@@ -1,0 +1,12 @@
+Year,Name,Driver1,Driver2,Car Speed
+default,Williams,Jacques Villeneuve,Heinz-Harald Frentzen,80
+default,Ferrari,Michael Schumacher,Eddie Irvine,84
+default,Benetton,Giancarlo Fisichella,Alexander Wurz,74
+default,McLaren,David Coulthard,Mika Hakkinen,90
+default,Jordan,Damon Hill,Ralf Schumacher,70
+default,Prost,Olivier Panis,Jarno Trulli,60
+default,Sauber,Jean Alesi,Johnny Herbert,70
+default,Arrows,Pedro Diniz,Mika Salo,45
+default,Stewart,Rubens Barrichello,Jan Magnussen,50
+default,Tyrrell,Ricardo Rosset,Tora Takagi,40
+default,Minardi,Shinji Nakano,Esteban Tuero,35

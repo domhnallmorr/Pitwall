@@ -1,0 +1,23 @@
+Year,Name,Age,Country,Speed
+default,Jacques Villeneuve,27,Canada,84
+default,Heinz-Harald Frentzen,31,Germany,72
+default,Michael Schumacher,29,Germany,98
+default,Eddie Irvine,33,UK,75
+default,Giancarlo Fisichella,25,Italy,70
+default,Alexander Wurz,24,Austria,71
+default,David Coulthard,27,UK,77
+default,Mika Hakkinen,30,Finland,87
+default,Damon Hill,38,UK,78
+default,Ralf Schumacher,23,Germany,74
+default,Olivier Panis,32,France,72
+default,Jarno Trulli,24,Italy,76
+default,Jean Alesi,34,France,75
+default,Johnny Herbert,34,UK,69
+default,Pedro Diniz,28,Brazil,65
+default,Mika Salo,32,Finland,68
+default,Rubens Barrichello,26,Brazil,77
+default,Jan Magnussen,25,Denmark,62
+default,Ricardo Rosset,26,Brazil,60
+default,Tora Takagi,24,Japan,53
+default,Shinji Nakano,27,Japan,58
+default,Esteban Tuero,20,Argentina,55

@@ -1,0 +1,6 @@
+Name: Autodromo Oscar Alfredo Galvez
+Country: Argentina
+Location: Buenos Aries
+Title: Argentinian Grand Prix
+Laps: 72
+Base Laptime: 84_000
