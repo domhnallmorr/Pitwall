@@ -224,19 +224,19 @@ class GrandPrixModel(session_model.SessionModel):
 			driver = row["Driver"]
 			participant = self.race_model.get_particpant_model_by_name(driver)
 
-			participant.driver.starts_this_season += 1
+			participant.driver.season_stats.starts_this_season += 1
 
 			if idx == 0: # update wins
-				participant.driver.wins_this_season += 1
-				participant.driver.team_model.wins_this_season += 1
+				participant.driver.season_stats.wins_this_season += 1
+				participant.driver.team_model.season_stats.wins_this_season += 1
 			if idx in [0, 1, 2]: # podiums
-				participant.driver.podiums_this_season += 1
-				participant.driver.team_model.podiums_this_season += 1
+				participant.driver.season_stats.podiums_this_season += 1
+				participant.driver.team_model.season_stats.podiums_this_season += 1
 			if row["Status"] == "retired":
-				participant.driver.dnfs_this_season += 1
-				participant.driver.team_model.dnfs_this_season += 1
+				participant.driver.season_stats.dnfs_this_season += 1
+				participant.driver.team_model.season_stats.dnfs_this_season += 1
 
-		self.race_model.model.season.update_standings(self.standings_df)
+		self.race_model.model.season.standings_manager.update_standings(self.standings_df)
 		
 		self.race_model.model.season.update_next_race()
 		self.generate_lap_chart_data()

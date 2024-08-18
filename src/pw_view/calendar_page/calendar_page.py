@@ -1,63 +1,44 @@
+import flet as ft
 
-
-import customtkinter
-
-from pw_view.calendar_page import calendar_race_widget
-
-class CalendarPage(customtkinter.CTkFrame):
-	def __init__(self, master, view):
-		super().__init__(master)
+class CalendarPage(ft.Column):
+	def __init__(self, view):
 
 		self.view = view
-		self.calendar_page_controller = self.view.controller.calendar_page_controller
 
-		self.race_labels = []
-		self.setup_frames()
-		self.setup_labels()
-		self.grid_configure()
+		self.header_text = ft.Text("Calendar", theme_style=self.view.page_header_style)
+		contents = [
+			self.header_text
+		]
 
-	def grid_configure(self):
-		self.grid_columnconfigure(4, weight=1)
-		self.grid_columnconfigure(5, weight=4)
+		super().__init__(controls=contents, alignment=ft.MainAxisAlignment.START)
 
-		self.grid_rowconfigure(4, weight=4)
+	def update_page(self, data):
+		calendar = data["calendar"]
 
-		self.calander_frame.grid_columnconfigure(4, weight=1)
-		self.track_frame.grid_columnconfigure(4, weight=1)
+		# Add a Round column based on index, maybe this should be added to the model
 
-	def setup_frames(self):
-		self.calander_frame = customtkinter.CTkScrollableFrame(self)
-		self.calander_frame.grid(row=4, column=4, padx=self.view.padx_large, pady=self.view.pady_large, sticky="NSEW")
+		calendar.insert(0, "#", calendar.index + 1)
 
-		self.track_frame = customtkinter.CTkFrame(self)
-		self.track_frame.grid(row=4, column=5, padx=self.view.padx_large, pady=self.view.pady_large, sticky="NSEW")
+		columns = []
+		for col in calendar.columns:
+			columns.append(ft.DataColumn(ft.Text(col)))
 
-	def setup_labels(self):
-		customtkinter.CTkLabel(self, text="Calander", font=self.view.page_title_font).grid(row=3, column=4, padx=self.view.padx*3, pady=self.view.pady, sticky="NW")
+		data = calendar.values.tolist()
+		rows = []
 
-		self.year_label = customtkinter.CTkLabel(self.calander_frame, text="1998 Calander", font=self.view.header1_font, anchor="w")
-		self.year_label.grid(row=0, column=4, padx=self.view.padx, pady=self.view.pady_large, ipadx=0, sticky="W")
+		for row in data:
+			cells = []
+			for cell in row:
+				cells.append(ft.DataCell(ft.Text(cell)))
 
-		self.race_title_label = customtkinter.CTkLabel(self.track_frame, text="Grand Prix", font=self.view.header1_font, anchor="w")
-		self.race_title_label.grid(row=0, column=4, padx=self.view.padx, pady=(self.view.pady_large, self.view.pady), ipadx=0, sticky="EW")
+			rows.append(ft.DataRow(cells=cells))
 
-		self.race_track_label = customtkinter.CTkLabel(self.track_frame, text="Some Track", font=self.view.normal_font, anchor="w")
-		self.race_track_label.grid(row=1, column=4, padx=self.view.padx, pady=self.view.pady, ipadx=0, sticky="EW")
+		self.calendar_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30)
 
-	def setup_widgets(self, calander):
-		'''
-		This gets called by the controller when a new season starts, so that we have the correct calander
-		'''
-		self.race_labels = []
-		row = 1
-		for idx, race in calander.iterrows():
+		contents = [
+			self.header_text,
+			self.calendar_table
+		]
 
-			self.race_labels.append(calendar_race_widget.RaceWidget(self.calander_frame, self.view, self, idx, race["Location"], race["Country"]))
-			self.race_labels[-1].grid(row=row, column=4, padx=self.view.padx, pady=self.view.pady, sticky="NSEW")
-
-			row += 1
-
-	def update_track_frame(self, data):
-		self.race_title_label.configure(text=data["title"])
-		self.race_track_label.configure(text=data["track"])
-
+		self.controls = contents
+		self.view.main_app.update()

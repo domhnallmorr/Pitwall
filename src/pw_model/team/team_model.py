@@ -1,4 +1,4 @@
-
+from pw_model.season import season_stats
 
 class TeamModel:
 	def __init__(self, model, name, driver1, driver2, car_model):
@@ -9,7 +9,10 @@ class TeamModel:
 		self.car_model = car_model
 
 		self.setup_season_stats()
-
+	
+	def __repr__(self):
+		return f"TeamModel <{self.name}>"
+	
 	@property
 	def driver1_model(self):
 		return self.model.get_driver_model(self.driver1)
@@ -18,9 +21,9 @@ class TeamModel:
 	def driver2_model(self):
 		return self.model.get_driver_model(self.driver2)
 	
+	def end_season(self):
+		self.setup_season_stats()
+		
 	def setup_season_stats(self):
-		self.points_this_season = 0
-		self.wins_this_season = 0
-		self.podiums_this_season = 0
-		self.dnfs_this_season = 0
+		self.season_stats = season_stats.SeasonStats()
 	

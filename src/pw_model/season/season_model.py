@@ -1,5 +1,6 @@
 import pandas as pd
 
+from pw_model.season import standings_manager
 
 class SeasonModel:
 	def __init__(self, model):
@@ -43,24 +44,9 @@ class SeasonModel:
 
 		self.current_week = 1
 		self.next_race_idx = 0
-		self.points_system = [10, 6, 4, 3, 2, 1]
+
 		
-		# SETUP DRIVER STANDINGS
-		columns = ["Driver", "Team", "Points", "Wins", "Podiums", "Fastest Laps", "DNFs", "Starts"]
-		data = []
-		for team in self.model.teams:
-			for driver in [team.driver1_model, team.driver2_model]:
-				data.append([driver.name, team.name, 0, 0, 0, 0, 0, 0])
-
-		self.drivers_standings_df = pd.DataFrame(columns=columns, data=data)
-
-		# SETUP CONSTRUCTORS STANDINGS
-		columns = ["Team", "Points", "Wins", "Podiums", "Fastest Laps", "DNFs"]
-		data = []
-		for team in self.model.teams:
-			data.append([team.name, 0, 0, 0, 0, 0])
-
-		self.constructors_standings_df = pd.DataFrame(columns=columns, data=data)
+		self.standings_manager = standings_manager.StandingsManager(self.model)
 
 	def advance_one_week(self):
 
@@ -68,46 +54,6 @@ class SeasonModel:
 
 		if self.current_week == 53:
 			self.model.end_season()
-
-	def update_standings(self, result_df):
-		# update points
-		for idx, points in enumerate(self.points_system):
-			driver_name = result_df.iloc[idx]["Driver"]
-			driver_model = self.model.get_driver_model(driver_name)
-
-			mask = self.drivers_standings_df["Driver"] == driver_name
-			
-			driver_model.points_this_season += points
-			driver_model.team_model.points_this_season += points
-
-			self.drivers_standings_df.loc[mask, "Points"] = driver_model.points_this_season
-
-		self.drivers_standings_df.sort_values("Points", inplace=True, ascending=False)
-
-		# update driver stats
-		for idx, row in self.drivers_standings_df.iterrows():
-			driver_name = row["Driver"]
-			driver_model = self.model.get_driver_model(driver_name)
-			mask = self.drivers_standings_df["Driver"] == driver_name
-
-			self.drivers_standings_df.loc[mask, "Wins"] = driver_model.wins_this_season
-			self.drivers_standings_df.loc[mask, "Podiums"] = driver_model.podiums_this_season
-			self.drivers_standings_df.loc[mask, "DNFs"] = driver_model.dnfs_this_season
-			self.drivers_standings_df.loc[mask, "Starts"] = driver_model.starts_this_season
-
-
-		# update constructors standings
-		for idx, row in self.constructors_standings_df.iterrows():
-			team_name = row["Team"]
-			team_model = self.model.get_team_model(team_name)
-			mask = self.constructors_standings_df["Team"] == team_name		
-
-			self.constructors_standings_df.loc[mask, "Points"] = team_model.points_this_season
-			self.constructors_standings_df.loc[mask, "Wins"] = team_model.wins_this_season
-			self.constructors_standings_df.loc[mask, "Podiums"] = team_model.podiums_this_season
-			self.constructors_standings_df.loc[mask, "DNFs"] = team_model.dnfs_this_season
-
-		self.constructors_standings_df.sort_values("Points", inplace=True, ascending=False)
 
 	def update_next_race(self):
 		'''

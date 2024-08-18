@@ -1,105 +1,67 @@
-import customtkinter
-from tksheet import Sheet
+import flet as ft
 
+from pw_view import sidebar
 
-class MainWindow(customtkinter.CTkFrame):
-	def __init__(self, master, view):
-		super().__init__(master)
-
+class MainWindow(ft.View):
+	def __init__(self, view):
 		self.view = view
 
-		self.setup_widgets()
-		self.configure_grid()
+		self.setup_header_bar()
+		self.nav_sidebar = sidebar.Sidebar(self.view)
 
-	def configure_grid(self):
-		self.grid_columnconfigure(1, weight=1)
-		self.grid_rowconfigure(1, weight=1)
+		self.content_row = ft.Row([
+			self.nav_sidebar, self.view.home_page
+		],
+		alignment=ft.MainAxisAlignment.START,
+		vertical_alignment=ft.CrossAxisAlignment.START
+		)
+		# contents = [nav_sidebar, self.view.home_page]
 
-		self.header_frame.grid_columnconfigure(8, weight=1)
-		self.sidebar_frame.grid_rowconfigure(20, weight=1)
+		super().__init__(controls=[self.header, self.content_row])
 
-		self.page_frame.grid_columnconfigure(0, weight=1)
-		self.page_frame.grid_rowconfigure(0, weight=1)
+	def setup_header_bar(self):
+		self.team_text = ft.Text("Williams - $1,000,000", theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM)
+		self.week_text = ft.Text("Week 1 - 1998", theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM)
 
-	def setup_widgets(self):
-		self.home_icon = customtkinter.CTkImage(light_image=self.view.home_icon2, size=(15, 15))
-		self.email_icon = customtkinter.CTkImage(light_image=self.view.email_icon2, size=(15, 15))
-		self.calendar_icon = customtkinter.CTkImage(light_image=self.view.calendar_icon2, size=(15, 15))
-		self.standings_icon = customtkinter.CTkImage(light_image=self.view.table_icon2, size=(15, 15))
-		self.car_icon = customtkinter.CTkImage(light_image=self.view.car_icon2, size=(15, 15))
-		self.advance_icon = customtkinter.CTkImage(light_image=self.view.advance_icon2, size=(15, 15))
+		self.header = ft.Row(
+			controls=[
+				self.team_text,
+				self.week_text
+			],
+			alignment=ft.MainAxisAlignment.SPACE_BETWEEN,  # Space between the items
+			vertical_alignment=ft.CrossAxisAlignment.CENTER  # Align items to the center vertically
+		)
 
-		self.header_frame = customtkinter.CTkFrame(self)
-		self.header_frame.grid(row=0, column=0, columnspan=2, sticky="EW")
-	
-		self.sidebar_frame = customtkinter.CTkFrame(self, fg_color="transparent")
-		self.sidebar_frame.grid(row=1, column=0, padx=0, pady=0, sticky="NSEW")
 
-		self.page_frame = customtkinter.CTkFrame(self, fg_color="transparent")
-		self.page_frame.grid(row=1, column=1, padx=0, pady=0, sticky="NSEW")
+	def change_page(self, page_name):
+		
+		contents = [self.nav_sidebar]
 
-		# HEADER LABELS
-		self.header_label = customtkinter.CTkLabel(self.header_frame, text="Williams $5,762,308", font=self.view.normal_font)
-		self.header_label.grid(row=0, column=0, padx=self.view.padx, sticky="NW")
+		if page_name == "home":
+			contents.append(self.view.home_page)
+		elif page_name == "email":
+			contents.append(self.view.email_page)
+		elif page_name == "standings":
+			contents.append(self.view.standings_page)
+		elif page_name == "calendar":
+			contents.append(self.view.calendar_page)
 
-		self.week_label = customtkinter.CTkLabel(self.header_frame, text="Week 1 - 1998", font=self.view.normal_font)
-		self.week_label.grid(row=0, column=8, padx=self.view.padx, sticky="NE")
+		self.content_row = ft.Row(
+			contents,
+			alignment=ft.MainAxisAlignment.START,
+			vertical_alignment=ft.CrossAxisAlignment.START			
+		)			
 
-		# SIDEBAR BUTTONS
-		self.home_btn = customtkinter.CTkButton(master=self.sidebar_frame, text="Home", image=self.home_icon, anchor="w",
-										   command=lambda window="home": self.view.change_window(window))
-		self.home_btn.grid(row=0, column=0, padx=self.view.padx, pady=self.view.pady, sticky="NSEW")
-
-		self.email_btn = customtkinter.CTkButton(master=self.sidebar_frame, text="Email", image=self.email_icon, anchor="w",
-										   command=lambda window="email": self.view.change_window(window))
-		self.email_btn.grid(row=1, column=0, padx=self.view.padx, pady=self.view.pady, sticky="NSEW")
-
-		# self.team_btn = customtkinter.CTkButton(master=self.sidebar_frame, text="Team", command=self.view.controller.show_player_team_page)
-		# self.team_btn.grid(row=2, column=0, padx=self.view.padx, pady=self.view.pady, sticky="NSEW")
-
-		self.standings_btn = customtkinter.CTkButton(master=self.sidebar_frame, text="Standings", image=self.standings_icon, anchor="w",
-					       command=lambda window="standings": self.view.change_window(window))
-		self.standings_btn.grid(row=3, column=0, padx=self.view.padx, pady=self.view.pady, sticky="NSEW")
-
-		self.calender_btn = customtkinter.CTkButton(master=self.sidebar_frame, text="Calendar", image=self.calendar_icon, anchor="w",
-					      command=lambda window="calendar": self.view.change_window(window))
-		self.calender_btn.grid(row=4, column=0, padx=self.view.padx, pady=self.view.pady, sticky="NSEW")
-
-		self.finances_btn = customtkinter.CTkButton(master=self.sidebar_frame, text="Finances",
-					      command=lambda window="finance": self.view.change_window(window))
-		self.finances_btn.grid(row=5, column=0, padx=self.view.padx, pady=self.view.pady, sticky="NSEW")
-
-		self.sponsors_btn = customtkinter.CTkButton(master=self.sidebar_frame, text="Sponsors",
-					      command=lambda window="sponsors": self.view.change_window(window))
-		self.sponsors_btn.grid(row=6, column=0, padx=self.view.padx, pady=self.view.pady, sticky="NSEW")
-
-		self.car_btn = customtkinter.CTkButton(master=self.sidebar_frame, text="Car", image=self.car_icon, anchor="w",
-					      command=lambda window="car": self.view.change_window(window))
-		self.car_btn.grid(row=7, column=0, padx=self.view.padx, pady=self.view.pady, sticky="NSEW")
-
-		self.advance_btn = customtkinter.CTkButton(master=self.sidebar_frame, text="Advance", fg_color=self.view.success_color, image=self.advance_icon, anchor="w",
-					     							hover_color=self.view.success_color_darker, command=self.view.controller.advance)
-		self.advance_btn.grid(row=20, column=0, padx=self.view.padx, pady=self.view.pady, sticky="SW")
-
+		self.controls = [self.header, self.content_row]
+		self.view.main_app.update()
+		
 	def update_window(self, data):
-		self.week_label.configure(text=data["date"])
+		self.week_text.value = data["date"]
+		self.week_text.update()
 
 		if data["in_race_week"] is True:
-			self.advance_btn.configure(text="Go To Race", command=self.view.controller.go_to_race_weekend)
+			self.nav_sidebar.update_advance_button("go_to_race")
 		else:
-			self.advance_btn.configure(text="Advance")
+			self.nav_sidebar.update_advance_button("advance")
+			
 
-		# if "player_team" in data.keys():
-		# 	self.header_label.configure(text=data["player_team"])
-
-		# if data["new_mails"] > 0:
-		# 	self.email_btn.configure(text=f"Email ({data['new_mails']})")
-		# else:
-		# 	self.email_btn.configure(text=f"Email")
-		
-
-	def update_advance_btn(self, mode):
-		if mode == "advance":
-			self.advance_btn.configure(text="Advance", command=self.view.controller.advance)
-		else:
-			self.advance_btn.configure(text="Go To Race Weekend", command=lambda window="race_weekend": self.view.change_window(window))

@@ -1,4 +1,6 @@
 from tkinter import *
+import threading
+
 from race_model import race_model
 
 class RaceController:
@@ -22,13 +24,17 @@ class RaceController:
 			self.race_model.setup_practice(60*60, session)
 		elif session == "Race":
 			self.race_model.setup_race()
+		
+		simulation_thread = threading.Thread(target=self.race_model.simulate_session)
+		# self.race_model.simulate_session()
+		simulation_thread.start()
 
-		self.race_model.simulate_session()
+		simulation_thread.join() # wait for simulation to stop running
 
 		# update lap chart
 		if session == "Race":
 			data = {"lap_chart_data": self.race_model.current_session.lap_chart_data}
-			self.view.lap_chart_page.update_page(data)
+			#  self.view.lap_chart_page.update_page(data)
 
 		data = {
 			"current_session_name": self.race_model.current_session_name,
@@ -36,9 +42,10 @@ class RaceController:
 		}
 
 		# SHOW THE RESULTS
-		self.view.results_page.update_page(data)
+		self.view.results_window.update_page(data)
 		self.view.show_simulated_session_results()
-		
+
+
 	def continue_from_results(self):
 		data = {
 			"current_session_name": self.race_model.current_session_name,
@@ -49,15 +56,15 @@ class RaceController:
 		self.view.race_weekend_window.update_window(data)
 		self.view.continue_from_results_page()
 	
-	def return_to_main_window(self):
-		'''
-		Post race, remove race weekend, update advance button to allow progress to next week
-		'''
-		self.controller.update_standings_page()
-		self.controller.update_home_page()
+	# def return_to_main_window(self):
+	# 	'''
+	# 	Post race, remove race weekend, update advance button to allow progress to next week
+	# 	'''
+	# 	self.controller.update_standings_page()
+	# 	self.controller.update_home_page()
 
-		self.view.return_to_main_window()
-		self.view.main_window.update_advance_btn("advance")
+	# 	self.view.return_to_main_window()
+	# 	self.view.main_window.update_advance_btn("advance")
 
 	def continue_from_lap_chart(self):
 		self.view.continue_from_lap_chart()

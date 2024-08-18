@@ -1,16 +1,20 @@
 
 from pw_model import load_roster
 from pw_model.season import season_model
+from pw_model.email import email_model
 
 class Model:
 	def __init__(self, roster, run_directory):
 		self.run_directory = run_directory
 
 		self.tracks = []
-		load_roster.load_roster(self, roster)
+		if roster is not None:
+			load_roster.load_roster(self, roster)
 
 		self.year = 1998
 		self.season = season_model.SeasonModel(self)
+
+		self.inbox = email_model.Inbox(self)
 
 	def get_driver_model(self, driver_name):
 		driver_model = None
@@ -50,10 +54,10 @@ class Model:
 		self.season.setup_new_season_variables()
 
 		for driver in self.drivers:
-			driver.setup_season_stats()
+			driver.end_season()
 
 		for team in self.teams:
-			team.setup_season_stats()
+			team.end_season()
 
 		self.year += 1
 		

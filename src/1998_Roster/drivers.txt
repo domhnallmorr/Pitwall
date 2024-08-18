@@ -21,3 +21,11 @@ default,Ricardo Rosset,26,Brazil,60
 default,Tora Takagi,24,Japan,53
 default,Shinji Nakano,27,Japan,58
 default,Esteban Tuero,20,Argentina,55
+default,Juan-Pablo Montoya,22,Columbia,79
+default,Luca Badoer,26,Italy,61
+default,Jos Verstappen,25,Netherlands,66
+default,Pedro de la Rosa,26,Spain,65
+default,Stephane Sarrazin,22,France,64
+default,Jorg Müller,28,Germany,48
+default,Luciano Burti,22,Brazil,61
+default,Jean-Christophe Bouillon,28,France,54
