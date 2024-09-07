@@ -9,6 +9,7 @@ class RaceWeekendWindow(ft.View):
 	def __init__(self, view, data):
 		self.view = view
 		self.simulate_buttons = {}
+		self.simulate_btns_clicked = []
 
 		self.header_text = ft.Text(data["race_title"], theme_style=self.view.page_header_style)
 
@@ -31,7 +32,7 @@ class RaceWeekendWindow(ft.View):
 			controls=[ft.Text(session_title, theme_style=self.view.header2_style)]
 		)
 
-		self.simulate_buttons[session_title] = ft.TextButton("Simulate", on_click=lambda _: self.simulate(session_title), disabled=True)
+		self.simulate_buttons[session_title] = ft.TextButton("Simulate", on_click=self.simulate, disabled=True, data=session_title)
 		row2 = ft.Row(
 			controls=[self.simulate_buttons[session_title]]
 		)
@@ -50,28 +51,33 @@ class RaceWeekendWindow(ft.View):
 
 		return container
 	
-	def simulate(self, session_title):
-		self.simulate_buttons[session_title].disabled = True
-		
-		if "friday" in session_title.lower():
-			self.simulate_buttons["Saturday Practice"].disabled = False
-			self.view.controller.race_controller.simulate_session("FP Friday")
+	def simulate(self, e):
+		session_title = e.control.data
 
-		elif "saturday" in session_title.lower():
-			self.simulate_buttons["Qualifying"].disabled = False
-			self.view.controller.race_controller.simulate_session("FP Saturday")			
+		if session_title not in self.simulate_btns_clicked: # make sure simulate only happens once per session
+			self.simulate_btns_clicked.append(session_title)
 
-		elif "qualifying" in session_title.lower():
-			self.simulate_buttons["Warmup"].disabled = False
-			self.view.controller.race_controller.simulate_session("Qualy")	
+			self.simulate_buttons[session_title].disabled = True
+			
+			if "friday" in session_title.lower():
+				self.simulate_buttons["Saturday Practice"].disabled = False
+				self.view.controller.race_controller.simulate_session("FP Friday")
 
-		elif "warmup" in session_title.lower():
-			self.simulate_buttons["Race"].disabled = False
-			self.view.controller.race_controller.simulate_session("Warmup")	
+			elif "saturday" in session_title.lower():
+				self.simulate_buttons["Qualifying"].disabled = False
+				self.view.controller.race_controller.simulate_session("FP Saturday")			
 
-		elif "race" in session_title.lower():
-			self.continue_btn.disabled = False
-			self.view.controller.race_controller.simulate_session("Race")
+			elif "qualifying" in session_title.lower():
+				self.simulate_buttons["Warmup"].disabled = False
+				self.view.controller.race_controller.simulate_session("Qualy")	
+
+			elif "warmup" in session_title.lower():
+				self.simulate_buttons["Race"].disabled = False
+				self.view.controller.race_controller.simulate_session("Warmup")	
+
+			elif "race" in session_title.lower():
+				self.continue_btn.disabled = False
+				self.view.controller.race_controller.simulate_session("Race")
 
 
 	def return_to_main_window(self, e):

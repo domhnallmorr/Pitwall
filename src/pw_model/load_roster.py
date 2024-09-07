@@ -13,7 +13,7 @@ def load_roster(model, roster):
 
 	drivers_file, teams_file, season_file, track_files = checks(model, roster)
 
-	model.drivers = load_drivers(model, drivers_file)
+	model.drivers, model.future_drivers = load_drivers(model, drivers_file)
 	model.teams = load_teams(model, teams_file)
 
 	load_tracks(model, track_files)
@@ -22,6 +22,8 @@ def load_roster(model, roster):
 
 def load_drivers(model, drivers_file):
 	drivers = []
+	future_drivers = []
+
 	with open(drivers_file) as f:
 		data = f.readlines()
 
@@ -36,8 +38,10 @@ def load_drivers(model, drivers_file):
 
 			driver = driver_model.DriverModel(model, name, age, country, speed)
 			drivers.append(driver)
+		else:
+			future_drivers.append(line)
 	
-	return drivers
+	return drivers, future_drivers
 
 def load_teams(model, teams_file):
 	teams = []
@@ -63,6 +67,16 @@ def load_teams(model, teams_file):
 			teams.append(team)
 
 	return teams
+
+def create_driver(line_data, model):
+	name = line_data[1].lstrip().rstrip()
+	age = int(line_data[2])
+	country = line_data[3]
+	speed = int(line_data[4])
+
+	driver = driver_model.DriverModel(model, name, age, country, speed)
+	
+	return driver
 
 def load_season(model, season_file):
 

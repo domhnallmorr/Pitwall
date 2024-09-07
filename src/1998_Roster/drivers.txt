@@ -8,7 +8,7 @@ default,Alexander Wurz,24,Austria,71
 default,David Coulthard,27,UK,77
 default,Mika Hakkinen,30,Finland,87
 default,Damon Hill,38,UK,78
-default,Ralf Schumacher,23,Germany,74
+default,Ralf Schumacher,43,Germany,74
 default,Olivier Panis,32,France,72
 default,Jarno Trulli,24,Italy,76
 default,Jean Alesi,34,France,75
@@ -26,6 +26,28 @@ default,Luca Badoer,26,Italy,61
 default,Jos Verstappen,25,Netherlands,66
 default,Pedro de la Rosa,26,Spain,65
 default,Stephane Sarrazin,22,France,64
-default,Jorg Müller,28,Germany,48
+default,Jorg Muller,28,Germany,48
 default,Luciano Burti,22,Brazil,61
 default,Jean-Christophe Bouillon,28,France,54
+default,Alex Zanardi,32,Italy,55
+default,Marc Gene,24,Spain,64
+default,Ricardo Zonta,22,Brazil,66
+1999,Jenson Button,19,UK,80
+1999,Nick Heidfeld,22,Germany,74
+1999,Gaston Mazzacane,24,Argentina,52
+2000,Tomas Enge,23,Czech Republic,56
+2000,Alex Yoong,24,Malaysia,40
+2000,Fernando Alonso,19,Spain,95
+2000,Enrique Bernoldi,21,Brazil,59
+2000,Kimi Raikkonen,20,Finland,89
+2000,Tarso Marques,24,Brazil,62
+2001,Takuma Sato,25,Japan,73
+2001,Alan McNish,31,UK,68
+2001,Mark Webber,25,Australia,79
+2001,Anthony Davidson,22,UK,72
+2002,Ralph Firman,27,Ireland,55
+2002,Zsolt Baumgartner,21,Hungary,50
+2002,Antonio Pizzonia,22,Brazil,66
+2002,Justin Wilson,24,UK,65
+2002,Nicolas Kiesa,24,Denmark,50
+2002,Cristiano da Matta,29,Brazil,64

@@ -1,9 +1,10 @@
 
 import flet as ft
 
-from pw_view import main_window, home_page, email_page, standings_page
+from pw_view import main_window, home_page, email_page, standings_page, grid_page
 from pw_view.race_weekend import race_weekend_window, results_window
 from pw_view.calendar_page import calendar_page
+from pw_view.staff_page import staff_page, hire_driver_page
 
 class View:
 	def __init__(self, controller):
@@ -13,9 +14,13 @@ class View:
 
 		self.page_header_style = ft.TextThemeStyle.DISPLAY_MEDIUM
 		self.header2_style = ft.TextThemeStyle.DISPLAY_SMALL
+		
+		self.header3_style = ft.TextThemeStyle.LABEL_MEDIUM
 
 		self.dark_grey = "#23232A"
 
+		self.vscroll_buffer = 100
+		
 		self.setup_pages()
 		self.setup_windows()
 
@@ -26,6 +31,9 @@ class View:
 		self.email_page = email_page.EmailPage(self)
 		self.standings_page = standings_page.StandingsPage(self)
 		self.calendar_page = calendar_page.CalendarPage(self)
+		self.staff_page = staff_page.StaffPage(self)
+		self.hire_driver_page = hire_driver_page.HireDriverPage(self)
+		self.grid_page = grid_page.GridPage(self)
 
 		self.results_window = results_window.ResultsWindow(self)
 

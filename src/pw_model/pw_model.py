@@ -1,20 +1,34 @@
+import logging
 
 from pw_model import load_roster
 from pw_model.season import season_model
 from pw_model.email import email_model
+from pw_model.driver_market import driver_market
+
+
 
 class Model:
 	def __init__(self, roster, run_directory):
+
+		self.player_team = "Jordan"
+
+		# logging.basicConfig(filename=f"{run_directory}\\log.txt", filemode="w", level=logging.DEBUG)
+		logging.basicConfig(level=logging.DEBUG)
+
 		self.run_directory = run_directory
 
+		self.inbox = email_model.Inbox(self)
 		self.tracks = []
+		self.retired_drivers = []
+
 		if roster is not None:
 			load_roster.load_roster(self, roster)
 
 		self.year = 1998
 		self.season = season_model.SeasonModel(self)
 
-		self.inbox = email_model.Inbox(self)
+		self.driver_market = driver_market.DriverMarket(self)
+		self.end_season(increase_year=False)
 
 	def get_driver_model(self, driver_name):
 		driver_model = None
@@ -27,7 +41,7 @@ class Model:
 		return driver_model
 	
 	def get_team_model(self, team_name):
-		driver_model = None
+		team_model = None
 
 		for t in self.teams:
 			if t.name == team_name:
@@ -48,16 +62,47 @@ class Model:
 		return track_model
 	
 	def advance(self):
+		if self.season.current_week == 51:
+			self.driver_market.ensure_player_has_drivers_for_next_season()
+			
 		self.season.advance_one_week()
 
-	def end_season(self):
-		self.season.setup_new_season_variables()
-
-		for driver in self.drivers:
-			driver.end_season()
+	def end_season(self, increase_year=True):
+		logging.critical("End Season")
+		'''
+		the order in which the below code is important
+		team end_season must be called first
+		this updates the drivers for upcoming season
+		then the drivers end_season can assign the correct team to the driver
+		'''
+		# if increase_year is True:
+			
 
 		for team in self.teams:
-			team.end_season()
+			team.end_season() # update drivers for next year
 
-		self.year += 1
+		for driver in self.drivers:
+			driver.end_season(increase_age=increase_year)
+
+		# # TODO move the below into a start new season method
+		# for team in self.teams:
+		# 	team.check_drivers_for_next_year()
+
+		if increase_year is True:
+			self.year += 1
+			self.driver_market.update_team_drivers()
+			logging.critical(f"Start Season {self.year}")
+			self.add_new_drivers()
+
+		self.driver_market.setup_dataframes()
+		self.driver_market.determine_driver_transfers()
+
+		self.season.setup_new_season_variables()
 		
+	def add_new_drivers(self):
+		new_drivers = [d for d in self.future_drivers if int(d[0]) == self.year]
+
+		for line_data in new_drivers:
+			new_driver = load_roster.create_driver(line_data, self)
+
+			self.drivers.append(new_driver)

@@ -12,6 +12,8 @@ class Sidebar(ft.Column):
 			ft.TextButton("Email", icon="email", on_click=lambda _: view.main_window.change_page("email")),
 			ft.TextButton("Standings", icon="table_chart", on_click=lambda _: view.main_window.change_page("standings")),
 			ft.TextButton("Calendar", icon="CALENDAR_MONTH", on_click=lambda _: view.main_window.change_page("calendar")),
+			ft.TextButton("Staff", icon="account_box_rounded", on_click=lambda _: view.main_window.change_page("staff")),
+			ft.TextButton("Grid", icon="border_all", on_click=lambda _: view.main_window.change_page("grid")),
 			ft.Divider(),
 			self.advance_btn
 		]

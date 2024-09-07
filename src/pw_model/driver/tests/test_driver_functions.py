@@ -3,6 +3,7 @@ import random
 import pytest
 
 from pw_model.driver import driver_model 
+from tests import create_model
 
 def gen_dummy_driver(model=None, name="Jacques Villeneuve"):
 	model = model
@@ -26,7 +27,7 @@ def test_determine_retiring_age():
 
 def test_end_season_method():
 
-	dummy_driver = gen_dummy_driver()
+	dummy_driver = gen_dummy_driver(model=create_model.create_model())
 
 	age = dummy_driver.age
 

@@ -10,7 +10,6 @@ class ResultsWindow(ft.View):
 		super().__init__(controls=[self.header_text])
 
 	def update_page(self, data):
-
 		standings_df = data["standings_df"]
 
 		columns = []

@@ -45,6 +45,12 @@ class MainWindow(ft.View):
 			contents.append(self.view.standings_page)
 		elif page_name == "calendar":
 			contents.append(self.view.calendar_page)
+		elif page_name == "staff":
+			contents.append(self.view.staff_page)
+		elif page_name == "hire_driver":
+			contents.append(self.view.hire_driver_page)
+		elif page_name == "grid":
+			contents.append(self.view.grid_page)
 
 		self.content_row = ft.Row(
 			contents,
@@ -56,6 +62,8 @@ class MainWindow(ft.View):
 		self.view.main_app.update()
 		
 	def update_window(self, data):
+		self.team_text.value = data["team"]
+
 		self.week_text.value = data["date"]
 		self.week_text.update()
 
