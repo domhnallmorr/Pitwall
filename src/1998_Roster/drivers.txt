@@ -51,3 +51,12 @@ default,Ricardo Zonta,22,Brazil,66
 2002,Justin Wilson,24,UK,65
 2002,Nicolas Kiesa,24,Denmark,50
 2002,Cristiano da Matta,29,Brazil,64
+2004,Timo Glock,22,Germany,61
+2004,Giorgio Pantano,25,Italy,58
+2004,Gianmaria Bruni,23,Italy,60
+2005,Vitantonio Liuzzi,25,Italy,59
+2005,Tiago Monteiro,29,Portugal,57
+2005,Narain Karthikeyan,28,India,55
+2005,Robert Doornbos,24,Netherlands,52
+2005,Patrick Friesacher,25,Austria,50
+2005,Christijan Albers,26,Netherlands,58
