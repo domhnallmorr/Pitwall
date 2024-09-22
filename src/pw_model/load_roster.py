@@ -48,6 +48,12 @@ def load_teams(model, teams_file):
 	with open(teams_file) as f:
 		data = f.readlines()
 
+	headers = data[0].rstrip().split(",")
+
+	number_staff_idx = headers.index("Number of Staff")
+	starting_balance_idx = headers.index("Starting Balance")
+	starting_sponsorship_idx = headers.index("Starting Sponsorship")
+
 	for idx, line in enumerate(data[1:]):
 		line = line.split(",")
 
@@ -56,9 +62,14 @@ def load_teams(model, teams_file):
 			driver1 = line[2].lstrip().rstrip()
 			driver2 = line[3].lstrip().rstrip()
 			car_speed = int(line[4].lstrip().rstrip())
+
+			number_of_staff = int(line[number_staff_idx].lstrip().rstrip())
+
+			starting_balance = int(line[starting_balance_idx].lstrip().rstrip())
+			starting_sponsorship = int(line[starting_sponsorship_idx].lstrip().rstrip())
 			
 			car = car_model.CarModel(car_speed)
-			team = team_model.TeamModel(model, name, driver1, driver2, car)
+			team = team_model.TeamModel(model, name, driver1, driver2, car, number_of_staff, starting_balance, starting_sponsorship)
 			
 			# ensure drivers are correctly loaded
 			assert team.driver1_model is not None
@@ -180,7 +191,7 @@ def check_teams_file_format(teams_file, drivers_names):
 	
 	# Check we have at least 1 driver
 	assert len(data) > 1, "Insufficient Data in teams.txt File"
-	headers = "Year,Name,Driver1,Driver2,Car Speed"
+	headers = "Year,Name,Driver1,Driver2,Car Speed,Number of Staff,Starting Balance,Starting Sponsorship"
 
 	# check headers are correct
 	assert data[0] == headers + "\n", "Incorrect Headers in teams.txt File"

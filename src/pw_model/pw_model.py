@@ -30,6 +30,10 @@ class Model:
 		self.driver_market = driver_market.DriverMarket(self)
 		self.end_season(increase_year=False)
 
+	@property
+	def player_team_model(self):
+		return self.get_team_model(self.player_team)
+	
 	def get_driver_model(self, driver_name):
 		driver_model = None
 
@@ -66,6 +70,7 @@ class Model:
 			self.driver_market.ensure_player_has_drivers_for_next_season()
 			
 		self.season.advance_one_week()
+		self.get_team_model(self.player_team).advance()
 
 	def end_season(self, increase_year=True):
 		logging.critical("End Season")
@@ -79,11 +84,12 @@ class Model:
 			
 
 		for team in self.teams:
-			team.end_season() # update drivers for next year
+			team.end_season(increase_year) # update drivers for next year
 
 		for driver in self.drivers:
 			driver.end_season(increase_age=increase_year)
 
+		self.player_team_model.finance_model.update_prize_money(self.season.standings_manager.player_team_position)
 		# # TODO move the below into a start new season method
 		# for team in self.teams:
 		# 	team.check_drivers_for_next_year()

@@ -24,3 +24,22 @@ def driver_hiring_email(team, driver):
     selected_message = random.choice(hiring_messages)
     
     return selected_message
+
+def prize_money_email(prize_money):
+    messages = [
+        f"Prize money from last season has been confirmed at ${prize_money: ,}. Payments will be made on a weekly basis.",
+    ]
+
+    # Choose a random hiring message from the list
+    selected_message = random.choice(messages)
+    
+    return selected_message
+
+def car_update_email():
+    messages = [
+         "This years car is ready to hit the track! Check out the car page to see how we stack up against the opposition",
+    ]
+    
+    selected_message = random.choice(messages)
+    
+    return selected_message

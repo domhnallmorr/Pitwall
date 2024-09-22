@@ -38,6 +38,7 @@ class Controller:
 		if self.mode != "headless":
 			self.update_main_window()
 			self.update_email_page()
+			self.update_finance_page()
 
 		if self.model.season.current_week == 1:
 			self.setup_new_season()
@@ -57,6 +58,8 @@ class Controller:
 			self.update_home_page()
 			self.update_grid_page()
 			self.update_staff_page()
+			self.update_car_page()
+			# self.update_finance_page()
 			self.update_main_window()
 			self.race_controller = race_controller.RaceController(self)
 
@@ -135,6 +138,27 @@ class Controller:
 		}
 		self.view.email_page.update_page(data)
 
+	def update_finance_page(self):
+		data = {
+			"total_sponsorship": copy.deepcopy(self.model.player_team_model.finance_model.total_sponsorship),
+			"prize_money": copy.deepcopy(self.model.player_team_model.finance_model.prize_money),
+			"total_staff_costs_per_year": copy.deepcopy(self.model.player_team_model.finance_model.total_staff_costs_per_year),
+			"race_costs": 500_000, # hard code this for now TODO, make it variable
+			"balance_history": copy.deepcopy(self.model.player_team_model.finance_model.balance_history),
+			"balance_history_dates": copy.deepcopy(self.model.player_team_model.finance_model.balance_history_dates),
+		}
+		self.view.finance_page.update_page(data)
+
+	def update_car_page(self):
+		car_speeds = [[team.name, team.car_model.speed] for team in self.model.teams]
+		car_speeds.sort(key=lambda x: x[1], reverse=True) # sort, highest speed to lowest speed
+		
+		data = {
+			"car_speeds": car_speeds,
+		}
+
+		self.view.car_page.update_page(data)
+
 	def go_to_race_weekend(self):
 		data = {
 			"race_title": self.model.season.current_track_model.title
@@ -145,8 +169,14 @@ class Controller:
 		'''
 		Post race, remove race weekend, update advance button to allow progress to next week
 		'''
-		self.update_standings_page()
+		
 		# self.update_home_page()
 
 		self.view.return_to_main_window()
 		# self.view.main_window.update_advance_btn("advance")
+
+	def post_race_actions(self):
+		self.model.season.post_race_actions()
+
+		self.update_standings_page()
+		self.return_to_main_window()

@@ -19,8 +19,6 @@ class Inbox:
 		welcome_email = Email("Welcome", "Welcome to Pitwall!", sender="The Board")
 		self.add_email(welcome_email)
 
-		prize_email = Email("This Years Prize Money", "Loads of Monnies!", sender="FOM")
-		self.add_email(prize_email)
 
 	@property
 	def number_unread(self):
@@ -65,8 +63,14 @@ class Inbox:
 		email = Email(f"Sponsor Income Update", msg)
 		self.add_email(email)
 
-	def new_prize_money_email(self, team, prize_money):
-		msg = email_generation.prize_money_email(team, prize_money)
+	def new_prize_money_email(self, prize_money):
+		msg = email_generation.prize_money_email(prize_money)
 
 		email = Email(f"Prize Money Confirmed", msg)
+		self.add_email(email)
+
+	def new_car_update_email(self):
+		msg = email_generation.car_update_email()
+
+		email = Email(f"New Car Ready", msg)
 		self.add_email(email)

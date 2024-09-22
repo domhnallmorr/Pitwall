@@ -1,6 +1,8 @@
+from tests import create_model
+import pytest
 
-
-def advance_test(model):
+def test_advance():
+	model = create_model.create_model()
 	week_start = model.season.current_week
 	model.advance()
 

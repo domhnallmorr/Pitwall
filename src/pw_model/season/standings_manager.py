@@ -28,6 +28,12 @@ class StandingsManager:
 		self._points_system = [10, 6, 4, 3, 2, 1]
 		self.setup_dataframes()
 
+	@property
+	def player_team_position(self):
+		index = self.constructors_standings_df[self.constructors_standings_df["Team"] == self.model.player_team].index.values[0]
+
+		return index
+
 	def setup_dataframes(self):
 		teams = {}
 
@@ -75,3 +81,7 @@ class StandingsManager:
 			self.constructors_standings_df.loc[mask, "DNFs"] = team_model.season_stats.dnfs_this_season
 
 		self.constructors_standings_df.sort_values("Points", inplace=True, ascending=False)
+		
+		
+		self.drivers_standings_df.reset_index(drop=True, inplace=True)
+		self.constructors_standings_df.reset_index(drop=True, inplace=True)

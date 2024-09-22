@@ -8,7 +8,7 @@ default,Alexander Wurz,24,Austria,71
 default,David Coulthard,27,UK,77
 default,Mika Hakkinen,30,Finland,87
 default,Damon Hill,38,UK,78
-default,Ralf Schumacher,43,Germany,74
+default,Ralf Schumacher,23,Germany,74
 default,Olivier Panis,32,France,72
 default,Jarno Trulli,24,Italy,76
 default,Jean Alesi,34,France,75
@@ -45,9 +45,14 @@ default,Ricardo Zonta,22,Brazil,66
 2001,Alan McNish,31,UK,68
 2001,Mark Webber,25,Australia,79
 2001,Anthony Davidson,22,UK,72
+2001,Felipe Massa,20,Brazil,76
 2002,Ralph Firman,27,Ireland,55
 2002,Zsolt Baumgartner,21,Hungary,50
 2002,Antonio Pizzonia,22,Brazil,66
 2002,Justin Wilson,24,UK,65
 2002,Nicolas Kiesa,24,Denmark,50
 2002,Cristiano da Matta,29,Brazil,64
+2003,Christian Klien,20,Austria,59
+2003,Giorgio Pantano,24,Italy,57
+2003,Timo Glock,21,Germany,66
+2003,Gianmaria Bruni,22,Italy,62

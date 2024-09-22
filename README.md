@@ -4,16 +4,18 @@ Pitwall is a free and open F1 manager game being developed in python. There is v
 
 The game starts in 1998 and will allow the player to compete through to modern day F1.
 
-The current objective is reach V1.0, that represents a "bare bones" game with all the major required features included in their most basic format.
+The current objective is reach V1.0, that represents a "bare bones" game with all the major required features included in their most basic format. See the [ROADMAP](Roadmap.md) file for details on the planned features.
 
 The UI is built using flet.
 
+See the [CONTRIBUTING](Contributing.md) file if interested in helping out.
 
 ## Features
 
 - Drivers retire
 - Practice/Qualy and Race sessions are simulated
 - New drivers become available each year to hire
+- Car speeds update at the start of each season
 
 
 ## Gameplay Features
@@ -48,3 +50,9 @@ poetry run flet main.py
 ![p1](preview/preview1.png)
 
 ![p2](preview/preview2.png)
+
+![p3](preview/preview3.png)
+
+![p4](preview/preview4.png)
+
+![p5](preview/preview5.png)

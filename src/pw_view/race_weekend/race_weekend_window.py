@@ -24,7 +24,7 @@ class RaceWeekendWindow(ft.View):
 		
 		controls = [self.header_text, friday_container, saturday_container, qualy_container, warmup_container, race_container, self.continue_btn]
 
-		super().__init__(controls=controls)
+		super().__init__(controls=controls, scroll="auto")
 
 	def setup_session_container(self, session_title):
 		
@@ -81,5 +81,5 @@ class RaceWeekendWindow(ft.View):
 
 
 	def return_to_main_window(self, e):
-		self.view.controller.return_to_main_window()
+		self.view.controller.post_race_actions()
 		

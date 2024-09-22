@@ -5,6 +5,8 @@ from pw_view import main_window, home_page, email_page, standings_page, grid_pag
 from pw_view.race_weekend import race_weekend_window, results_window
 from pw_view.calendar_page import calendar_page
 from pw_view.staff_page import staff_page, hire_driver_page
+from pw_view.finance_page import finance_page
+from pw_view.car_page import car_page
 
 class View:
 	def __init__(self, controller):
@@ -34,6 +36,8 @@ class View:
 		self.staff_page = staff_page.StaffPage(self)
 		self.hire_driver_page = hire_driver_page.HireDriverPage(self)
 		self.grid_page = grid_page.GridPage(self)
+		self.finance_page = finance_page.FinancePage(self)
+		self.car_page = car_page.CarPage(self)
 
 		self.results_window = results_window.ResultsWindow(self)
 

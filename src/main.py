@@ -6,17 +6,22 @@ import flet as ft
 from pw_controller import pw_controller
 
 def main(page: ft.Page):
-	# disable flet debug messages
+	# disable debug messages
 	flet_logger = logging.getLogger("flet_core")
 	flet_logger.setLevel(logging.WARNING)
 
 	flet_logger = logging.getLogger("flet_runtime")
 	flet_logger.setLevel(logging.WARNING)
 
+	matplotlib_logger = logging.getLogger("matplotlib")
+	matplotlib_logger.setLevel(logging.WARNING)
+
+	pil_logger = logging.getLogger("PIL.PngImagePlugin")
+	pil_logger.setLevel(logging.WARNING)
 
 	page.theme_mode = ft.ThemeMode.DARK
 	page.window.maximized = True
-	version = "0.0.3"
+	version = "0.0.4"
 	page.title = f"Pitwall {version}"
 	
 	run_directory = os.path.dirname(os.path.join(os.path.abspath(__file__)))

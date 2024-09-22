@@ -14,6 +14,8 @@ class Sidebar(ft.Column):
 			ft.TextButton("Calendar", icon="CALENDAR_MONTH", on_click=lambda _: view.main_window.change_page("calendar")),
 			ft.TextButton("Staff", icon="account_box_rounded", on_click=lambda _: view.main_window.change_page("staff")),
 			ft.TextButton("Grid", icon="border_all", on_click=lambda _: view.main_window.change_page("grid")),
+			ft.TextButton("Finance", icon="attach_money", on_click=lambda _: view.main_window.change_page("finance")),
+			ft.TextButton("Car", icon="DIRECTIONS_CAR", on_click=lambda _: view.main_window.change_page("car")),
 			ft.Divider(),
 			self.advance_btn
 		]

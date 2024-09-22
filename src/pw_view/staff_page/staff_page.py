@@ -87,22 +87,22 @@ class StaffPage(ft.Column):
 
 
 	def update_page(self, data):
-		self.driver_name_texts[0].value = f"Name: {data["driver1"]}"
-		self.driver_name_texts[1].value = f"Name: {data["driver2"]}"
+		self.driver_name_texts[0].value = f"Name: {data['driver1']}"
+		self.driver_name_texts[1].value = f"Name: {data['driver2']}"
 
-		self.driver_age_texts[0].value = f"Age: {data["driver1_age"]} Years"
-		self.driver_age_texts[1].value = f"Age: {data["driver2_age"]} Years"
+		self.driver_age_texts[0].value = f"Age: {data['driver1_age']} Years"
+		self.driver_age_texts[1].value = f"Age: {data['driver2_age']} Years"
 
-		self.driver_country_texts[0].value = f"Country: {data["driver1_country"]}"
-		self.driver_country_texts[1].value = f"Country: {data["driver2_country"]}"
+		self.driver_country_texts[0].value = f"Country: {data['driver1_country']}"
+		self.driver_country_texts[1].value = f"Country: {data['driver2_country']}"
 
 		# Ability
-		self.driver_ability_texts[0].value = f"Ability: {data["driver1_speed"]}"
-		self.driver_ability_texts[1].value = f"Ability: {data["driver2_speed"]}"
+		self.driver_ability_texts[0].value = f"Ability: {data['driver1_speed']}"
+		self.driver_ability_texts[1].value = f"Ability: {data['driver2_speed']}"
 
 		# Contract Length
-		self.driver_contract_length_texts[0].value = f"Contract Length: {data["driver1_contract_length"]} Years"
-		self.driver_contract_length_texts[1].value = f"Contract Length: {data["driver2_contract_length"]} Years"
+		self.driver_contract_length_texts[0].value = f"Contract Length: {data['driver1_contract_length']} Years"
+		self.driver_contract_length_texts[1].value = f"Contract Length: {data['driver2_contract_length']} Years"
 
 		# Contract Status
 

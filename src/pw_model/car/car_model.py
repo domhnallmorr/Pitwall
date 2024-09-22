@@ -7,6 +7,11 @@ class CarModel:
 		self.fuel_load = 155 # kg
 		self.tyre_wear = 0 # time lost (in ms) due to tyre wear
 
+	def update_speed(self, speed):
+		assert speed > 0 and speed <= 100, f"Invalid speed: {speed}"
+		
+		self.speed = speed
+
 	def update_fuel(self, circuit_model):
 		self.fuel_load -= circuit_model.fuel_consumption
 		self.fuel_load = round(self.fuel_load, 2)

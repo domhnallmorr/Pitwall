@@ -63,3 +63,9 @@ class SeasonModel:
 
 		if self.next_race_idx > self.model.calendar.shape[0] - 1:
 			self.next_race_idx = None
+
+	def post_race_actions(self):
+
+		self.update_next_race()
+		# Update finances with race costs
+		self.model.player_team_model.finance_model.apply_race_costs()

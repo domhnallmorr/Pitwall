@@ -14,7 +14,7 @@ def test_end_season_method():
 	for i in range(100):
 		# assign random points
 		test_team.points_this_season = random.randint(0, 100)
-		test_team.end_season()
+		test_team.end_season(increase_year=True)
 
 		assert test_team.season_stats.starts_this_season == 0
 		assert test_team.season_stats.points_this_season == 0

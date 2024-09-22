@@ -238,9 +238,7 @@ class GrandPrixModel(session_model.SessionModel):
 
 		self.race_model.model.season.standings_manager.update_standings(self.standings_df)
 		
-		self.race_model.model.season.update_next_race()
 		self.generate_lap_chart_data()
-		
 
 
 	def generate_lap_chart_data(self):
