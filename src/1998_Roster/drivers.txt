@@ -56,3 +56,51 @@ default,Ricardo Zonta,22,Brazil,66
 2003,Giorgio Pantano,24,Italy,57
 2003,Timo Glock,21,Germany,66
 2003,Gianmaria Bruni,22,Italy,62
+2004,Tiago Monteiro,29,Portugal,57
+2004,Narain Karthikeyan,28,India,55
+2004,Robert Doornbos,24,Netherlands,52
+2004,Patrick Friesacher,25,Austria,50
+2004,Christijan Albers,26,Netherlands,58
+2004,Vitantonio Liuzzi,25,Italy,59
+2005,Nico Rosberg,20,Finland,82
+2005,Robert Kubica,22,Poland,75
+2005,Scott Speed,22,USA,64
+2005,Yuji Ide,20,Japan,51
+2005,Franck Montagny,27,France,53
+2005,Sakon Yamamoto,23,Japan,50
+2006,Lewis Hamilton,21,UK,97
+2006,Sebastian Vettel,19,Germany,96
+2006,Kazuki Nakajima,21,Japan,58
+2006,Adrian Sutil,23,Germany,64
+2006,Markus Winkelhock,26,Germany,65
+2006,Heikki Kovalainen,25,Finland,70
+2007,Nelson Piquet Jr.,22,Brazil,68
+2007,Sebastien Bourdais,28,France,69
+2007,Timo Glock,25,Germany,67
+2008,Romain Grosjean,22,France,67
+2008,Kamui Kobayashi,22,Japan,63
+2008,Jaime Alguersuari,18,Spain,62
+2008,Sebastien Buemi,20,Switzerland,64
+2009,Nico Hulkenberg,22,Germany,71
+2009,Vitaly Petrov,25,Russia,66
+2009,Karun Chandhok,25,India,63
+2009,Bruno Senna,26,Brazil,67
+2009,Lucas di Grassi,25,Brazil,62
+2010,Pastor Maldonado,25,Venezuela,70
+2010,Paul di Resta,24,UK,67
+2010,Sergio Perez,20,Mexico,78
+2010,Daniel Ricciardo,21,Australia,76
+2010,Jerome d Ambrosio,25,Belgium,60
+2011,Jean-Eric Vergne,21,France,69
+2011,Charles Pic,21,France,61
+2012,Valtteri Bottas,23,Finland,78
+2012,Giedo van der Garde,27,Netherlands,59
+2012,Jules Bianchi,23,France,65
+2012,Max Chilton,21,UK,62
+2012,Esteban Gutierrez,21,Mexico,64
+2013,Marcus Ericsson,23,Sweden,63
+2013,Will Stevens,22,UK,58
+2013,Andre Lotterer,32,Germany,62
+2013,Alexander Rossi,22,USA,63
+2013,Kevin Magnussen,21,Denmark,68
+2013,Daniil Kvyat,19,Russia,69
