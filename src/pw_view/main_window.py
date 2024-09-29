@@ -55,6 +55,10 @@ class MainWindow(ft.View):
 			contents.append(self.view.finance_page)
 		elif page_name == "car":
 			contents.append(self.view.car_page)
+		elif page_name == "facility":
+			contents.append(self.view.facility_page)
+		elif page_name == "upgrade_facility":
+			contents.append(self.view.upgrade_facility_page)
 
 		self.content_row = ft.Row(
 			contents,

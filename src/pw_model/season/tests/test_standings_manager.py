@@ -4,8 +4,6 @@ import pytest
 import pandas as pd
 
 from pw_model import pw_model
-from pw_model.team.tests import test_team_functions
-from pw_model.driver.tests import test_driver_functions
 from pw_model.season import standings_manager
 
 from tests import create_model

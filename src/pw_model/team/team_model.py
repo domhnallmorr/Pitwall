@@ -4,19 +4,23 @@ import random
 from pw_model.season import season_stats
 from pw_model.finance import finance_model
 from pw_model.driver import driver_model
+from pw_model.team import facilities_model
 
 class TeamModel:
 	def __init__(self, model, name, driver1, driver2, car_model,
 			  number_of_staff : int, 
-			  starting_balance, starting_sponsorship):
+			  facilities : int, 
+			  starting_balance : int,
+			  starting_sponsorship : int):
+		
 		self.model = model
 		self.name = name
 		self.driver1 = driver1 # name of driver1/2
 		self.driver2 = driver2
 		self.car_model = car_model
 
-
 		self.number_of_staff = number_of_staff
+		self.facilities_model = facilities_model.FacilityModel(self, facilities)
 				
 		self.finance_model = finance_model.FinanceModel(model, self, starting_balance, starting_sponsorship)
 
@@ -45,12 +49,13 @@ class TeamModel:
 		self.setup_season_stats()
 
 		if increase_year is True:
+			self.facilities_model.end_season()
 			self.update_car_speed()
 
 	def setup_season_stats(self):
 		self.season_stats = season_stats.SeasonStats()
 
-	def hire_driver(self, driver_type, free_agents):
+	def hire_driver(self, driver_type: str, free_agents: list):
 		'''
 		free_agents is a list of driver_names
 		'''
@@ -77,7 +82,11 @@ class TeamModel:
 		staff_ceoff = 0.4
 		random_element = random.randint(-30, 20)
 		
-		speed = (self.number_of_staff * staff_ceoff) + random_element
+		staff_speed = (self.number_of_staff * staff_ceoff)
+
+		facilities_speed = self.facilities_model.factory_rating
+
+		speed = (staff_speed + facilities_speed + random_element) / 2
 
 		speed = max(1, min(100, speed)) # make sure speed is between 1 and 100
 
@@ -85,3 +94,4 @@ class TeamModel:
 
 		if self.is_player_team is True:
 			self.model.inbox.new_car_update_email()
+

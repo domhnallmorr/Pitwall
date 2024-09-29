@@ -1,6 +1,6 @@
 import copy
 
-from pw_controller import calander_page_controller, driver_hire_controller
+from pw_controller import calander_page_controller, driver_hire_controller, facilities_controller
 from pw_model import pw_model, update_window_functions
 from pw_view import view
 from pw_controller import race_controller
@@ -13,6 +13,7 @@ class Controller:
 
 		self.calendar_page_controller = calander_page_controller.CalendarPageController(self)
 		self.driver_hire_controller = driver_hire_controller.PWDriverHireController(self)
+		self.facilities_controller = facilities_controller.FacilitiesController(self)
 		
 		self.model = pw_model.Model(roster, run_directory)
 
@@ -21,7 +22,7 @@ class Controller:
 		else:
 			self.view = None # running headless tests
 
-		self.update_standings_page()
+
 		self.update_staff_page()
 
 		# if self.mode in ["normal"]:
@@ -38,6 +39,7 @@ class Controller:
 		if self.mode != "headless":
 			self.update_main_window()
 			self.update_email_page()
+			self.update_standings_page()
 			self.update_finance_page()
 
 		if self.model.season.current_week == 1:
@@ -59,9 +61,11 @@ class Controller:
 			self.update_grid_page()
 			self.update_staff_page()
 			self.update_car_page()
-			# self.update_finance_page()
+			self.update_facilities_page(new_season=True)
 			self.update_main_window()
 			self.race_controller = race_controller.RaceController(self)
+
+			self.update_standings_page()
 
 	def update_home_page(self):
 		data = {
@@ -158,6 +162,23 @@ class Controller:
 		}
 
 		self.view.car_page.update_page(data)
+
+	def update_facilities_page(self, new_season=False):
+		'''
+		new_season is passed here to
+		'''
+
+		facility_values = [[team.name, team.facilities_model.factory_rating] for team in self.model.teams]
+		facility_values.sort(key=lambda x: x[1], reverse=True) # sort, highest speed to lowest speed
+		
+		data = {
+			"facility_values": facility_values,
+		}
+
+		self.view.facility_page.update_page(data)
+
+		if new_season is True:
+			self.view.facility_page.enable_upgrade_button()
 
 	def go_to_race_weekend(self):
 		data = {

@@ -7,6 +7,7 @@ from pw_view.calendar_page import calendar_page
 from pw_view.staff_page import staff_page, hire_driver_page
 from pw_view.finance_page import finance_page
 from pw_view.car_page import car_page
+from pw_view.facility_page import facility_page, upgrade_facility_page
 
 class View:
 	def __init__(self, controller):
@@ -21,7 +22,7 @@ class View:
 
 		self.dark_grey = "#23232A"
 
-		self.vscroll_buffer = 100
+		self.vscroll_buffer = 200
 		
 		self.setup_pages()
 		self.setup_windows()
@@ -38,6 +39,8 @@ class View:
 		self.grid_page = grid_page.GridPage(self)
 		self.finance_page = finance_page.FinancePage(self)
 		self.car_page = car_page.CarPage(self)
+		self.facility_page = facility_page.FacilityPage(self)
+		self.upgrade_facility_page = upgrade_facility_page.UpgradeFacilitiesPage(self)
 
 		self.results_window = results_window.ResultsWindow(self)
 

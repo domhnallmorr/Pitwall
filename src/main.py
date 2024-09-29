@@ -1,5 +1,6 @@
 import logging 
 import os 
+import time
 
 import flet as ft
 
@@ -20,8 +21,10 @@ def main(page: ft.Page):
 	pil_logger.setLevel(logging.WARNING)
 
 	page.theme_mode = ft.ThemeMode.DARK
+
 	page.window.maximized = True
-	version = "0.0.4"
+
+	version = "0.0.5"
 	page.title = f"Pitwall {version}"
 	
 	run_directory = os.path.dirname(os.path.join(os.path.abspath(__file__)))

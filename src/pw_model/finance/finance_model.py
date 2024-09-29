@@ -68,3 +68,6 @@ class FinanceModel:
 		self.prize_money = calculate_prize_money(finishing_position)
 
 		self.model.inbox.new_prize_money_email(self.prize_money)
+
+	def update_facilities_cost(self, cost):
+		self.balance -= cost

@@ -37,11 +37,20 @@ class HireDriverPage(ft.Column):
 
 		self.free_agent_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30)
 		
+		# Make table scrollable
+
+		self.scrollable_free_agents_table = ft.Column(
+			controls=[self.free_agent_table],
+			height=self.view.main_app.window.height - self.view.vscroll_buffer,
+			expand=True,  # Set height to show scrollbar if content exceeds this height
+			scroll=ft.ScrollMode.AUTO  # Automatically show scrollbar when needed
+		)
 
 		contents = [
 			ft.Text("Hire Driver", theme_style=self.view.page_header_style),
-			self.free_agent_table,
+			self.scrollable_free_agents_table,
 		]
+		
 		self.controls = contents
 		self.view.main_app.update()
 

@@ -43,3 +43,20 @@ def car_update_email():
     selected_message = random.choice(messages)
     
     return selected_message
+
+def upgrade_facility(team, facility="factory"):
+	messages = [
+		f"Exciting news! {team.name} has completed an upgrade to their {facility}.",
+		f"{team.name} is investing in excellence with the latest upgrade to their {facility}.",
+		f"Attention all fans! {team.name} has improved their {facility} to enhance performance.",
+		f"Breaking news: {team.name} unveils an upgraded {facility} to stay at the forefront of F1 technology.",  
+		]
+    
+	return random.choice(messages)
+
+def upgrade_player_facility(facility="factory"):
+    messages = [
+          f"Upgrades to the {facility} have been completed. We should see the benfits in next years car."  
+    ]
+      
+    return random.choice(messages)

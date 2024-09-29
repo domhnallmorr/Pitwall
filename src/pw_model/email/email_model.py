@@ -45,10 +45,16 @@ class Inbox:
 		email = Email(f"{team.name} have hired {driver.name}!", msg)
 		self.add_email(email)
 
-	def generate_facility_update_email(self, team, facility):
-		msg = email_generation.upgrade_facility(team, facility)
+	def generate_facility_update_email(self, team):
+		msg = email_generation.upgrade_facility(team)
 
-		email = Email(f"{team.name} have upgraded their {facility}!", msg)
+		email = Email(f"{team.name} have upgraded their factory!", msg)
+		self.add_email(email)
+
+	def generate_player_facility_update_email(self):
+		msg = email_generation.upgrade_player_facility()
+
+		email = Email(f"Factory has been upgraded!", msg)
 		self.add_email(email)
 
 	def new_technical_director_email(self, team, technical_director):

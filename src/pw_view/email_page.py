@@ -26,7 +26,7 @@ class EmailPage(ft.Column):
 		email_list_container = ft.Container(
 			content=email_list,
 			width=400,
-			height=self.view.main_app.window.height,  # Updated to use Page.window.height
+			height=self.view.main_app.window.height - 200,  # Updated to use Page.window.height
 			border=ft.border.all(2, ft.colors.WHITE),
 		)
 

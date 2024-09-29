@@ -13,7 +13,7 @@ class StandingsPage(ft.Column):
 			self.drivers_table
 		]
 
-		super().__init__(controls=contents)
+		super().__init__(controls=contents, expand=1)
 
 	def setup_standings_tables(self):
 
@@ -102,8 +102,6 @@ class StandingsPage(ft.Column):
 			# expand=True,  # Set height to show scrollbar if content exceeds this height
 			scroll=ft.ScrollMode.AUTO  # Automatically show scrollbar when needed
 		)
-
-
 
 		contents = [
 			ft.Text("Standings", theme_style=self.view.page_header_style),

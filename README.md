@@ -16,11 +16,13 @@ See the [CONTRIBUTING](Contributing.md) file if interested in helping out.
 - Practice/Qualy and Race sessions are simulated
 - New drivers become available each year to hire
 - Car speeds update at the start of each season
+- Standard of factory facilities varies between teams
 
 
 ## Gameplay Features
 
 - Player can replace a retiring driver
+- Player can upgrade facilities
 
 
 ## RUNNING THE GAME

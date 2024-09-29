@@ -16,6 +16,7 @@ class Sidebar(ft.Column):
 			ft.TextButton("Grid", icon="border_all", on_click=lambda _: view.main_window.change_page("grid")),
 			ft.TextButton("Finance", icon="attach_money", on_click=lambda _: view.main_window.change_page("finance")),
 			ft.TextButton("Car", icon="DIRECTIONS_CAR", on_click=lambda _: view.main_window.change_page("car")),
+			ft.TextButton("Facilities", icon="FACTORY", on_click=lambda _: view.main_window.change_page("facility")),
 			ft.Divider(),
 			self.advance_btn
 		]
