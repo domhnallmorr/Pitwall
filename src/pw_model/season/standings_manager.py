@@ -85,3 +85,9 @@ class StandingsManager:
 		
 		self.drivers_standings_df.reset_index(drop=True, inplace=True)
 		self.constructors_standings_df.reset_index(drop=True, inplace=True)
+
+	def to_dict(self):
+		return {
+			"drivers_standings_df": self.drivers_standings_df.to_dict(),
+			"constructors_standings_df": self.constructors_standings_df.to_dict(),
+		}

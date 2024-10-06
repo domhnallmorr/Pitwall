@@ -1,6 +1,7 @@
 import glob
 import os
 import re
+import sqlite3
 
 import pandas as pd
 
@@ -11,65 +12,98 @@ from pw_model.track import track_model
 
 def load_roster(model, roster):
 
-	drivers_file, teams_file, season_file, track_files = checks(model, roster)
+	conn = sqlite3.connect(f"{model.run_directory}\\{roster}\\roster.db")
 
-	model.drivers, model.future_drivers = load_drivers(model, drivers_file)
-	model.teams = load_teams(model, teams_file)
+	season_file, track_files = checks(model, roster)
+
+	model.drivers, model.future_drivers = load_drivers(model, conn)
+	model.teams = load_teams(model, conn)
 
 	load_tracks(model, track_files)
 	model.calendar = load_season(model, season_file)
 	
 
-def load_drivers(model, drivers_file):
+def load_drivers(model, conn):
 	drivers = []
 	future_drivers = []
 
-	with open(drivers_file) as f:
-		data = f.readlines()
+	table_name = "drivers"
+	cursor = conn.execute(f'PRAGMA table_info({table_name})')
+	columns = cursor.fetchall()
+	column_names = [column[1] for column in columns]
 
-	for idx, line in enumerate(data[1:]):
-		line = line.split(",")
+	name_idx = column_names.index("Name")
+	age_idx = column_names.index("Age")
+	country_idx = column_names.index("Country")
+	speed_idx = column_names.index("Speed")
 
-		if line[0].lower() == "default":
-			name = line[1].lstrip().rstrip()
-			age = int(line[2])
-			country = line[3]
-			speed = int(line[4])
+	cursor = conn.cursor()
+	cursor.execute(f"SELECT * FROM {table_name}")
+	drivers_table = cursor.fetchall()
 
-			driver = driver_model.DriverModel(model, name, age, country, speed)
+	for row in drivers_table:
+		name = row[name_idx]
+		age = row[age_idx]
+		country = row[country_idx]
+		speed = row[speed_idx]
+
+		driver = driver_model.DriverModel(model, name, age, country, speed)
+		
+		if "RetiringAge" in column_names:
+			retiring_age_idx = column_names.index("RetiringAge")
+			retiring_age = row[retiring_age_idx]
+			driver.retiring_age = retiring_age
+
+			retiring_idx = column_names.index("Retiring")
+			retiring = bool(row[retiring_idx])
+			driver.retiring = retiring
+
+			retired_idx = column_names.index("Retired")
+			retired = bool(row[retired_idx])
+			driver.retired = retired
+
+		if row[0].lower() == "default":
 			drivers.append(driver)
 		else:
-			future_drivers.append(line)
-	
+			future_drivers.append([row[0], driver])
+
 	return drivers, future_drivers
 
-def load_teams(model, teams_file):
+def load_teams(model, conn):
 	teams = []
-	with open(teams_file) as f:
-		data = f.readlines()
 
-	headers = data[0].rstrip().split(",")
+	table_name = "teams"
 
-	number_staff_idx = headers.index("Number of Staff")
-	facilities_idx = headers.index("Facilities")
-	starting_balance_idx = headers.index("Starting Balance")
-	starting_sponsorship_idx = headers.index("Starting Sponsorship")
+	cursor = conn.execute(f'PRAGMA table_info({table_name})')
+	columns = cursor.fetchall()
+	column_names = [column[1] for column in columns]
 
-	for idx, line in enumerate(data[1:]):
-		line = line.split(",")
+	name_idx = column_names.index("Name")
+	driver1_idx = column_names.index("Driver1")
+	driver2_idx = column_names.index("Driver2")
+	car_speed_idx = column_names.index("CarSpeed")
+	number_of_staff_idx = column_names.index("NumberofStaff")
+	facilities_idx = column_names.index("Facilities")
+	balance_idx = column_names.index("StartingBalance")
+	starting_sponsorship_idx = column_names.index("StartingSponsorship")
 
-		if line[0].lower() == "default":
-			name = line[1].lstrip().rstrip()
-			driver1 = line[2].lstrip().rstrip()
-			driver2 = line[3].lstrip().rstrip()
-			car_speed = int(line[4].lstrip().rstrip())
+	cursor = conn.cursor()
+	cursor.execute(f"SELECT * FROM {table_name}")
+	teams_table = cursor.fetchall()
 
-			facilities = int(line[facilities_idx].lstrip().rstrip())
-			number_of_staff = int(line[number_staff_idx].lstrip().rstrip())
+	for row in teams_table:
+		if row[0].lower() == "default":
+			name = row[name_idx]
+			driver1 = row[driver1_idx]
+			driver2 = row[driver2_idx]
+			car_speed = row[car_speed_idx]
 
-			starting_balance = int(line[starting_balance_idx].lstrip().rstrip())
-			starting_sponsorship = int(line[starting_sponsorship_idx].lstrip().rstrip())
-			
+			facilities = row[facilities_idx]
+			number_of_staff = row[number_of_staff_idx]
+
+			starting_balance = row[balance_idx]
+			starting_sponsorship = row[starting_sponsorship_idx]
+
 			car = car_model.CarModel(car_speed)
 			team = team_model.TeamModel(model, name, driver1, driver2, car, number_of_staff, facilities, starting_balance, starting_sponsorship)
 			
@@ -132,73 +166,16 @@ def load_tracks(model, track_files):
 
 def checks(model, roster):
 
-	# check files present
-	drivers_file = os.path.join(model.run_directory, roster, "drivers.txt")
-	assert os.path.isfile(drivers_file), f"Cannot Find {drivers_file}"
-
-	teams_file = os.path.join(model.run_directory, roster, "teams.txt")
-	assert os.path.isfile(drivers_file), f"Cannot Find {teams_file}"
-
 	season_file = os.path.join(model.run_directory, roster, "season.txt")
 	assert os.path.isfile(season_file), f"Cannot Find {season_file}"
-
-	drivers_names = check_drivers_file_format(drivers_file)
-	#TODO finish teams file checks
-	check_teams_file_format(teams_file, drivers_names)
 
 	tracks_folder = os.path.join(model.run_directory, roster, "tracks")
 	assert os.path.isdir(tracks_folder), f"Cannot Find {tracks_folder}"
 
 	track_files = glob.glob(os.path.join(tracks_folder, "*.txt"))
 
-	return drivers_file, teams_file, season_file, track_files
+	return season_file, track_files
 
-def check_drivers_file_format(drivers_file):
-	drivers_names = []
 
-	with open(drivers_file) as f:
-		data = f.readlines()
 	
-	# Check we have at least 1 driver
-	assert len(data) > 1, "Insufficient Data in drivers.txt File"
-	headers = "Year,Name,Age,Country,Speed"
 
-	# check headers are correct
-	assert data[0] == headers + "\n", "Incorrect Headers in drivers.txt File"
-
-	for idx, line in enumerate(data[1:]):
-		line = line.rstrip().split(",")
-		# check number of fields correct (comma delimited)
-		assert len(line) == len(headers.split(",")), f"drivers.txt file, Line {idx + 2}, Expected {len(headers)} Fields, Found {len(line)}"
-
-		# check first field is default or a year
-		if line[0].lower() != "default":
-			pattern = r'^\d{4}$'
-			assert re.match(pattern, line[0]) is not None, f"drivers.txt file, Line {idx + 2}, Year Field Must be 'default' or Year in Format YYYY. Found '{line[0]}'"
-
-		# ensure drivers name field is populated
-		assert line[1].strip() != "", f"drivers.txt file, Line {idx + 2}, Driver Name Field Not Populated"
-		drivers_names.append(line[1].strip())
-
-		# check age is in correct format
-		pattern = r'^\d{2}$'
-		assert re.match(pattern, line[2]) is not None, f"drivers.txt file, Line {idx + 2}, Driver Age Field Must be Numeric in the Format 'XY', Found '{line[2]}'"
-
-		#TODO check country, speed
-		return drivers_names
-	
-def check_teams_file_format(teams_file, drivers_names):
-	with open(teams_file) as f:
-		data = f.readlines()
-	
-	# Check we have at least 1 driver
-	assert len(data) > 1, "Insufficient Data in teams.txt File"
-	headers = "Year,Name,Driver1,Driver2,Car Speed,Number of Staff,Facilities,Starting Balance,Starting Sponsorship"
-
-	# check headers are correct
-	assert data[0] == headers + "\n", "Incorrect Headers in teams.txt File"
-
-	for idx, line in enumerate(data[1:]):
-		line = line.rstrip().split(",")
-
-# def check_season_file_format(season_file):

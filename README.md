@@ -17,6 +17,7 @@ See the [CONTRIBUTING](Contributing.md) file if interested in helping out.
 - New drivers become available each year to hire
 - Car speeds update at the start of each season
 - Standard of factory facilities varies between teams
+- Load/save (note game save automatically to save_game.db in src folder)
 
 
 ## Gameplay Features
@@ -48,6 +49,8 @@ poetry run flet main.py
 ```
  
 ## Preview
+
+![p0](preview/title_screen.png)
 
 ![p1](preview/preview1.png)
 

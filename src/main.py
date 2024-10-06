@@ -21,10 +21,11 @@ def main(page: ft.Page):
 	pil_logger.setLevel(logging.WARNING)
 
 	page.theme_mode = ft.ThemeMode.DARK
+	page.window.padding = 0
 
 	page.window.maximized = True
 
-	version = "0.0.5"
+	version = "0.1.0"
 	page.title = f"Pitwall {version}"
 	
 	run_directory = os.path.dirname(os.path.join(os.path.abspath(__file__)))

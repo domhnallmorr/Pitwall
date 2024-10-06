@@ -21,7 +21,7 @@ Member of staff repsonsible for finding sponsors for the car.
 
 ### Facilites
 
-A number between 0 and 100 that represents the qualty of a teams factory. The number effects the speed of the car produced. It should decrease bya certain amount each year until upgraded by the player
+A number between 0 and 100 that represents the qualty of a teams factory. The number effects the speed of the car produced. It should decrease by a certain amount each year until upgraded by the player
 
 ### Number of Staff
 

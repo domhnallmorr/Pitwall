@@ -17,8 +17,10 @@ class Controller:
 		
 		self.model = pw_model.Model(roster, run_directory)
 
+		team_names = [t.name for t in self.model.teams]
+
 		if self.mode in ["normal"]:
-			self.view = view.View(self)
+			self.view = view.View(self, team_names, run_directory)
 		else:
 			self.view = None # running headless tests
 
@@ -30,9 +32,30 @@ class Controller:
 
 		self.setup_new_season()
 		
-		# self.update_main_window()
+		self.view.show_title_screen()
 		
+	def start_career(self, team : str):
+		self.model.start_career(team)
+		
+		self.setup_new_season()
+		self.view.return_to_main_window()
 
+	def load_career(self):
+		self.model.load_career()
+		#TODO not redefining the race controller here will result in errors in post race actions
+		self.race_controller = race_controller.RaceController(self)
+
+		self.refresh_ui()
+		self.view.return_to_main_window()
+
+	def refresh_ui(self):
+		self.update_main_window()
+		self.update_standings_page()
+		self.update_grid_page()
+		self.update_finance_page()
+		self.update_staff_page()
+		self.update_email_page()
+		
 	def advance(self):
 		self.model.advance()
 
@@ -198,6 +221,7 @@ class Controller:
 
 	def post_race_actions(self):
 		self.model.season.post_race_actions()
+		self.model.save_career()
 
 		self.update_standings_page()
 		self.return_to_main_window()

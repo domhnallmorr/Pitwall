@@ -69,5 +69,15 @@ class FinanceModel:
 
 		self.model.inbox.new_prize_money_email(self.prize_money)
 
-	def update_facilities_cost(self, cost):
+	def update_facilities_cost(self, cost : int):
 		self.balance -= cost
+
+	def to_dict(self):
+		return {
+			"balance": self.balance,
+			"staff_yearly_cost": self.staff_yearly_cost,
+			"prize_money": self.prize_money,
+			"total_sponsorship": self.total_sponsorship,
+			"balance_history": list(self.balance_history),
+			"balance_history_dates": [d.strftime("%Y-%m-%d") for d in self.balance_history_dates],
+		}

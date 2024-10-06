@@ -2,6 +2,7 @@
 import flet as ft
 
 from pw_view import main_window, home_page, email_page, standings_page, grid_page
+from pw_view.title_screen import title_screen, team_selection_screen
 from pw_view.race_weekend import race_weekend_window, results_window
 from pw_view.calendar_page import calendar_page
 from pw_view.staff_page import staff_page, hire_driver_page
@@ -10,8 +11,9 @@ from pw_view.car_page import car_page
 from pw_view.facility_page import facility_page, upgrade_facility_page
 
 class View:
-	def __init__(self, controller):
+	def __init__(self, controller, team_names, run_directory):
 		self.controller = controller
+		self.run_directory = run_directory
 
 		self.main_app = self.controller.app
 
@@ -25,7 +27,7 @@ class View:
 		self.vscroll_buffer = 200
 		
 		self.setup_pages()
-		self.setup_windows()
+		self.setup_windows(team_names)
 
 		self.main_app.views.append(self.main_window)
 
@@ -44,8 +46,10 @@ class View:
 
 		self.results_window = results_window.ResultsWindow(self)
 
-	def setup_windows(self):
+	def setup_windows(self, team_names):
+		self.title_screen = title_screen.TitleScreen(self, self.run_directory)
 		self.main_window = main_window.MainWindow(self)
+		self.team_selection_screen = team_selection_screen.TeamSelectionScreen(self, team_names)
 
 	def go_to_race_weekend(self, data):
 
@@ -69,3 +73,14 @@ class View:
 		self.main_window.nav_sidebar.update_advance_button("advance")
 
 		self.main_app.update()
+
+	def show_title_screen(self):
+		self.main_app.views.append(self.title_screen)
+
+		self.main_app.update()
+
+	def show_team_selection_screen(self):
+		self.controller.update_standings_page()
+		self.main_app.views.append(self.team_selection_screen)
+
+		self.main_app.update()		

@@ -17,7 +17,7 @@ compile list of free agents
 class DriverMarket:
 	def __init__(self, model):
 		self.model = model
-
+		
 	def setup_dataframes(self):
 		columns = ["team", "driver1", "driver2"]
 		this_year_data = [] # grid for upcoming season

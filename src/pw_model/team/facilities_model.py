@@ -48,3 +48,7 @@ class FacilityModel:
 
 		self.factory_rating = min(100, self.factory_rating) # ensure it's less then equal to 100
 
+	def to_dict(self):
+		return {
+			"factory_rating": self.factory_rating,
+		}

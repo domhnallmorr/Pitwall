@@ -24,6 +24,8 @@ class TeamModel:
 				
 		self.finance_model = finance_model.FinanceModel(model, self, starting_balance, starting_sponsorship)
 
+		self.setup_season_stats()
+
 	def __repr__(self):
 		return f"TeamModel <{self.name}>"
 	
@@ -70,7 +72,7 @@ class TeamModel:
 
 		return driver_choosen
 	
-	def update_drivers(self, driver1, driver2):
+	def update_drivers(self, driver1 : str, driver2 : str):
 		self.driver1 = driver1
 		self.driver2 = driver2
 
@@ -95,3 +97,17 @@ class TeamModel:
 		if self.is_player_team is True:
 			self.model.inbox.new_car_update_email()
 
+	def to_dict(self):
+		data =  {
+			"name": self.name,
+			"driver1": self.driver1,
+			"driver2": self.driver2,
+			"number_of_staff": self.number_of_staff,
+			"facilities_model": self.facilities_model.to_dict(),
+		}
+
+		if self.is_player_team is True:
+			data["finance_model"] = self.finance_model.to_dict()
+
+		return data
+	

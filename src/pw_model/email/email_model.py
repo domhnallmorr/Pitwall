@@ -14,7 +14,7 @@ class Inbox:
 	def __init__(self, model):
 		self.model = model
 
-		self.emails = collections.deque(maxlen=20)
+		self.setup_email_list()
 
 		welcome_email = Email("Welcome", "Welcome to Pitwall!", sender="The Board")
 		self.add_email(welcome_email)
@@ -32,6 +32,9 @@ class Inbox:
 
 	def add_email(self, email):
 		self.emails.appendleft(email)
+
+	def setup_email_list(self):
+		self.emails = collections.deque(maxlen=20)
 
 	def generate_driver_retirement_email(self, driver):
 		msg = email_generation.driver_retirement(driver)

@@ -26,6 +26,8 @@ class DriverModel:
 
 		self.retiring_age = decide_when_retiring(self.age)
 
+		self.setup_season_stats()
+
 	@property
 	def team_model(self):
 		current_team = None
