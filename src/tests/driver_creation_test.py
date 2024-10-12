@@ -18,7 +18,7 @@ def test_new_driver_creation():
 	# 
 
 	# end season which calls the function to create the new drivers
-	model.driver_market.ensure_player_has_drivers_for_next_season() # avoid assertion error None in grid_next_year_df.values
+	model.staff_market.ensure_player_has_drivers_for_next_season() # avoid assertion error None in grid_next_year_df.values
 	model.end_season()
 
 	# Button gets added at the start of 1999, so check that he is now in the game

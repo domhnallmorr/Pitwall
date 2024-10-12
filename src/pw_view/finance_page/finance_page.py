@@ -43,6 +43,7 @@ class FinancePage(ft.Column):
 		self.prize_money_income_text = ft.Text(f"Prize Money: $1")
 
 		self.staff_costs_text = ft.Text(f"Staff: $1")
+		self.commercial_manager_salary_text = ft.Text(f"Commercial Manager: $1")
 		self.race_costs_text = ft.Text(f"Races: $1 (per race)")
 
 		column = ft.Column(
@@ -54,6 +55,7 @@ class FinancePage(ft.Column):
 
 					ft.Text("Expenditure", weight=ft.FontWeight.BOLD, size=25,),
 					self.staff_costs_text,
+					self.commercial_manager_salary_text,
 					self.race_costs_text,
 			],
 			expand=True
@@ -86,6 +88,7 @@ class FinancePage(ft.Column):
 		self.sponsor_income_text.value = f"Sponsorship: ${data['total_sponsorship']:,}"
 		self.prize_money_income_text.value = f"Prize Money: ${data['prize_money']:,}"
 		self.staff_costs_text.value = f"Staff Costs: ${data['total_staff_costs_per_year']:,}"
+		self.commercial_manager_salary_text.value = f"Commercial Manager: ${data['commercial_manager_salary']:,}"
 		self.race_costs_text.value = f"Race Costs: ${data['race_costs']:,} (per race)"
 
 		self.update_history_chart(data)

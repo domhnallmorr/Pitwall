@@ -21,6 +21,8 @@ def test_balance_update():
 		team_model.driver1_model.contract.salary = random.randint(1, 10_000_000)
 		team_model.driver2_model.contract.salary = random.randint(1, 10_000_000)
 
+		team_model.commercial_manager_model.contract.salary = random.randint(1, 10_000_000)
+
 		team_model.finance_model.staff_yearly_cost = 28_000
 
 		assert team_model.finance_model.total_staff_costs_per_year == 3_108_000 #number staff * yearly wage
@@ -28,7 +30,7 @@ def test_balance_update():
 		team_model.finance_model.weekly_update()
 
 		expected_income = team_model.finance_model.prize_money + team_model.finance_model.total_sponsorship
-		expected_costs = team_model.driver1_model.contract.salary + team_model.driver2_model.contract.salary + team_model.finance_model.total_staff_costs_per_year
+		expected_costs = team_model.driver1_model.contract.salary + team_model.driver2_model.contract.salary + team_model.finance_model.total_staff_costs_per_year + team_model.commercial_manager_model.contract.salary
 
 		expected_balance = expected_income - expected_costs
 		weekly_change = int(expected_balance / 52)

@@ -7,6 +7,7 @@ class StaffPage(ft.Column):
 		self.setup_buttons_row()
 		self.setup_widgets()
 		self.setup_driver_containers()
+		self.setup_manager_containers()
 
 		contents = [
 			ft.Text("Staff", theme_style=self.view.page_header_style),
@@ -17,10 +18,20 @@ class StaffPage(ft.Column):
 		super().__init__(expand=1, controls=contents)
 
 	def setup_buttons_row(self):
+		self.manager_button = ft.TextButton("Management", on_click=self.display_managers,
+									  style=ft.ButtonStyle(
+                								color={
+													ft.ControlState.FOCUSED: ft.colors.WHITE,
+													}
+													)
+										)
+
+
 		self.buttons_row = ft.Row(
 			# expand=1,
 			controls=[
-				ft.TextButton("Drivers",)# on_click=self.display_drivers),
+				ft.TextButton("Drivers", on_click=self.display_drivers),
+				self.manager_button
 			]
 		)
 
@@ -38,6 +49,12 @@ class StaffPage(ft.Column):
 			ft.TextButton("Replace", disabled=True, icon="find_replace", on_click=self.replace_driver, data="driver1"),
 			ft.TextButton("Replace", disabled=True, icon="find_replace", on_click=self.replace_driver, data="driver2")
 			]
+
+		self.commercial_manager_text = ft.Text(f"Commercial Manager Name")
+		self.commercial_manager_age_text = ft.Text(f"Commercial Manager Age")
+		self.commercial_manager_contract_length_text = ft.Text(f"Commercial Manager Contact Length")
+		self.commercial_manager_contract_status_text = ft.Text(f"Status: Contracted")
+		self.commercial_manager_skill_text = ft.Text(f"Ability: 100")
 
 	def setup_driver_containers(self):
 		self.driver_containers = []
@@ -73,6 +90,7 @@ class StaffPage(ft.Column):
 				padding=10,
 				width=200,
 				expand=True,
+				border_radius=15,
 			)
 
 			self.driver_containers.append(container)
@@ -85,6 +103,55 @@ class StaffPage(ft.Column):
 			]
 		)
 
+	def setup_manager_containers(self):
+		self.manager_containers = []
+
+		for manager in ["Commercial Manager"]:
+			controls = [
+				ft.Text(manager, weight=ft.FontWeight.BOLD, size=35,),
+				ft.Text("Personal Details", weight=ft.FontWeight.BOLD, size=25,),
+				]
+
+			if manager == "Commercial Manager":
+				controls.append(self.commercial_manager_text)
+				controls.append(self.commercial_manager_age_text)
+			
+			# CONTRACT ----------------------
+			controls.append(ft.Text("Contract", weight=ft.FontWeight.BOLD, size=25,))
+			if manager == "Commercial Manager":
+				controls.append(self.commercial_manager_contract_length_text)
+				controls.append(self.commercial_manager_contract_status_text)
+
+			# STATS ----------------------
+			controls.append(ft.Text("Stats", weight=ft.FontWeight.BOLD, size=25,))
+			if manager == "Commercial Manager":
+				controls.append(self.commercial_manager_skill_text)
+
+			column = ft.Column(
+				# expand=1,
+				controls=controls,
+				expand=True
+			)
+
+			#TODO make this contain a custom class with inheritence
+			container = ft.Container(
+				# expand=1,
+				content=column,
+				bgcolor=self.view.dark_grey,
+				margin=20,
+				padding=10,
+				width=200,
+				expand=True,
+				border_radius=15,
+			)
+
+			self.manager_containers.append(container)
+
+		self.manager_row = ft.Row(
+			controls = [
+				self.manager_containers[0],
+			]
+		)
 
 	def update_page(self, data):
 		self.driver_name_texts[0].value = f"Name: {data['driver1']}"
@@ -123,8 +190,11 @@ class StaffPage(ft.Column):
 			else:
 				self.driver_replace_buttons[idx].disabled = True # can't replace a driver if a driver is in place for next year, disable button
 
-		
-		# self.driver_contract_status_texts[1].value = f"Contract Status: {data["driver2_contract_length"]} Years"
+		# Update commercial manager
+		self.commercial_manager_text.value = f"Name: {data['commercial_manager']}"
+		self.commercial_manager_age_text.value = f"Age: {data['commercial_manager_age']}"
+		self.commercial_manager_contract_length_text.value = f"Contract Length: {data['commercial_manager_contract_length']} Years"
+		self.commercial_manager_skill_text.value = f"Ability: {data['commercial_manager_skill']}"
 
 		self.view.main_app.update()
 
@@ -132,3 +202,20 @@ class StaffPage(ft.Column):
 
 		self.view.controller.driver_hire_controller.launch_replace_driver(e.control.data)
 
+	def display_drivers(self, e):
+		self.controls = [
+			ft.Text("Staff", theme_style=self.view.page_header_style),
+			self.buttons_row,
+			self.driver_row,
+		]
+
+		self.view.main_app.update()
+
+	def display_managers(self, e):
+		self.controls = [
+			ft.Text("Staff", theme_style=self.view.page_header_style),
+			self.buttons_row,
+			self.manager_row,
+		]
+
+		self.view.main_app.update()

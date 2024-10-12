@@ -1,5 +1,5 @@
 
-from pw_model.driver_market import driver_market
+from pw_model.staff_market import staff_market
 
 class FacilitiesController:
 	def __init__(self, controller):

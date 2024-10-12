@@ -16,6 +16,7 @@ def save_game(model, mode="file"):
 	
 	save_general(model, save_file)
 	save_drivers(model, save_file)
+	save_commercial_managers(model, save_file)
 	save_teams(model, save_file)
 	save_grid_this_year(model, save_file)
 	save_grid_next_year(model, save_file)
@@ -95,6 +96,32 @@ def save_drivers(model, save_file):
 				driver.retired
 			))
 
+def save_commercial_managers(model, save_file):
+	cursor = save_file.cursor()
+
+	cursor.execute('''
+	CREATE TABLE IF NOT EXISTS "commercial_managers" (
+	"Year"	TEXT,
+	"Name"	TEXT,
+	"Age"	INTEGER,
+	"Skill"	INTEGER,
+	"Salary"	INTEGER
+			)'''
+				)
+	
+	cursor.execute("DELETE FROM commercial_managers") # clear existing data
+
+	for commercial_manager in model.commercial_managers:
+		cursor.execute('''
+			INSERT INTO commercial_managers (year, name, age, skill, salary) 
+			VALUES (?, ?, ?, ?, ?)
+		''', (
+			"default",
+			commercial_manager.name, 
+			commercial_manager.age,
+			commercial_manager.skill,
+			commercial_manager.contract.salary,
+		))
 
 def save_teams(model, save_file):
 
@@ -110,7 +137,8 @@ def save_teams(model, save_file):
 	"NumberofStaff"	INTEGER,
 	"Facilities"	INTEGER,
 	"StartingBalance"	INTEGER,
-	"StartingSponsorship"	INTEGER
+	"StartingSponsorship"	INTEGER,
+	"CommercialManager"	TEXT
 	)'''
 				)
 	
@@ -119,8 +147,10 @@ def save_teams(model, save_file):
 	for team in model.teams:
 
 		cursor.execute('''
-			INSERT INTO teams (year, name, Driver1, Driver2, CarSpeed, NumberofStaff, Facilities, StartingBalance, StartingSponsorship) 
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+			INSERT INTO teams (year, name, Driver1, Driver2, CarSpeed, NumberofStaff, Facilities, StartingBalance, StartingSponsorship,
+				 CommercialManager) 
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,
+				 ?)
 		''', (
 			"default",
 			team.name, 
@@ -131,14 +161,15 @@ def save_teams(model, save_file):
 			team.facilities_model.factory_rating, 
 			team.finance_model.balance, 
 			team.finance_model.total_sponsorship, 
+			team.commercial_manager,
 		))
 
 def save_grid_this_year(model, save_file):
-	model.driver_market.grid_this_year_df.to_sql("grid_this_year_df", save_file, if_exists="replace", index=False)
+	model.staff_market.grid_this_year_df.to_sql("grid_this_year_df", save_file, if_exists="replace", index=False)
 
 def save_grid_next_year(model, save_file):
-	model.driver_market.grid_next_year_df.to_sql("grid_next_year_df", save_file, if_exists="replace", index=False)
-	model.driver_market.grid_next_year_announced_df.to_sql("grid_next_year_announced", save_file, if_exists="replace", index=False)
+	model.staff_market.grid_next_year_df.to_sql("grid_next_year_df", save_file, if_exists="replace", index=False)
+	model.staff_market.grid_next_year_announced_df.to_sql("grid_next_year_announced", save_file, if_exists="replace", index=False)
 
 def save_standings(model, save_file):
 	model.season.standings_manager.drivers_standings_df.to_sql("drivers_standings_df", save_file, if_exists="replace", index=False)
@@ -157,6 +188,7 @@ def load(model, save_file=None, mode="file"):
 		conn = save_file # db provided in memory
 
 	load_drivers(conn, model)
+	load_senior_staff(conn, model)
 	load_teams(conn, model)
 	load_general(conn, model)
 	load_standings(conn, model)
@@ -188,6 +220,10 @@ def load_drivers(conn, model):
 	model.drivers = drivers
 	model.future_drivers = future_drivers
 
+def load_senior_staff(conn, model):
+	commercial_managers = load_roster.load_senior_staff(model, conn)
+	model.commercial_managers = commercial_managers
+
 def load_teams(conn, model):
 	teams = load_roster.load_teams(model, conn)
 	model.teams = teams
@@ -197,8 +233,8 @@ def load_standings(conn, model):
 	model.season.standings_manager.constructors_standings_df = pd.read_sql('SELECT * FROM constructors_standings_df', conn)
 
 def load_grid_this_year(conn, model):
-	model.driver_market.grid_this_year_df = pd.read_sql('SELECT * FROM grid_this_year_df', conn)
+	model.staff_market.grid_this_year_df = pd.read_sql('SELECT * FROM grid_this_year_df', conn)
 
 def load_grid_next_year(conn, model):
-	model.driver_market.grid_next_year_df = pd.read_sql('SELECT * FROM grid_next_year_df', conn)
-	model.driver_market.grid_next_year_announced_df = pd.read_sql('SELECT * FROM grid_next_year_announced', conn)
+	model.staff_market.grid_next_year_df = pd.read_sql('SELECT * FROM grid_next_year_df', conn)
+	model.staff_market.grid_next_year_announced_df = pd.read_sql('SELECT * FROM grid_next_year_announced', conn)

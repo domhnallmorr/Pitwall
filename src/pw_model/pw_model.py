@@ -3,7 +3,7 @@ import logging
 from pw_model import load_roster
 from pw_model.season import season_model
 from pw_model.email import email_model
-from pw_model.driver_market import driver_market
+from pw_model.staff_market import staff_market
 
 from pw_model import load_save
 
@@ -28,12 +28,12 @@ class Model:
 		self.year = 1998
 		self.season = season_model.SeasonModel(self)
 
-		self.driver_market = driver_market.DriverMarket(self)
+		self.staff_market = staff_market.StaffMarket(self)
 		self.end_season(increase_year=False, start_career=True)
 
 		if mode == "headless":
 			# this is called in start_career method, when player is playing
-			self.driver_market.determine_driver_transfers()
+			self.staff_market.determine_driver_transfers()
 		
 	@property
 	def player_team_model(self):
@@ -68,6 +68,16 @@ class Model:
 			
 		return team_model
 	
+	def get_commercial_manager_model(self, name):
+		commercial_manager_model = None
+
+		for c in self.commercial_managers:
+			if c.name == name:
+				commercial_manager_model = c
+				break
+			
+		return commercial_manager_model
+	
 	def get_track_model(self, track_name):
 		track_model = None
 
@@ -81,7 +91,7 @@ class Model:
 	
 	def advance(self):
 		if self.season.current_week == 51:
-			self.driver_market.ensure_player_has_drivers_for_next_season()
+			self.staff_market.ensure_player_has_drivers_for_next_season()
 			
 		self.season.advance_one_week()
 		self.get_team_model(self.player_team).advance()
@@ -105,6 +115,9 @@ class Model:
 		for driver in self.drivers:
 			driver.end_season(increase_age=increase_year)
 
+		for commercial_manager in self.commercial_managers:
+			commercial_manager.end_season(increase_age=increase_year)
+
 		
 		# # TODO move the below into a start new season method
 		# for team in self.teams:
@@ -112,14 +125,14 @@ class Model:
 
 		if increase_year is True:
 			self.year += 1
-			self.driver_market.update_team_drivers()
+			self.staff_market.update_team_drivers()
 			logging.critical(f"Start Season {self.year}")
 			self.add_new_drivers()
 
-		self.driver_market.setup_dataframes()
+		self.staff_market.setup_dataframes()
 
 		if start_career is False:
-			self.driver_market.determine_driver_transfers() # driver transfers at start of career are handled in the start_career method (once player_team is defined)
+			self.staff_market.determine_driver_transfers() # driver transfers at start of career are handled in the start_career method (once player_team is defined)
 
 		self.season.setup_new_season_variables()
 		
@@ -138,4 +151,4 @@ class Model:
 		if player_team is not None:
 			self.player_team_model.finance_model.update_prize_money(self.season.standings_manager.player_team_position)
 
-		self.driver_market.determine_driver_transfers()
+		self.staff_market.determine_driver_transfers()

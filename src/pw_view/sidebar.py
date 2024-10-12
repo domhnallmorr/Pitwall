@@ -26,7 +26,13 @@ class Sidebar(ft.Column):
 		super().__init__(controls=contents, width=width)
 
 	def advance(self, e):
+		self.advance_btn.disabled = True # disable to avoid potential double click
+
+		self.view.main_app.update()
 		self.view.controller.advance()
+
+		self.advance_btn.disabled = False
+		self.view.main_app.update()
 
 	def go_to_race_weekend(self, e):
 		self.view.controller.go_to_race_weekend()

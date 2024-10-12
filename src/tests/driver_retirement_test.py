@@ -1,5 +1,5 @@
 from tests import create_model
-from pw_model.driver_market import driver_market
+from pw_model.staff_market import staff_market
 
 import pytest
 
@@ -20,16 +20,16 @@ def test_driver_retirement_team_end_season():
 	irvine_model = model.get_driver_model("Eddie Irvine")
 	irvine_model.retiring = True
 
-	model.driver_market.team_hire_driver("Ferrari", "driver1", ["Jos Verstappen"])
-	model.driver_market.team_hire_driver("Ferrari", "driver2", ["Marc Gene"])
+	model.staff_market.team_hire_driver("Ferrari", "driver1", ["Jos Verstappen"])
+	model.staff_market.team_hire_driver("Ferrari", "driver2", ["Marc Gene"])
 
 	# Make sure hired drivers no longer available for hire
-	assert "Jos Verstappen" not in model.driver_market.get_free_agents()
-	assert "Marc Gene" not in model.driver_market.get_free_agents()
+	assert "Jos Verstappen" not in model.staff_market.get_free_agents()
+	assert "Marc Gene" not in model.staff_market.get_free_agents()
 
 	# complete all other driver transfers and end the season in the model
-	model.driver_market.ensure_player_has_drivers_for_next_season()
-	model.driver_market.determine_driver_transfers()
+	model.staff_market.ensure_player_has_drivers_for_next_season()
+	model.staff_market.determine_driver_transfers()
 	model.end_season()
 
 	# ensure ferrari's drivers have refreshed
@@ -64,6 +64,6 @@ def test_driver_retirements_over_several_seasons():
 				model.get_driver_model("Tora Takagi").retiring = True
 
 
-			model.driver_market.ensure_player_has_drivers_for_next_season()
-			model.driver_market.determine_driver_transfers()
+			model.staff_market.ensure_player_has_drivers_for_next_season()
+			model.staff_market.determine_driver_transfers()
 			model.end_season()

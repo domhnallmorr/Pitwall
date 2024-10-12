@@ -55,6 +55,9 @@ class FinanceModel:
 		self.balance -= int(self.team_model.driver1_model.contract.salary / 52)
 		self.balance -= int(self.team_model.driver2_model.contract.salary / 52)
 
+		# manager costs
+		self.balance -= int(self.team_model.commercial_manager_model.contract.salary / 52)
+		
 		self.update_balance_history()
 		
 	def apply_race_costs(self, race_cost=500_000):
@@ -71,6 +74,13 @@ class FinanceModel:
 
 	def update_facilities_cost(self, cost : int):
 		self.balance -= cost
+
+	def end_season(self):
+		# determine sponsorship
+		sponsorship = self.team_model.commercial_manager_model.determine_yearly_sponsorship()
+
+		self.model.inbox.new_sponsor_income_email(sponsorship)
+		self.total_sponsorship = sponsorship
 
 	def to_dict(self):
 		return {

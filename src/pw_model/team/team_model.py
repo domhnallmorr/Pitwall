@@ -4,6 +4,7 @@ import random
 from pw_model.season import season_stats
 from pw_model.finance import finance_model
 from pw_model.driver import driver_model
+from pw_model.senior_staff import commercial_manager
 from pw_model.team import facilities_model
 
 class TeamModel:
@@ -11,7 +12,8 @@ class TeamModel:
 			  number_of_staff : int, 
 			  facilities : int, 
 			  starting_balance : int,
-			  starting_sponsorship : int):
+			  starting_sponsorship : int,
+			  commercial_manager : str):
 		
 		self.model = model
 		self.name = name
@@ -23,6 +25,8 @@ class TeamModel:
 		self.facilities_model = facilities_model.FacilityModel(self, facilities)
 				
 		self.finance_model = finance_model.FinanceModel(model, self, starting_balance, starting_sponsorship)
+
+		self.commercial_manager = commercial_manager
 
 		self.setup_season_stats()
 
@@ -44,6 +48,10 @@ class TeamModel:
 	def driver2_model(self):
 		return self.model.get_driver_model(self.driver2)
 	
+	@property
+	def commercial_manager_model(self) -> commercial_manager.CommercialManager:
+		return self.model.get_commercial_manager_model(self.commercial_manager)
+
 	def advance(self):
 		self.finance_model.weekly_update()
 		
@@ -52,6 +60,9 @@ class TeamModel:
 
 		if increase_year is True:
 			self.facilities_model.end_season()
+
+			if self.is_player_team:
+				self.finance_model.end_season()
 			self.update_car_speed()
 
 	def setup_season_stats(self):
@@ -66,9 +77,6 @@ class TeamModel:
 		driver_choosen = random.choice(free_agents)
 
 		logging.debug(f"{self.name} hired {driver_choosen}")
-
-		# Generate Email
-		# self.model.inbox.generate_driver_hiring_email(self, driver_choosen)
 
 		return driver_choosen
 	

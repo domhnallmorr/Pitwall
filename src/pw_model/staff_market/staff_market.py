@@ -14,12 +14,12 @@ compile list of free agents
 
 
 
-class DriverMarket:
+class StaffMarket:
 	def __init__(self, model):
 		self.model = model
 		
 	def setup_dataframes(self):
-		columns = ["team", "driver1", "driver2"]
+		columns = ["team", "driver1", "driver2", "commercial_manager"]
 		this_year_data = [] # grid for upcoming season
 		next_year_data = [] # grid for next year
 
@@ -27,7 +27,7 @@ class DriverMarket:
 			this_year_data.append([team.name])
 			next_year_data.append([team.name])
 
-			for driver_model in [team.driver1_model, team.driver2_model]:
+			for driver_model in [team.driver1_model, team.driver2_model, team.commercial_manager_model]:
 				this_year_data[-1].append(driver_model.name)
 
 				if driver_model.retiring is True:

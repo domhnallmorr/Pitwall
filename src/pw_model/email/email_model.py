@@ -66,8 +66,8 @@ class Inbox:
 		email = Email(f"New TD: {team.name} have hired {technical_director.name}!", msg)
 		self.add_email(email)
 
-	def new_sponsor_income_email(self, team):
-		msg = email_generation.sponsor_income_update_email(team)
+	def new_sponsor_income_email(self, sponsorship):
+		msg = email_generation.sponsor_income_update_email(sponsorship)
 
 		email = Email(f"Sponsor Income Update", msg)
 		self.add_email(email)

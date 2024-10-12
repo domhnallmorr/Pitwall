@@ -60,3 +60,10 @@ def upgrade_player_facility(facility="factory"):
     ]
       
     return random.choice(messages)
+
+def sponsor_income_update_email(sponsorship):
+    messages = [
+            f"Sponsorship for the upcoming seaosn has been confirmed as ${sponsorship :,}."  
+    ]
+      
+    return random.choice(messages)

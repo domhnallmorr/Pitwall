@@ -9,6 +9,7 @@ from pw_model.car import car_model
 from pw_model.driver import driver_model
 from pw_model.team import team_model
 from pw_model.track import track_model
+from pw_model.senior_staff import commercial_manager
 
 def load_roster(model, roster):
 
@@ -17,6 +18,7 @@ def load_roster(model, roster):
 	season_file, track_files = checks(model, roster)
 
 	model.drivers, model.future_drivers = load_drivers(model, conn)
+	model.commercial_managers = load_senior_staff(model, conn)
 	model.teams = load_teams(model, conn)
 
 	load_tracks(model, track_files)
@@ -84,8 +86,11 @@ def load_teams(model, conn):
 	car_speed_idx = column_names.index("CarSpeed")
 	number_of_staff_idx = column_names.index("NumberofStaff")
 	facilities_idx = column_names.index("Facilities")
+
 	balance_idx = column_names.index("StartingBalance")
 	starting_sponsorship_idx = column_names.index("StartingSponsorship")
+
+	commercial_manager_idx = column_names.index("CommercialManager")
 
 	cursor = conn.cursor()
 	cursor.execute(f"SELECT * FROM {table_name}")
@@ -104,8 +109,11 @@ def load_teams(model, conn):
 			starting_balance = row[balance_idx]
 			starting_sponsorship = row[starting_sponsorship_idx]
 
+			commercial_manager = row[commercial_manager_idx]
+
 			car = car_model.CarModel(car_speed)
-			team = team_model.TeamModel(model, name, driver1, driver2, car, number_of_staff, facilities, starting_balance, starting_sponsorship)
+			team = team_model.TeamModel(model, name, driver1, driver2, car, number_of_staff, facilities, starting_balance, starting_sponsorship,
+							   commercial_manager)
 			
 			# ensure drivers are correctly loaded
 			assert team.driver1_model is not None
@@ -114,6 +122,36 @@ def load_teams(model, conn):
 			teams.append(team)
 
 	return teams
+
+def load_senior_staff(model, conn):
+	commercial_managers = []
+
+	table_name = "commercial_managers"
+	cursor = conn.execute(f'PRAGMA table_info({table_name})')
+	columns = cursor.fetchall()
+	column_names = [column[1] for column in columns]
+
+	name_idx = column_names.index("Name")
+	age_idx = column_names.index("Age")
+	skill_idx = column_names.index("Skill")
+	salary_idx = column_names.index("Salary")
+
+	cursor = conn.cursor()
+	cursor.execute(f"SELECT * FROM {table_name}")
+	commercial_managers_table = cursor.fetchall()
+
+	for row in commercial_managers_table:
+		name = row[name_idx]
+		age = row[age_idx]
+		skill = row[skill_idx]
+		salary = row[salary_idx]
+
+		c = commercial_manager.CommercialManager(model, name, age, skill, salary)
+
+		commercial_managers.append(c)
+	
+	return commercial_managers
+
 
 def create_driver(line_data, model):
 	name = line_data[1].lstrip().rstrip()
