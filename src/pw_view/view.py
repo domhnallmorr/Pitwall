@@ -1,10 +1,11 @@
 
 import flet as ft
 
-from pw_view import main_window, home_page, email_page, standings_page, grid_page
+from pw_view import main_window, email_page, standings_page, grid_page
 from pw_view.title_screen import title_screen, team_selection_screen
 from pw_view.race_weekend import race_weekend_window, results_window
 from pw_view.calendar_page import calendar_page
+from pw_view.home_page import home_page
 from pw_view.staff_page import staff_page, hire_driver_page
 from pw_view.finance_page import finance_page
 from pw_view.car_page import car_page
@@ -21,6 +22,10 @@ class View:
 		self.header2_style = ft.TextThemeStyle.DISPLAY_SMALL
 		
 		self.header3_style = ft.TextThemeStyle.LABEL_MEDIUM
+
+		self.container_header2_size = 25
+
+		self.container_border_radius = 15
 
 		self.dark_grey = "#23232A"
 

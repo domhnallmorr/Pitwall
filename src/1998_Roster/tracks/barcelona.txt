@@ -1,0 +1,6 @@
+Name: Circuit de Barcelona-Catalunya
+Country: Spain
+Location: Barcelona
+Title: Spanish Grand Prix
+Laps: 66
+Base Laptime: 84_000

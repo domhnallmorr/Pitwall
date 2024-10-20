@@ -49,7 +49,7 @@ class FacilityPage(ft.Column):
 					ft.Text(f"{team_name}:", width=100),
 					ft.ProgressBar(value=facility/100, width=500, expand=True, bar_height=28)
 				],
-				expand=True,
+				expand=False,
 			)
 			facility_rows.append(row)
 

@@ -56,6 +56,7 @@ class FinanceModel:
 		self.balance -= int(self.team_model.driver2_model.contract.salary / 52)
 
 		# manager costs
+		self.balance -= int(self.team_model.technical_director_model.contract.salary / 52)
 		self.balance -= int(self.team_model.commercial_manager_model.contract.salary / 52)
 		
 		self.update_balance_history()

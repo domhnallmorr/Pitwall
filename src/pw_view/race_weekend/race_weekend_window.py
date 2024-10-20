@@ -20,9 +20,11 @@ class RaceWeekendWindow(ft.View):
 		race_container = self.setup_session_container("Race")
 
 		self.continue_btn = ft.TextButton("Continue", disabled=True, on_click=self.return_to_main_window)
-		self.simulate_buttons["Friday Practice"].disabled = False
+		self.simulate_buttons["Qualifying"].disabled = False
 		
-		controls = [self.header_text, friday_container, saturday_container, qualy_container, warmup_container, race_container, self.continue_btn]
+		# comment out to remove practice sessions for now, will add back later when they are of value
+		# controls = [self.header_text, friday_container, saturday_container, qualy_container, warmup_container, race_container, self.continue_btn]
+		controls = [self.header_text, qualy_container, race_container, self.continue_btn]
 
 		super().__init__(controls=controls, scroll="auto")
 
@@ -68,7 +70,7 @@ class RaceWeekendWindow(ft.View):
 				self.view.controller.race_controller.simulate_session("FP Saturday")			
 
 			elif "qualifying" in session_title.lower():
-				self.simulate_buttons["Warmup"].disabled = False
+				self.simulate_buttons["Race"].disabled = False
 				self.view.controller.race_controller.simulate_session("Qualy")	
 
 			elif "warmup" in session_title.lower():

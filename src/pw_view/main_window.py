@@ -13,7 +13,8 @@ class MainWindow(ft.View):
 			self.nav_sidebar, self.view.home_page
 		],
 		alignment=ft.MainAxisAlignment.START,
-		vertical_alignment=ft.CrossAxisAlignment.START
+		vertical_alignment=ft.CrossAxisAlignment.START,
+		expand=1,
 		)
 		# contents = [nav_sidebar, self.view.home_page]
 
@@ -63,7 +64,8 @@ class MainWindow(ft.View):
 		self.content_row = ft.Row(
 			contents,
 			alignment=ft.MainAxisAlignment.START,
-			vertical_alignment=ft.CrossAxisAlignment.START			
+			vertical_alignment=ft.CrossAxisAlignment.START,
+			expand=1,		
 		)			
 
 		self.controls = [self.header, self.content_row]

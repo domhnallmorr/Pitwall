@@ -94,7 +94,14 @@ class Controller:
 	def update_home_page(self):
 		data = {
 			"next_race": self.model.season.next_race,
-			"constructors_standings_df": self.model.season.standings_manager.constructors_standings_df.copy(deep=True)
+			"constructors_standings_df": self.model.season.standings_manager.constructors_standings_df.copy(deep=True),
+			"team_average_stats": self.model.gen_team_average_stats(),
+			"player_car": self.model.player_team_model.car_model.speed,
+			"player_drivers": self.model.player_team_model.average_driver_skill,
+			"player_managers": self.model.player_team_model.average_manager_skill,
+			"player_staff": self.model.player_team_model.number_of_staff,
+			"player_facilities": self.model.player_team_model.facilities_model.factory_rating,
+			"player_sponsorship": self.model.player_team_model.finance_model.total_sponsorship,
 		}
 		self.view.home_page.update_page(data)
 
@@ -133,6 +140,12 @@ class Controller:
 			"commercial_manager_age": team_model.commercial_manager_model.age,
 			"commercial_manager_contract_length": team_model.commercial_manager_model.contract.contract_length,
 			"commercial_manager_skill": team_model.commercial_manager_model.skill,
+
+			"technical_director": team_model.technical_director,
+			"technical_director_age": team_model.technical_director_model.age,
+			"technical_director_contract_length": team_model.technical_director_model.contract.contract_length,
+			"technical_director_skill": team_model.technical_director_model.skill,
+
 		}
 
 		self.view.staff_page.update_page(copy.deepcopy(data))
@@ -176,6 +189,7 @@ class Controller:
 			"total_sponsorship": copy.deepcopy(self.model.player_team_model.finance_model.total_sponsorship),
 			"prize_money": copy.deepcopy(self.model.player_team_model.finance_model.prize_money),
 			"total_staff_costs_per_year": copy.deepcopy(self.model.player_team_model.finance_model.total_staff_costs_per_year),
+			"technical_director_salary": copy.deepcopy(self.model.player_team_model.technical_director_model.contract.salary),
 			"commercial_manager_salary": copy.deepcopy(self.model.player_team_model.commercial_manager_model.contract.salary),
 			"race_costs": 500_000, # hard code this for now TODO, make it variable
 			"balance_history": copy.deepcopy(self.model.player_team_model.finance_model.balance_history),

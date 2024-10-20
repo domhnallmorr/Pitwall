@@ -22,7 +22,7 @@ class CarPage(ft.Column):
 
 		car_comparison_container = ft.Container(
 			content=column,
-			expand=True
+			expand=False
 		)
 
 		self.controls = [

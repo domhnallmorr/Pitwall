@@ -28,7 +28,11 @@ class SeniorStaff:
 
 		self.contract = staff_contract.StaffContract(salary=salary)
 
-	def end_season(self, increase_age=True):
+	@property
+	def average_skill(self) -> int:
+		return self.skill
+	
+	def end_season(self, increase_age=True) -> None:
 		
 		if increase_age is True:
 			self.age += 1

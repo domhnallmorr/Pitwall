@@ -50,6 +50,12 @@ class StaffPage(ft.Column):
 			ft.TextButton("Replace", disabled=True, icon="find_replace", on_click=self.replace_driver, data="driver2")
 			]
 
+		self.technical_director_text = ft.Text(f"Technical Director Name")
+		self.technical_director_age_text = ft.Text(f"Technical Director Age")
+		self.technical_director_contract_length_text = ft.Text(f"Technical Director Contact Length")
+		self.technical_director_contract_status_text = ft.Text(f"Status: Contracted")
+		self.technical_director_skill_text = ft.Text(f"Ability: 100")
+
 		self.commercial_manager_text = ft.Text(f"Commercial Manager Name")
 		self.commercial_manager_age_text = ft.Text(f"Commercial Manager Age")
 		self.commercial_manager_contract_length_text = ft.Text(f"Commercial Manager Contact Length")
@@ -106,25 +112,38 @@ class StaffPage(ft.Column):
 	def setup_manager_containers(self):
 		self.manager_containers = []
 
-		for manager in ["Commercial Manager"]:
+		for manager in ["Technical Director", "Commercial Manager"]:
 			controls = [
 				ft.Text(manager, weight=ft.FontWeight.BOLD, size=35,),
 				ft.Text("Personal Details", weight=ft.FontWeight.BOLD, size=25,),
 				]
 
-			if manager == "Commercial Manager":
+			if manager == "Technical Director":
+				controls.append(self.technical_director_text)
+				controls.append(self.technical_director_age_text)
+
+			elif manager == "Commercial Manager":
 				controls.append(self.commercial_manager_text)
 				controls.append(self.commercial_manager_age_text)
+			controls.append(ft.Divider())
 			
 			# CONTRACT ----------------------
 			controls.append(ft.Text("Contract", weight=ft.FontWeight.BOLD, size=25,))
-			if manager == "Commercial Manager":
+
+			if manager == "Technical Director":
+				controls.append(self.technical_director_contract_length_text)
+				controls.append(self.technical_director_contract_status_text)
+			elif manager == "Commercial Manager":
 				controls.append(self.commercial_manager_contract_length_text)
 				controls.append(self.commercial_manager_contract_status_text)
 
+			controls.append(ft.Divider())
+
 			# STATS ----------------------
 			controls.append(ft.Text("Stats", weight=ft.FontWeight.BOLD, size=25,))
-			if manager == "Commercial Manager":
+			if manager == "Technical Director":
+				controls.append(self.technical_director_skill_text)
+			elif manager == "Commercial Manager":
 				controls.append(self.commercial_manager_skill_text)
 
 			column = ft.Column(
@@ -150,6 +169,7 @@ class StaffPage(ft.Column):
 		self.manager_row = ft.Row(
 			controls = [
 				self.manager_containers[0],
+				self.manager_containers[1],
 			]
 		)
 
@@ -189,6 +209,12 @@ class StaffPage(ft.Column):
 				self.driver_replace_buttons[idx].disabled = False
 			else:
 				self.driver_replace_buttons[idx].disabled = True # can't replace a driver if a driver is in place for next year, disable button
+
+		# Update technical director
+		self.technical_director_text.value = f"Name: {data['technical_director']}"
+		self.technical_director_age_text.value = f"Age: {data['technical_director_age']}"
+		self.technical_director_contract_length_text.value = f"Contract Length: {data['technical_director_contract_length']} Years"
+		self.technical_director_skill_text.value = f"Ability: {data['technical_director_skill']}"
 
 		# Update commercial manager
 		self.commercial_manager_text.value = f"Name: {data['commercial_manager']}"

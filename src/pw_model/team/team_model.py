@@ -4,7 +4,7 @@ import random
 from pw_model.season import season_stats
 from pw_model.finance import finance_model
 from pw_model.driver import driver_model
-from pw_model.senior_staff import commercial_manager
+from pw_model.senior_staff import commercial_manager, technical_director
 from pw_model.team import facilities_model
 
 class TeamModel:
@@ -13,7 +13,8 @@ class TeamModel:
 			  facilities : int, 
 			  starting_balance : int,
 			  starting_sponsorship : int,
-			  commercial_manager : str):
+			  commercial_manager : str,
+			  technical_director : str):
 		
 		self.model = model
 		self.name = name
@@ -27,6 +28,7 @@ class TeamModel:
 		self.finance_model = finance_model.FinanceModel(model, self, starting_balance, starting_sponsorship)
 
 		self.commercial_manager = commercial_manager
+		self.technical_director = technical_director
 
 		self.setup_season_stats()
 
@@ -51,6 +53,23 @@ class TeamModel:
 	@property
 	def commercial_manager_model(self) -> commercial_manager.CommercialManager:
 		return self.model.get_commercial_manager_model(self.commercial_manager)
+
+	@property
+	def technical_director_model(self) -> technical_director.TechnicalDirector:
+		return self.model.get_technical_director_model(self.technical_director)
+	
+	#TODO make a property in driver model to calculate average skill
+	@property
+	def average_driver_skill(self) -> int:
+		return int((self.driver1_model.speed + self.driver2_model.speed) / 2)
+	
+	@property
+	def average_manager_skill(self):
+		skill = 0
+		for idx, manager in enumerate([self.commercial_manager_model, self.technical_director_model]):
+			skill += manager.average_skill
+
+		return int(skill / (idx + 1)) # return average skill of all managers
 
 	def advance(self):
 		self.finance_model.weekly_update()
@@ -96,7 +115,7 @@ class TeamModel:
 
 		facilities_speed = self.facilities_model.factory_rating
 
-		speed = (staff_speed + facilities_speed + random_element) / 2
+		speed = (staff_speed + facilities_speed + self.technical_director_model.skill + random_element) / 3
 
 		speed = max(1, min(100, speed)) # make sure speed is between 1 and 100
 

@@ -35,6 +35,7 @@ class ParticpantModel:
 		self.total_time = 0
 		self.pitstop_times = []
 		self.positions_by_lap = [] # not zero indexed
+		self.tyre_wear_by_lap = [] # not zero indexed
 		self.number_of_pitstops = 0
 		self.starting_position = None # not zero indexed
 
@@ -102,12 +103,14 @@ class ParticpantModel:
 		if self.current_lap == self.pit1_lap:
 			new_tyres = True
 			
-		self.update_fuel_and_tyre_wear()
+		self.update_fuel_and_tyre_wear(new_tyres)
 		self.current_lap += 1
 
 	def update_fuel_and_tyre_wear(self, new_tyres=False):
 		self.car_model.update_fuel(self.circuit_model)
 		self.car_model.update_tyre_wear(self.circuit_model, new_tyres)
+
+		self.tyre_wear_by_lap.append(self.car_model.tyre_wear)
 
 	def recalculate_laptime_when_passed(self, revised_laptime):
 		self.total_time -= self.laptimes[-1]

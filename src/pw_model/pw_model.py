@@ -1,4 +1,5 @@
 import logging
+import statistics
 
 from pw_model import load_roster
 from pw_model.season import season_model
@@ -77,6 +78,16 @@ class Model:
 				break
 			
 		return commercial_manager_model
+
+	def get_technical_director_model(self, name):
+		technical_director_mdoel = None
+
+		for t in self.technical_directors:
+			if t.name == name:
+				technical_director_mdoel = t
+				break
+			
+		return technical_director_mdoel
 	
 	def get_track_model(self, track_name):
 		track_model = None
@@ -152,3 +163,19 @@ class Model:
 			self.player_team_model.finance_model.update_prize_money(self.season.standings_manager.player_team_position)
 
 		self.staff_market.determine_driver_transfers()
+
+	def gen_team_average_stats(self) -> dict:
+		
+		team_average_stats = {
+			"car_speed": int(statistics.fmean([t.car_model.speed for t in self.teams])),
+			"driver_skill": int(statistics.fmean([t.average_driver_skill for t in self.teams])),
+			"managers": int(statistics.fmean([t.average_manager_skill for t in self.teams])),
+			"staff": int(statistics.fmean([t.number_of_staff for t in self.teams])),
+			"max_staff": max([t.number_of_staff for t in self.teams]),
+			"facilities": int(statistics.fmean([t.facilities_model.factory_rating for t in self.teams])),
+			"max_sponsorship": max([t.finance_model.total_sponsorship for t in self.teams]),
+			"sponsorship": int(statistics.fmean([t.finance_model.total_sponsorship for t in self.teams])),
+		}
+
+		return team_average_stats
+

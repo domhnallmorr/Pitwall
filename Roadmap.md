@@ -11,7 +11,7 @@ The objective for V1.0 is to have a "bare bones" game with the most basic featur
 
 A driver roster from 1998 up to present day will be included. Drivers will retire. Drivers will be able to switch teams.
 
-### Head Designer
+### Technical Director
 
 Member of staff repsonsible for design of the car. Will directly effect the speed of the car.
 

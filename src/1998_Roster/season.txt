@@ -4,4 +4,6 @@ Albert Park, 10
 Interlagos, 13
 Autodromo Oscar Alfredo Galvez, 15
 Autodromo Enzo e Dino Ferrari, 17
+Circuit de Barcelona-Catalunya, 19
+Circuit de Monaco, 21
 Calendar>

@@ -17,6 +17,7 @@ def save_game(model, mode="file"):
 	save_general(model, save_file)
 	save_drivers(model, save_file)
 	save_commercial_managers(model, save_file)
+	save_technical_directors(model, save_file)
 	save_teams(model, save_file)
 	save_grid_this_year(model, save_file)
 	save_grid_next_year(model, save_file)
@@ -123,6 +124,33 @@ def save_commercial_managers(model, save_file):
 			commercial_manager.contract.salary,
 		))
 
+def save_technical_directors(model, save_file):
+	cursor = save_file.cursor()
+
+	cursor.execute('''
+	CREATE TABLE IF NOT EXISTS "technical_directors" (
+	"Year"	TEXT,
+	"Name"	TEXT,
+	"Age"	INTEGER,
+	"Skill"	INTEGER,
+	"Salary"	INTEGER
+			)'''
+				)
+	
+	cursor.execute("DELETE FROM technical_directors") # clear existing data
+
+	for technical_director in model.technical_directors:
+		cursor.execute('''
+			INSERT INTO technical_directors (year, name, age, skill, salary) 
+			VALUES (?, ?, ?, ?, ?)
+		''', (
+			"default",
+			technical_director.name, 
+			technical_director.age,
+			technical_director.skill,
+			technical_director.contract.salary,
+		))
+
 def save_teams(model, save_file):
 
 	cursor = save_file.cursor()
@@ -138,7 +166,8 @@ def save_teams(model, save_file):
 	"Facilities"	INTEGER,
 	"StartingBalance"	INTEGER,
 	"StartingSponsorship"	INTEGER,
-	"CommercialManager"	TEXT
+	"CommercialManager"	TEXT,
+	"TechnicalDirector"	TEXT
 	)'''
 				)
 	
@@ -148,9 +177,9 @@ def save_teams(model, save_file):
 
 		cursor.execute('''
 			INSERT INTO teams (year, name, Driver1, Driver2, CarSpeed, NumberofStaff, Facilities, StartingBalance, StartingSponsorship,
-				 CommercialManager) 
+				 CommercialManager, TechnicalDirector) 
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,
-				 ?)
+				 ?, ?)
 		''', (
 			"default",
 			team.name, 
@@ -162,6 +191,7 @@ def save_teams(model, save_file):
 			team.finance_model.balance, 
 			team.finance_model.total_sponsorship, 
 			team.commercial_manager,
+			team.technical_director,
 		))
 
 def save_grid_this_year(model, save_file):
@@ -221,8 +251,9 @@ def load_drivers(conn, model):
 	model.future_drivers = future_drivers
 
 def load_senior_staff(conn, model):
-	commercial_managers = load_roster.load_senior_staff(model, conn)
+	commercial_managers, technical_directors = load_roster.load_senior_staff(model, conn)
 	model.commercial_managers = commercial_managers
+	model.technical_directors = technical_directors
 
 def load_teams(conn, model):
 	teams = load_roster.load_teams(model, conn)
