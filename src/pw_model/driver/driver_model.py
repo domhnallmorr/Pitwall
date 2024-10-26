@@ -10,7 +10,13 @@ def decide_when_retiring(age):
 	return retiring_age
 
 class DriverModel:
-	def __init__(self, model, name, age, country, speed):
+	def __init__(self, model,
+			  name : str,
+			  age : int,
+			  country : str,
+			  speed : int,
+			  contract_length : int):
+		
 		self.model = model
 		self.name = name
 		self.age = age
@@ -22,7 +28,7 @@ class DriverModel:
 
 		self.team_next_year = None
 
-		self.contract = driver_contract.DriverContract()
+		self.contract = driver_contract.DriverContract(contract_length=contract_length)
 
 		self.retiring_age = decide_when_retiring(self.age)
 
@@ -39,11 +45,21 @@ class DriverModel:
 
 		return current_team
 	
+	@property
+	def overall_rating(self) -> int:
+		return self.speed
 
+	@property
+	def details(self) -> dict:
+		return {
+			"name": self.name,
+			"age": self.age
+		}
+	
 	def __repr__(self):
 		return f"DriverModel <{self.name}>"
 	
-	def end_season(self, increase_age=True):
+	def end_season(self, increase_age: bool=True) -> None:
 		if increase_age is True: # this method is run when driver is initialised, don't increase age or contract in that case
 			self.age += 1
 
@@ -62,14 +78,14 @@ class DriverModel:
 				self.handle_start_of_retiring_season()
 			
 		
-	def handle_start_of_retiring_season(self):
+	def handle_start_of_retiring_season(self) -> None:
 		self.retiring = True
 		self.model.inbox.generate_driver_retirement_email(self)
 
-	def setup_season_stats(self):
+	def setup_season_stats(self) -> None:
 		self.season_stats = season_stats.SeasonStats()
 
-	def hired_by_team(self, team):
+	def hired_by_team(self, team) -> None:
 		assert team is not None
 
 		self.team_next_year = team

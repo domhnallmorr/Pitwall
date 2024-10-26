@@ -4,7 +4,7 @@ from tests import create_model
 
 def test_sponsorship_update():
 
-	model = create_model.create_model()
+	model = create_model.create_model(mode="headless")
 
 	for idx, team in enumerate(["Ferrari", "Prost", "Minardi"]):
 		team_model = model.get_team_model(team)
@@ -27,7 +27,7 @@ def test_sponsorship_update():
 	plt.savefig("sponsorship_values.png")
 
 def test_end_season():
-	model = create_model.create_model()
+	model = create_model.create_model(mode="headless")
 
 	team_model = model.get_team_model("Ferrari")
 

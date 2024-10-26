@@ -60,6 +60,7 @@ class RaceWeekendWindow(ft.View):
 			self.simulate_btns_clicked.append(session_title)
 
 			self.simulate_buttons[session_title].disabled = True
+			self.view.main_app.update()
 			
 			if "friday" in session_title.lower():
 				self.simulate_buttons["Saturday Practice"].disabled = False
@@ -83,5 +84,8 @@ class RaceWeekendWindow(ft.View):
 
 
 	def return_to_main_window(self, e):
+		self.continue_btn.disabled = True
+		self.view.main_app.update()
+		
 		self.view.controller.post_race_actions()
 		

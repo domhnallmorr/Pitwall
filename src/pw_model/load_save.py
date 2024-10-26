@@ -21,6 +21,7 @@ def save_game(model, mode="file"):
 	save_teams(model, save_file)
 	save_grid_this_year(model, save_file)
 	save_grid_next_year(model, save_file)
+	save_new_contracts_df(model, save_file)
 	save_standings(model, save_file)
 
 	save_file.commit()
@@ -64,6 +65,7 @@ def save_drivers(model, save_file):
 		"Age"	INTEGER,
 		"Country"	TEXT,
 		"Speed"	INTEGER,
+		"ContractLength"	INTEGER,
 		"RetiringAge"	INTEGER,
 		"Retiring"	INTEGER,
 		"Retired"	INTEGER
@@ -71,8 +73,6 @@ def save_drivers(model, save_file):
 				)
 	
 	cursor.execute("DELETE FROM drivers") # clear existing data
-
-	# for driver_type in [model.drivers, model.]
 
 	for idx, driver_type in enumerate([model.drivers, model.future_drivers]):
 		for driver in driver_type:
@@ -84,14 +84,15 @@ def save_drivers(model, save_file):
 
 
 			cursor.execute('''
-				INSERT INTO drivers (year, name, age, country, speed, retiringage, retiring, retired) 
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+				INSERT INTO drivers (year, name, age, country, speed, contractlength, retiringage, retiring, retired) 
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 			''', (
 				year,
 				driver.name, 
 				driver.age, 
 				driver.country, 
 				driver.speed, 
+				driver.contract.contract_length, 
 				driver.retiring_age, 
 				driver.retiring,
 				driver.retired
@@ -201,6 +202,9 @@ def save_grid_next_year(model, save_file):
 	model.staff_market.grid_next_year_df.to_sql("grid_next_year_df", save_file, if_exists="replace", index=False)
 	model.staff_market.grid_next_year_announced_df.to_sql("grid_next_year_announced", save_file, if_exists="replace", index=False)
 
+def save_new_contracts_df(model, save_file):
+	model.staff_market.new_contracts_df.to_sql("new_contracts_df", save_file, if_exists="replace", index=False)
+
 def save_standings(model, save_file):
 	model.season.standings_manager.drivers_standings_df.to_sql("drivers_standings_df", save_file, if_exists="replace", index=False)
 	model.season.standings_manager.constructors_standings_df.to_sql("constructors_standings_df", save_file, if_exists="replace", index=False)
@@ -269,3 +273,6 @@ def load_grid_this_year(conn, model):
 def load_grid_next_year(conn, model):
 	model.staff_market.grid_next_year_df = pd.read_sql('SELECT * FROM grid_next_year_df', conn)
 	model.staff_market.grid_next_year_announced_df = pd.read_sql('SELECT * FROM grid_next_year_announced', conn)
+	model.staff_market.new_contracts_df = pd.read_sql('SELECT * FROM new_contracts_df', conn)
+
+

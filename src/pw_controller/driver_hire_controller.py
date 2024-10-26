@@ -1,4 +1,4 @@
-
+import copy
 from pw_model.staff_market import staff_market
 
 class PWDriverHireController:
@@ -15,7 +15,7 @@ class PWDriverHireController:
 		
 		self.driver_idx = driver_idx
 
-		free_agents = self.controller.model.driver_market.get_free_agents()
+		free_agents = self.controller.model.staff_market.get_free_agents()
 
 		self.controller.view.hire_driver_page.update_free_agent_list(free_agents)
 
@@ -25,7 +25,10 @@ class PWDriverHireController:
 
 	def complete_hire(self, driver_hired):
 		
-		self.model.driver_market.complete_driver_hiring(driver_hired, self.model.player_team, self.driver_idx)
+		self.model.staff_market.complete_driver_hiring(driver_hired, self.model.player_team, self.driver_idx)
 		self.controller.update_grid_page()
 		self.controller.update_email_page()
 		self.controller.update_staff_page()
+
+	def get_driver_details(self, driver_name: str) -> dict:
+		return copy.deepcopy(self.controller.model.get_driver_model(driver_name).details)

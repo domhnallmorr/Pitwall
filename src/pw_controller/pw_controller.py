@@ -225,6 +225,7 @@ class Controller:
 			self.view.facility_page.enable_upgrade_button()
 
 	def go_to_race_weekend(self):
+		self.race_controller = race_controller.RaceController(self)
 		data = {
 			"race_title": self.model.season.current_track_model.title
 		}

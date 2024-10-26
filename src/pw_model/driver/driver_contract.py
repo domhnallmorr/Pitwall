@@ -8,5 +8,6 @@ class DriverContract:
 
 
 	def end_season(self):
-		if self.contract_length > 0:
-			self.contract_length -= 1
+		if self.contract_length is not None:
+			if self.contract_length > 0:
+				self.contract_length -= 1

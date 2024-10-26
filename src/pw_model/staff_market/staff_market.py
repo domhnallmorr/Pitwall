@@ -1,5 +1,6 @@
 
 import logging
+import random
 
 import pandas as pd
 
@@ -19,6 +20,9 @@ class StaffMarket:
 		self.model = model
 		
 	def setup_dataframes(self):
+		columns = ["Driver", "Salary", "ContractLength"]
+		self.new_contracts_df = pd.DataFrame(columns=columns) # dataframe for tracking details of new contracts offered to new hires
+
 		columns = ["team", "driver1", "driver2", "technical_director", "commercial_manager"]
 		this_year_data = [] # grid for upcoming season
 		next_year_data = [] # grid for next year
@@ -30,7 +34,7 @@ class StaffMarket:
 			for driver_model in [team.driver1_model, team.driver2_model, team.technical_director_model, team.commercial_manager_model]:
 				this_year_data[-1].append(driver_model.name)
 
-				if driver_model.retiring is True:
+				if driver_model.retiring is True or driver_model.contract.contract_length < 2:
 					next_year_data[-1].append(None)
 				else:
 					next_year_data[-1].append(driver_model.name)
@@ -73,7 +77,7 @@ class StaffMarket:
 
 		teams = []
 
-		for idx, row in self.grid_next_year_announced_df.iterrows():
+		for idx, row in self.grid_next_year_df.iterrows():
 			if row[driver_idx] is None:
 				teams.append(row["team"])
 		
@@ -93,6 +97,8 @@ class StaffMarket:
 	def determine_driver_transfers(self):
 		self.transfers = []
 
+		self.handle_top_3_drivers()
+
 		teams_requiring_driver1 = self.compile_teams_requiring_drivers("driver1")
 		teams_requiring_driver2 = self.compile_teams_requiring_drivers("driver2")
 
@@ -108,6 +114,29 @@ class StaffMarket:
 					free_agents = self.get_free_agents()
 					self.team_hire_driver(team, driver_idx, free_agents)
 
+	def handle_top_3_drivers(self):
+		'''
+		ensure top 3 drivers are in the top 4 teams next season
+		'''
+		drivers_by_rating = [d[0] for d in self.model.season.drivers_by_rating[:3]] # d[0] is drivers name
+		teams_by_rating = [t[0] for t in self.model.season.teams_by_rating[:3]] # t[0] is teams name
+		free_agents = self.get_free_agents()
+
+		top_available_drivers = [driver for driver in drivers_by_rating if driver in free_agents]
+		teams_requiring_driver1 = self.compile_teams_requiring_drivers("driver1")
+		top_available_teams = [team for team in teams_by_rating if team in teams_requiring_driver1]
+		
+		if len(top_available_drivers) > 0: # if any of the top drivers are available
+			for team in top_available_teams:
+				self.team_hire_driver(team, "driver1", top_available_drivers)
+				
+				# redefine top available drivers
+				free_agents = self.get_free_agents()
+				top_available_drivers = [driver for driver in drivers_by_rating if driver in free_agents]
+
+				if len(top_available_drivers) == 0: # run out of drivers
+					break
+
 	def team_hire_driver(self, team, driver_idx, free_agents):
 		
 		logging.debug(f"{team} hiring {driver_idx}")
@@ -119,29 +148,47 @@ class StaffMarket:
 
 		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team, driver_idx] = driver_hired
 
+		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [driver_hired, 4_000_000, random.randint(2, 5)]
+
 		self.model.inbox.generate_driver_hiring_email(team_model, self.model.get_driver_model(driver_hired))
 
-	def update_team_drivers(self):
+	def update_team_drivers(self) -> None:
 
 		assert None not in self.grid_next_year_df.values
 
 		for idx, row in self.grid_next_year_df.iterrows():
 			team_name = row["team"]
 			team_model = self.model.get_team_model(team_name)
-			
-			team_model.update_drivers(row["driver1"], row["driver2"])
 
-	def complete_driver_hiring(self, driver_hired, team_name, driver_idx):
+			# Get new contract details
+			if row["driver1"] in self.new_contracts_df["Driver"].values:
+				driver1_contract = self.new_contracts_df.loc[self.new_contracts_df["Driver"] == row["driver1"]].to_dict(orient="records")[0]
+			else:
+				driver1_contract = None # driver retained this year
+
+			if row["driver2"] in self.new_contracts_df["Driver"].values:
+				driver2_contract = self.new_contracts_df.loc[self.new_contracts_df["Driver"] == row["driver2"]].to_dict(orient="records")[0]
+			else:
+				driver2_contract = None
+
+			team_model.update_drivers(row["driver1"], row["driver2"], driver1_contract, driver2_contract)
+
+	def complete_driver_hiring(self, driver_hired: str, team_name: str, driver_idx: str) -> None:
 		team_model = self.model.get_team_model(team_name)
 
 		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team_name, driver_idx] = driver_hired
-
+		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [driver_hired, 4_000_000, random.randint(2, 5)]
+		
 		if team_name == self.model.player_team: # make this announced straight away for player hirings
 			self.grid_next_year_announced_df.loc[self.grid_next_year_df["team"] == team_name, driver_idx] = driver_hired
 
 		self.model.inbox.generate_driver_hiring_email(team_model, self.model.get_driver_model(driver_hired))
 
-	def ensure_player_has_drivers_for_next_season(self):
+	def ensure_player_has_drivers_for_next_season(self) -> None:
+		'''
+		At the end of the season, if the player has failed to hire a driver(s)
+		this method automically hires a random driver
+		'''
 		if self.player_requiring_driver1 is True:
 			self.team_hire_driver(self.model.player_team, "driver1", self.get_free_agents())
 

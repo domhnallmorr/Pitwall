@@ -33,14 +33,15 @@ class Model:
 		self.end_season(increase_year=False, start_career=True)
 
 		if mode == "headless":
-			# this is called in start_career method, when player is playing
+			self.player_team = None
+			# this is called in start_career method, when player is  (mode=normal)
 			self.staff_market.determine_driver_transfers()
-		
+
 	@property
 	def player_team_model(self):
 		return self.get_team_model(self.player_team)
 	
-	def load_career(self):
+	def load_career(self) -> None:
 		load_save.load(self)
 
 		#TODO reset email, email not saved currently

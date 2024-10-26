@@ -1,12 +1,11 @@
+from typing import Optional
 import flet as ft
 
 class HireDriverPage(ft.Column):
 	def __init__(self, view):
 
 		self.view = view
-		# self.setup_buttons_row()
-		# self.setup_widgets()
-
+		self.setup_contract_column()
 
 		contents = [
 			ft.Text("Hire Driver", theme_style=self.view.page_header_style),
@@ -23,8 +22,7 @@ class HireDriverPage(ft.Column):
 		for name in free_agents:
 			row = ft.DataRow(
 				cells = [
-					ft.DataCell(ft.Text(name)),
-					ft.DataCell(ft.TextButton("Approach", data=name, on_click=self.approach_driver))
+						ft.DataCell(ft.TextButton(name, data=name, on_click=self.update_driver))
 				]
 			)
 			
@@ -32,10 +30,9 @@ class HireDriverPage(ft.Column):
 
 		columns=[
             ft.DataColumn(label=ft.Text("Name")),
-            ft.DataColumn(label=ft.Text("")), # btn column
 		]
 
-		self.free_agent_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30)
+		self.free_agent_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30, width=300)
 		
 		# Make table scrollable
 
@@ -46,12 +43,61 @@ class HireDriverPage(ft.Column):
 			scroll=ft.ScrollMode.AUTO  # Automatically show scrollbar when needed
 		)
 
-		contents = [
-			ft.Text("Hire Driver", theme_style=self.view.page_header_style),
-			self.scrollable_free_agents_table,
-		]
+		self.free_agents_column = ft.Column(
+			controls=[
+				ft.Text("Free Agents", weight=ft.FontWeight.BOLD, size=25,),
+				self.scrollable_free_agents_table,
+			],
+			expand=True
+		)
+
+		self.setup_page()
+
+		self.update_driver(None, name=free_agents[0])
 		
-		self.controls = contents
+	def setup_contract_column(self):
+		self.name_text = ft.Text("Driver Name: Some Driver")
+		self.age_text = ft.Text("Driver Age: 99")
+		self.contract_length_text = ft.Text("Contract Length: 2 years")
+
+		self.offer_btn = ft.TextButton("Offer", on_click=self.approach_driver)
+
+		self.contract_column = ft.Column(
+			controls=[
+				ft.Text("Contract Details", weight=ft.FontWeight.BOLD, size=25,),
+				self.name_text,
+				self.age_text,
+				self.contract_length_text,
+				self.offer_btn
+			]
+		)
+
+
+	def setup_page(self):
+		content_row = ft.Row(
+			controls=[
+				self.free_agents_column,
+				self.contract_column
+			],
+			expand=True
+		)
+
+		self.controls = [
+			ft.Text("Hire Driver", theme_style=self.view.page_header_style),
+			content_row
+		]
+
+		self.view.main_app.update()
+
+	def update_driver(self, e: ft.ControlEvent, name: Optional[str]=None) -> None:
+		if name is None:
+			name = e.control.data
+
+		details = self.view.controller.driver_hire_controller.get_driver_details(name)
+		self.name_text.value = f"Driver Name: {details['name']}"
+		self.age_text.value = f"Driver Age: {details['age']}"
+
+		self.offer_btn.data = name
 		self.view.main_app.update()
 
 	def approach_driver(self, e):

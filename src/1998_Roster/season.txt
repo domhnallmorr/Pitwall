@@ -6,4 +6,6 @@ Autodromo Oscar Alfredo Galvez, 15
 Autodromo Enzo e Dino Ferrari, 17
 Circuit de Barcelona-Catalunya, 19
 Circuit de Monaco, 21
+Circuit Gilles Villeneuve, 23
+Circuit de Nevers Magny-Cours, 26
 Calendar>

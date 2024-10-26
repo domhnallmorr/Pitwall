@@ -6,7 +6,7 @@ from pw_model import load_save
 
 def test_retirements():
 
-	model = create_model.create_model()
+	model = create_model.create_model(mode="headless")
 
 	# Test Schumacher retirement
 	schumacher_model = model.get_driver_model("Michael Schumacher")

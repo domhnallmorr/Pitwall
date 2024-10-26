@@ -36,6 +36,10 @@ class TeamModel:
 		return f"TeamModel <{self.name}>"
 	
 	@property
+	def overall_rating(self) -> int:
+		return self.car_model.speed
+	
+	@property
 	def is_player_team(self) -> bool:
 		if self.name == self.model.player_team:
 			return True
@@ -99,9 +103,17 @@ class TeamModel:
 
 		return driver_choosen
 	
-	def update_drivers(self, driver1 : str, driver2 : str):
+	def update_drivers(self, driver1 : str, driver2 : str, driver1_contract : dict, driver2_contract : dict):
 		self.driver1 = driver1
 		self.driver2 = driver2
+		print(self.name)
+		if driver1_contract is not None:
+			print(self.driver1)
+			print(driver1_contract["ContractLength"])
+			self.driver1_model.contract.contract_length = driver1_contract["ContractLength"]
+
+		if driver2_contract is not None:
+			self.driver2_model.contract.contract_length = driver2_contract["ContractLength"]
 
 	def update_car_speed(self):
 		'''

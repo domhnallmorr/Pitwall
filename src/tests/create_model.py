@@ -4,7 +4,6 @@ from race_model import race_model
 
 
 def create_model(mode="normal"):
-
 	run_directory = os.path.dirname(os.path.join(os.path.abspath(__file__)))
 	run_directory = os.path.dirname(run_directory) # go one level up to src folder
 

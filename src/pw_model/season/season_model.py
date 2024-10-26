@@ -28,18 +28,55 @@ class SeasonModel:
 		for idx, row in self.model.calendar.iterrows():
 			if row["Week"] >= self.current_week:
 				current_track = self.model.get_track_model(row["Track"])
+				assert current_track is not None, f"Failed to find track {row['Track']}"
 				break
 
 		return current_track
 
 	@property	
-	def next_race(self):
+	def next_race(self) -> str:
 		if self.next_race_idx is None:
 			return "Post Season"
 		else:
 			track_name = self.model.calendar.iloc[self.next_race_idx]["Track"]
 			return self.model.get_track_model(track_name).title
 
+	@property
+	def drivers_by_rating(self) -> list:
+		'''
+		compile all drivers on the grid and arrange by their overall rating
+		'''
+		drivers = []
+		for team in self.model.teams:
+			drivers.append([team.driver1, team.driver1_model.overall_rating])
+			drivers.append([team.driver2, team.driver2_model.overall_rating])
+
+		# sort by rating
+		drivers = sorted(drivers, key=lambda x: x[1], reverse=True)
+
+		''' 
+		example ouput
+		[['Michael Schumacher', 98], ['Mika Hakkinen', 87], ['Jacques Villeneuve', 84], ['Damon Hill', 78], ....
+		'''
+		return drivers
+	
+	@property
+	def teams_by_rating(self) -> list:
+		'''
+		compile all teams on the grid and arrange by their overall rating
+		'''
+		teams = []
+
+		for team in self.model.teams:
+			teams.append([team.name, team.overall_rating])
+
+		teams = sorted(teams, key=lambda x: x[1], reverse=True)
+
+		'''
+		[['McLaren', 90], ['Ferrari', 84], ['Williams', 80], ['Benetton', 74], .......
+		'''
+		return teams
+	
 	def setup_new_season_variables(self):
 
 		self.current_week = 1

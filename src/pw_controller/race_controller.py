@@ -8,7 +8,8 @@ class RaceController:
 		self.controller = controller
 		self.view = controller.view
 		
-		self.race_model = race_model.RaceModel("UI", self.controller.model, self.controller.model.season.current_track_model)
+		if self.controller.model.season.current_track_model is not None: # None indicates the season is over, no more races this season
+			self.race_model = race_model.RaceModel("UI", self.controller.model, self.controller.model.season.current_track_model)
 
 
 	def simulate_session(self, session):

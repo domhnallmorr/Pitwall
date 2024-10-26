@@ -38,6 +38,7 @@ def load_drivers(model, conn):
 	age_idx = column_names.index("Age")
 	country_idx = column_names.index("Country")
 	speed_idx = column_names.index("Speed")
+	contract_length_idx = column_names.index("ContractLength")
 
 	cursor = conn.cursor()
 	cursor.execute(f"SELECT * FROM {table_name}")
@@ -48,8 +49,9 @@ def load_drivers(model, conn):
 		age = row[age_idx]
 		country = row[country_idx]
 		speed = row[speed_idx]
+		contract_length = row[contract_length_idx]
 
-		driver = driver_model.DriverModel(model, name, age, country, speed)
+		driver = driver_model.DriverModel(model, name, age, country, speed, contract_length)
 		
 		if "RetiringAge" in column_names:
 			retiring_age_idx = column_names.index("RetiringAge")

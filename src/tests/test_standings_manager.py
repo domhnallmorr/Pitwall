@@ -72,8 +72,8 @@ def test_standings_manager_setup():
 		["Eddie Irvine", "Ferrari", 0, 0, 0, 0, 0, 0],
 		["Giancarlo Fisichella", "Benetton", 0, 0, 0, 0, 0, 0],
 		["Alexander Wurz", "Benetton", 0, 0, 0, 0, 0, 0],
-		["David Coulthard", "McLaren", 0, 0, 0, 0, 0, 0],
 		["Mika Hakkinen", "McLaren", 0, 0, 0, 0, 0, 0],
+		["David Coulthard", "McLaren", 0, 0, 0, 0, 0, 0],
 		]
 
 	assert standings_manager_instance.drivers_standings_df.head(8).values.tolist() == expected

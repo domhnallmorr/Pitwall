@@ -11,8 +11,9 @@ def gen_dummy_driver(model=None, name="Jacques Villeneuve"):
 	age = 27
 	country = "Canada"
 	speed = 84
+	contact_length = 4
 
-	return driver_model.DriverModel(model, name, age, country, speed)
+	return driver_model.DriverModel(model, name, age, country, speed, contact_length)
 
 def test_determine_retiring_age():
 	age = 20

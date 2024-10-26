@@ -1,0 +1,6 @@
+Name: Circuit de Nevers Magny-Cours
+Country: France
+Location: Magny-Cours
+Title: French Grand Prix
+Laps: 72
+Base Laptime: 84_000
