@@ -43,9 +43,6 @@ class Model:
 	
 	def load_career(self) -> None:
 		load_save.load(self)
-
-		#TODO reset email, email not saved currently
-		self.inbox.setup_email_list()
 	
 	def save_career(self):
 		load_save.save_game(self)
@@ -106,7 +103,10 @@ class Model:
 			self.staff_market.ensure_player_has_drivers_for_next_season()
 			
 		self.season.advance_one_week()
-		self.get_team_model(self.player_team).advance()
+
+		if self.player_team is not None:
+			self.get_team_model(self.player_team).advance()
+		self.staff_market.announce_signings()
 
 		self.save_career()
 

@@ -10,6 +10,12 @@ Class for the following functionaility
 compile list of drivers retiring
 compile list of teams who need drivers
 compile list of free agents
+Determine driver transfers between teams
+Finalise player driver hirings
+call email model to generate an email announcing a driver hiring
+
+grid_next_year_df is a dataframe that contains the staff for each team for next year. This gets computed at the start of each season, and recomputed if the player signs someone
+grid_next_year_announced_df, gets populated as the season progresses and signings are announced. These are finalised signings that will carry over to next season
 
 '''
 
@@ -20,7 +26,7 @@ class StaffMarket:
 		self.model = model
 		
 	def setup_dataframes(self):
-		columns = ["Driver", "Salary", "ContractLength"]
+		columns = ["Team", "WeekToAnnounce", "DriverIdx", "Driver", "Salary", "ContractLength"]
 		self.new_contracts_df = pd.DataFrame(columns=columns) # dataframe for tracking details of new contracts offered to new hires
 
 		columns = ["team", "driver1", "driver2", "technical_director", "commercial_manager"]
@@ -83,14 +89,20 @@ class StaffMarket:
 		
 		return teams
 	
-	def get_free_agents(self):
+	def get_free_agents(self, for_player_team: bool =False) -> list:
 		free_agents = []
 
 		for driver in self.model.drivers:
 			if driver.retired is False:
 				if driver.retiring is False:
-					if not self.grid_next_year_df.isin([driver.name]).any().any():
-						free_agents.append(driver.name)
+
+					if for_player_team is True:
+						# When the player is hiring a new driver, any driver not announced for next season is considered a free agent
+						if not self.grid_next_year_announced_df.isin([driver.name]).any().any():
+							free_agents.append(driver.name)
+					else: # for AI teams, don;t consider if hiring is announced yet, this avoids the same driver being hired by multiple teams
+						if not self.grid_next_year_df.isin([driver.name]).any().any():
+							free_agents.append(driver.name)
 	
 		return free_agents
 	
@@ -137,20 +149,22 @@ class StaffMarket:
 				if len(top_available_drivers) == 0: # run out of drivers
 					break
 
-	def team_hire_driver(self, team, driver_idx, free_agents):
-		
+	def team_hire_driver(self, team: str, driver_idx: str, free_agents: list) -> None:
+		'''
+		This method handles the AI controlled teams hiring a new driver
+		'''
 		logging.debug(f"{team} hiring {driver_idx}")
 		logging.debug(f"Free Agents: {free_agents}")
 		
-		#TODO move this to self.complete_driver_hiring
 		team_model = self.model.get_team_model(team)
 		driver_hired = team_model.hire_driver(driver_idx, free_agents)
 
 		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team, driver_idx] = driver_hired
 
-		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [driver_hired, 4_000_000, random.randint(2, 5)]
+		week_to_announce = max(random.randint(4, 40), self.model.season.current_week + 1) # ensure the week is not in the past
+		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team, week_to_announce, driver_idx, driver_hired, 4_000_000, random.randint(2, 5)]
 
-		self.model.inbox.generate_driver_hiring_email(team_model, self.model.get_driver_model(driver_hired))
+		# self.model.inbox.generate_driver_hiring_email(team_model, self.model.get_driver_model(driver_hired))
 
 	def update_team_drivers(self) -> None:
 
@@ -177,12 +191,16 @@ class StaffMarket:
 		team_model = self.model.get_team_model(team_name)
 
 		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team_name, driver_idx] = driver_hired
-		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [driver_hired, 4_000_000, random.randint(2, 5)]
+		if team_name == self.model.player_team:
+			self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team_name, self.model.season.current_week, driver_idx, driver_hired, 4_000_000, random.randint(2, 5)]
 		
-		if team_name == self.model.player_team: # make this announced straight away for player hirings
-			self.grid_next_year_announced_df.loc[self.grid_next_year_df["team"] == team_name, driver_idx] = driver_hired
+		# if team_name == self.model.player_team: # make this announced straight away for player hirings
+		self.grid_next_year_announced_df.loc[self.grid_next_year_df["team"] == team_name, driver_idx] = driver_hired
 
 		self.model.inbox.generate_driver_hiring_email(team_model, self.model.get_driver_model(driver_hired))
+
+		if team_name == self.model.player_team: # if the player signs a driver, we must recopute AI signings
+			self.recompute_transfers_after_player_hiring()
 
 	def ensure_player_has_drivers_for_next_season(self) -> None:
 		'''
@@ -195,3 +213,24 @@ class StaffMarket:
 		if self.player_requiring_driver2 is True:
 			self.team_hire_driver(self.model.player_team, "driver2", self.get_free_agents())
 			
+	def announce_signings(self):
+		for idx, row in self.new_contracts_df.iterrows():
+			if row["WeekToAnnounce"] == self.model.season.current_week:
+				driver_hired = row["Driver"]
+				team_name = row["Team"]
+				driver_idx = row["DriverIdx"]
+				
+				self.complete_driver_hiring(driver_hired, team_name, driver_idx)
+
+	def recompute_transfers_after_player_hiring(self) -> None:
+		# remove any contracts that have not been announced yet
+		self.new_contracts_df = self.new_contracts_df[self.new_contracts_df["WeekToAnnounce"] <= self.model.season.current_week].reset_index(drop=True)
+
+		# redo grid_next_year_df
+		self.grid_next_year_df = self.grid_next_year_announced_df.copy(deep=True)
+
+		# determine driver transfers
+		self.determine_driver_transfers()
+
+
+

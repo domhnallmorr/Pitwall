@@ -64,6 +64,7 @@ class Controller:
 			self.update_email_page()
 			self.update_standings_page()
 			self.update_finance_page()
+			self.update_grid_page()
 
 		if self.model.season.current_week == 1:
 			self.setup_new_season()
@@ -173,6 +174,7 @@ class Controller:
 			"year": self.model.year,
 			"grid_this_year_df": self.model.staff_market.grid_this_year_df.copy(deep=True),
 			"grid_next_year_df": self.model.staff_market.grid_next_year_df.copy(deep=True),
+			"grid_next_year_announced_df": self.model.staff_market.grid_next_year_announced_df.copy(deep=True),
 		}
 
 		self.view.grid_page.update_page(data)

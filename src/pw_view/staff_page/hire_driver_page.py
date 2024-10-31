@@ -51,6 +51,16 @@ class HireDriverPage(ft.Column):
 			expand=True
 		)
 
+		self.free_agents_container = ft.Container(
+				content=self.free_agents_column,
+				bgcolor=self.view.dark_grey,
+				margin=20,
+				padding=10,
+				width=200,
+				expand=True,
+				border_radius=15,
+			)
+		
 		self.setup_page()
 
 		self.update_driver(None, name=free_agents[0])
@@ -72,12 +82,23 @@ class HireDriverPage(ft.Column):
 			]
 		)
 
+		self.container_container = ft.Container(
+				# expand=1,
+				content=self.contract_column,
+				bgcolor=self.view.dark_grey,
+				margin=20,
+				padding=10,
+				width=200,
+				expand=True,
+				border_radius=15,
+			)
+
 
 	def setup_page(self):
 		content_row = ft.Row(
 			controls=[
-				self.free_agents_column,
-				self.contract_column
+				self.free_agents_container,
+				self.container_container
 			],
 			expand=True
 		)

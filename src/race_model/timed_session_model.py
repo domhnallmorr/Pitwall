@@ -1,3 +1,5 @@
+import copy
+
 from race_model import session_model
 from race_model import commentary
 
@@ -45,6 +47,25 @@ class TimedSessionModel(session_model.SessionModel):
 					# UPDATE STANDINGS
 					self.standings_df.sort_values("Fastest Lap", inplace=True)
 					self.refresh_standings_column() # in SessionModel
+
+					# Update Gap To Leader Column
+					data = []
+					for idx, row in self.standings_df.iterrows():
+						if row["Position"] == 1:
+							if row["Fastest Lap"] is None: # no lap times set yet by any driver
+								data = None
+								break
+							else:
+								fastest_lap = row["Fastest Lap"] # fastest lap by any driver
+								data.append(0)
+						else:
+							if row["Fastest Lap"] is None:
+								data.append(None)
+							else:
+								data.append(row["Fastest Lap"] - fastest_lap)
+
+					self.standings_df["Gap to Leader"] = data
+						
 
 			else: # we have some commentary to process
 				if self.race_model.mode == "headless":

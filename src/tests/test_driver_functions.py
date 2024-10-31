@@ -31,6 +31,7 @@ def test_end_season_method():
 	dummy_driver = gen_dummy_driver(model=create_model.create_model())
 
 	age = dummy_driver.age
+	contract_length = dummy_driver.contract.contract_length
 
 	for i in range(100):
 		# assign random points
@@ -38,6 +39,10 @@ def test_end_season_method():
 		dummy_driver.end_season()
 
 		assert dummy_driver.age == age + i + 1
+		if i < 4:
+			assert dummy_driver.contract.contract_length == contract_length - i - 1
+		else:
+			assert dummy_driver.contract.contract_length == 0 # contract length should not go into negative numbers
 		assert dummy_driver.season_stats.starts_this_season == 0
 		assert dummy_driver.season_stats.points_this_season == 0
 		assert dummy_driver.season_stats.poles_this_season == 0

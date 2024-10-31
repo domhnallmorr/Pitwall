@@ -1,6 +1,8 @@
 import collections
 
+import pandas as pd
 from pw_model.email import email_generation
+from pw_model.team import team_model
 
 class Email:
 	def __init__(self, subject, message, sender=""):
@@ -60,26 +62,47 @@ class Inbox:
 		email = Email(f"Factory has been upgraded!", msg)
 		self.add_email(email)
 
-	def new_technical_director_email(self, team, technical_director):
+	def new_technical_director_email(self, team: team_model.TeamModel, technical_director) -> None:
 		msg = email_generation.hire_technical_director_email(team, technical_director)
 
 		email = Email(f"New TD: {team.name} have hired {technical_director.name}!", msg)
 		self.add_email(email)
 
-	def new_sponsor_income_email(self, sponsorship):
+	def new_sponsor_income_email(self, sponsorship) -> None:
 		msg = email_generation.sponsor_income_update_email(sponsorship)
 
 		email = Email(f"Sponsor Income Update", msg)
 		self.add_email(email)
 
-	def new_prize_money_email(self, prize_money):
+	def new_prize_money_email(self, prize_money) -> None:
 		msg = email_generation.prize_money_email(prize_money)
 
 		email = Email(f"Prize Money Confirmed", msg)
 		self.add_email(email)
 
-	def new_car_update_email(self):
+	def new_car_update_email(self) -> None:
 		msg = email_generation.car_update_email()
 
 		email = Email(f"New Car Ready", msg)
 		self.add_email(email)
+	
+	def generate_dataframe(self) -> pd.DataFrame:
+		data = []
+
+		for email in self.emails:
+			data.append([email.subject, email.message, email.sender])
+
+		return pd.DataFrame(columns=["Subject", "Message", "Sender"], data=data)
+	
+	def load_dataframe(self, df) -> None:
+		self.emails.clear()
+
+		for idx, row in df.iterrows():
+
+			subject = row["Subject"]
+			message = row["Message"]
+			sender = row["Sender"]
+
+			email = Email(subject, message, sender)
+
+			self.add_email(email)

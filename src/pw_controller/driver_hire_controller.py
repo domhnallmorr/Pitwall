@@ -10,12 +10,12 @@ class PWDriverHireController:
 	def model(self):
 		return self.controller.model
 
-	def launch_replace_driver(self, driver_idx):
+	def launch_replace_driver(self, driver_idx: str) -> None:
 		assert driver_idx in ["driver1", "driver2"]
 		
 		self.driver_idx = driver_idx
 
-		free_agents = self.controller.model.staff_market.get_free_agents()
+		free_agents = self.controller.model.staff_market.get_free_agents(for_player_team=True)
 
 		self.controller.view.hire_driver_page.update_free_agent_list(free_agents)
 
@@ -23,7 +23,7 @@ class PWDriverHireController:
 
 		self.controller.view.main_app.update()
 
-	def complete_hire(self, driver_hired):
+	def complete_hire(self, driver_hired: str) -> None:
 		
 		self.model.staff_market.complete_driver_hiring(driver_hired, self.model.player_team, self.driver_idx)
 		self.controller.update_grid_page()

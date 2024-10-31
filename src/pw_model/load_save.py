@@ -23,6 +23,7 @@ def save_game(model, mode="file"):
 	save_grid_next_year(model, save_file)
 	save_new_contracts_df(model, save_file)
 	save_standings(model, save_file)
+	save_email(model, save_file)
 
 	save_file.commit()
 
@@ -205,9 +206,13 @@ def save_grid_next_year(model, save_file):
 def save_new_contracts_df(model, save_file):
 	model.staff_market.new_contracts_df.to_sql("new_contracts_df", save_file, if_exists="replace", index=False)
 
-def save_standings(model, save_file):
+def save_standings(model, save_file) -> None:
 	model.season.standings_manager.drivers_standings_df.to_sql("drivers_standings_df", save_file, if_exists="replace", index=False)
 	model.season.standings_manager.constructors_standings_df.to_sql("constructors_standings_df", save_file, if_exists="replace", index=False)
+
+def save_email(model, save_file):
+	df = model.inbox.generate_dataframe()
+	df.to_sql("email", save_file, if_exists="replace", index=False)
 
 def load(model, save_file=None, mode="file"):
 	assert mode in ["file", "memory"]
@@ -228,6 +233,7 @@ def load(model, save_file=None, mode="file"):
 	load_standings(conn, model)
 	load_grid_this_year(conn, model)
 	load_grid_next_year(conn, model)
+	load_email(conn, model)
 
 def load_general(conn, model):
 	table_name = "general"
@@ -275,4 +281,7 @@ def load_grid_next_year(conn, model):
 	model.staff_market.grid_next_year_announced_df = pd.read_sql('SELECT * FROM grid_next_year_announced', conn)
 	model.staff_market.new_contracts_df = pd.read_sql('SELECT * FROM new_contracts_df', conn)
 
+def load_email(conn, model):
+	df = pd.read_sql('SELECT * FROM email', conn)
+	model.inbox.load_dataframe(df)
 

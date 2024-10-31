@@ -22,7 +22,7 @@ class RaceModel:
 		for team in model.teams:
 			for driver in [team.driver1_model, team.driver2_model]:
 				driver_count += 1
-				self.participants.append(particpant_model.ParticpantModel(driver, team.car_model, self.track_model, driver_count))
+				self.participants.append(particpant_model.ParticpantModel(driver, team.name, team.car_model, self.track_model, driver_count))
 
 	def get_particpant_model_by_name(self, name):
 		for p in self.participants:

@@ -16,7 +16,7 @@ class TitleScreen(ft.View):
 
 		super().__init__(controls=controls, padding=0)
 
-	def setup_page(self, run_directory):
+	def setup_page(self, run_directory: str) -> None:
 		# Create a resizable image widget for the background
 		image_path = fr"{self.view.run_directory}\pw_view\assets\title_screen.jpg"
 		
@@ -80,16 +80,17 @@ class TitleScreen(ft.View):
 		self.view.main_app.on_resized = self.resize_image
 		self.resize_image(None)
 
-	def new_career_click(self, e):
+	def new_career_click(self, e: ft.ControlEvent) -> None:
+		e.control.disabled = True
 		self.view.show_team_selection_screen()
 
-	def load_game_click(self, e):
+	def load_game_click(self, e: ft.ControlEvent) -> None:
 		self.view.controller.load_career()
 
-	def quit_game_click(self, e):
+	def quit_game_click(self, e: ft.ControlEvent) -> None:
 		self.view.main_app.window.close()
 
-	def resize_image(self, e):
+	def resize_image(self, e: ft.ControlEvent) -> None:
         # Get the window's aspect ratio
 		screen_width = self.view.main_app.window.width
 		screen_height = self.view.main_app.window.height

@@ -38,3 +38,37 @@ def test_update_team_drivers():
 			assert team_model.driver1_model.contract.contract_length > 0	
 			assert team_model.driver2_model.contract.contract_length > 0
 
+def test_top3_drivers_logic():
+	'''
+	Current logic is that top 3 drivers should be in one the top 4 teams.
+	make the top 3 drivers available (MS, MH and JV). Also make the Benetton driver 1 seat available
+	Test that the top 3 drivers end up in one of the 4 seats
+	'''
+
+	for i in range(50):
+		model = create_model.create_model(mode="headless")
+
+		schumacher_model = model.get_driver_model("Michael Schumacher")
+		hakkinen_model = model.get_driver_model("Mika Hakkinen")
+		villeneuve_model = model.get_driver_model("Jacques Villeneuve")
+		fisichella_model = model.get_driver_model("Giancarlo Fisichella")
+
+		schumacher_model.contract.contract_length = 1
+		hakkinen_model.contract.contract_length = 1
+		villeneuve_model.contract.contract_length = 1
+		fisichella_model.contract.contract_length = 1
+
+		model.staff_market.setup_dataframes()
+
+		model.staff_market.determine_driver_transfers()
+		model.staff_market.update_team_drivers()
+
+		top_4_teams_driver1 = []
+
+		for team in ["Ferrari", "Williams", "McLaren", "Benetton"]:
+			team_model = model.get_team_model(team)
+			top_4_teams_driver1.append(team_model.driver1)
+
+		assert "Michael Schumacher" in top_4_teams_driver1
+		assert "Mika Hakkinen" in top_4_teams_driver1
+		assert "Jacques Villeneuve" in top_4_teams_driver1

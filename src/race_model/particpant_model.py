@@ -1,8 +1,10 @@
 import random
 
 class ParticpantModel:
-	def __init__(self, driver, car, circuit, starting_position):
+	def __init__(self, driver,
+			  team_name: str, car, circuit, starting_position):
 		self.driver = driver
+		self.team_name = team_name
 		self.car_model = car
 		self.circuit_model = circuit
 		self.position = starting_position

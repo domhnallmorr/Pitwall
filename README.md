@@ -61,3 +61,5 @@ poetry run flet main.py
 ![p4](preview/preview4.png)
 
 ![p5](preview/preview5.png)
+
+![p6](preview/preview6.png)

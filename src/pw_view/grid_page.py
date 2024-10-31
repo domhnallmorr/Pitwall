@@ -55,7 +55,7 @@ class GridPage(ft.Column):
 		)
 
 		# NEXT YEAR
-		grid_next_year_df = data["grid_next_year_df"]
+		grid_next_year_df = data["grid_next_year_announced_df"]
 
 		columns = []
 		for col in grid_next_year_df.columns:
