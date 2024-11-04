@@ -1,3 +1,4 @@
+import os
 
 import flet as ft
 
@@ -31,6 +32,16 @@ class View:
 
 		self.vscroll_buffer = 200
 		
+		self.default_button_style = ft.ButtonStyle(alignment=ft.alignment.center_left)
+		self.positive_button_style = ft.ButtonStyle(color=ft.colors.GREEN, alignment=ft.alignment.center_left)
+		self.clicked_button_style = ft.ButtonStyle(color=ft.colors.BLACK, bgcolor=ft.colors.PRIMARY)
+
+		image_path = fr"{self.run_directory}\pw_view\assets\background_image.jpg"
+		self.background_image = ft.Image(
+			src=os.path.abspath(image_path),  # Use absolute path for the local image
+			fit=ft.ImageFit.COVER  # Ensure it covers the entire area
+		)
+
 		self.setup_pages()
 		self.setup_windows(team_names)
 

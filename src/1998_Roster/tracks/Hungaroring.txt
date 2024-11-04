@@ -1,0 +1,6 @@
+Name: Hungaroring
+Country: Hungary
+Location: Budapest
+Title: Hungarian Grand Prix
+Laps: 77
+Base Laptime: 84_000

@@ -10,4 +10,6 @@ Circuit Gilles Villeneuve, 23
 Circuit de Nevers Magny-Cours, 26
 Silverstone Circuit, 28
 A1 Ring, 30
+Hockenheimring, 31
+Hungaroring, 33
 Calendar>

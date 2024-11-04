@@ -1,0 +1,6 @@
+Name: Hockenheimring
+Country: Germany
+Location: Hockenheim
+Title: German Grand Prix
+Laps: 45
+Base Laptime: 84_000

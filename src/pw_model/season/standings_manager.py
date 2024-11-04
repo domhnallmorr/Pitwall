@@ -91,3 +91,8 @@ class StandingsManager:
 			"drivers_standings_df": self.drivers_standings_df.to_dict(),
 			"constructors_standings_df": self.constructors_standings_df.to_dict(),
 		}
+	
+	def team_position(self, team: str) -> int: #0 indexed
+		index = self.constructors_standings_df[self.constructors_standings_df["Team"] == team].index.values[0]
+		
+		return index

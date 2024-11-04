@@ -114,7 +114,7 @@ class HireDriverPage(ft.Column):
 		if name is None:
 			name = e.control.data
 
-		details = self.view.controller.driver_hire_controller.get_driver_details(name)
+		details = self.view.controller.staff_hire_controller.get_driver_details(name)
 		self.name_text.value = f"Driver Name: {details['name']}"
 		self.age_text.value = f"Driver Age: {details['age']}"
 
@@ -147,7 +147,6 @@ class HireDriverPage(ft.Column):
 		self.view.main_app.close(self.dlg_modal)
 		action = e.control.text
 
-
 		if action.lower() == "yes":
-			self.view.controller.driver_hire_controller.complete_hire(name)
+			self.view.controller.staff_hire_controller.complete_hire(name)
 		

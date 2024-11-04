@@ -1,5 +1,8 @@
 import flet as ft
 
+from pw_view.custom_widgets import custom_container
+from pw_view.staff_page import hire_workforce_modal
+
 class StaffPage(ft.Column):
 	def __init__(self, view):
 
@@ -16,24 +19,46 @@ class StaffPage(ft.Column):
 		]
 
 		super().__init__(expand=1, controls=contents)
+		self.display_drivers(None)
+
+	def reset_tab_buttons(self) -> None:
+		# When a button is clicked to view a different tab, reset all buttons style
+
+		self.drivers_btn.style = None
+		self.manager_button.style = None
+		self.workforce_btn.style = None
+
+
 
 	def setup_buttons_row(self):
-		self.manager_button = ft.TextButton("Management", on_click=self.display_managers,
-									  style=ft.ButtonStyle(
-                								color={
-													ft.ControlState.FOCUSED: ft.colors.WHITE,
-													}
-													)
-										)
+		self.manager_button = ft.TextButton("Management", on_click=self.display_managers,)
 
+		self.drivers_btn = ft.TextButton("Drivers", on_click=self.display_drivers)
+		self.workforce_btn = ft.TextButton("Workforce", on_click=self.display_workforce)
 
 		self.buttons_row = ft.Row(
-			# expand=1,
 			controls=[
-				ft.TextButton("Drivers", on_click=self.display_drivers),
-				self.manager_button
-			]
+				self.drivers_btn,
+				self.manager_button,
+				self.workforce_btn,
+			],
+			expand=False,
+			tight=True
 		)
+
+		self.buttons_container = custom_container.CustomContainer(self.view, self.buttons_row, expand=False)
+
+		self.hire_workforce_button = ft.TextButton("Hire", icon="upgrade", on_click=self.hire_workforce)
+
+		self.workforce_buttons_row = ft.Row(
+			controls=[
+				self.hire_workforce_button,
+			],
+			expand=False,
+			tight=True
+		)
+
+		self.workforce_buttons_container = custom_container.CustomContainer(self.view, self.workforce_buttons_row, expand=False)
 
 	def setup_widgets(self):
 		self.driver_name_texts = [ft.Text(f"Driver1"), ft.Text(f"Driver2")]
@@ -87,17 +112,7 @@ class StaffPage(ft.Column):
 				expand=True
 			)
 
-			#TODO make this contain a custom class with inheritence
-			container = ft.Container(
-				# expand=1,
-				content=column,
-				bgcolor=self.view.dark_grey,
-				margin=20,
-				padding=10,
-				width=200,
-				expand=True,
-				border_radius=15,
-			)
+			container = custom_container.CustomContainer(self.view, column, expand=True)
 
 			self.driver_containers.append(container)
 
@@ -152,18 +167,7 @@ class StaffPage(ft.Column):
 				expand=True
 			)
 
-			#TODO make this contain a custom class with inheritence
-			container = ft.Container(
-				# expand=1,
-				content=column,
-				bgcolor=self.view.dark_grey,
-				margin=20,
-				padding=10,
-				width=200,
-				expand=True,
-				border_radius=15,
-			)
-
+			container = custom_container.CustomContainer(self.view, column, expand=True)
 			self.manager_containers.append(container)
 
 		self.manager_row = ft.Row(
@@ -173,7 +177,10 @@ class StaffPage(ft.Column):
 			]
 		)
 
-	def update_page(self, data):
+	def update_page(self, data: dict, new_season: bool=False):
+		if new_season is True:
+			self.enable_hire_workforce_btn()
+			
 		self.driver_name_texts[0].value = f"Name: {data['driver1']}"
 		self.driver_name_texts[1].value = f"Name: {data['driver2']}"
 
@@ -222,26 +229,141 @@ class StaffPage(ft.Column):
 		self.commercial_manager_contract_length_text.value = f"Contract Length: {data['commercial_manager_contract_length']} Years"
 		self.commercial_manager_skill_text.value = f"Ability: {data['commercial_manager_skill']}"
 
+		self.workforce_container = self.setup_staff_value_progress_bars(data)
+
 		self.view.main_app.update()
 
-	def replace_driver(self, e):
-
-		self.view.controller.driver_hire_controller.launch_replace_driver(e.control.data)
+	def replace_driver(self, e: ft.ControlEvent) -> None:
+		self.view.controller.staff_hire_controller.launch_replace_driver(e.control.data)
 
 	def display_drivers(self, e):
+		self.reset_tab_buttons()
+		self.drivers_btn.style = self.view.clicked_button_style
+
+		page_controls = [self.buttons_container, self.driver_row]
+
+		column = ft.Column(
+			controls=page_controls,
+			expand=False,
+			spacing=20
+		)
+
 		self.controls = [
 			ft.Text("Staff", theme_style=self.view.page_header_style),
 			self.buttons_row,
 			self.driver_row,
 		]
 
-		self.view.main_app.update()
+		self.background_stack = ft.Stack(
+			[
+				self.view.background_image,
+				column,
+			],
+			expand=False,
+		)
 
-	def display_managers(self, e):
 		self.controls = [
 			ft.Text("Staff", theme_style=self.view.page_header_style),
-			self.buttons_row,
-			self.manager_row,
+			self.background_stack
+		]
+		
+		self.view.main_app.update()
+
+	def display_managers(self, e: ft.ControlEvent) -> None:
+		self.reset_tab_buttons()
+		self.manager_button.style = self.view.clicked_button_style
+
+		page_controls = [self.buttons_container, self.manager_row]
+
+		column = ft.Column(
+			controls=page_controls,
+			expand=False,
+			spacing=20
+		)
+
+		self.background_stack = ft.Stack(
+			[
+				self.view.background_image,
+				column,
+			],
+			expand=False
+		)
+
+		self.controls = [
+			ft.Text("Staff", theme_style=self.view.page_header_style),
+			self.background_stack
 		]
 
 		self.view.main_app.update()
+
+	def display_workforce(self, e: ft.ControlEvent) -> None:
+		self.reset_tab_buttons()
+		self.workforce_btn.style = self.view.clicked_button_style
+
+		page_controls = [self.buttons_container, self.workforce_container, self.workforce_buttons_container]
+
+		column = ft.Column(
+			controls=page_controls,
+			expand=False,
+			spacing=20
+		)
+
+		self.background_stack = ft.Stack(
+			[
+				self.view.background_image,
+				column,
+			],
+			expand=False
+		)
+
+		self.controls = [
+			ft.Text("Staff", theme_style=self.view.page_header_style),
+			self.background_stack
+		]
+
+		self.view.main_app.update()
+
+	def setup_staff_value_progress_bars(self, data: dict) -> ft.Container:
+		staff_value_rows = []
+		max_staff = max(v[1] for v in data["staff_values"])
+
+		for team in data["staff_values"]:
+			team_name = team[0]
+			staff_value = team[1]
+			
+			row = ft.Row(
+				controls=[
+					ft.Text(f"{team_name} ({staff_value}):", width=100),
+					ft.ProgressBar(value=staff_value/max_staff, width=500, expand=True, bar_height=28)
+				],
+				expand=True,
+			)
+			staff_value_rows.append(row)
+
+		column = ft.Column(
+			controls=staff_value_rows,
+			expand=True,
+			spacing=20
+		)
+
+		workforce_container = custom_container.CustomContainer(self.view, column, expand=False)
+
+		return workforce_container
+	
+	def hire_workforce(self, e: ft.ControlEvent) -> None:
+		self.view.controller.staff_hire_controller.hire_workforce()
+
+	def open_workforce_dialog(self, current_workforce: int) -> None:
+		workforce_dialog = hire_workforce_modal.WorkforceDialog(self.view.main_app, self.view, initial_value=current_workforce)
+
+		# Adding elements to page
+		self.view.main_app.dialog = workforce_dialog
+
+		workforce_dialog.open = True
+		self.view.main_app.update()
+
+	def disable_hire_workforce_btn(self):
+		self.hire_workforce_button.disabled = True
+
+	def enable_hire_workforce_btn(self):
+		self.hire_workforce_button.disabled = False

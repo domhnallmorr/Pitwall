@@ -10,6 +10,8 @@ The UI is built using flet.
 
 See the [CONTRIBUTING](Contributing.md) file if interested in helping out.
 
+See the [acknowledgements](acknowledgements.md) file for credit of any assets used.
+
 ## Features
 
 - Drivers retire

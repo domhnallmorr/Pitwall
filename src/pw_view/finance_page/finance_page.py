@@ -13,6 +13,8 @@ from matplotlib import style
 from matplotlib.ticker import FuncFormatter
 style.use("dark_background")
 
+from pw_view.custom_widgets import custom_container
+
 class FinancePage(ft.Column):
 	def __init__(self, view):
 
@@ -20,20 +22,33 @@ class FinancePage(ft.Column):
 
 		self.setup_widgets()
 
+		column = ft.Column(
+			controls=[
+				ft.Row(
+					controls=[
+						self.summary_container,
+					]
+				),
+				ft.Row(
+					controls=[
+						self.chart_container,
+					],
+					expand=True
+				)
+			]
+		)
+		self.background_stack = ft.Stack(
+			[
+				self.view.background_image,
+				column
+			],
+			expand=False
+		)
+
 		contents = [
 			ft.Text("Finance", theme_style=self.view.page_header_style),
-			ft.Row(
-				controls=[
-					self.summary_container,
-					]
-			),
-			ft.Row(
-				controls=[
-					self.chart_container,
-				],
-				expand=True
-				
-			)
+			self.background_stack
+
 		]
 
 		super().__init__(expand=1, controls=contents, alignment=ft.MainAxisAlignment.START, scroll="auto")
@@ -63,29 +78,11 @@ class FinancePage(ft.Column):
 			expand=True
 		)
 
+		self.summary_container = custom_container.CustomContainer(self.view, column, expand=True)
 
-		self.summary_container = ft.Container(
-				# expand=1,
-				content=column,
-				bgcolor=self.view.dark_grey,
-				margin=20,
-				padding=10,
-				width=200,
-				expand=True,
-				border_radius=self.view.container_border_radius
-			)
-		
 		self.setup_plot()
 
-		self.chart_container = ft.Container(
-				content=self.history_chart,
-				bgcolor=self.view.dark_grey,
-				margin=20,
-				padding=10,
-				# width=200,
-				expand=True,
-				border_radius=self.view.container_border_radius
-			)
+		self.chart_container = custom_container.CustomContainer(self.view, self.history_chart, expand=True)
 
 
 	def update_page(self, data: dict):
@@ -106,7 +103,7 @@ class FinancePage(ft.Column):
 		self.axs.set_xlabel("Date")
 		self.axs.set_ylabel("Balance")
 
-		self.fig.subplots_adjust(left=0.07, right=0.97, top=0.98, bottom=0.15)
+		self.fig.subplots_adjust(left=0.08, right=0.97, top=0.98, bottom=0.15)
 
 		self.history_chart = MatplotlibChart(self.fig, expand=True, transparent=True, original_size=False)
 

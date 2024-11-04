@@ -8,26 +8,6 @@ from pw_model.season import standings_manager
 
 from tests import create_model
 
-# class DummyModel(pw_model.Model):
-# 	def __init__(self):
-		
-# 		self.teams = []
-
-# 		self.teams.append(test_team_functions.gen_dummy_team(model=self, name="Williams", driver1="Jacques Villeneuve", driver2="Heinz-Harald Frentzen")) 
-# 		self.teams.append(test_team_functions.gen_dummy_team(model=self, name="Ferrari", driver1="Michael Schumacher", driver2="Eddie Irvine")) 
-# 		self.teams.append(test_team_functions.gen_dummy_team(model=self, name="McLaren", driver1="Mika Hakkinen", driver2="David Coulthard")) 
-
-# 		self.drivers = []
-
-# 		self.drivers.append(test_driver_functions.gen_dummy_driver(model=self, name="Jacques Villeneuve"))
-# 		self.drivers.append(test_driver_functions.gen_dummy_driver(model=self, name="Heinz-Harald Frentzen"))
-# 		self.drivers.append(test_driver_functions.gen_dummy_driver(model=self, name="Michael Schumacher"))
-# 		self.drivers.append(test_driver_functions.gen_dummy_driver(model=self, name="Eddie Irvine"))
-# 		self.drivers.append(test_driver_functions.gen_dummy_driver(model=self, name="Mika Hakkinen"))
-# 		self.drivers.append(test_driver_functions.gen_dummy_driver(model=self, name="David Coulthard"))
-
-# 		super().__init__(None, None)
-
 def test_create_standings_dataframe():
 
 	teams = {
@@ -140,3 +120,15 @@ def test_update_standings():
 
 	#TODO test stats such as starts, DNFs in standings df
 
+def test_team_position():
+	# test the functions for returning the position of a team in the standings
+	# NOTE positions are 0 indexed
+	model = create_model.create_model(mode="headless")
+
+	model.player_team = "Williams"
+	assert model.season.standings_manager.player_team_position == 0
+
+	model.player_team = "Minardi"
+	assert model.season.standings_manager.player_team_position == 10
+
+	assert model.season.standings_manager.team_position("Ferrari") == 1

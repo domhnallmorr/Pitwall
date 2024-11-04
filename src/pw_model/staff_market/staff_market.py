@@ -131,8 +131,12 @@ class StaffMarket:
 		ensure top 3 drivers are in the top 4 teams next season
 		'''
 		drivers_by_rating = [d[0] for d in self.model.season.drivers_by_rating[:3]] # d[0] is drivers name
-		teams_by_rating = [t[0] for t in self.model.season.teams_by_rating[:3]] # t[0] is teams name
+		teams_by_rating = [t[0] for t in self.model.season.teams_by_rating[:4]] # t[0] is teams name
 		free_agents = self.get_free_agents()
+
+		# remove player team if in top 4 teams
+		if self.model.player_team in teams_by_rating:
+			teams_by_rating.remove(self.model.player_team)
 
 		top_available_drivers = [driver for driver in drivers_by_rating if driver in free_agents]
 		teams_requiring_driver1 = self.compile_teams_requiring_drivers("driver1")

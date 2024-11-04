@@ -3,6 +3,7 @@ from pw_model.finance import finance_model
 
 import random
 
+import pandas as pd
 import pytest
 
 
@@ -48,4 +49,27 @@ def test_balance_update():
 
 		assert team_model.finance_model.balance == last_balance - race_cost
 		
+def test_prize_money_update():
+	'''
+	Do a spot check on ending the season and check if prize money is updated
+	set player_team to Williams, create a dummy dataframe for contructors championship and test if prize money gets updated
+	'''
+	model = create_model.create_model(mode="headless")
 
+	# Redfine constructors standings
+	data = [
+		"Ferrari",
+		"Benetton",
+		"Jordan",
+		"Stewart",
+		"Williams",
+		"Prost"
+	]
+
+	model.season.standings_manager.constructors_standings_df = pd.DataFrame(data=data, columns=["Team"])
+
+	# model.staff_market.ensure_player_has_drivers_for_next_season()
+	model.player_team = "Williams"
+	model.player_team_model.finance_model.prize_money = 0 # set to zero and check if it gets updated
+	model.end_season()
+	assert model.player_team_model.finance_model.prize_money == 13_000_000

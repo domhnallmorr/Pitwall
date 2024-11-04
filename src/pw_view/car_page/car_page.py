@@ -1,5 +1,7 @@
 import flet as ft
 
+from pw_view.custom_widgets import custom_container
+
 class CarPage(ft.Column):
 	def __init__(self, view):
 
@@ -20,14 +22,43 @@ class CarPage(ft.Column):
 			spacing=20
 		)
 
-		car_comparison_container = ft.Container(
-			content=column,
-			expand=False
+		car_comparison_container = custom_container.CustomContainer(self.view, column, expand=False)
+
+		self.background_stack = ft.Stack(
+			[
+				# Add the resizable background image
+				self.view.background_image,
+				car_comparison_container
+				# Add the buttons on top of the image
+		# ft.Container(
+		# 			content=ft.Column(
+		# 				[
+		# 					ft.Text(
+		# 						"Pitwall",
+		# 						size=80,  # Increased size for the title
+		# 						color=ft.colors.WHITE,
+		# 						weight=ft.FontWeight.BOLD,
+		# 						bgcolor=ft.colors.BLACK54,  # Add a semi-transparent background to the text
+		# 					),
+		# 					button_container,
+		# 				],
+		# 				alignment=ft.MainAxisAlignment.CENTER,
+		# 				horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+		# 				spacing=40  # Added spacing between the title and buttons
+		# 			),
+		# 			expand=True,  # This makes the container fill the entire window
+		# 			alignment=ft.Alignment(-0.75, -1.0),  # Center the content
+		# 		),
+			],
+			expand=False,  # Make sure the stack expands to fill the window
 		)
+
+
 
 		self.controls = [
 			ft.Text("Car", theme_style=self.view.page_header_style),
-			car_comparison_container
+			# car_comparison_container
+			self.background_stack
 		]
 
 		self.view.main_app.update()

@@ -1,5 +1,7 @@
 import flet as ft
 
+from pw_view.custom_widgets import custom_container
+
 class FacilityPage(ft.Column):
 	def __init__(self, view):
 
@@ -15,27 +17,50 @@ class FacilityPage(ft.Column):
 	def update_page(self, data):
 		facility_rows = self.setup_facilities_progress_bars(data)
 
-		column = ft.Column(
+		facility_column = ft.Column(
 			controls=facility_rows,
 			expand=True,
 			spacing=20
 		)
 
-		facility_comparison_container = ft.Container(
-			content=column,
-			expand=True
+		facility_comparison_container = custom_container.CustomContainer(self.view, facility_column, expand=True)
+
+		column = ft.Column(
+			controls=[
+				self.buttons_container,
+				facility_comparison_container,
+			]
+		)
+
+		self.background_stack = ft.Stack(
+			[
+				self.view.background_image,
+				column
+			],
+			expand=False
 		)
 
 		self.controls = [
 			ft.Text("Facilities", theme_style=self.view.page_header_style),
-			self.update_button,
-			facility_comparison_container,
+			self.background_stack
+			# self.update_button,
+			# facility_comparison_container,
 		]
 
 		self.view.main_app.update()
 
 	def setup_widgets(self):
 		self.update_button = ft.TextButton("Update", icon="upgrade", on_click=self.update_facilities)
+
+		self.buttons_row = ft.Row(
+			controls=[
+				self.update_button,
+			],
+			expand=False,
+			tight=True
+		)
+
+		self.buttons_container = custom_container.CustomContainer(self.view, self.buttons_row, expand=False)
 
 	def setup_facilities_progress_bars(self, data):
 		facility_rows = []

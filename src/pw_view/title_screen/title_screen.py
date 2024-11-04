@@ -99,6 +99,9 @@ class TitleScreen(ft.View):
 		self.background_image.width = screen_width
 		self.background_image.height = screen_height
 
+		self.view.background_image.width = screen_width
+		self.view.background_image.height = screen_height
+
         # Force the page to update with the new image size
 		self.view.main_app.update()
 

@@ -1,9 +1,9 @@
 import copy
 
-from pw_controller import calander_page_controller, driver_hire_controller, facilities_controller
+from pw_controller import calander_page_controller, staff_hire_controller, facilities_controller
 from pw_model import pw_model, update_window_functions
 from pw_view import view
-from pw_controller import race_controller
+from pw_controller import race_controller, page_update_controller
 
 class Controller:
 	def __init__(self, app, run_directory, mode):
@@ -11,8 +11,9 @@ class Controller:
 		self.mode = mode
 		roster = "1998_Roster"
 
+		self.page_update_controller = page_update_controller.PageUpdateController(self)
 		self.calendar_page_controller = calander_page_controller.CalendarPageController(self)
-		self.driver_hire_controller = driver_hire_controller.PWDriverHireController(self)
+		self.staff_hire_controller = staff_hire_controller.StaffHireController(self)
 		self.facilities_controller = facilities_controller.FacilitiesController(self)
 		
 		self.model = pw_model.Model(roster, run_directory)
@@ -24,8 +25,7 @@ class Controller:
 		else:
 			self.view = None # running headless tests
 
-
-		self.update_staff_page()
+		self.page_update_controller.update_staff_page()
 
 		# if self.mode in ["normal"]:
 		# 	self.view.setup_race_pages()
@@ -53,8 +53,9 @@ class Controller:
 		self.update_standings_page()
 		self.update_grid_page()
 		self.update_finance_page()
-		self.update_staff_page()
 		self.update_email_page()
+
+		self.page_update_controller.refresh_ui()
 		
 	def advance(self):
 		self.model.advance()
@@ -63,8 +64,9 @@ class Controller:
 			self.update_main_window()
 			self.update_email_page()
 			self.update_standings_page()
-			self.update_finance_page()
 			self.update_grid_page()
+
+			self.page_update_controller.refresh_ui()
 
 		if self.model.season.current_week == 1:
 			self.setup_new_season()
@@ -82,15 +84,15 @@ class Controller:
 			self.update_calendar_page()
 			self.update_standings_page()
 			self.update_home_page()
-			self.update_finance_page()
 			self.update_grid_page()
-			self.update_staff_page()
 			self.update_car_page()
 			self.update_facilities_page(new_season=True)
 			self.update_main_window()
 			self.race_controller = race_controller.RaceController(self)
 
 			self.update_standings_page()
+
+			self.page_update_controller.refresh_ui(new_season=True)
 
 	def update_home_page(self):
 		data = {
@@ -118,38 +120,7 @@ class Controller:
 
 		self.view.standings_page.update_standings(data)
 
-	def update_staff_page(self):
-		team_model = self.model.get_team_model(self.model.player_team)
-		data = {
-			"driver1": team_model.driver1,
-			"driver1_age": team_model.driver1_model.age,
-			"driver1_country": team_model.driver1_model.country,
-			"driver1_speed": team_model.driver1_model.speed,
-			"driver1_contract_length": team_model.driver1_model.contract.contract_length,
-			"driver1_retiring": team_model.driver1_model.retiring,
-			"player_requiring_driver1": self.model.staff_market.player_requiring_driver1,
 
-			"driver2": team_model.driver2,
-			"driver2_age": team_model.driver2_model.age,
-			"driver2_country": team_model.driver2_model.country,
-			"driver2_speed": team_model.driver2_model.speed,
-			"driver2_contract_length": team_model.driver2_model.contract.contract_length,
-			"driver2_retiring": team_model.driver2_model.retiring,
-			"player_requiring_driver2": self.model.staff_market.player_requiring_driver2,
-
-			"commercial_manager": team_model.commercial_manager,
-			"commercial_manager_age": team_model.commercial_manager_model.age,
-			"commercial_manager_contract_length": team_model.commercial_manager_model.contract.contract_length,
-			"commercial_manager_skill": team_model.commercial_manager_model.skill,
-
-			"technical_director": team_model.technical_director,
-			"technical_director_age": team_model.technical_director_model.age,
-			"technical_director_contract_length": team_model.technical_director_model.contract.contract_length,
-			"technical_director_skill": team_model.technical_director_model.skill,
-
-		}
-
-		self.view.staff_page.update_page(copy.deepcopy(data))
 
 	def update_car_page(self):
 		car_speeds = {}
@@ -186,18 +157,7 @@ class Controller:
 		}
 		self.view.email_page.update_page(data)
 
-	def update_finance_page(self):
-		data = {
-			"total_sponsorship": copy.deepcopy(self.model.player_team_model.finance_model.total_sponsorship),
-			"prize_money": copy.deepcopy(self.model.player_team_model.finance_model.prize_money),
-			"total_staff_costs_per_year": copy.deepcopy(self.model.player_team_model.finance_model.total_staff_costs_per_year),
-			"technical_director_salary": copy.deepcopy(self.model.player_team_model.technical_director_model.contract.salary),
-			"commercial_manager_salary": copy.deepcopy(self.model.player_team_model.commercial_manager_model.contract.salary),
-			"race_costs": 500_000, # hard code this for now TODO, make it variable
-			"balance_history": copy.deepcopy(self.model.player_team_model.finance_model.balance_history),
-			"balance_history_dates": copy.deepcopy(self.model.player_team_model.finance_model.balance_history_dates),
-		}
-		self.view.finance_page.update_page(data)
+
 
 	def update_car_page(self):
 		car_speeds = [[team.name, team.car_model.speed] for team in self.model.teams]

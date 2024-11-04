@@ -75,6 +75,10 @@ class TeamModel:
 
 		return int(skill / (idx + 1)) # return average skill of all managers
 
+	@property
+	def current_position(self) -> int: #in constructors championship, 0 indexed
+		return self.model.season.standings_manager.team_position(self.name)
+	
 	def advance(self):
 		self.finance_model.weekly_update()
 		
@@ -86,6 +90,10 @@ class TeamModel:
 
 			if self.is_player_team:
 				self.finance_model.end_season()
+				self.finance_model.update_prize_money(self.current_position)
+			else: # AI only functions
+				self.update_workforce()
+
 			self.update_car_speed()
 
 	def setup_season_stats(self):
@@ -106,10 +114,8 @@ class TeamModel:
 	def update_drivers(self, driver1 : str, driver2 : str, driver1_contract : dict, driver2_contract : dict):
 		self.driver1 = driver1
 		self.driver2 = driver2
-		print(self.name)
+
 		if driver1_contract is not None:
-			print(self.driver1)
-			print(driver1_contract["ContractLength"])
 			self.driver1_model.contract.contract_length = driver1_contract["ContractLength"]
 
 		if driver2_contract is not None:
@@ -135,6 +141,15 @@ class TeamModel:
 
 		if self.is_player_team is True:
 			self.model.inbox.new_car_update_email()
+
+	def update_workforce(self):
+		# randomly update number of staff, should trend upwards over the seasons
+		self.number_of_staff += random.randint(-15, 20)
+		if self.number_of_staff > 250:
+			self.number_of_staff = 250
+		elif self.number_of_staff < 90:
+			self.number_of_staff = 90
+
 
 	def to_dict(self):
 		data =  {

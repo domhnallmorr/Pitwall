@@ -1,7 +1,7 @@
 import copy
 from pw_model.staff_market import staff_market
 
-class PWDriverHireController:
+class StaffHireController:
 	def __init__(self, controller):
 		self.controller = controller
 
@@ -28,7 +28,19 @@ class PWDriverHireController:
 		self.model.staff_market.complete_driver_hiring(driver_hired, self.model.player_team, self.driver_idx)
 		self.controller.update_grid_page()
 		self.controller.update_email_page()
-		self.controller.update_staff_page()
+		self.controller.page_update_controller.update_staff_page()
 
 	def get_driver_details(self, driver_name: str) -> dict:
 		return copy.deepcopy(self.controller.model.get_driver_model(driver_name).details)
+	
+	def hire_workforce(self):
+		current_workforce = self.controller.model.player_team_model.number_of_staff
+		# Open the dialog in view
+		self.controller.view.staff_page.open_workforce_dialog(current_workforce)
+
+	def update_workforce(self, number_of_staff: int) -> None:
+		self.controller.model.player_team_model.number_of_staff = number_of_staff
+		self.controller.view.staff_page.disable_hire_workforce_btn()
+		self.controller.page_update_controller.refresh_ui()
+		self.controller.view.staff_page.display_workforce(None)
+
