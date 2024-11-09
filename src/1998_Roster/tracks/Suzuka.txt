@@ -1,0 +1,6 @@
+Name: Suzuka Circuit
+Country: Japan
+Location: Suzuka
+Title: Japanese Grand Prix
+Laps: 53
+Base Laptime: 84_000

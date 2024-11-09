@@ -29,6 +29,7 @@ class StaffHireController:
 		self.controller.update_grid_page()
 		self.controller.update_email_page()
 		self.controller.page_update_controller.update_staff_page()
+		self.controller.view.main_window.change_page("email")
 
 	def get_driver_details(self, driver_name: str) -> dict:
 		return copy.deepcopy(self.controller.model.get_driver_model(driver_name).details)

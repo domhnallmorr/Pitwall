@@ -1,0 +1,6 @@
+Name: Nurburgring
+Country: Germany
+Location: Nurburg
+Title: Luxembourg Grand Prix
+Laps: 67
+Base Laptime: 84_000

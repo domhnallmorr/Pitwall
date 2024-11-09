@@ -12,4 +12,8 @@ Silverstone Circuit, 28
 A1 Ring, 30
 Hockenheimring, 31
 Hungaroring, 33
+Circuit de Spa-Francorchamps, 35
+Autodromo Nazionale di Monza, 37
+Nurburgring, 39
+Suzuka Circuit, 44
 Calendar>

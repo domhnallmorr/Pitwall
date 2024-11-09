@@ -18,7 +18,7 @@ class RaceController:
 		elif session == "FP Saturday":
 			self.race_model.setup_practice(90*60, session)
 		elif session == "Qualy":
-			self.race_model.setup_qualfying(60*60, session)
+			self.race_model.setup_qualifying(60*60, session)
 		elif session == "Warmup":
 			self.race_model.setup_practice(60*60, session)
 		elif session == "Warmup":
@@ -32,15 +32,16 @@ class RaceController:
 
 		simulation_thread.join() # wait for simulation to stop running
 
-		# update lap chart
-		if session == "Race":
-			data = {"lap_chart_data": self.race_model.current_session.lap_chart_data}
-			#  self.view.lap_chart_page.update_page(data)
-
 		data = {
 			"current_session_name": self.race_model.current_session_name,
 			"standings_df": self.race_model.current_session.standings_df.copy(deep=True),
 		}
+
+		# Add race specific data
+		if session == "Race":
+			data["lap_chart_data"] = self.race_model.current_session.lap_chart_data
+			data["pit_stop_summary"] = self.race_model.current_session.pit_stop_summary
+			data["lap_times_summary"] = self.race_model.current_session.lap_times_summary
 
 		# SHOW THE RESULTS
 		self.view.results_window.update_page(data)

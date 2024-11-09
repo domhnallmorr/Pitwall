@@ -26,6 +26,7 @@ See the [acknowledgements](acknowledgements.md) file for credit of any assets us
 
 - Player can replace a retiring driver
 - Player can upgrade facilities
+- Player can increase/decrease the teams workforce
 
 
 ## RUNNING THE GAME

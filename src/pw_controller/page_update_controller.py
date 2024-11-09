@@ -16,8 +16,9 @@ class PageUpdateController:
 		return self.controller.view
 	
 	def refresh_ui(self, new_season: bool=False):
-		self.update_staff_page(new_season)
 		self.update_finance_page()
+		self.update_staff_page(new_season)
+		self.update_standings_page()
 
 	def update_staff_page(self, new_season: bool=False) -> None:
 		team_model = self.model.get_team_model(self.model.player_team)
@@ -57,6 +58,14 @@ class PageUpdateController:
 		}
 
 		self.view.staff_page.update_page(copy.deepcopy(data), new_season)
+
+	def update_standings_page(self):
+		data = {
+			"drivers_standings_df": self.model.season.standings_manager.drivers_standings_df.copy(deep=True),
+			"constructors_standings_df": self.model.season.standings_manager.constructors_standings_df.copy(deep=True)
+		}
+
+		self.view.standings_page.update_standings(data)
 
 	def update_finance_page(self) -> None:
 		data = {

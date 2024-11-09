@@ -50,9 +50,7 @@ class Controller:
 
 	def refresh_ui(self):
 		self.update_main_window()
-		self.update_standings_page()
 		self.update_grid_page()
-		self.update_finance_page()
 		self.update_email_page()
 
 		self.page_update_controller.refresh_ui()
@@ -63,7 +61,6 @@ class Controller:
 		if self.mode != "headless":
 			self.update_main_window()
 			self.update_email_page()
-			self.update_standings_page()
 			self.update_grid_page()
 
 			self.page_update_controller.refresh_ui()
@@ -82,15 +79,12 @@ class Controller:
 			# Setup the calander page to show the races upcoming in the new season
 			self.update_email_page()
 			self.update_calendar_page()
-			self.update_standings_page()
 			self.update_home_page()
 			self.update_grid_page()
 			self.update_car_page()
 			self.update_facilities_page(new_season=True)
 			self.update_main_window()
 			self.race_controller = race_controller.RaceController(self)
-
-			self.update_standings_page()
 
 			self.page_update_controller.refresh_ui(new_season=True)
 
@@ -111,15 +105,6 @@ class Controller:
 	def update_email_button(self):
 		data = {"number_unread": self.model.inbox.number_unread}
 		self.view.main_window.update_email_button(data)
-
-	def update_standings_page(self):
-		data = {
-			"drivers_standings_df": self.model.season.standings_manager.drivers_standings_df.copy(deep=True),
-			"constructors_standings_df": self.model.season.standings_manager.constructors_standings_df.copy(deep=True)
-		}
-
-		self.view.standings_page.update_standings(data)
-
 
 
 	def update_car_page(self):
@@ -207,5 +192,5 @@ class Controller:
 		self.model.season.post_race_actions()
 		self.model.save_career()
 
-		self.update_standings_page()
+		self.page_update_controller.update_standings_page()
 		self.return_to_main_window()

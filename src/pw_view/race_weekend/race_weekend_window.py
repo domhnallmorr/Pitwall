@@ -1,5 +1,7 @@
 import flet as ft
 
+from pw_view.custom_widgets import custom_container, custom_buttons
+
 def create_session_header_text(session):
 
 	return ft.Text(text=session)
@@ -15,20 +17,48 @@ class RaceWeekendWindow(ft.View):
 
 		friday_container = self.setup_session_container("Friday Practice")
 		saturday_container = self.setup_session_container("Saturday Practice")
-		qualy_container = self.setup_session_container("Qualifying")
+		self.qualy_container = self.setup_session_container("Qualifying")
 		warmup_container = self.setup_session_container("Warmup")
-		race_container = self.setup_session_container("Race")
+		self.race_container = self.setup_session_container("Race")
 
-		self.continue_btn = ft.TextButton("Continue", disabled=True, on_click=self.return_to_main_window)
+		self.continue_btn = custom_buttons.gen_continue_btn(self.view, on_click_func=self.return_to_main_window)
+		self.continue_btn.disabled = True
+
+		self.continue_container = custom_buttons.buttons_row(view, [self.continue_btn])
+
+		# self.continue_btn = ft.TextButton("Continue", disabled=True, on_click=self.return_to_main_window)
 		self.simulate_buttons["Qualifying"].disabled = False
 		
 		# comment out to remove practice sessions for now, will add back later when they are of value
 		# controls = [self.header_text, friday_container, saturday_container, qualy_container, warmup_container, race_container, self.continue_btn]
-		controls = [self.header_text, qualy_container, race_container, self.continue_btn]
+		
+		controls = self.setup_page()
 
 		super().__init__(controls=controls, scroll="auto")
 
-	def setup_session_container(self, session_title):
+	def setup_page(self) -> list:
+		self.content_column = ft.Column(
+			controls=[self.qualy_container, self.race_container, self.continue_container],
+			expand=True,
+			spacing=20
+		)
+
+		self.background_stack = ft.Stack(
+			[
+				self.view.race_background_image,
+				self.content_column,
+			],
+			expand=False,
+		)
+
+		controls = [
+			self.header_text,
+			self.background_stack,
+		]
+
+		return controls
+
+	def setup_session_container(self, session_title: str) -> ft.Container:
 		
 		row1 = ft.Row(
 			controls=[ft.Text(session_title, theme_style=self.view.header2_style)]
@@ -43,13 +73,7 @@ class RaceWeekendWindow(ft.View):
 			controls=[row1, row2]
 		)
 
-
-		container = ft.Container(
-			content=column,
-			bgcolor=self.view.dark_grey,
-			margin=20,
-			padding=10
-		)
+		container = custom_container.CustomContainer(self.view, column, expand=False)
 
 		return container
 	

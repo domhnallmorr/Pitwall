@@ -33,19 +33,35 @@ class View:
 		self.vscroll_buffer = 200
 		
 		self.default_button_style = ft.ButtonStyle(alignment=ft.alignment.center_left)
-		self.positive_button_style = ft.ButtonStyle(color=ft.colors.GREEN, alignment=ft.alignment.center_left)
+		self.positive_button_style = ft.ButtonStyle(color="#111418",
+											  bgcolor={ft.ControlState.DEFAULT: ft.colors.LIGHT_GREEN, ft.ControlState.DISABLED: ft.colors.GREY},
+											  alignment=ft.alignment.center_left,)
 		self.clicked_button_style = ft.ButtonStyle(color=ft.colors.BLACK, bgcolor=ft.colors.PRIMARY)
 
+		self.setup_background_images()
+		self.setup_pages()
+		self.setup_windows(team_names)
+
+		self.main_app.views.append(self.main_window)
+
+	def setup_background_images(self):
 		image_path = fr"{self.run_directory}\pw_view\assets\background_image.jpg"
 		self.background_image = ft.Image(
 			src=os.path.abspath(image_path),  # Use absolute path for the local image
 			fit=ft.ImageFit.COVER  # Ensure it covers the entire area
 		)
 
-		self.setup_pages()
-		self.setup_windows(team_names)
+		image_path = fr"{self.run_directory}\pw_view\assets\results_background_image.jpg"
+		self.results_background_image = ft.Image(
+			src=os.path.abspath(image_path),  # Use absolute path for the local image
+			fit=ft.ImageFit.COVER  # Ensure it covers the entire area
+		)
 
-		self.main_app.views.append(self.main_window)
+		image_path = fr"{self.run_directory}\pw_view\assets\race_background_image.jpg"
+		self.race_background_image = ft.Image(
+			src=os.path.abspath(image_path),  # Use absolute path for the local image
+			fit=ft.ImageFit.COVER  # Ensure it covers the entire area
+		)
 
 	def setup_pages(self):
 		self.home_page = home_page.HomePage(self)
@@ -75,14 +91,14 @@ class View:
 		self.main_app.update()
 
 	def show_simulated_session_results(self):
-		self.results_window.continue_btn.disabled = True
+		# self.results_window.continue_btn.disabled = True
 		self.main_app.views.append(self.results_window)
 
 		self.main_app.update()
-		self.results_window.continue_btn.disabled = False
+		# self.results_window.continue_btn.disabled = False
 		self.main_app.update() # update again, this is to avoid a problem where the continue button on the results page would not work if the user clicked on it too quickly (on_click not fully assigned by flet?????)
 
-	def return_to_main_window(self):
+	def return_to_main_window(self) -> None:
 		self.main_app.views.clear()
 		self.main_app.views.append(self.main_window)
 
@@ -90,13 +106,12 @@ class View:
 
 		self.main_app.update()
 
-	def show_title_screen(self):
+	def show_title_screen(self) -> None:
 		self.main_app.views.append(self.title_screen)
 
 		self.main_app.update()
 
-	def show_team_selection_screen(self):
-		self.controller.update_standings_page()
+	def show_team_selection_screen(self) -> None:
 		self.main_app.views.append(self.team_selection_screen)
 
 		self.main_app.update()		

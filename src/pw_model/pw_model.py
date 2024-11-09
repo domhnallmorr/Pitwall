@@ -9,7 +9,7 @@ from pw_model.staff_market import staff_market
 from pw_model import load_save
 
 class Model:
-	def __init__(self, roster, run_directory, mode="normal"):
+	def __init__(self, roster, run_directory, mode="normal", auto_save=True):
 		
 		assert mode in ["normal", "headless"]
 
@@ -17,6 +17,7 @@ class Model:
 		logging.basicConfig(level=logging.DEBUG)
 
 		self.run_directory = run_directory
+		self.auto_save = auto_save
 
 		self.inbox = email_model.Inbox(self)
 		self.tracks = []
@@ -108,7 +109,8 @@ class Model:
 			self.get_team_model(self.player_team).advance()
 		self.staff_market.announce_signings()
 
-		self.save_career()
+		if self.auto_save is True:
+			self.save_career()
 
 	def end_season(self, increase_year=True, start_career=False):
 		logging.critical("End Season")
@@ -143,11 +145,11 @@ class Model:
 
 		self.staff_market.setup_dataframes()
 
+		self.season.setup_new_season_variables()
+
 		if start_career is False:
 			self.staff_market.determine_driver_transfers() # driver transfers at start of career are handled in the start_career method (once player_team is defined)
 
-		self.season.setup_new_season_variables()
-		
 	def add_new_drivers(self):
 		new_drivers = [d for d in self.future_drivers if int(d[0]) == self.year]
 

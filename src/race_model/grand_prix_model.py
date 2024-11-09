@@ -12,6 +12,8 @@ class GrandPrixModel(session_model.SessionModel):
 		if "Qualy" in self.race_model.results.keys():
 			self.setup_grid_order()
 
+		self.setup_participant_start_fuel_and_tyres()
+
 	@property
 	def leader(self):
 		return self.standings_df.iloc[0]["Driver"]
@@ -28,7 +30,14 @@ class GrandPrixModel(session_model.SessionModel):
 			driver = row["Driver"]
 			participant = self.race_model.get_particpant_model_by_name(driver)
 
+			# update position in participant class
 			participant.starting_position = idx + 1
+			# update Grid column in dataframe
+			self.standings_df.loc[self.standings_df["Driver"] == driver, "Grid"] = idx + 1
+		
+	def setup_participant_start_fuel_and_tyres(self):
+		for p in self.race_model.participants:
+			p.setup_start_fuel_and_tyres()
 
 	def run_race(self):
 		while self.status != "post_race":
@@ -164,7 +173,7 @@ class GrandPrixModel(session_model.SessionModel):
 		for idx, row in self.standings_df.iterrows():
 			driver = row["Driver"]
 			participant = self.race_model.get_particpant_model_by_name(driver)
-
+			
 			# ONLY PROCESS IF STILL RUNNING
 			if participant.status != "retired":
 				# print("not retired")
@@ -218,7 +227,7 @@ class GrandPrixModel(session_model.SessionModel):
 					participant_ahead = participant
 					participant.complete_lap()
 
-	def post_race_actions(self):
+	def post_race_actions(self) -> None:
 		# update driver stats
 		for idx, row in self.standings_df.iterrows():
 			driver = row["Driver"]
@@ -239,9 +248,10 @@ class GrandPrixModel(session_model.SessionModel):
 		self.race_model.model.season.standings_manager.update_standings(self.standings_df)
 		
 		self.generate_lap_chart_data()
+		self.generate_pit_stop_summary()
+		self.generate_lap_times_summary()
 
-
-	def generate_lap_chart_data(self):
+	def generate_lap_chart_data(self) -> None:
 		self.lap_chart_data = {}
 
 		for idx, row in self.standings_df.iterrows():
@@ -249,6 +259,17 @@ class GrandPrixModel(session_model.SessionModel):
 			participant = self.race_model.get_particpant_model_by_name(driver)
 
 			self.lap_chart_data[driver] = [[i + 1 for i in range(len(participant.positions_by_lap))], participant.positions_by_lap]
+			
+			# add the starting position as Lap 0
 			self.lap_chart_data[driver][0].insert(0, 0)
-			self.lap_chart_data[driver][1].insert(0, participant.starting_position)
+			self.lap_chart_data[driver][1].insert(0, row["Grid"])
 		
+	def generate_pit_stop_summary(self) -> None:
+		self.pit_stop_summary = {
+			p.name: p.pitstop_laps for p in self.race_model.participants
+		}
+
+	def generate_lap_times_summary(self) -> None:
+		self.lap_times_summary = {
+			p.name: p.laptimes for p in self.race_model.participants
+		}

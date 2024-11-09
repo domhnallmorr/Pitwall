@@ -1,3 +1,8 @@
+'''
+This is the model for timed sessions such as practice and qualifying
+This differs from the grand prix model, in that cars are constantly in and out of the pits
+	and also the session ends based on time rather than laps
+'''
 import copy
 
 from race_model import session_model

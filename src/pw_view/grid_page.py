@@ -44,6 +44,7 @@ class GridPage(ft.Column):
 
 		columns = []
 		for col in grid_this_year_df.columns:
+			col = col.replace("_", " ").title()
 			columns.append(ft.DataColumn(ft.Text(col)))
 
 		df_data = grid_this_year_df.values.tolist()
@@ -70,6 +71,7 @@ class GridPage(ft.Column):
 
 		columns = []
 		for col in grid_next_year_df.columns:
+			col = col.replace("_", " ").title()
 			columns.append(ft.DataColumn(ft.Text(col)))
 
 		df_data = grid_next_year_df.values.tolist()

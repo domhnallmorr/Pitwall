@@ -5,10 +5,11 @@ class Sidebar(ft.Column):
 	def __init__(self, view):
 		self.view = view
 
-		self.advance_btn = ft.TextButton("Advance", icon="play_arrow", on_click=self.advance)
+		btn_width = 200
+
+		self.advance_btn = ft.TextButton("Advance", icon="play_arrow", width=btn_width, on_click=self.advance)
 		self.advance_btn.style = self.view.positive_button_style
 
-		btn_width = 200
 		nav_buttons = [
 			ft.TextButton("Home", icon="home", on_click=lambda _: view.main_window.change_page("home"), width=btn_width, style=self.view.default_button_style),
 			ft.TextButton("Email", icon="email", on_click=lambda _: view.main_window.change_page("email"), width=btn_width, style=self.view.default_button_style),

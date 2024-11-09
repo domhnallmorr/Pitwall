@@ -1,3 +1,8 @@
+'''
+This is the baseline class for all session (practice, qualy, race)
+It's main function is to hold methods/variables that are common across all session types
+Most importantly it holds a pandas dataframe called self.standings_df that contains the current standings of the session
+'''
 import copy
 import pandas as pd
 
@@ -39,11 +44,11 @@ class SessionModel:
 		'''
 		setup pandas dataframe to track standings, assumes participants have been supplied in starting grid order!
 		'''
-		columns = ["Position", "Driver", "Team", "Lap", "Total Time", "Gap Ahead", "Gap to Leader", "Last Lap", "Status", "Lapped Status", "Pit", "Fastest Lap"] # all times in milliseconds
+		columns = ["Position", "Driver", "Team", "Lap", "Total Time", "Gap Ahead", "Gap to Leader", "Last Lap", "Status", "Lapped Status", "Pit", "Fastest Lap", "Grid"] # all times in milliseconds
 
 		data = []
 		for participant in self.race_model.participants: 
-			data.append([participant.position, participant.name, participant.team_name, 0, 0, 0, 0, "-", "running", None, 0, None])
+			data.append([participant.position, participant.name, participant.team_name, 0, 0, 0, 0, "-", "running", None, 0, None, 0])
 
 		self.standings_df = pd.DataFrame(columns=columns, data=data)
 		

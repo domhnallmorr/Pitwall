@@ -25,12 +25,14 @@ def main(page: ft.Page):
 
 	page.window.maximized = True
 
-	version = "0.6.0"
+	version = "0.7.0"
 	page.title = f"Pitwall {version}"
 	
 	run_directory = os.path.dirname(os.path.join(os.path.abspath(__file__)))
 
 	controller = pw_controller.Controller(page, run_directory, "normal")
+
+	page.window.full_screen = True
 	page.update()
 
 ft.app(target=main)

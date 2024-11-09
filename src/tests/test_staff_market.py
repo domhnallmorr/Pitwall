@@ -5,7 +5,7 @@ def test_update_team_drivers():
 	'''
 	Test that drivers are signed and allocated to AI teams correctly
 	'''
-	model = create_model.create_model()
+	model = create_model.create_model(auto_save=False)
 
 	model.player_team = None
 
@@ -46,7 +46,7 @@ def test_top3_drivers_logic():
 	'''
 
 	for i in range(50):
-		model = create_model.create_model(mode="headless")
+		model = create_model.create_model(mode="headless", auto_save=False)
 
 		schumacher_model = model.get_driver_model("Michael Schumacher")
 		hakkinen_model = model.get_driver_model("Mika Hakkinen")
@@ -72,3 +72,18 @@ def test_top3_drivers_logic():
 		assert "Michael Schumacher" in top_4_teams_driver1
 		assert "Mika Hakkinen" in top_4_teams_driver1
 		assert "Jacques Villeneuve" in top_4_teams_driver1
+
+def test_week_to_announce_signing():
+	'''
+	Ensure that the week to annouce signing is between weeks 4 and 40
+	'''
+
+	model = create_model.create_model(mode="headless", auto_save=False)
+
+	for i in range(20*52):
+		weeks = model.staff_market.new_contracts_df["WeekToAnnounce"].values.tolist()
+		if len(weeks) > 0:
+			assert min(weeks) >= 4
+			assert max(weeks) <= 40
+
+		model.advance()

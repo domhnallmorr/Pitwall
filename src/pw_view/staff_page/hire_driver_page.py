@@ -121,8 +121,7 @@ class HireDriverPage(ft.Column):
 		self.offer_btn.data = name
 		self.view.main_app.update()
 
-	def approach_driver(self, e):
-		print(e.control.data)
+	def approach_driver(self, e: ft.ControlEvent) -> None:
 		name = e.control.data
 
 		self.dlg_modal = ft.AlertDialog(
@@ -142,7 +141,7 @@ class HireDriverPage(ft.Column):
 		self.dlg_modal.open = True
 		self.view.main_app.update()
 		
-	def handle_close(self, e):
+	def handle_close(self, e: ft.ControlEvent) -> None:
 		name = self.dlg_modal.data
 		self.view.main_app.close(self.dlg_modal)
 		action = e.control.text
