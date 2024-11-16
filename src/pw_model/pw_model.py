@@ -100,6 +100,8 @@ class Model:
 		return track_model
 	
 	def advance(self):
+		self.inbox.reset_number_new_emails()
+		
 		if self.season.current_week == 51:
 			self.staff_market.ensure_player_has_drivers_for_next_season()
 			

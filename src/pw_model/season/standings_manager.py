@@ -7,15 +7,17 @@ def create_standings_dataframe(teams: dict)-> pd.DataFrame:
 	'''
 
 	driver_columns = ["Driver", "Team", "Points", "Wins", "Podiums", "Fastest Laps", "DNFs", "Starts"]
-	constructor_columns = ["Team", "Points", "Wins", "Podiums", "Fastest Laps", "DNFs"]
+	constructor_columns = ["Team", "Points", "Wins", "Podiums", "Fastest Laps", "DNFs", "Best Result", "Rnd"]
 
+	# *** Rnd is zero indexed
+	
 	team_data = []
 	constructor_data = []
 
 	for team in teams.keys():
 		team_data.append([teams[team][0], team, 0, 0, 0, 0, 0, 0])
 		team_data.append([teams[team][1], team, 0, 0, 0, 0, 0, 0])
-		constructor_data.append([team, 0, 0, 0, 0, 0])
+		constructor_data.append([team, 0, 0, 0, 0, 0, None, None])
 
 	drivers_standings_df = pd.DataFrame(columns=driver_columns, data=team_data)
 	constructors_standings_df = pd.DataFrame(columns=constructor_columns, data=constructor_data)
@@ -43,6 +45,7 @@ class StandingsManager:
 		self.drivers_standings_df, self.constructors_standings_df = create_standings_dataframe(teams)
 	
 	def update_standings(self, result_df):
+
 		# update points
 		for idx, points in enumerate(self._points_system):
 			driver_name = result_df.iloc[idx]["Driver"]
@@ -56,6 +59,18 @@ class StandingsManager:
 			self.drivers_standings_df.loc[mask, "Points"] = driver_model.season_stats.points_this_season
 
 		self.drivers_standings_df.sort_values("Points", inplace=True, ascending=False)
+
+		# Update teams best result
+		for idx, row in result_df.iterrows():
+			position = row["Position"]
+			team_model = self.model.get_team_model(row["Team"])
+
+			if team_model.season_stats.best_result_this_season == 0: # zero is default value at start of season
+				team_model.season_stats.best_result_this_season = position
+				team_model.season_stats.rnd_best_result_scored = self.model.season.next_race_idx
+			elif position < team_model.season_stats.best_result_this_season:
+				team_model.season_stats.best_result_this_season = position
+				team_model.season_stats.rnd_best_result_scored = self.model.season.next_race_idx
 
 		# update driver stats
 		for idx, row in self.drivers_standings_df.iterrows():
@@ -79,9 +94,10 @@ class StandingsManager:
 			self.constructors_standings_df.loc[mask, "Wins"] = team_model.season_stats.wins_this_season
 			self.constructors_standings_df.loc[mask, "Podiums"] = team_model.season_stats.podiums_this_season
 			self.constructors_standings_df.loc[mask, "DNFs"] = team_model.season_stats.dnfs_this_season
+			self.constructors_standings_df.loc[mask, "Best Result"] = team_model.season_stats.best_result_this_season
+			self.constructors_standings_df.loc[mask, "Rnd"] = team_model.season_stats.rnd_best_result_scored
 
-		self.constructors_standings_df.sort_values("Points", inplace=True, ascending=False)
-		
+		self.constructors_standings_df.sort_values(by=["Points", "Best Result", "Rnd"], inplace=True, ascending=[False, True, True])
 		
 		self.drivers_standings_df.reset_index(drop=True, inplace=True)
 		self.constructors_standings_df.reset_index(drop=True, inplace=True)

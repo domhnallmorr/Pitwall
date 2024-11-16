@@ -2,6 +2,7 @@ from tkinter import *
 import threading
 
 from race_model import race_model
+from race_model.race_model_enums import SessionNames
 
 class RaceController:
 	def __init__(self, controller):
@@ -13,17 +14,15 @@ class RaceController:
 
 
 	def simulate_session(self, session):
-		if session == "FP Friday":
-			self.race_model.setup_practice(120*60, session)
-		elif session == "FP Saturday":
-			self.race_model.setup_practice(90*60, session)
-		elif session == "Qualy":
+		# if session == "FP Friday":
+		# 	self.race_model.setup_practice(120*60, session)
+		# elif session == "FP Saturday":
+		# 	self.race_model.setup_practice(90*60, session)
+		if session == SessionNames.QUALIFYING:
 			self.race_model.setup_qualifying(60*60, session)
-		elif session == "Warmup":
-			self.race_model.setup_practice(60*60, session)
-		elif session == "Warmup":
-			self.race_model.setup_practice(60*60, session)
-		elif session == "Race":
+		# elif session == "Warmup":
+		# 	self.race_model.setup_practice(60*60, session)
+		elif session == SessionNames.RACE:
 			self.race_model.setup_race()
 		
 		simulation_thread = threading.Thread(target=self.race_model.simulate_session)
@@ -33,12 +32,12 @@ class RaceController:
 		simulation_thread.join() # wait for simulation to stop running
 
 		data = {
-			"current_session_name": self.race_model.current_session_name,
+			"current_session": session,
 			"standings_df": self.race_model.current_session.standings_df.copy(deep=True),
 		}
 
 		# Add race specific data
-		if session == "Race":
+		if session == SessionNames.RACE:
 			data["lap_chart_data"] = self.race_model.current_session.lap_chart_data
 			data["pit_stop_summary"] = self.race_model.current_session.pit_stop_summary
 			data["lap_times_summary"] = self.race_model.current_session.lap_times_summary

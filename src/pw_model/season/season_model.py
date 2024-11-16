@@ -13,10 +13,14 @@ class SeasonModel:
 	
 	@property
 	def in_race_week(self):
+		is_race_week = False
+		
 		if self.current_week in self.model.calendar["Week"].values:
-			return True
-		else:
-			return False
+			if self.model.calendar.iloc[self.next_race_idx]["Week"] == self.current_week:
+				is_race_week = True
+				
+		return is_race_week
+
 		
 	@property
 	def current_track_model(self):
@@ -40,6 +44,15 @@ class SeasonModel:
 		else:
 			track_name = self.model.calendar.iloc[self.next_race_idx]["Track"]
 			return self.model.get_track_model(track_name).title
+
+	@property
+	def next_race_week(self) -> str:
+		if self.next_race_idx is None:
+			return "-"
+		else:
+			week = self.model.calendar.iloc[self.next_race_idx]["Week"]
+
+			return week
 
 	@property
 	def drivers_by_rating(self) -> list:

@@ -10,9 +10,11 @@ class Sidebar(ft.Column):
 		self.advance_btn = ft.TextButton("Advance", icon="play_arrow", width=btn_width, on_click=self.advance)
 		self.advance_btn.style = self.view.positive_button_style
 
+		self.email_btn = ft.TextButton("Email", icon="email", on_click=lambda _: view.main_window.change_page("email"), width=btn_width, style=self.view.default_button_style)
+
 		nav_buttons = [
 			ft.TextButton("Home", icon="home", on_click=lambda _: view.main_window.change_page("home"), width=btn_width, style=self.view.default_button_style),
-			ft.TextButton("Email", icon="email", on_click=lambda _: view.main_window.change_page("email"), width=btn_width, style=self.view.default_button_style),
+			self.email_btn,
 			ft.TextButton("Standings", icon="table_chart", on_click=lambda _: view.main_window.change_page("standings"), width=btn_width, style=self.view.default_button_style),
 			ft.TextButton("Calendar", icon="CALENDAR_MONTH", on_click=lambda _: view.main_window.change_page("calendar"), width=btn_width, style=self.view.default_button_style),
 			ft.TextButton("Staff", icon="account_box_rounded", on_click=lambda _: view.main_window.change_page("staff"), width=btn_width, style=self.view.default_button_style),

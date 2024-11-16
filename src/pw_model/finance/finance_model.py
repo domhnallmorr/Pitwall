@@ -33,12 +33,43 @@ class FinanceModel:
 		self.prize_money = 13_000_000
 		self.total_sponsorship = total_sponsorship
 
+		self.car_cost = 7_000_000 # generic value to cover car production and development costs
+
 		self.balance_history = collections.deque(maxlen=130) # 130 weeks (2.5 years) in length
 		self.balance_history_dates = collections.deque(maxlen=130)
 
 	@property
 	def total_staff_costs_per_year(self):
 		return self.staff_yearly_cost * self.team_model.number_of_staff
+	
+	@property
+	def drivers_payments(self):
+		payments = 0
+
+		for driver_model in [self.team_model.driver1_model, self.team_model.driver2_model]:
+			if driver_model.contract.salary < 0:
+				payments += driver_model.contract.salary * -1
+		
+		return payments
+	
+	@property
+	def drivers_salary(self):
+		salary = 0
+
+		for driver_model in [self.team_model.driver1_model, self.team_model.driver2_model]:
+			if driver_model.contract.salary > 0:
+				salary += driver_model.contract.salary
+		
+		return salary		
+
+	@property
+	def total_income(self):
+		return self.prize_money + self.total_sponsorship + self.drivers_payments
+	
+	@property
+	def total_expenditure(self):
+		#TODO remove hard coding of race costs
+		return self.total_staff_costs_per_year + self.drivers_salary + self.team_model.technical_director_model.contract.salary + self.team_model.commercial_manager_model.contract.salary + 8_000_000 + self.car_cost
 	
 	def weekly_update(self):
 		

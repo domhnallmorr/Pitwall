@@ -15,7 +15,7 @@ See the [acknowledgements](acknowledgements.md) file for credit of any assets us
 ## Features
 
 - Drivers retire
-- Practice/Qualy and Race sessions are simulated
+- Qualifying and Race sessions are simulated
 - New drivers become available each year to hire
 - Car speeds update at the start of each season
 - Standard of factory facilities varies between teams

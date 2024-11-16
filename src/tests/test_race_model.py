@@ -1,5 +1,6 @@
 from tests import create_model
 from race_model import race_model
+from race_model.race_model_enums import SessionNames
 from pw_model.track import track_model
 
 from tests import test_track_model
@@ -36,7 +37,7 @@ def test_session_setup():
 	track = test_track_model.create_dummy_track()
 	_race_model = race_model.RaceModel("headless", model, track)
 
-	_race_model.setup_qualifying(60*60, "Qualy")
+	_race_model.setup_qualifying(60*60, SessionNames.QUALIFYING)
 
 	assert _race_model.current_session.time_left == 3600
 

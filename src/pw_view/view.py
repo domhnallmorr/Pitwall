@@ -33,6 +33,9 @@ class View:
 		self.vscroll_buffer = 200
 		
 		self.default_button_style = ft.ButtonStyle(alignment=ft.alignment.center_left)
+		self.default_button_clicked_style = ft.ButtonStyle(alignment=ft.alignment.center_left,
+               										 side=ft.Border(left=ft.BorderSide(5, "blue")))
+
 		self.positive_button_style = ft.ButtonStyle(color="#111418",
 											  bgcolor={ft.ControlState.DEFAULT: ft.colors.LIGHT_GREEN, ft.ControlState.DISABLED: ft.colors.GREY},
 											  alignment=ft.alignment.center_left,)
@@ -98,11 +101,13 @@ class View:
 		# self.results_window.continue_btn.disabled = False
 		self.main_app.update() # update again, this is to avoid a problem where the continue button on the results page would not work if the user clicked on it too quickly (on_click not fully assigned by flet?????)
 
-	def return_to_main_window(self) -> None:
+	def return_to_main_window(self, mode: str="post_race") -> None:
+		assert mode in ["post_race", "load"]
 		self.main_app.views.clear()
 		self.main_app.views.append(self.main_window)
 
-		self.main_window.nav_sidebar.update_advance_button("advance")
+		if mode == "post_race": # avoid updating the adance button when loading a career
+			self.main_window.nav_sidebar.update_advance_button("advance")
 
 		self.main_app.update()
 

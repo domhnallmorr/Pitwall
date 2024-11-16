@@ -42,6 +42,7 @@ class MainWindow(ft.View):
 			contents.append(self.view.home_page)
 		elif page_name == "email":
 			contents.append(self.view.email_page)
+			self.update_email_button(0) # reset email btn to remove number of new mails
 		elif page_name == "standings":
 			contents.append(self.view.standings_page)
 		elif page_name == "calendar":
@@ -72,6 +73,7 @@ class MainWindow(ft.View):
 		self.view.main_app.update()
 		
 	def update_window(self, data):
+
 		self.team_text.value = data["team"]
 
 		self.week_text.value = data["date"]
@@ -81,5 +83,11 @@ class MainWindow(ft.View):
 			self.nav_sidebar.update_advance_button("go_to_race")
 		else:
 			self.nav_sidebar.update_advance_button("advance")
-			
-
+		
+		self.view.main_app.update()
+		
+	def update_email_button(self, number_of_emails):
+		if number_of_emails > 0:
+			self.nav_sidebar.email_btn.text = f"Email ({number_of_emails})"
+		else:
+			self.nav_sidebar.email_btn.text = f"Email"

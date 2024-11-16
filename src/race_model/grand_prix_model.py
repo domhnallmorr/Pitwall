@@ -1,6 +1,7 @@
 import random
 
 from race_model import session_model, commentary
+from race_model.race_model_enums import SessionNames, SessionStatus
 
 class GrandPrixModel(session_model.SessionModel):
 	def __init__(self, model):
@@ -9,7 +10,7 @@ class GrandPrixModel(session_model.SessionModel):
 		self.current_lap = 1
 		self.retirements = []
 
-		if "Qualy" in self.race_model.results.keys():
+		if SessionNames.QUALIFYING.value in self.race_model.results.keys():
 			self.setup_grid_order()
 
 		self.setup_participant_start_fuel_and_tyres()
@@ -19,7 +20,7 @@ class GrandPrixModel(session_model.SessionModel):
 		return self.standings_df.iloc[0]["Driver"]
 	
 	def setup_grid_order(self):
-		qualy_results = self.race_model.results["Qualy"]["results"]
+		qualy_results = self.race_model.results[SessionNames.QUALIFYING.value]["results"]
 		grid_order = qualy_results["Driver"]
 
 		self.standings_df.set_index('Driver', inplace=True, drop=False)
@@ -40,7 +41,7 @@ class GrandPrixModel(session_model.SessionModel):
 			p.setup_start_fuel_and_tyres()
 
 	def run_race(self):
-		while self.status != "post_race":
+		while self.status != SessionStatus.POST_SESSION:
 			self.advance()
 
 			self.process_headless_commentary()
@@ -48,15 +49,15 @@ class GrandPrixModel(session_model.SessionModel):
 
 	def advance(self, mode):
 		self.mode = mode
-		if self.status == "pre_session":
+		if self.status == SessionStatus.PRE_SESSION:
 			if self.mode != "simulate":
 				self.commentary_to_process.append(commentary.gen_race_start_message())
 			self.calculate_start()
-			self.status = "running"
+			self.status = SessionStatus.RUNNING
 
 		else: # process lap
 			if len(self.commentary_to_process) == 0:
-				if self.status == "running":
+				if self.status == SessionStatus.RUNNING:
 					self.calculate_lap()
 					self.update_fastest_lap()
 					self.update_standings()
@@ -65,7 +66,7 @@ class GrandPrixModel(session_model.SessionModel):
 					if self.current_lap > self.race_model.track_model.number_of_laps or self.current_lap == 999:
 						if self.mode != "simulate":
 							self.commentary_to_process.append(commentary.gen_race_over_message(self.leader))
-						self.status = "post_race"
+						self.status = SessionStatus.POST_SESSION
 						self.post_race_actions()
 						
 						# self.log_event("Race Over")

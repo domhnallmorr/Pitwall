@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional
 
 import flet as ft
@@ -5,6 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from flet.matplotlib_chart import MatplotlibChart
 
+from race_model.race_model_enums import SessionNames
 from pw_view import view
 from pw_view.custom_widgets import custom_container, custom_buttons
 
@@ -66,12 +68,12 @@ class ResultsWindow(ft.View):
 		self.view.main_app.update()
 
 	def update_page(self, data: dict) -> None:
-		current_session_name = data["current_session_name"]
+		current_session = data["current_session"]
 		standings_df = data["standings_df"]
 		
 		# update the buttons row
 		timed_session = True
-		if current_session_name == "Race":
+		if current_session == SessionNames.RACE:
 			timed_session = False
 
 			# update pitstop table (race only)
@@ -80,7 +82,7 @@ class ResultsWindow(ft.View):
 			self.setup_laptimes_plot(data["lap_times_summary"])
 
 		self.update_buttons_row(timed_session)
-		self.setup_classification_table(standings_df, current_session_name)
+		self.setup_classification_table(standings_df, current_session)
 
 		self.content_column = ft.Column(
 			controls=[self.buttons_container, self.classification_container, self.continue_container],
@@ -106,16 +108,16 @@ class ResultsWindow(ft.View):
 		self.display_classification()
 		self.view.main_app.update()
 
-	def setup_classification_table(self, standings_df: pd.DataFrame, current_session_name: str) -> None:
+	def setup_classification_table(self, standings_df: pd.DataFrame, current_session: Enum) -> None:
 		#TODO cleaup actions below should be moved to a stand alone function outside the class for unit testing
 		# Format from ms to min:seconds
 		standings_df.loc[:, "Fastest Lap"] = standings_df["Fastest Lap"].apply(self.ms_to_min_sec)
 		
-		if current_session_name == "Qualy":
+		if current_session == SessionNames.QUALIFYING:
 			cols = ["Position", "Driver", "Team", "Fastest Lap", "Gap to Leader"]
 			standings_df.loc[:, "Gap to Leader"] = standings_df["Gap to Leader"].apply(self.ms_to_min_sec, interval=True)
 
-		elif current_session_name == "Race":
+		elif current_session == SessionNames.RACE:
 			cols = ["Position", "Driver", "Team", "Fastest Lap", "Gap to Leader", "Pit", "Grid"]
 			
 			# cleanup Gap to Leader column

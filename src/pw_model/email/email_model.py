@@ -16,24 +16,29 @@ class Inbox:
 	def __init__(self, model):
 		self.model = model
 
+		self.reset_number_new_emails()
 		self.setup_email_list()
 
 		welcome_email = Email("Welcome", "Welcome to Pitwall!", sender="The Board")
 		self.add_email(welcome_email)
 
 
-	@property
-	def number_unread(self):
-		unread = 0
+	# @property
+	# def number_unread(self):
+	# 	unread = 0
 
-		for email in self.emails:
-			if email.status == "unread":
-				unread += 1
+	# 	for email in self.emails:
+	# 		if email.status == "unread":
+	# 			unread += 1
 
-		return unread
+	# 	return unread
+
+	def reset_number_new_emails(self):
+		self.new_emails = 0
 
 	def add_email(self, email):
 		self.emails.appendleft(email)
+		self.new_emails += 1
 
 	def setup_email_list(self):
 		self.emails = collections.deque(maxlen=20)

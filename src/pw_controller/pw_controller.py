@@ -46,12 +46,12 @@ class Controller:
 		self.race_controller = race_controller.RaceController(self)
 
 		self.refresh_ui()
-		self.view.return_to_main_window()
+		self.update_main_window()
+		self.view.return_to_main_window(mode="load")
 
+	# TODO check if can remove this, seems redundant now
 	def refresh_ui(self):
 		self.update_main_window()
-		self.update_grid_page()
-		self.update_email_page()
 
 		self.page_update_controller.refresh_ui()
 		
@@ -60,14 +60,14 @@ class Controller:
 
 		if self.mode != "headless":
 			self.update_main_window()
-			self.update_email_page()
-			self.update_grid_page()
 
 			self.page_update_controller.refresh_ui()
 
 		if self.model.season.current_week == 1:
 			self.setup_new_season()
 
+		self.update_email_button()
+		
 	def update_main_window(self):
 		data = update_window_functions.get_main_window_data(self.model)
 		self.view.main_window.update_window(data)
@@ -77,82 +77,15 @@ class Controller:
 		
 		if self.mode != "headless":
 			# Setup the calander page to show the races upcoming in the new season
-			self.update_email_page()
-			self.update_calendar_page()
-			self.update_home_page()
-			self.update_grid_page()
-			self.update_car_page()
 			self.update_facilities_page(new_season=True)
 			self.update_main_window()
 			self.race_controller = race_controller.RaceController(self)
 
 			self.page_update_controller.refresh_ui(new_season=True)
 
-	def update_home_page(self):
-		data = {
-			"next_race": self.model.season.next_race,
-			"constructors_standings_df": self.model.season.standings_manager.constructors_standings_df.copy(deep=True),
-			"team_average_stats": self.model.gen_team_average_stats(),
-			"player_car": self.model.player_team_model.car_model.speed,
-			"player_drivers": self.model.player_team_model.average_driver_skill,
-			"player_managers": self.model.player_team_model.average_manager_skill,
-			"player_staff": self.model.player_team_model.number_of_staff,
-			"player_facilities": self.model.player_team_model.facilities_model.factory_rating,
-			"player_sponsorship": self.model.player_team_model.finance_model.total_sponsorship,
-		}
-		self.view.home_page.update_page(data)
-
 	def update_email_button(self):
-		data = {"number_unread": self.model.inbox.number_unread}
-		self.view.main_window.update_email_button(data)
-
-
-	def update_car_page(self):
-		car_speeds = {}
-		for team in self.model.teams:
-			car_speeds[team.name] = team.car_model.speed
-		
-		data = {
-			"car_speeds": car_speeds
-		}
-
-		self.view.car_page.update_plot(data)
-
-	def update_calendar_page(self):
-		data = {
-			"calendar": self.model.calendar.copy(deep=True)
-		}
-
-		self.view.calendar_page.update_page(data)
-
-	def update_grid_page(self):
-		data = {
-			"year": self.model.year,
-			"grid_this_year_df": self.model.staff_market.grid_this_year_df.copy(deep=True),
-			"grid_next_year_df": self.model.staff_market.grid_next_year_df.copy(deep=True),
-			"grid_next_year_announced_df": self.model.staff_market.grid_next_year_announced_df.copy(deep=True),
-		}
-
-		self.view.grid_page.update_page(data)
-		self.view.grid_page.change_display(None)
-
-	def update_email_page(self):
-		data = {
-			"emails": copy.deepcopy(self.model.inbox.emails),
-		}
-		self.view.email_page.update_page(data)
-
-
-
-	def update_car_page(self):
-		car_speeds = [[team.name, team.car_model.speed] for team in self.model.teams]
-		car_speeds.sort(key=lambda x: x[1], reverse=True) # sort, highest speed to lowest speed
-		
-		data = {
-			"car_speeds": car_speeds,
-		}
-
-		self.view.car_page.update_page(data)
+		data = {"new_emails": self.model.inbox.new_emails}
+		self.view.main_window.update_email_button(self.model.inbox.new_emails)
 
 	def update_facilities_page(self, new_season=False):
 		'''
@@ -183,8 +116,7 @@ class Controller:
 		Post race, remove race weekend, update advance button to allow progress to next week
 		'''
 		
-		# self.update_home_page()
-
+		self.page_update_controller.refresh_ui()
 		self.view.return_to_main_window()
 		# self.view.main_window.update_advance_btn("advance")
 

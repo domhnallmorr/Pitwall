@@ -31,12 +31,12 @@ def test_create_standings_dataframe():
 	
 	assert drivers_standings_df.values.tolist() == expected
 
-	assert constructors_standings_df.columns.tolist() == ["Team", "Points", "Wins", "Podiums", "Fastest Laps", "DNFs"]
+	assert constructors_standings_df.columns.tolist() == ["Team", "Points", "Wins", "Podiums", "Fastest Laps", "DNFs", "Best Result", "Rnd"]
 
 	expected = [
-			["Williams", 0, 0, 0, 0, 0],
-			["Ferrari", 0, 0, 0, 0, 0],
-			["McLaren", 0, 0, 0, 0, 0],
+			["Williams", 0, 0, 0, 0, 0, None, None],
+			["Ferrari", 0, 0, 0, 0, 0,  None, None],
+			["McLaren", 0, 0, 0, 0, 0, None, None],
 		]
 	
 	assert constructors_standings_df.values.tolist() == expected
@@ -59,10 +59,10 @@ def test_standings_manager_setup():
 	assert standings_manager_instance.drivers_standings_df.head(8).values.tolist() == expected
 
 	expected = [
-			["Williams", 0, 0, 0, 0, 0],
-			["Ferrari", 0, 0, 0, 0, 0],
-			["Benetton", 0, 0, 0, 0, 0],
-			["McLaren", 0, 0, 0, 0, 0],
+			["Williams", 0, 0, 0, 0, 0,  None, None],
+			["Ferrari", 0, 0, 0, 0, 0,  None, None],
+			["Benetton", 0, 0, 0, 0, 0,  None, None],
+			["McLaren", 0, 0, 0, 0, 0,  None, None],
 		]
 	
 	assert standings_manager_instance.constructors_standings_df.head(4).values.tolist() == expected
@@ -74,6 +74,9 @@ def test_update_standings():
 	columns = ["Driver"]
 	data = ["Mika Hakkinen", "David Coulthard", "Eddie Irvine", "Michael Schumacher", "Jacques Villeneuve", "Heinz-Harald Frentzen", "Giancarlo Fisichella", "Alexander Wurz"]
 	result1 = pd.DataFrame(columns=columns, data=data)
+	
+	result1["Position"] = [i + 1 for i in range(len(data))]
+	result1["Team"] = ["McLaren", "McLaren", "Ferrari", "Ferrari", "Williams", "Williams", "Benetton", "Benetton"]
 
 	standings_manager_instance.update_standings(result1)
 
@@ -90,8 +93,11 @@ def test_update_standings():
 	
 	assert standings_manager_instance.drivers_standings_df.head(6).values.tolist() == expected
 
+	model.season.next_race_idx += 1
 	data = ["Michael Schumacher", "Eddie Irvine", "Mika Hakkinen", "Jacques Villeneuve", "David Coulthard", "Heinz-Harald Frentzen", "Giancarlo Fisichella", "Alexander Wurz"]
 	result2 = pd.DataFrame(columns=columns, data=data)
+	result2["Position"] = [i + 1 for i in range(len(data))]
+	result2["Team"] = ["Ferrari", "Ferrari", "McLaren", "Williams", "McLaren", "Williams", "Benetton", "Benetton"]
 
 	standings_manager_instance.update_standings(result2)
 
@@ -109,9 +115,9 @@ def test_update_standings():
 	assert standings_manager_instance.drivers_standings_df.head(6).values.tolist() == expected
 
 	expected = [
-			["Ferrari", 23, 0, 0, 0, 0],
-			["McLaren", 22, 0, 0, 0, 0],
-			["Williams", 7, 0, 0, 0, 0],
+			["Ferrari", 23, 0, 0, 0, 0, 1, 1],
+			["McLaren", 22, 0, 0, 0, 0, 1, 0],
+			["Williams", 7, 0, 0, 0, 0, 4, 1],
 			# ["Arrows", 0, 0, 0, 0, 0],
 			# ["Benetton", 0, 0, 0, 0, 0],
 		]

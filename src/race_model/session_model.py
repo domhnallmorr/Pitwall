@@ -6,12 +6,14 @@ Most importantly it holds a pandas dataframe called self.standings_df that conta
 import copy
 import pandas as pd
 
+from race_model.race_model_enums import SessionStatus
+
 class SessionModel:
 	def __init__(self, race_model):
 		self.race_model = race_model
 		self.setup_standings()
 
-		self.status = "pre_session"
+		self.status = SessionStatus.PRE_SESSION
 		self.time_left = None
 
 		self.commentary_messages = []
@@ -87,7 +89,7 @@ class SessionModel:
 	def get_data_for_view(self):
 		data = {}
 
-		data["status"] = self.status
+		data["status"] = self.status.value
 		data["current_lap"] = self.current_lap
 		data["total_laps"] = self.race_model.circuit_model.number_of_laps
 		data["time_left"] = self.time_left

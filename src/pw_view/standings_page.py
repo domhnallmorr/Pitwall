@@ -72,7 +72,8 @@ class StandingsPage(ft.Column):
 
 		columns = []
 		for col in drivers_standings_df.columns:
-			columns.append(ft.DataColumn(ft.Text(col)))
+			column_content = custom_container.HeaderContainer(self.view, col)
+			columns.append(ft.DataColumn(column_content))
 
 		data = drivers_standings_df.values.tolist()
 		rows = []
@@ -84,7 +85,8 @@ class StandingsPage(ft.Column):
 
 			rows.append(ft.DataRow(cells=cells))
 
-		self.drivers_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30)
+		self.drivers_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
+									heading_row_color=ft.colors.PRIMARY)
 
 		self.scrollable_drivers_table = ft.Column(
 			controls=[self.drivers_table],
@@ -97,19 +99,24 @@ class StandingsPage(ft.Column):
 		 
 		columns = []
 		for col in constructors_standings_df.columns:
-			columns.append(ft.DataColumn(ft.Text(col)))
+			column_content = custom_container.HeaderContainer(self.view, col)
+			columns.append(ft.DataColumn(column_content))
 
 		data = constructors_standings_df.values.tolist()
 		rows = []
 
 		for row in data:
 			cells = []
-			for cell in row:
+			for idx, cell in enumerate(row):
+				if constructors_standings_df.columns.values.tolist()[idx] == "Rnd":
+					if cell is not None:
+						cell += 1 # best result rnd is zero indexed in the dataframe
 				cells.append(ft.DataCell(ft.Text(cell)))
 
 			rows.append(ft.DataRow(cells=cells))
 
-		self.constructors_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30)		
+		self.constructors_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
+										 heading_row_color=ft.colors.PRIMARY)		
 
 		self.scrollable_constructors_table = ft.Column(
 			controls=[self.constructors_table],
@@ -151,7 +158,7 @@ class StandingsPage(ft.Column):
 				self.view.background_image,
 				column
 			],
-			expand=False
+			expand=True
 		)
 
 		page_controls = [

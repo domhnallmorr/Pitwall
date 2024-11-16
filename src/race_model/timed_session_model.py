@@ -7,6 +7,7 @@ import copy
 
 from race_model import session_model
 from race_model import commentary
+from race_model.race_model_enums import SessionStatus
 
 class TimedSessionModel(session_model.SessionModel):
 	def __init__(self, race_model, session_time):
@@ -33,8 +34,8 @@ class TimedSessionModel(session_model.SessionModel):
 		assert mode in ["UI", "simulate"] # simulate prevents any commentart messages from being generated
 		self.mode = mode
 
-		if self.status == "pre_session":
-			self.status = "running"
+		if self.status == SessionStatus.PRE_SESSION:
+			self.status = SessionStatus.RUNNING
 
 			if mode != "simulate":
 				self.commentary_to_process.append(commentary.gen_practice_start_message())
@@ -42,7 +43,7 @@ class TimedSessionModel(session_model.SessionModel):
 		
 		else:
 			if len(self.commentary_to_process) == 0:
-				if self.status == "running":
+				if self.status == SessionStatus.RUNNING:
 					time_delta = 10
 					self.find_particpants_leaving_pit_lane()
 					self.update_participants_in_practice()
@@ -78,7 +79,7 @@ class TimedSessionModel(session_model.SessionModel):
 
 		# HANDLE SESSION ENDING
 		if self.time_left <= 0:
-			self.status = "post_session"
+			self.status = SessionStatus.POST_SESSION
 			self.end_session()
 
 	def find_particpants_leaving_pit_lane(self):

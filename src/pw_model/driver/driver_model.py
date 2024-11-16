@@ -15,7 +15,8 @@ class DriverModel:
 			  age : int,
 			  country : str,
 			  speed : int,
-			  contract_length : int):
+			  contract_length : int,
+			  salary: int):
 		
 		self.model = model
 		self.name = name
@@ -28,7 +29,7 @@ class DriverModel:
 
 		self.team_next_year = None
 
-		self.contract = driver_contract.DriverContract(contract_length=contract_length)
+		self.contract = driver_contract.DriverContract(contract_length=contract_length, salary=salary)
 
 		self.retiring_age = decide_when_retiring(self.age)
 

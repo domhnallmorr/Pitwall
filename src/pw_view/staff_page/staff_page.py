@@ -12,13 +12,13 @@ class StaffPage(ft.Column):
 		self.setup_driver_containers()
 		self.setup_manager_containers()
 
-		contents = [
-			ft.Text("Staff", theme_style=self.view.page_header_style),
-			self.buttons_row,
-			self.driver_row,
-		]
+		# contents = [
+		# 	ft.Text("Staff", theme_style=self.view.page_header_style),
+		# 	self.buttons_row,
+		# 	self.driver_row,
+		# ]
 
-		super().__init__(expand=1, controls=contents)
+		super().__init__(expand=1, controls=[])
 		self.display_drivers(None)
 
 	def reset_tab_buttons(self) -> None:
@@ -65,6 +65,7 @@ class StaffPage(ft.Column):
 		self.driver_age_texts = [ft.Text(f"25"), ft.Text(f"32")]
 		self.driver_country_texts = [ft.Text(f"UK"), ft.Text(f"USA")]
 
+		self.driver_salary_texts = [ft.Text(f"0"), ft.Text(f"0")]
 		self.driver_contract_length_texts = [ft.Text(f"2"), ft.Text(f"3")]
 		self.driver_contract_status_texts = [ft.Text(f"Contracted"), ft.Text(f"Contracted")]
 
@@ -94,19 +95,21 @@ class StaffPage(ft.Column):
 			column = ft.Column(
 				# expand=1,
 				controls=[
-					ft.Text("Personal Details", weight=ft.FontWeight.BOLD, size=25,),
+					custom_container.HeaderContainer(self.view, f"Driver {idx + 1}"), # header
+					ft.Text("Personal Details", weight=ft.FontWeight.BOLD, size=18,),
 					self.driver_name_texts[idx],
 					self.driver_age_texts[idx],
 					self.driver_country_texts[idx],
 					ft.Divider(),
 
-					ft.Text("Contract", weight=ft.FontWeight.BOLD, size=25,),
+					ft.Text("Contract", weight=ft.FontWeight.BOLD, size=18,),
+					self.driver_salary_texts[idx], # length left on contract
 					self.driver_contract_length_texts[idx], # length left on contract
 					self.driver_contract_status_texts[idx], # status
 					self.driver_replace_buttons[idx], # replace button
 					ft.Divider(),
 
-					ft.Text("Stats", weight=ft.FontWeight.BOLD, size=25,),
+					ft.Text("Stats", weight=ft.FontWeight.BOLD, size=18,),
 					self.driver_ability_texts[idx],
 					],
 				expand=True
@@ -129,8 +132,8 @@ class StaffPage(ft.Column):
 
 		for manager in ["Technical Director", "Commercial Manager"]:
 			controls = [
-				ft.Text(manager, weight=ft.FontWeight.BOLD, size=35,),
-				ft.Text("Personal Details", weight=ft.FontWeight.BOLD, size=25,),
+				custom_container.HeaderContainer(self.view, manager),
+				ft.Text("Personal Details", weight=ft.FontWeight.BOLD, size=18,),
 				]
 
 			if manager == "Technical Director":
@@ -143,7 +146,7 @@ class StaffPage(ft.Column):
 			controls.append(ft.Divider())
 			
 			# CONTRACT ----------------------
-			controls.append(ft.Text("Contract", weight=ft.FontWeight.BOLD, size=25,))
+			controls.append(ft.Text("Contract", weight=ft.FontWeight.BOLD, size=18,))
 
 			if manager == "Technical Director":
 				controls.append(self.technical_director_contract_length_text)
@@ -155,7 +158,7 @@ class StaffPage(ft.Column):
 			controls.append(ft.Divider())
 
 			# STATS ----------------------
-			controls.append(ft.Text("Stats", weight=ft.FontWeight.BOLD, size=25,))
+			controls.append(ft.Text("Stats", weight=ft.FontWeight.BOLD, size=18,))
 			if manager == "Technical Director":
 				controls.append(self.technical_director_skill_text)
 			elif manager == "Commercial Manager":
@@ -193,6 +196,10 @@ class StaffPage(ft.Column):
 		# Ability
 		self.driver_ability_texts[0].value = f"Ability: {data['driver1_speed']}"
 		self.driver_ability_texts[1].value = f"Ability: {data['driver2_speed']}"
+
+		# Contract Salary
+		self.driver_salary_texts[0].value = f"Salary: ${data['driver1_salary']:,}"
+		self.driver_salary_texts[1].value = f"Salary: ${data['driver2_salary']:,}"
 
 		# Contract Length
 		self.driver_contract_length_texts[0].value = f"Contract Length: {data['driver1_contract_length']} Years"
@@ -259,7 +266,7 @@ class StaffPage(ft.Column):
 				self.view.background_image,
 				column,
 			],
-			expand=False,
+			expand=True,
 		)
 
 		self.controls = [
@@ -286,7 +293,7 @@ class StaffPage(ft.Column):
 				self.view.background_image,
 				column,
 			],
-			expand=False
+			expand=True
 		)
 
 		self.controls = [
@@ -313,7 +320,7 @@ class StaffPage(ft.Column):
 				self.view.background_image,
 				column,
 			],
-			expand=False
+			expand=True
 		)
 
 		self.controls = [
@@ -324,7 +331,8 @@ class StaffPage(ft.Column):
 		self.view.main_app.update()
 
 	def setup_staff_value_progress_bars(self, data: dict) -> ft.Container:
-		staff_value_rows = []
+		staff_value_rows = [custom_container.HeaderContainer(self.view, f"Number of Staff")]
+		
 		max_staff = max(v[1] for v in data["staff_values"])
 
 		for team in data["staff_values"]:

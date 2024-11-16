@@ -3,6 +3,7 @@ import pytest
 from tests import create_model
 from race_model import race_model
 from tests import test_track_model
+from race_model.race_model_enums import SessionStatus
 
 def test_pit_strategy_setup():
 	# check planned pit stop laps are in expected range (based on a 71 lap race)
@@ -78,7 +79,7 @@ def test_pitstops():
 	schumacher_model.pit2_lap = 20
 	schumacher_model.pit3_lap = 30
 
-	while _race_model.current_session.status != "post_race":
+	while _race_model.current_session.status != SessionStatus.POST_SESSION:
 		_race_model.current_session.advance(mode="simulate")
 
 		if _race_model.current_session.current_lap in [11, 21, 31]:

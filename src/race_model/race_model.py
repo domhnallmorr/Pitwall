@@ -8,11 +8,13 @@ It's purpose is to
 '''
 import copy
 import random
+from enum import Enum
 
 from pw_model import pw_model
 from pw_model.track import track_model
 from race_model import qualy_model, grand_prix_model
 from race_model import particpant_model
+from race_model.race_model_enums import SessionNames, SessionStatus
 
 class RaceModel:
 	def __init__(self, mode: str, model: pw_model.Model, track_model: track_model.TrackModel):
@@ -48,15 +50,15 @@ class RaceModel:
 
 	def setup_qualifying(self,
 					  session_time: None,# in seconds e.g. 60*60 for 1 hr
-					  session_name: str) -> None:
-		assert session_name == "Qualy" # session is a variable for future development of Q1, Q2, Q3, for the 1998 1hr qualfy, it should just be called "Qualy"
+					  session_type: Enum) -> None:
+		assert session_type == SessionNames.QUALIFYING # session is a variable for future development of Q1, Q2, Q3, for the 1998 1hr qualfy
 		
-		self.current_session_name = session_name	
+		self.current_session_name = session_type.value	
 		self.current_session = qualy_model.QualyModel(self, session_time)
 		self.setup_session()
 
 	def setup_race(self) -> None:
-		self.current_session_name = "Race"
+		self.current_session_name = SessionNames.RACE.value
 		self.current_session = grand_prix_model.GrandPrixModel(self)
 		self.setup_session()
 
@@ -69,6 +71,6 @@ class RaceModel:
 		self.player_driver2.update_player_pitstop_laps(driver2_data)
 
 	def simulate_session(self) -> None:
-		while self.current_session.status not in ["post_session", "post_race"]:
+		while self.current_session.status != SessionStatus.POST_SESSION:
 			self.current_session.advance("simulate")
 

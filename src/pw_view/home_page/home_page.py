@@ -1,8 +1,8 @@
 import flet as ft
-
 from flet.matplotlib_chart import MatplotlibChart
-
 import matplotlib.pyplot as plt
+
+from pw_view.custom_widgets import custom_container
 
 class HomePage(ft.Column):
 	def __init__(self, view):
@@ -14,85 +14,113 @@ class HomePage(ft.Column):
 
 		self.setup_containers()
 
-		controls = [
-			ft.Text("Home", theme_style=self.view.page_header_style),
-			ft.Row(
-				controls=[
-					self.summary_container,
-					# self.staff_container,
-					self.chart_container,
-					self.next_race_container
-				],
-			),	
-		]
+		self.setup_page()
 
-		super().__init__(expand=1, controls=controls, alignment=ft.MainAxisAlignment.START)
+		super().__init__(expand=1, controls=self.controls)
 
-	def setup_containers(self):
-		self.summary_container = ft.Container(
-			content=ft.Column(
-				controls=[
-					ft.Text("Summary", size=self.view.container_header2_size),
-				],
-			),
-			bgcolor=self.view.dark_grey,
-			border_radius=self.view.container_border_radius,
+	def setup_containers(self) -> None:
+		# STANDINGS
+		self.current_team_pos_text = ft.Text("Current Position: 1st")
+		standings_column = ft.Column(
+			controls=[
+				custom_container.HeaderContainer(self.view, "Standings", expand=False),
+				self.current_team_pos_text
+				]
 		)
 
-		self.standings_container = ft.Container(
-			content=ft.Column(
-				controls=[
-					ft.Text("Standings", size=self.view.container_header2_size)
+		self.standings_container = custom_container.CustomContainer(self.view, standings_column)
+
+		# STAFF
+		self.driver1_text = ft.Text("Driver1: XXX - Contract: 2 Year(s)")
+		self.driver2_text = ft.Text("Driver2: XXX - Contract: 2 Year(s)")
+
+		staff_column = ft.Column(
+			controls=[
+				custom_container.HeaderContainer(self.view, "Staff", expand=False),
+				self.driver1_text,
+				self.driver2_text,
 				],
-			),
-			bgcolor=self.view.dark_grey,
-			border_radius=self.view.container_border_radius
+			expand=True
 		)
 
-		self.chart_container = ft.Container(
-			content=ft.Column(
-				controls=[
-					ft.Text("Team Stats", size=self.view.container_header2_size),
+		self.staff_container = custom_container.CustomContainer(self.view, staff_column)
+
+		# NEXT RACE
+		self.next_race_text = ft.Text("Some Grand Prix")
+		self.next_race_week_text = ft.Text("Some Week")
+		next_race_column = ft.Column(
+			controls=[
+				custom_container.HeaderContainer(self.view, "Next Race", expand=False),
+				self.next_race_text,
+				self.next_race_week_text
+				],
+				expand=True
+		)
+
+		self.next_race_container = custom_container.CustomContainer(self.view, next_race_column)
+
+		# TEAM STATS CHART
+		chart_column = ft.Column(
+			controls=[
+					custom_container.HeaderContainer(self.view, "Team Stats", expand=False),
 					self.team_stats_chart,
-				],
-			),
-			bgcolor=self.view.dark_grey,
-			border_radius=self.view.container_border_radius,
-			expand=1,
-		)
-
-		self.next_race_container = ft.Container(
-			content=ft.Column(
-				controls=[
-					ft.Text("Next Race", size=self.view.container_header2_size),
-				],
-			),
-			bgcolor=self.view.dark_grey,
-			border_radius=self.view.container_border_radius,
-			expand=1,			
-		)
-
+			]
+			)
+		self.chart_container = custom_container.CustomContainer(self.view, chart_column)
+		
 	def update_page(self, data):
 		self.update_plot(data)
 
-		controls = [
-			ft.Text("Home", theme_style=self.view.page_header_style),
-			ft.Row(
-				controls=[
-					# self.staff_container,
-					ft.Column(
-						controls=[
-							self.chart_container,
-						],
-						expand=True
-					)
+		self.current_team_pos_text.value = f"Current Position: {data['current_position']}"
+
+		self.driver1_text.value = f"Driver 1: {data['driver1']} - Contract: {data['driver1_contract']} Year(s)"
+		self.driver2_text.value = f"Driver 2: {data['driver2']} - Contract: {data['driver2_contract']} Year(s)"
+
+		self.next_race_text.value = f"Next Race: {data['next_race']}"
+		self.next_race_week_text.value = f"Week: {data['next_race_week']}"
+
+		self.view.main_app.update()
+
+	def setup_page(self):
+		row1 = ft.Row(
+			controls=[
+				ft.Container(content=self.standings_container, expand=True),
+				ft.Container(content=self.staff_container, expand=True),
+				ft.Container(content=self.next_race_container, expand=True),
 				],
-				expand=1,
-			),	
+			expand=1,
+			alignment=ft.MainAxisAlignment.SPACE_EVENLY
+		)
+
+		row2 = ft.Row(
+			controls=[self.chart_container,],
+			expand=1
+		)
+
+		page_controls = ft.Container(
+			content=ft.Column(
+				controls=[
+							row1,
+							row2
+							],
+							expand=True
+			),
+			expand=True
+		)
+
+		self.background_stack = ft.Stack(
+			[
+				self.view.background_image,
+				page_controls,
+			],
+			expand=True,
+		)
+
+		self.controls = [
+			ft.Text("Home", theme_style=self.view.page_header_style),
+			self.background_stack
 		]
 
-
-		self.controls = controls
 		self.view.main_app.update()
 
 	def update_plot(self, data):
