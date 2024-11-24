@@ -5,6 +5,7 @@ import pandas as pd
 
 from pw_model import load_save
 from pw_model import load_roster
+from pw_model.pw_model_enums import StaffRoles
 
 def save_game(model, mode="file"):
 	assert mode in ["file", "memory"]
@@ -153,14 +154,15 @@ def save_drivers_stats(model, save_file):
 
 def save_commercial_managers(model, save_file):
 	cursor = save_file.cursor()
-
+	# TODO condense into a single "managers" table
 	cursor.execute('''
 	CREATE TABLE IF NOT EXISTS "commercial_managers" (
 	"Year"	TEXT,
 	"Name"	TEXT,
 	"Age"	INTEGER,
 	"Skill"	INTEGER,
-	"Salary"	INTEGER
+	"Salary"	INTEGER,
+	"ContractLength"	INTEGER
 			)'''
 				)
 	
@@ -168,14 +170,15 @@ def save_commercial_managers(model, save_file):
 
 	for commercial_manager in model.commercial_managers:
 		cursor.execute('''
-			INSERT INTO commercial_managers (year, name, age, skill, salary) 
-			VALUES (?, ?, ?, ?, ?)
+			INSERT INTO commercial_managers (year, name, age, skill, salary, contractlength) 
+			VALUES (?, ?, ?, ?, ?, ?)
 		''', (
 			"default",
 			commercial_manager.name, 
 			commercial_manager.age,
 			commercial_manager.skill,
 			commercial_manager.contract.salary,
+			commercial_manager.contract.contract_length,
 		))
 
 def save_technical_directors(model, save_file):
@@ -187,23 +190,38 @@ def save_technical_directors(model, save_file):
 	"Name"	TEXT,
 	"Age"	INTEGER,
 	"Skill"	INTEGER,
-	"Salary"	INTEGER
+	"Salary"	INTEGER,
+	"ContractLength"	INTEGER
 			)'''
 				)
 	
 	cursor.execute("DELETE FROM technical_directors") # clear existing data
 
-	for technical_director in model.technical_directors:
-		cursor.execute('''
-			INSERT INTO technical_directors (year, name, age, skill, salary) 
-			VALUES (?, ?, ?, ?, ?)
-		''', (
-			"default",
-			technical_director.name, 
-			technical_director.age,
-			technical_director.skill,
-			technical_director.contract.salary,
-		))
+	for idx, list_type in enumerate([model.technical_directors, model.future_managers]):
+		for technical_director in list_type:
+			process = False
+			if idx == 0:
+				year = "default"
+				process = True
+			elif idx == 1:
+				if technical_director[1].role == StaffRoles.TECHNICAL_DIRECTOR:
+					year = technical_director[0]
+					technical_director = technical_director[1]
+					process = True
+
+			if process is True:
+				
+				cursor.execute('''
+					INSERT INTO technical_directors (year, name, age, skill, salary, contractlength) 
+					VALUES (?, ?, ?, ?, ?, ?)
+				''', (
+					year,
+					technical_director.name, 
+					technical_director.age,
+					technical_director.skill,
+					technical_director.contract.salary,
+					technical_director.contract.contract_length,
+				))
 
 def save_teams(model, save_file):
 
@@ -383,9 +401,10 @@ def load_drivers_stats(conn, model):
 
 
 def load_senior_staff(conn, model):
-	commercial_managers, technical_directors = load_roster.load_senior_staff(model, conn)
+	commercial_managers, technical_directors, future_managers = load_roster.load_senior_staff(model, conn)
 	model.commercial_managers = commercial_managers
 	model.technical_directors = technical_directors
+	model.future_managers = future_managers
 
 def load_teams(conn, model):
 	teams = load_roster.load_teams(model, conn)

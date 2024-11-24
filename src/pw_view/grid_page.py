@@ -44,8 +44,8 @@ class GridPage(ft.Column):
 
 		columns = []
 		for col in grid_this_year_df.columns:
-			col = col.replace("_", " ").title()
-			columns.append(ft.DataColumn(ft.Text(col)))
+			column_content = custom_container.HeaderContainer(self.view, col)
+			columns.append(ft.DataColumn(column_content))
 
 		df_data = grid_this_year_df.values.tolist()
 		rows = []
@@ -57,7 +57,8 @@ class GridPage(ft.Column):
 
 			rows.append(ft.DataRow(cells=cells))
 
-		self.grid_this_year_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30)
+		self.grid_this_year_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
+										   heading_row_color=ft.colors.PRIMARY)
 
 		self.scrollable_grid_this_year_table = ft.Column(
 			controls=[self.grid_this_year_table],
@@ -71,8 +72,8 @@ class GridPage(ft.Column):
 
 		columns = []
 		for col in grid_next_year_df.columns:
-			col = col.replace("_", " ").title()
-			columns.append(ft.DataColumn(ft.Text(col)))
+			column_content = custom_container.HeaderContainer(self.view, col)
+			columns.append(ft.DataColumn(column_content))
 
 		df_data = grid_next_year_df.values.tolist()
 		rows = []
@@ -84,7 +85,8 @@ class GridPage(ft.Column):
 
 			rows.append(ft.DataRow(cells=cells))
 
-		self.grid_next_year_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30)
+		self.grid_next_year_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
+										   heading_row_color=ft.colors.PRIMARY)
 
 		self.scrollable_grid_next_year_table = ft.Column(
 			controls=[self.grid_next_year_table],
@@ -120,7 +122,7 @@ class GridPage(ft.Column):
 				self.view.background_image,
 				column
 			],
-			expand=False
+			expand=True
 		)
 
 		page_controls = [

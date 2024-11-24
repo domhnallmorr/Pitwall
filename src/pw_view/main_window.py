@@ -49,8 +49,8 @@ class MainWindow(ft.View):
 			contents.append(self.view.calendar_page)
 		elif page_name == "staff":
 			contents.append(self.view.staff_page)
-		elif page_name == "hire_driver":
-			contents.append(self.view.hire_driver_page)
+		elif page_name == "hire_staff":
+			contents.append(self.view.hire_staff_page)
 		elif page_name == "grid":
 			contents.append(self.view.grid_page)
 		elif page_name == "finance":

@@ -1,7 +1,8 @@
 [tool.poetry]
+package-mode = false
 name = "Pitwall"
-version = "0.2.0"
-description = "A free and open source motorsport manager game."
+version = "0.9.0"
+description = "A free and open source motorsport manager game"
 authors = ["Domhnall Morrissey"]
 readme = "README.md"
 

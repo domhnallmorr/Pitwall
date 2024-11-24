@@ -6,6 +6,7 @@ from pw_model.finance import finance_model
 from pw_model.driver import driver_model
 from pw_model.senior_staff import commercial_manager, technical_director
 from pw_model.team import facilities_model
+from pw_model.pw_model_enums import StaffRoles
 
 class TeamModel:
 	def __init__(self, model, name, driver1, driver2, car_model,
@@ -103,7 +104,7 @@ class TeamModel:
 		'''
 		free_agents is a list of driver_names
 		'''
-		assert driver_type in ["driver1", "driver2"]
+		assert driver_type in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]
 
 		driver_choosen = random.choice(free_agents)
 
@@ -111,7 +112,7 @@ class TeamModel:
 
 		return driver_choosen
 	
-	def update_drivers(self, driver1 : str, driver2 : str, driver1_contract : dict, driver2_contract : dict):
+	def update_drivers(self, driver1 : str, driver2 : str, driver1_contract : dict, driver2_contract : dict) -> None:
 		self.driver1 = driver1
 		self.driver2 = driver2
 
@@ -121,6 +122,12 @@ class TeamModel:
 		if driver2_contract is not None:
 			self.driver2_model.contract.contract_length = driver2_contract["ContractLength"]
 
+	def update_managers(self, technical_director: str, technical_director_contract: dict) -> None:
+		self.technical_director = technical_director
+
+		if technical_director_contract is not None:
+			self.technical_director_model.contract.contract_length = technical_director_contract["ContractLength"]
+			
 	def update_car_speed(self):
 		'''
 		Recalculate the car speed at the end of the year for the next season

@@ -12,10 +12,11 @@ def decide_when_retiring(age):
 class SeniorStaff:
 	def __init__(self,
 			  model,
-			  name : str,
-			  age : int,
-			  skill : int,
-			  salary : int):
+			  name: str,
+			  age: int,
+			  skill: int,
+			  salary: int,
+			  contract_length: int):
 	
 		self.model = model
 		self.name = name
@@ -26,11 +27,18 @@ class SeniorStaff:
 		self.retired = False
 		self.retiring_age = decide_when_retiring(age)
 
-		self.contract = staff_contract.StaffContract(salary=salary)
+		self.contract = staff_contract.StaffContract(salary=salary, contract_length=contract_length)
 
 	@property
 	def average_skill(self) -> int:
 		return self.skill
+	
+	@property
+	def details(self) -> dict:
+		return {
+			"name": self.name,
+			"age": self.age
+		}
 	
 	def end_season(self, increase_age=True) -> None:
 		

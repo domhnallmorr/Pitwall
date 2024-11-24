@@ -38,7 +38,7 @@ class FinancePage(ft.Column):
 				self.view.background_image,
 				column
 			],
-			expand=False
+			expand=True
 		)
 
 		contents = [
@@ -47,7 +47,7 @@ class FinancePage(ft.Column):
 
 		]
 
-		super().__init__(expand=1, controls=contents, alignment=ft.MainAxisAlignment.START, scroll="auto")
+		super().__init__(expand=1, controls=contents)
 
 	def setup_widgets(self):
 		self.sponsor_income_text = ft.Text(f"Sponsorship: $1")
@@ -101,7 +101,7 @@ class FinancePage(ft.Column):
 		
 		self.expenditure_container = custom_container.CustomContainer(self.view, column, expand=True)
 
-		self.summary_row = ft.Row(controls=[self.income_container, self.expenditure_container], expand=True)
+		self.summary_row = ft.Row(controls=[self.income_container, self.expenditure_container], expand=False)
 
 		self.setup_plot()
 

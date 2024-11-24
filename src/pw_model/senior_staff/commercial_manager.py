@@ -1,5 +1,5 @@
 from pw_model.senior_staff import senior_staff
-
+from pw_model.pw_model_enums import StaffRoles
 import random
 
 class CommercialManager(senior_staff.SeniorStaff):
@@ -8,9 +8,11 @@ class CommercialManager(senior_staff.SeniorStaff):
 			  name : str,
 			  age : int,
 			  skill : int,
-			  salary : float):
+			  salary : float,
+			  contract_length : float):
 		
-		super().__init__(model, name, age, skill, salary)
+		super().__init__(model, name, age, skill, salary, contract_length)
+		self.role = StaffRoles.COMMERCIAL_MANAGER
 
 	@property
 	def team_model(self):

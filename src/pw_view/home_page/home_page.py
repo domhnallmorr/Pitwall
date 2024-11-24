@@ -33,12 +33,14 @@ class HomePage(ft.Column):
 		# STAFF
 		self.driver1_text = ft.Text("Driver1: XXX - Contract: 2 Year(s)")
 		self.driver2_text = ft.Text("Driver2: XXX - Contract: 2 Year(s)")
+		self.technical_director_text = ft.Text("Technical Director: XXX - Contract: 2 Year(s)")
 
 		staff_column = ft.Column(
 			controls=[
 				custom_container.HeaderContainer(self.view, "Staff", expand=False),
 				self.driver1_text,
 				self.driver2_text,
+				self.technical_director_text,
 				],
 			expand=True
 		)
@@ -75,6 +77,7 @@ class HomePage(ft.Column):
 
 		self.driver1_text.value = f"Driver 1: {data['driver1']} - Contract: {data['driver1_contract']} Year(s)"
 		self.driver2_text.value = f"Driver 2: {data['driver2']} - Contract: {data['driver2_contract']} Year(s)"
+		self.technical_director_text.value = f"Technical Director: {data['technical_director']} - Contract: {data['technical_director_contract']} Year(s)"
 
 		self.next_race_text.value = f"Next Race: {data['next_race']}"
 		self.next_race_week_text.value = f"Week: {data['next_race_week']}"

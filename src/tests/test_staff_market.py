@@ -1,5 +1,6 @@
 from tests import create_model
 from pw_model.staff_market import staff_market
+from pw_model.pw_model_enums import StaffRoles
 
 def test_update_team_drivers():
 	'''
@@ -22,7 +23,7 @@ def test_update_team_drivers():
 				driver.end_season(increase_age=True)
 
 		model.staff_market.setup_dataframes()
-		model.staff_market.determine_driver_transfers()
+		model.staff_market.compute_transfers()
 		model.staff_market.update_team_drivers()
 
 		for idx, row in model.staff_market.grid_next_year_df.iterrows():
@@ -31,8 +32,8 @@ def test_update_team_drivers():
 			team_model = model.get_team_model(team)
 
 			#ensure driver transfers applied correctly
-			assert team_model.driver1 == row["driver1"]
-			assert team_model.driver2 == row["driver2"]
+			assert team_model.driver1 == row[StaffRoles.DRIVER1.value]
+			assert team_model.driver2 == row[StaffRoles.DRIVER2.value]
 
 			# ensure no driver has a contract length of 0 or less
 			assert team_model.driver1_model.contract.contract_length > 0	
@@ -60,7 +61,7 @@ def test_top3_drivers_logic():
 
 		model.staff_market.setup_dataframes()
 
-		model.staff_market.determine_driver_transfers()
+		model.staff_market.compute_transfers()
 		model.staff_market.update_team_drivers()
 
 		top_4_teams_driver1 = []
@@ -87,3 +88,13 @@ def test_week_to_announce_signing():
 			assert max(weeks) <= 40
 
 		model.advance()
+
+def test_team_requiring_staff_method():
+	model = create_model.create_model(mode="headless", auto_save=False)
+
+	_staff_market = staff_market.StaffMarket(model)
+	_staff_market.setup_dataframes()
+
+	teams_requiring_tech_director = _staff_market.compile_teams_requiring_manager(StaffRoles.TECHNICAL_DIRECTOR)
+
+	assert teams_requiring_tech_director == ["Jordan", "Prost", "Arrows", "Stewart", "Tyrrell"]

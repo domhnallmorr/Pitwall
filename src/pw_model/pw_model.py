@@ -5,7 +5,8 @@ from pw_model import load_roster
 from pw_model.season import season_model
 from pw_model.email import email_model
 from pw_model.staff_market import staff_market
-
+from pw_model.pw_model_enums import StaffRoles
+from pw_model.staff_market import manager_transfers
 from pw_model import load_save
 
 class Model:
@@ -36,7 +37,7 @@ class Model:
 		if mode == "headless":
 			self.player_team = None
 			# this is called in start_career method, when player is  (mode=normal)
-			self.staff_market.determine_driver_transfers()
+			self.staff_market.compute_transfers()
 
 	@property
 	def player_team_model(self):
@@ -144,13 +145,14 @@ class Model:
 			self.staff_market.update_team_drivers()
 			logging.critical(f"Start Season {self.year}")
 			self.add_new_drivers()
+			self.add_new_managers()
 
 		self.staff_market.setup_dataframes()
 
 		self.season.setup_new_season_variables()
 
 		if start_career is False:
-			self.staff_market.determine_driver_transfers() # driver transfers at start of career are handled in the start_career method (once player_team is defined)
+			self.staff_market.compute_transfers() # driver transfers at start of career are handled in the start_career method (once player_team is defined)
 
 	def add_new_drivers(self):
 		new_drivers = [d for d in self.future_drivers if int(d[0]) == self.year]
@@ -160,6 +162,25 @@ class Model:
 
 			self.future_drivers.remove(new_driver)
 
+		# Check we don't have duplicate drivers
+		drivers_names = [driver.name for driver in self.drivers]
+		assert len(drivers_names) == len(set(drivers_names))
+	
+	def add_new_managers(self) -> None:
+		new_managers = [m for m in self.future_managers if int(m[0]) == self.year]
+		
+		'''
+		example of new_managers list
+		[['1999', <pw_model.senior_staff.technical_director.TechnicalDirector object at 0x00000150339AA8A0>]]
+		'''
+
+		for new_manager in new_managers:
+			if new_manager[1].role == StaffRoles.COMMERCIAL_MANAGER:
+				self.commercial_managers.append(new_manager[1])
+			elif new_manager[1].role == StaffRoles.TECHNICAL_DIRECTOR:
+				self.technical_directors.append(new_manager[1])
+
+			self.future_managers.remove(new_manager)
 
 	def start_career(self, player_team: str):
 		self.player_team = player_team
@@ -167,7 +188,7 @@ class Model:
 		if player_team is not None:
 			self.player_team_model.finance_model.update_prize_money(self.season.standings_manager.player_team_position)
 
-		self.staff_market.determine_driver_transfers()
+		self.staff_market.compute_transfers()
 
 	def gen_team_average_stats(self) -> dict:
 		

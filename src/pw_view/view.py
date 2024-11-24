@@ -7,7 +7,7 @@ from pw_view.title_screen import title_screen, team_selection_screen
 from pw_view.race_weekend import race_weekend_window, results_window
 from pw_view.calendar_page import calendar_page
 from pw_view.home_page import home_page
-from pw_view.staff_page import staff_page, hire_driver_page
+from pw_view.staff_page import staff_page, hire_staff_page
 from pw_view.finance_page import finance_page
 from pw_view.car_page import car_page
 from pw_view.facility_page import facility_page, upgrade_facility_page
@@ -72,7 +72,7 @@ class View:
 		self.standings_page = standings_page.StandingsPage(self)
 		self.calendar_page = calendar_page.CalendarPage(self)
 		self.staff_page = staff_page.StaffPage(self)
-		self.hire_driver_page = hire_driver_page.HireDriverPage(self)
+		self.hire_staff_page = hire_staff_page.HireStaffPage(self)
 		self.grid_page = grid_page.GridPage(self)
 		self.finance_page = finance_page.FinancePage(self)
 		self.car_page = car_page.CarPage(self)

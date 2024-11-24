@@ -14,7 +14,7 @@ def test_retirements():
 	schumacher_model.handle_start_of_retiring_season()
 	
 	model.staff_market.setup_dataframes()
-	model.staff_market.determine_driver_transfers()
+	model.staff_market.compute_transfers()
 
 	save_file = load_save.save_game(model, mode="memory")
 
@@ -36,7 +36,7 @@ def test_retirment_age():
 	schumacher_model.retiring_age = 55
 	
 	model.staff_market.setup_dataframes()
-	model.staff_market.determine_driver_transfers()
+	model.staff_market.compute_transfers()
 
 	save_file = load_save.save_game(model, mode="memory")
 

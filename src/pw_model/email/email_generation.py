@@ -25,6 +25,13 @@ def driver_hiring_email(team, driver):
     
     return selected_message
 
+def manager_hiring_email(team, manager, role):
+     hiring_messages = [
+          f"{team} have announced the signing of {manager} as thier new {role.lower()} for next season"
+     ]
+
+     return random.choice(hiring_messages)
+
 def prize_money_email(prize_money):
     messages = [
         f"Prize money from last season has been confirmed at ${prize_money: ,}. Payments will be made on a weekly basis.",

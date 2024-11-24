@@ -2,6 +2,7 @@
 A controller dedicated to refreshing the off track UI pages
 '''
 import copy
+from pw_model.pw_model_enums import StaffRoles
 
 class PageUpdateController:
 	def __init__(self, controller):
@@ -59,6 +60,7 @@ class PageUpdateController:
 			"technical_director_age": team_model.technical_director_model.age,
 			"technical_director_contract_length": team_model.technical_director_model.contract.contract_length,
 			"technical_director_skill": team_model.technical_director_model.skill,
+			"player_requiring_technical_director": self.model.staff_market.compile_teams_requiring_manager(StaffRoles.TECHNICAL_DIRECTOR),
 
 			"staff_values": staff_values,
 
@@ -123,6 +125,8 @@ class PageUpdateController:
 			"driver1_contract": self.model.player_team_model.driver1_model.contract.contract_length,
 			"driver2": self.model.player_team_model.driver2,
 			"driver2_contract": self.model.player_team_model.driver2_model.contract.contract_length,
+			"technical_director": self.model.player_team_model.technical_director,
+			"technical_director_contract": self.model.player_team_model.technical_director_model.contract.contract_length,
 
 			"team_average_stats": self.model.gen_team_average_stats(),
 			"player_car": self.model.player_team_model.car_model.speed,

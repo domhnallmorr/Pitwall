@@ -1,22 +1,23 @@
-
+from enum import Enum
 import logging
 import random
 
 import pandas as pd
+
+from pw_model.pw_model_enums import StaffRoles
+from pw_model.staff_market import driver_transfers, manager_transfers
 
 '''
 Class for the following functionaility
 
 compile list of drivers retiring
 compile list of teams who need drivers
-compile list of free agents
-Determine driver transfers between teams
 Finalise player driver hirings
 call email model to generate an email announcing a driver hiring
 
 grid_next_year_df is a dataframe that contains the staff for each team for next year. This gets computed at the start of each season, and recomputed if the player signs someone
 grid_next_year_announced_df, gets populated as the season progresses and signings are announced. These are finalised signings that will carry over to next season
-
+new_contracts_df is a dataframe that contains new contract information for any new signings
 '''
 
 
@@ -29,7 +30,7 @@ class StaffMarket:
 		columns = ["Team", "WeekToAnnounce", "DriverIdx", "Driver", "Salary", "ContractLength"]
 		self.new_contracts_df = pd.DataFrame(columns=columns) # dataframe for tracking details of new contracts offered to new hires
 
-		columns = ["team", "driver1", "driver2", "technical_director", "commercial_manager"]
+		columns = ["team", StaffRoles.DRIVER1.value, StaffRoles.DRIVER2.value, StaffRoles.TECHNICAL_DIRECTOR.value, "commercial_manager"]
 		this_year_data = [] # grid for upcoming season
 		next_year_data = [] # grid for next year
 
@@ -37,13 +38,13 @@ class StaffMarket:
 			this_year_data.append([team.name])
 			next_year_data.append([team.name])
 
-			for driver_model in [team.driver1_model, team.driver2_model, team.technical_director_model, team.commercial_manager_model]:
-				this_year_data[-1].append(driver_model.name)
+			for staff_model in [team.driver1_model, team.driver2_model, team.technical_director_model, team.commercial_manager_model]:
+				this_year_data[-1].append(staff_model.name)
 
-				if driver_model.retiring is True or driver_model.contract.contract_length < 2:
+				if staff_model.retiring is True or staff_model.contract.contract_length < 2:
 					next_year_data[-1].append(None)
 				else:
-					next_year_data[-1].append(driver_model.name)
+					next_year_data[-1].append(staff_model.name)
 
 		self.grid_this_year_df = pd.DataFrame(columns=columns, data=this_year_data)
 
@@ -64,7 +65,7 @@ class StaffMarket:
 		# if driver1 is an open seat in the player's team for next season
 		# NB, for this to work, player hirings must be added to grid_next_year_announced_df straight away 
 
-		if self.model.player_team in self.compile_teams_requiring_drivers("driver1"):
+		if self.model.player_team in self.compile_teams_requiring_drivers(StaffRoles.DRIVER1):
 			return True
 		else:
 			return False
@@ -72,106 +73,47 @@ class StaffMarket:
 	@property
 	def player_requiring_driver2(self):
 		# if driver2 is an open seat in the player's team for next season
-		if self.model.player_team in self.compile_teams_requiring_drivers("driver2"):
+		if self.model.player_team in self.compile_teams_requiring_drivers(StaffRoles.DRIVER2):
 			return True
 		else:
 			return False
 				
 
-	def compile_teams_requiring_drivers(self, driver_idx):
-		assert driver_idx in ["driver1", "driver2"], f"Unsupported driver_idx {driver_idx}"
+	def compile_teams_requiring_drivers(self, driver_idx: Enum) -> list:
+		assert driver_idx in [StaffRoles.DRIVER1, StaffRoles.DRIVER2], f"Unsupported driver_idx {driver_idx}"
 
 		teams = []
 
 		for idx, row in self.grid_next_year_df.iterrows():
-			if row[driver_idx] is None:
+			if row[driver_idx.value] is None:
 				teams.append(row["team"])
 		
 		return teams
-	
-	def get_free_agents(self, for_player_team: bool =False) -> list:
-		free_agents = []
 
-		for driver in self.model.drivers:
-			if driver.retired is False:
-				if driver.retiring is False:
+	#TODO can merge this with compile drivers method to create 1 single method
+	def compile_teams_requiring_manager(self, role: Enum) -> list:
+		assert role in [StaffRoles.TECHNICAL_DIRECTOR], f"Unsupported manager role {role}"
 
-					if for_player_team is True:
-						# When the player is hiring a new driver, any driver not announced for next season is considered a free agent
-						if not self.grid_next_year_announced_df.isin([driver.name]).any().any():
-							free_agents.append(driver.name)
-					else: # for AI teams, don;t consider if hiring is announced yet, this avoids the same driver being hired by multiple teams
-						if not self.grid_next_year_df.isin([driver.name]).any().any():
-							free_agents.append(driver.name)
-	
-		return free_agents
-	
-	def determine_driver_transfers(self):
-		self.transfers = []
+		teams = []
 
-		self.handle_top_3_drivers()
-
-		teams_requiring_driver1 = self.compile_teams_requiring_drivers("driver1")
-		teams_requiring_driver2 = self.compile_teams_requiring_drivers("driver2")
-
-		for driver_idx in ["driver1", "driver2"]:
-
-			if driver_idx == "driver1":
-				teams_list = teams_requiring_driver1
-			else:
-				teams_list = teams_requiring_driver2
-
-			for team in teams_list:
-				if team != self.model.player_team:
-					free_agents = self.get_free_agents()
-					self.team_hire_driver(team, driver_idx, free_agents)
-
-	def handle_top_3_drivers(self):
-		'''
-		ensure top 3 drivers are in the top 4 teams next season
-		'''
-		drivers_by_rating = [d[0] for d in self.model.season.drivers_by_rating[:3]] # d[0] is drivers name
-		teams_by_rating = [t[0] for t in self.model.season.teams_by_rating[:4]] # t[0] is teams name
-		free_agents = self.get_free_agents()
-
-		# remove player team if in top 4 teams
-		if self.model.player_team in teams_by_rating:
-			teams_by_rating.remove(self.model.player_team)
-
-		top_available_drivers = [driver for driver in drivers_by_rating if driver in free_agents]
-		teams_requiring_driver1 = self.compile_teams_requiring_drivers("driver1")
-		top_available_teams = [team for team in teams_by_rating if team in teams_requiring_driver1]
+		for idx, row in self.grid_next_year_df.iterrows():
+			if row[role.value] is None:
+				teams.append(row["team"])
 		
-		if len(top_available_drivers) > 0: # if any of the top drivers are available
-			for team in top_available_teams:
-				self.team_hire_driver(team, "driver1", top_available_drivers)
-				
-				# redefine top available drivers
-				free_agents = self.get_free_agents()
-				top_available_drivers = [driver for driver in drivers_by_rating if driver in free_agents]
+		return teams
 
-				if len(top_available_drivers) == 0: # run out of drivers
-					break
-
-	def team_hire_driver(self, team: str, driver_idx: str, free_agents: list) -> None:
+	def handle_team_hiring_someone(self, team:  str, role: Enum, person_hired: str):
 		'''
-		This method handles the AI controlled teams hiring a new driver
+		This is for AI only teams, for player team, complete_hiring is called
 		'''
-		logging.debug(f"{team} hiring {driver_idx}")
-		logging.debug(f"Free Agents: {free_agents}")
+		assert role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2, StaffRoles.TECHNICAL_DIRECTOR]
+		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team, role.value] = person_hired
 		
-		team_model = self.model.get_team_model(team)
-		driver_hired = team_model.hire_driver(driver_idx, free_agents)
-
-		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team, driver_idx] = driver_hired
-
 		week_to_announce = max(random.randint(4, 40), self.model.season.current_week + 1) # ensure the week is not in the past
-		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team, week_to_announce, driver_idx, driver_hired, 4_000_000, random.randint(2, 5)]
+		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team, week_to_announce, role.value, person_hired, 4_000_000, random.randint(2, 5)]
 
-		# self.model.inbox.generate_driver_hiring_email(team_model, self.model.get_driver_model(driver_hired))
 
 	def update_team_drivers(self) -> None:
-
 		assert None not in self.grid_next_year_df.values
 
 		for idx, row in self.grid_next_year_df.iterrows():
@@ -179,29 +121,39 @@ class StaffMarket:
 			team_model = self.model.get_team_model(team_name)
 
 			# Get new contract details
-			if row["driver1"] in self.new_contracts_df["Driver"].values:
-				driver1_contract = self.new_contracts_df.loc[self.new_contracts_df["Driver"] == row["driver1"]].to_dict(orient="records")[0]
+			if row[StaffRoles.DRIVER1.value] in self.new_contracts_df["Driver"].values:
+				driver1_contract = self.new_contracts_df.loc[self.new_contracts_df["Driver"] == row[StaffRoles.DRIVER1.value]].to_dict(orient="records")[0]
 			else:
 				driver1_contract = None # driver retained this year
 
-			if row["driver2"] in self.new_contracts_df["Driver"].values:
-				driver2_contract = self.new_contracts_df.loc[self.new_contracts_df["Driver"] == row["driver2"]].to_dict(orient="records")[0]
+			if row[StaffRoles.DRIVER2.value] in self.new_contracts_df["Driver"].values:
+				driver2_contract = self.new_contracts_df.loc[self.new_contracts_df["Driver"] == row[StaffRoles.DRIVER2.value]].to_dict(orient="records")[0]
 			else:
 				driver2_contract = None
 
-			team_model.update_drivers(row["driver1"], row["driver2"], driver1_contract, driver2_contract)
+			if row[StaffRoles.TECHNICAL_DIRECTOR.value] in self.new_contracts_df["Driver"].values:
+				tech_director_contract = self.new_contracts_df.loc[self.new_contracts_df["Driver"] == row[StaffRoles.TECHNICAL_DIRECTOR.value]].to_dict(orient="records")[0]
+			else:
+				tech_director_contract = None
 
-	def complete_driver_hiring(self, driver_hired: str, team_name: str, driver_idx: str) -> None:
+			team_model.update_drivers(row[StaffRoles.DRIVER1.value], row[StaffRoles.DRIVER2.value], driver1_contract, driver2_contract)
+			team_model.update_managers(row[StaffRoles.TECHNICAL_DIRECTOR.value], tech_director_contract)
+
+	def complete_hiring(self, person_hired: str, team_name: str, role: Enum) -> None:
+		assert role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2, StaffRoles.TECHNICAL_DIRECTOR]
 		team_model = self.model.get_team_model(team_name)
 
-		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team_name, driver_idx] = driver_hired
+		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team_name, role.value] = person_hired
 		if team_name == self.model.player_team:
-			self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team_name, self.model.season.current_week, driver_idx, driver_hired, 4_000_000, random.randint(2, 5)]
+			self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team_name, self.model.season.current_week, role.value, person_hired, 4_000_000, random.randint(2, 5)]
 		
 		# if team_name == self.model.player_team: # make this announced straight away for player hirings
-		self.grid_next_year_announced_df.loc[self.grid_next_year_df["team"] == team_name, driver_idx] = driver_hired
+		self.grid_next_year_announced_df.loc[self.grid_next_year_df["team"] == team_name, role.value] = person_hired
 
-		self.model.inbox.generate_driver_hiring_email(team_model, self.model.get_driver_model(driver_hired))
+		if role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
+			self.model.inbox.generate_driver_hiring_email(team_model, self.model.get_driver_model(person_hired))
+		elif role == StaffRoles.TECHNICAL_DIRECTOR:
+			self.model.inbox.new_manager_hired_email(team_name, person_hired, StaffRoles.TECHNICAL_DIRECTOR.value)
 
 		if team_name == self.model.player_team: # if the player signs a driver, we must recopute AI signings
 			self.recompute_transfers_after_player_hiring()
@@ -210,21 +162,22 @@ class StaffMarket:
 		'''
 		At the end of the season, if the player has failed to hire a driver(s)
 		this method automically hires a random driver
+		Will probably update this to end the game if player has failed to hire drivers
 		'''
 		if self.player_requiring_driver1 is True:
-			self.team_hire_driver(self.model.player_team, "driver1", self.get_free_agents())
+			driver_transfers.team_hire_driver(self.model, self.model.player_team, StaffRoles.DRIVER1, driver_transfers.get_free_agents(self.model))
 
 		if self.player_requiring_driver2 is True:
-			self.team_hire_driver(self.model.player_team, "driver2", self.get_free_agents())
+			driver_transfers.team_hire_driver(self.model, self.model.player_team, StaffRoles.DRIVER2, driver_transfers.get_free_agents(self.model))
 			
 	def announce_signings(self):
 		for idx, row in self.new_contracts_df.iterrows():
 			if row["WeekToAnnounce"] == self.model.season.current_week:
-				driver_hired = row["Driver"]
+				person_hired = row["Driver"]
 				team_name = row["Team"]
-				driver_idx = row["DriverIdx"]
+				role = StaffRoles(row["DriverIdx"]) # role is stored as an enum value (string) in the DF
 				
-				self.complete_driver_hiring(driver_hired, team_name, driver_idx)
+				self.complete_hiring(person_hired, team_name, role)
 
 	def recompute_transfers_after_player_hiring(self) -> None:
 		# remove any contracts that have not been announced yet
@@ -233,8 +186,14 @@ class StaffMarket:
 		# redo grid_next_year_df
 		self.grid_next_year_df = self.grid_next_year_announced_df.copy(deep=True)
 
-		# determine driver transfers
-		self.determine_driver_transfers()
+		# determine all transfers
+		self.compute_transfers()
 
+	def technical_director_hired(self, team, technical_director, week_to_announce):
 
+		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team, StaffRoles.TECHNICAL_DIRECTOR.value] = technical_director
+		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team, week_to_announce, StaffRoles.TECHNICAL_DIRECTOR.value, technical_director, 4_000_000, random.randint(2, 5)]
 
+	def compute_transfers(self):
+		driver_transfers.determine_driver_transfers(self.model)
+		manager_transfers.determine_technical_director_transfers(self.model)

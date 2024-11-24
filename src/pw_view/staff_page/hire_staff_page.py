@@ -1,28 +1,36 @@
+from enum import Enum
 from typing import Optional
 import flet as ft
 
-class HireDriverPage(ft.Column):
+from pw_model.pw_model_enums import StaffRoles
+
+class HireStaffPage(ft.Column):
 	def __init__(self, view):
 
 		self.view = view
 		self.setup_contract_column()
 
+		self.title_text = ft.Text("Hire Driver", theme_style=self.view.page_header_style)
+		self.curent_role = None # tracks wether player is hiring driver, technical director, etc
+
 		contents = [
-			ft.Text("Hire Driver", theme_style=self.view.page_header_style),
+			self.title_text,
 			# self.buttons_row,
 			# self.driver_row,
 		]
 
 		super().__init__(expand=1, controls=contents)
 
-	def update_free_agent_list(self, free_agents):
-		
+	def update_free_agent_list(self, free_agents: list, role: Enum):
+		self.title_text.value = role.value
+		self.curent_role = role
+
 		rows = []
 
 		for name in free_agents:
 			row = ft.DataRow(
 				cells = [
-						ft.DataCell(ft.TextButton(name, data=name, on_click=self.update_driver))
+						ft.DataCell(ft.TextButton(name, data=name, on_click=self.update_staff))
 				]
 			)
 			
@@ -63,14 +71,14 @@ class HireDriverPage(ft.Column):
 		
 		self.setup_page()
 
-		self.update_driver(None, name=free_agents[0])
+		self.update_staff(None, name=free_agents[0])
 		
 	def setup_contract_column(self):
 		self.name_text = ft.Text("Driver Name: Some Driver")
 		self.age_text = ft.Text("Driver Age: 99")
 		self.contract_length_text = ft.Text("Contract Length: 2 years")
 
-		self.offer_btn = ft.TextButton("Offer", on_click=self.approach_driver)
+		self.offer_btn = ft.TextButton("Offer", on_click=self.approach_staff)
 
 		self.contract_column = ft.Column(
 			controls=[
@@ -110,18 +118,18 @@ class HireDriverPage(ft.Column):
 
 		self.view.main_app.update()
 
-	def update_driver(self, e: ft.ControlEvent, name: Optional[str]=None) -> None:
+	def update_staff(self, e: ft.ControlEvent, name: Optional[str]=None) -> None:
 		if name is None:
 			name = e.control.data
 
-		details = self.view.controller.staff_hire_controller.get_driver_details(name)
+		details = self.view.controller.staff_hire_controller.get_staff_details(name, self.curent_role)
 		self.name_text.value = f"Driver Name: {details['name']}"
 		self.age_text.value = f"Driver Age: {details['age']}"
 
 		self.offer_btn.data = name
 		self.view.main_app.update()
 
-	def approach_driver(self, e: ft.ControlEvent) -> None:
+	def approach_staff(self, e: ft.ControlEvent) -> None:
 		name = e.control.data
 
 		self.dlg_modal = ft.AlertDialog(
@@ -147,5 +155,5 @@ class HireDriverPage(ft.Column):
 		action = e.control.text
 
 		if action.lower() == "yes":
-			self.view.controller.staff_hire_controller.complete_hire(name)
+			self.view.controller.staff_hire_controller.complete_hire(name, self.curent_role)
 		

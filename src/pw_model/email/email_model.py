@@ -3,6 +3,7 @@ import collections
 import pandas as pd
 from pw_model.email import email_generation
 from pw_model.team import team_model
+from pw_model.pw_model_enums import StaffRoles
 
 class Email:
 	def __init__(self, subject, message, sender=""):
@@ -67,6 +68,7 @@ class Inbox:
 		email = Email(f"Factory has been upgraded!", msg)
 		self.add_email(email)
 
+	#TODO remove this method, use manager_hired instead
 	def new_technical_director_email(self, team: team_model.TeamModel, technical_director) -> None:
 		msg = email_generation.hire_technical_director_email(team, technical_director)
 
@@ -91,6 +93,12 @@ class Inbox:
 		email = Email(f"New Car Ready", msg)
 		self.add_email(email)
 	
+	def new_manager_hired_email(self, team: str, manager: str, role: str) -> None:
+		msg = email_generation.manager_hiring_email(team, manager, role)
+
+		email = Email(f"{team} hire {manager}", msg)
+		self.add_email(email)
+
 	def generate_dataframe(self) -> pd.DataFrame:
 		data = []
 

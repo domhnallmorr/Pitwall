@@ -60,7 +60,7 @@ class ParticpantModel:
 		'''
 		driver with 0 speed rating is considered 3s slower than driver with 100 speed rating
 		'''
-		self.base_laptime += (100 - self.driver.speed) * 3_0 # 100 * 30 = 3000 (3s in ms)
+		self.base_laptime += (100 - self.driver.speed) * 2_0 # 100 * 20 = 2000 (2s in ms)
 
 		# add car component
 		'''

@@ -18,7 +18,7 @@ def load_roster(model, roster):
 	season_file, track_files = checks(model, roster)
 
 	model.drivers, model.future_drivers = load_drivers(model, conn)
-	model.commercial_managers, model.technical_directors = load_senior_staff(model, conn)
+	model.commercial_managers, model.technical_directors, model.future_managers = load_senior_staff(model, conn)
 	model.teams = load_teams(model, conn)
 
 	load_tracks(model, track_files)
@@ -71,7 +71,7 @@ def load_drivers(model, conn):
 		if row[0].lower() == "default":
 			drivers.append(driver)
 		else:
-			future_drivers.append([row[0], driver])
+			future_drivers.append([row[0], driver]) # [year, driver]
 
 	return drivers, future_drivers
 
@@ -132,6 +132,7 @@ def load_teams(model, conn):
 def load_senior_staff(model, conn):
 	technical_directors = []
 	commercial_managers = []
+	future_managers = []
 
 	for table_name in ["technical_directors", "commercial_managers"]:
 
@@ -142,6 +143,7 @@ def load_senior_staff(model, conn):
 		name_idx = column_names.index("Name")
 		age_idx = column_names.index("Age")
 		skill_idx = column_names.index("Skill")
+		contract_length_idx = column_names.index("ContractLength")
 		salary_idx = column_names.index("Salary")
 
 		cursor = conn.cursor()
@@ -152,14 +154,24 @@ def load_senior_staff(model, conn):
 			name = row[name_idx]
 			age = row[age_idx]
 			skill = row[skill_idx]
+			contract_length = row[contract_length_idx]
 			salary = row[salary_idx]
 
+			
 			if table_name == "technical_directors":
-				technical_directors.append(technical_director.TechnicalDirector(model, name, age, skill, salary))
+				manager = technical_director.TechnicalDirector(model, name, age, skill, salary, contract_length)
 			elif table_name == "commercial_managers":
-				commercial_managers.append(commercial_manager.CommercialManager(model, name, age, skill, salary))
-	
-	return commercial_managers, technical_directors
+				manager = commercial_manager.CommercialManager(model, name, age, skill, salary, contract_length)
+			
+			if row[0].lower() == "default":
+				if table_name == "technical_directors":
+					technical_directors.append(manager)
+				elif table_name == "commercial_managers":
+					commercial_managers.append(manager)
+			else:
+				future_managers.append([row[0], manager])
+
+	return commercial_managers, technical_directors, future_managers
 
 
 def create_driver(line_data, model):

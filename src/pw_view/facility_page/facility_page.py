@@ -19,17 +19,20 @@ class FacilityPage(ft.Column):
 
 		facility_column = ft.Column(
 			controls=facility_rows,
-			expand=True,
+			expand=False,
+			tight=True,
 			spacing=20
 		)
 
-		facility_comparison_container = custom_container.CustomContainer(self.view, facility_column, expand=True)
+		facility_comparison_container = custom_container.CustomContainer(self.view, facility_column, expand=False)
 
 		column = ft.Column(
 			controls=[
 				self.buttons_container,
 				facility_comparison_container,
-			]
+			],
+			expand=False,
+			tight=True
 		)
 
 		self.background_stack = ft.Stack(
@@ -37,7 +40,7 @@ class FacilityPage(ft.Column):
 				self.view.background_image,
 				column
 			],
-			expand=False
+			expand=True
 		)
 
 		self.controls = [
