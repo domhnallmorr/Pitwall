@@ -4,12 +4,16 @@ class EmailPage(ft.Column):
 	def __init__(self, view):
 
 		self.view = view
+		self.setup_page()
 
 		contents = [
 			ft.Text("Email", theme_style=self.view.page_header_style)
 		]
 
 		super().__init__(controls=contents)
+
+	def setup_page(self):
+		self.email_content = ft.Text("Select an email to view its content")
 
 	def update_page(self, data):
 
@@ -29,10 +33,6 @@ class EmailPage(ft.Column):
 			height=self.view.main_app.window.height - 200,  # Updated to use Page.window.height
 			border=ft.border.all(2, ft.colors.WHITE),
 		)
-
-		# This will be updated with the email content
-		self.email_content = ft.Text("Select an email to view its content")
-
 
 		email_row = ft.Row(
 			[
@@ -68,4 +68,5 @@ class EmailPage(ft.Column):
 	
 	def show_email_content(self, e):
 		self.email_content.value = e.control.data.message
-		self.email_content.update()
+		self.view.main_app.update()
+		#self.email_content.update()

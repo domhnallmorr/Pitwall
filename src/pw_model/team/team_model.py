@@ -1,12 +1,18 @@
+from __future__ import annotations
 import copy
 import logging
 import random
+from typing import TYPE_CHECKING
+
 from pw_model.season import season_stats
 from pw_model.finance import finance_model
-from pw_model.driver import driver_model
+
 from pw_model.senior_staff import commercial_manager, technical_director
 from pw_model.team import facilities_model
 from pw_model.pw_model_enums import StaffRoles
+
+if TYPE_CHECKING:
+	from pw_model.driver import driver_model
 
 class TeamModel:
 	def __init__(self, model, name, driver1, driver2, car_model,
@@ -38,7 +44,14 @@ class TeamModel:
 	
 	@property
 	def overall_rating(self) -> int:
-		return self.car_model.speed
+		return int( (self.technical_director_model.skill + self.facilities_model.factory_rating + self.staff_rating) / 3 )
+	
+	@property
+	def staff_rating(self) -> int:
+		# Measure between 1 and 100 of the number of staff a team has
+		max_staff = max([t.number_of_staff for t in self.model.teams])
+
+		return int( (self.number_of_staff / max_staff) * 100 )
 	
 	@property
 	def is_player_team(self) -> bool:

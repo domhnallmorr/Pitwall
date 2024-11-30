@@ -1,5 +1,5 @@
 import os
-from pw_model import pw_model
+from pw_model import pw_base_model
 from race_model import race_model
 
 
@@ -9,7 +9,7 @@ def create_model(mode="normal", auto_save=True):
 
 	roster = "1998_Roster"
 
-	return pw_model.Model(roster, run_directory, mode=mode, auto_save=auto_save)
+	return pw_base_model.Model(roster, run_directory, mode=mode, auto_save=auto_save)
 
 def create_race_model(model):
 	return race_model.RaceModel("headless", model, model.tracks[0])

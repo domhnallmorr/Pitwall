@@ -28,4 +28,4 @@ class FacilitiesController:
 		self.controller.update_facilities_page()
 
 		self.model.inbox.generate_player_facility_update_email()
-		self.controller.update_email_page()
+		self.controller.page_update_controller.update_email_page()

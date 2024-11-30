@@ -10,7 +10,7 @@ def test_driver_retirement_team_end_season():
 	test that when a driver is retiring, that drivers next season gets updated appropriately
 	'''
 
-	model = create_model.create_model()
+	model = create_model.create_model(mode="headless")
 
 	team_model = model.get_team_model("Ferrari")
 
@@ -49,7 +49,7 @@ def test_driver_retirements_over_several_seasons():
 	Run multiple seaosn, retire select drivers each season, ensure that the grid remains populated
 	'''
 	for i in range(50):
-		model = create_model.create_model(auto_save=False)
+		model = create_model.create_model(mode="headless", auto_save=False)
 		for year in range(10):
 			if year == 0:
 				model.get_driver_model("Damon Hill").retiring = True

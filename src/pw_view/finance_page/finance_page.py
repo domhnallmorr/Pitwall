@@ -1,4 +1,6 @@
+from __future__ import annotations
 import io
+from typing import TYPE_CHECKING
 import flet as ft
 from flet.plotly_chart import PlotlyChart
 from flet.matplotlib_chart import MatplotlibChart
@@ -13,10 +15,14 @@ from matplotlib import style
 from matplotlib.ticker import FuncFormatter
 style.use("dark_background")
 
+from pw_model.finance.finance_data import FinanceData
 from pw_view.custom_widgets import custom_container
 
+if TYPE_CHECKING:
+	from pw_view.view import View
+
 class FinancePage(ft.Column):
-	def __init__(self, view):
+	def __init__(self, view: View):
 
 		self.view = view
 
@@ -49,7 +55,7 @@ class FinancePage(ft.Column):
 
 		super().__init__(expand=1, controls=contents)
 
-	def setup_widgets(self):
+	def setup_widgets(self) -> None:
 		self.sponsor_income_text = ft.Text(f"Sponsorship: $1")
 		self.prize_money_income_text = ft.Text(f"Prize Money: $1")
 		self.drivers_payments_text = ft.Text(f"Drivers Payments: $1")
@@ -105,10 +111,10 @@ class FinancePage(ft.Column):
 
 		self.setup_plot()
 
+		self.chart_container: custom_container.CustomContainer #for mypy
 		self.chart_container = custom_container.CustomContainer(self.view, self.history_chart, expand=True)
 
-
-	def update_page(self, data: dict):
+	def update_page(self, data: FinanceData) -> None:
 		self.sponsor_income_text.value = f"Sponsorship: ${data['total_sponsorship']:,}"
 		self.prize_money_income_text.value = f"Prize Money: ${data['prize_money']:,}"
 		self.drivers_payments_text.value = f"Drivers Payments: ${data['drivers_payments']:,}"
@@ -124,7 +130,7 @@ class FinancePage(ft.Column):
 
 		self.update_history_chart(data)
 
-	def setup_plot(self):
+	def setup_plot(self) -> None:
 		self.fig, self.axs = plt.subplots(1, 1, figsize=(12, 3))
 
 		self.fig.tight_layout()
@@ -136,14 +142,14 @@ class FinancePage(ft.Column):
 
 		self.history_chart = MatplotlibChart(self.fig, expand=True, transparent=True, original_size=False)
 
-	def update_history_chart(self, data):
+	def update_history_chart(self, data: FinanceData) -> None:
 		y_formatter = FuncFormatter(self.balance_formatter)
 
 		self.axs.plot(data["balance_history_dates"], data["balance_history"], linestyle="-", color="#A0CAFD")
 
 		self.axs.yaxis.set_major_formatter(y_formatter)
 
-	def balance_formatter(self, x, pos):
+	def balance_formatter(self, x: int, pos: float) -> str:
 		if x < 1_000_000:
 			return f"${int(x/1_000)}K"
 		else:

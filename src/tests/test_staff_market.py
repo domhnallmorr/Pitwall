@@ -74,6 +74,27 @@ def test_top3_drivers_logic():
 		assert "Mika Hakkinen" in top_4_teams_driver1
 		assert "Jacques Villeneuve" in top_4_teams_driver1
 
+def test_top_10_drivers_logic():
+	'''
+	Test that the top drivers are in the grid next year (assuming they're not retiring)
+	'''
+	model = create_model.create_model(mode="headless", auto_save=False)
+
+	# set everyone's contract to 1 year long to make transfers more dynamic
+	for driver in model.drivers:
+		driver.contract.contract_length = 1
+
+	model.staff_market.setup_dataframes()
+	model.staff_market.compute_transfers()
+
+	drivers_by_rating = [d[0] for d in model.season.drivers_by_rating[0:10]]
+
+	for driver in drivers_by_rating:
+		driver_model = model.get_driver_model(driver)
+		if driver_model.retiring is not True:
+			assert driver in model.staff_market.grid_next_year_df.values
+
+
 def test_week_to_announce_signing():
 	'''
 	Ensure that the week to annouce signing is between weeks 4 and 40

@@ -15,6 +15,8 @@ class ResultsWindow(ft.View):
 		self.view = view
 
 		self.setup_buttons_row()
+		self.setup_lap_chart()
+		self.setup_laptimes_plot()
 
 		self.header_text = ft.Text("Results", theme_style=self.view.page_header_style)
 		
@@ -78,8 +80,8 @@ class ResultsWindow(ft.View):
 
 			# update pitstop table (race only)
 			self.setup_pitstops_table(data["pit_stop_summary"])
-			self.setup_lap_chart(data["lap_chart_data"])
-			self.setup_laptimes_plot(data["lap_times_summary"])
+			self.update_lap_chart(data["lap_chart_data"])
+			self.update_laptimes_plot(data["lap_times_summary"])
 
 		self.update_buttons_row(timed_session)
 		self.setup_classification_table(standings_df, current_session)
@@ -114,8 +116,9 @@ class ResultsWindow(ft.View):
 		standings_df.loc[:, "Fastest Lap"] = standings_df["Fastest Lap"].apply(self.ms_to_min_sec)
 		
 		if current_session == SessionNames.QUALIFYING:
-			cols = ["Position", "Driver", "Team", "Fastest Lap", "Gap to Leader"]
-			standings_df.loc[:, "Gap to Leader"] = standings_df["Gap to Leader"].apply(self.ms_to_min_sec, interval=True)
+			cols = ["Position", "Driver", "Team", "Fastest Lap", "Gap"]
+			# create the gap column, prior to V0.10.0, pandas gave warning for unsupported dtype when overwriting "Gap To Leader" col
+			standings_df.loc[:, "Gap"] = standings_df["Gap to Leader"].apply(lambda x: self.ms_to_min_sec(x, interval=True))
 
 		elif current_session == SessionNames.RACE:
 			cols = ["Position", "Driver", "Team", "Fastest Lap", "Gap to Leader", "Pit", "Grid"]
@@ -175,39 +178,44 @@ class ResultsWindow(ft.View):
 
 		self.pitstops_container = custom_container.CustomContainer(self.view, self.pitstops_table, expand=False)
 
-	def setup_lap_chart(self, lap_chart_data: dict) -> None:
+	def setup_lap_chart(self) -> None:
 		px = 1/plt.rcParams['figure.dpi']  # pixel in inches
-		fig, ax = plt.subplots(figsize=(1820*px, 700*px))
+		self.lap_chart_fig, self.lap_chart_ax = plt.subplots(figsize=(1820*px, 700*px))
+
+	def update_lap_chart(self, lap_chart_data: dict) -> None:
+		self.lap_chart_ax.cla()
 
 		drivers = list(lap_chart_data.keys())
 		for driver in lap_chart_data.keys():
 			laps = lap_chart_data[driver][0]
 			positions = lap_chart_data[driver][1]
 			
-			ax.plot(laps, positions, label=driver)
+			self.lap_chart_ax.plot(laps, positions, label=driver)
 
-		ax.invert_yaxis()
+		self.lap_chart_ax.invert_yaxis()
 
-		ax.set_xlabel("Lap")
-		ax.set_ylabel("Position")
+		self.lap_chart_ax.set_xlabel("Lap")
+		self.lap_chart_ax.set_ylabel("Position")
 
-		ax.set_yticks(range(1, len(drivers) + 1))
-		ax.set_yticklabels(drivers)
-		ax.yaxis.tick_right()
+		self.lap_chart_ax.set_yticks(range(1, len(drivers) + 1))
+		self.lap_chart_ax.set_yticklabels(drivers)
+		self.lap_chart_ax.yaxis.tick_right()
 
-		fig.subplots_adjust(left=0.02, top=0.98, bottom=0.08)
-		ax.set_xlim(left=0)
-		ax.grid()
+		self.lap_chart_fig.subplots_adjust(left=0.02, top=0.98, bottom=0.08)
+		self.lap_chart_ax.set_xlim(left=0)
+		self.lap_chart_ax.grid()
 		
-		lap_chart = MatplotlibChart(fig, expand=True, transparent=True, original_size=False)
+		lap_chart = MatplotlibChart(self.lap_chart_fig, expand=True, transparent=True, original_size=False)
 		self.lap_chart_container = custom_container.CustomContainer(self.view, lap_chart, expand=True)
 
-	def setup_laptimes_plot(self, lap_times: dict) -> None:
-		self.lap_times = lap_times
-		
+	def setup_laptimes_plot(self):
 		px = 1/plt.rcParams['figure.dpi']  # pixel in inches
-		fig, self.laptimes_ax = plt.subplots(figsize=(1820*px, 700*px))
+		self.laptimes_fig, self.laptimes_ax = plt.subplots(figsize=(1820*px, 700*px))
 
+	def update_laptimes_plot(self, lap_times: dict) -> None:
+		self.laptimes_ax.cla()
+
+		self.lap_times = lap_times
 		self.drivers_list = list(lap_times.keys())
 
 		self.driver1_dropdown = ft.Dropdown(
@@ -230,7 +238,7 @@ class ResultsWindow(ft.View):
 			controls=[self.driver1_dropdown, self.driver2_dropdown]
 		)
 
-		laptimes_chart = MatplotlibChart(fig, expand=True, transparent=True, original_size=False)
+		laptimes_chart = MatplotlibChart(self.laptimes_fig, expand=True, transparent=True, original_size=False)
 
 		column = ft.Column(
 			controls=[

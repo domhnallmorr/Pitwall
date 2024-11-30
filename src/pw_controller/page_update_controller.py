@@ -3,6 +3,7 @@ A controller dedicated to refreshing the off track UI pages
 '''
 import copy
 from pw_model.pw_model_enums import StaffRoles
+from pw_model.finance import finance_data
 
 class PageUpdateController:
 	def __init__(self, controller):
@@ -83,7 +84,7 @@ class PageUpdateController:
 		self.view.email_page.update_page(data)
 
 	def update_finance_page(self) -> None:
-		data = {
+		data: finance_data.FinanceData = {
 			"total_sponsorship": copy.deepcopy(self.model.player_team_model.finance_model.total_sponsorship),
 			"prize_money": copy.deepcopy(self.model.player_team_model.finance_model.prize_money),
 			"drivers_payments": copy.deepcopy(self.model.player_team_model.finance_model.drivers_payments),
@@ -154,3 +155,13 @@ class PageUpdateController:
 		}
 
 		self.view.car_page.update_page(data)
+
+	def update_main_window(self):
+		data = {}
+	
+		player_team_model = self.model.get_team_model(self.model.player_team)
+		data["team"] = f"{self.model.player_team} - ${player_team_model.finance_model.balance:,}"
+		data["date"] = f"Week {self.model.season.current_week} - {self.model.year}"
+		data["in_race_week"] = self.model.season.in_race_week
+
+		self.view.main_window.update_window(data)

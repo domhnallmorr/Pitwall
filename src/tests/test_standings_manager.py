@@ -3,7 +3,6 @@ import pytest
 
 import pandas as pd
 
-from pw_model import pw_model
 from pw_model.season import standings_manager
 
 from tests import create_model

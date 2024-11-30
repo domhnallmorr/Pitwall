@@ -1,7 +1,15 @@
+from __future__ import annotations
+
 import collections
 from datetime import datetime, timedelta
+from typing import Deque
+from typing import TYPE_CHECKING
 
-def calculate_prize_money(finishing_position):
+if TYPE_CHECKING:
+	from pw_model.pw_base_model import Model
+	from pw_model.team.team_model import TeamModel
+
+def calculate_prize_money(finishing_position: int) -> int:
 	'''
 	finishing position should be zero indexed
 	'''
@@ -23,7 +31,7 @@ def calculate_prize_money(finishing_position):
 	return prize_money[finishing_position]
 
 class FinanceModel:
-	def __init__(self, model, team_model, opening_balance, total_sponsorship):
+	def __init__(self, model: Model, team_model: TeamModel, opening_balance: int, total_sponsorship: int):
 		self.model = model
 		self.team_model = team_model
 		self.balance = opening_balance
@@ -35,15 +43,15 @@ class FinanceModel:
 
 		self.car_cost = 7_000_000 # generic value to cover car production and development costs
 
-		self.balance_history = collections.deque(maxlen=130) # 130 weeks (2.5 years) in length
-		self.balance_history_dates = collections.deque(maxlen=130)
+		self.balance_history: Deque[int] = collections.deque(maxlen=130) # 130 weeks (2.5 years) in length
+		self.balance_history_dates: Deque[datetime] = collections.deque(maxlen=130)
 
 	@property
-	def total_staff_costs_per_year(self):
+	def total_staff_costs_per_year(self) -> int:
 		return self.staff_yearly_cost * self.team_model.number_of_staff
 	
 	@property
-	def drivers_payments(self):
+	def drivers_payments(self) -> int:
 		payments = 0
 
 		for driver_model in [self.team_model.driver1_model, self.team_model.driver2_model]:
@@ -53,7 +61,7 @@ class FinanceModel:
 		return payments
 	
 	@property
-	def drivers_salary(self):
+	def drivers_salary(self) -> int:
 		salary = 0
 
 		for driver_model in [self.team_model.driver1_model, self.team_model.driver2_model]:
@@ -63,15 +71,15 @@ class FinanceModel:
 		return salary		
 
 	@property
-	def total_income(self):
+	def total_income(self) -> int:
 		return self.prize_money + self.total_sponsorship + self.drivers_payments
 	
 	@property
-	def total_expenditure(self):
+	def total_expenditure(self) -> int:
 		#TODO remove hard coding of race costs
 		return self.total_staff_costs_per_year + self.drivers_salary + self.team_model.technical_director_model.contract.salary + self.team_model.commercial_manager_model.contract.salary + 8_000_000 + self.car_cost
 	
-	def weekly_update(self):
+	def weekly_update(self) -> None:
 		
 		# add prize money
 		self.balance += int(self.prize_money / 52)
@@ -92,29 +100,29 @@ class FinanceModel:
 		
 		self.update_balance_history()
 		
-	def apply_race_costs(self, race_cost=500_000):
+	def apply_race_costs(self, race_cost: int=500_000) -> None:
 		self.balance -= race_cost
 	
-	def update_balance_history(self):
+	def update_balance_history(self) -> None:
 		self.balance_history.append(self.balance)
 		self.balance_history_dates.append(datetime(self.model.year, 1, 1) + timedelta(weeks=self.model.season.current_week - 1))
 
-	def update_prize_money(self, finishing_position):
+	def update_prize_money(self, finishing_position: int) -> None:
 		self.prize_money = calculate_prize_money(finishing_position)
 
 		self.model.inbox.new_prize_money_email(self.prize_money)
 
-	def update_facilities_cost(self, cost : int):
+	def update_facilities_cost(self, cost: int) -> None:
 		self.balance -= cost
 
-	def end_season(self):
+	def end_season(self) -> None:
 		# determine sponsorship
 		sponsorship = self.team_model.commercial_manager_model.determine_yearly_sponsorship()
 
 		self.model.inbox.new_sponsor_income_email(sponsorship)
 		self.total_sponsorship = sponsorship
 
-	def to_dict(self):
+	def to_dict(self) -> dict:
 		return {
 			"balance": self.balance,
 			"staff_yearly_cost": self.staff_yearly_cost,

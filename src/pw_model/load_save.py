@@ -1,13 +1,16 @@
-import json
+from __future__ import annotations
 import sqlite3
-
+from typing import Union, Optional, TYPE_CHECKING
 import pandas as pd
 
 from pw_model import load_save
 from pw_model import load_roster
 from pw_model.pw_model_enums import StaffRoles
 
-def save_game(model, mode="file"):
+if TYPE_CHECKING:
+	from pw_model.pw_base_model import Model
+
+def save_game(model: Model, mode: str="file") -> sqlite3.Connection:
 	assert mode in ["file", "memory"]
 	
 	if mode == "file":
@@ -35,7 +38,7 @@ def save_game(model, mode="file"):
 
 	return save_file
 
-def save_general(model, save_file):
+def save_general(model: Model, save_file: sqlite3.Connection) -> None:
 	cursor = save_file.cursor()
 
 	cursor.execute('''
@@ -60,7 +63,7 @@ def save_general(model, save_file):
 	))
 
 
-def save_drivers(model, save_file):
+def save_drivers(model: Model, save_file: sqlite3.Connection) -> None:
 
 	cursor = save_file.cursor()
 
@@ -106,7 +109,7 @@ def save_drivers(model, save_file):
 				driver.contract.salary
 			))
 
-def save_drivers_stats(model, save_file):
+def save_drivers_stats(model: Model, save_file: sqlite3.Connection) -> None:
 
 	cursor = save_file.cursor()
 
@@ -152,7 +155,7 @@ def save_drivers_stats(model, save_file):
 			rnd_best_result_scored,
 		))
 
-def save_commercial_managers(model, save_file):
+def save_commercial_managers(model: Model, save_file: sqlite3.Connection) -> None:
 	cursor = save_file.cursor()
 	# TODO condense into a single "managers" table
 	cursor.execute('''
@@ -181,7 +184,7 @@ def save_commercial_managers(model, save_file):
 			commercial_manager.contract.contract_length,
 		))
 
-def save_technical_directors(model, save_file):
+def save_technical_directors(model : Model, save_file: sqlite3.Connection) -> None:
 	cursor = save_file.cursor()
 
 	cursor.execute('''
@@ -191,7 +194,10 @@ def save_technical_directors(model, save_file):
 	"Age"	INTEGER,
 	"Skill"	INTEGER,
 	"Salary"	INTEGER,
-	"ContractLength"	INTEGER
+	"ContractLength"	INTEGER,
+	"RetiringAge"	INTEGER,
+	"Retiring"	INTEGER,
+	"Retired"	INTEGER
 			)'''
 				)
 	
@@ -212,8 +218,8 @@ def save_technical_directors(model, save_file):
 			if process is True:
 				
 				cursor.execute('''
-					INSERT INTO technical_directors (year, name, age, skill, salary, contractlength) 
-					VALUES (?, ?, ?, ?, ?, ?)
+					INSERT INTO technical_directors (year, name, age, skill, salary, contractlength, retiringage, retiring, retired) 
+					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 				''', (
 					year,
 					technical_director.name, 
@@ -221,9 +227,12 @@ def save_technical_directors(model, save_file):
 					technical_director.skill,
 					technical_director.contract.salary,
 					technical_director.contract.contract_length,
+					technical_director.retiring_age,
+					technical_director.retiring,
+					technical_director.retired,
 				))
 
-def save_teams(model, save_file):
+def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 
 	cursor = save_file.cursor()
 
@@ -266,7 +275,7 @@ def save_teams(model, save_file):
 			team.technical_director,
 		))
 
-def save_teams_stats(model, save_file):
+def save_teams_stats(model: Model, save_file: sqlite3.Connection) -> None:
 	cursor = save_file.cursor()
 
 	cursor.execute('''
@@ -311,25 +320,25 @@ def save_teams_stats(model, save_file):
 			rnd_best_result_scored,
 		))
 
-def save_grid_this_year(model, save_file):
+def save_grid_this_year(model: Model, save_file: sqlite3.Connection) -> None:
 	model.staff_market.grid_this_year_df.to_sql("grid_this_year_df", save_file, if_exists="replace", index=False)
 
-def save_grid_next_year(model, save_file):
+def save_grid_next_year(model: Model, save_file: sqlite3.Connection) -> None:
 	model.staff_market.grid_next_year_df.to_sql("grid_next_year_df", save_file, if_exists="replace", index=False)
 	model.staff_market.grid_next_year_announced_df.to_sql("grid_next_year_announced", save_file, if_exists="replace", index=False)
 
-def save_new_contracts_df(model, save_file):
+def save_new_contracts_df(model: Model, save_file: sqlite3.Connection) -> None:
 	model.staff_market.new_contracts_df.to_sql("new_contracts_df", save_file, if_exists="replace", index=False)
 
-def save_standings(model, save_file) -> None:
+def save_standings(model: Model, save_file: sqlite3.Connection) -> None:
 	model.season.standings_manager.drivers_standings_df.to_sql("drivers_standings_df", save_file, if_exists="replace", index=False)
 	model.season.standings_manager.constructors_standings_df.to_sql("constructors_standings_df", save_file, if_exists="replace", index=False)
 
-def save_email(model, save_file):
+def save_email(model: Model, save_file: sqlite3.Connection) -> None:
 	df = model.inbox.generate_dataframe()
 	df.to_sql("email", save_file, if_exists="replace", index=False)
 
-def load(model, save_file=None, mode="file"):
+def load(model: Model, save_file: Union[Optional[str], Optional[sqlite3.Connection]]=None, mode: str="file") -> None:
 	assert mode in ["file", "memory"]
 
 	if mode == "file":
@@ -352,7 +361,7 @@ def load(model, save_file=None, mode="file"):
 	load_grid_next_year(conn, model)
 	load_email(conn, model)
 
-def load_general(conn, model):
+def load_general(conn: sqlite3.Connection, model: Model) -> None:
 	table_name = "general"
 	cursor = conn.execute(f'PRAGMA table_info({table_name})')
 
@@ -374,12 +383,12 @@ def load_general(conn, model):
 	model.player_team = data[player_team_idx]
 	model.season.next_race_idx = data[next_race_idx]
 
-def load_drivers(conn, model):
+def load_drivers(conn: sqlite3.Connection, model: Model) -> None:
 	drivers, future_drivers = load_roster.load_drivers(model, conn)
 	model.drivers = drivers
 	model.future_drivers = future_drivers
 
-def load_drivers_stats(conn, model):
+def load_drivers_stats(conn: sqlite3.Connection, model: Model) -> None:
 	stats_df = pd.read_sql('SELECT * FROM drivers_stats', conn)
 
 	for idx, row in stats_df.iterrows():
@@ -400,17 +409,17 @@ def load_drivers_stats(conn, model):
 		driver_model.season_stats.dnfs_this_season = dnfs_this_season
 
 
-def load_senior_staff(conn, model):
+def load_senior_staff(conn: sqlite3.Connection, model: Model) -> None:
 	commercial_managers, technical_directors, future_managers = load_roster.load_senior_staff(model, conn)
 	model.commercial_managers = commercial_managers
 	model.technical_directors = technical_directors
 	model.future_managers = future_managers
 
-def load_teams(conn, model):
+def load_teams(conn: sqlite3.Connection, model: Model) -> None:
 	teams = load_roster.load_teams(model, conn)
 	model.teams = teams
 
-def load_teams_stats(conn, model):
+def load_teams_stats(conn: sqlite3.Connection, model: Model) -> None:
 	stats_df = pd.read_sql('SELECT * FROM teams_stats', conn)
 
 	for idx, row in stats_df.iterrows():
@@ -432,19 +441,19 @@ def load_teams_stats(conn, model):
 		team_model.season_stats.best_result_this_season = best_result_this_season
 		team_model.season_stats.rnd_best_result_scored = rnd_best_result_scored
 
-def load_standings(conn, model):
+def load_standings(conn: sqlite3.Connection, model: Model) -> None:
 	model.season.standings_manager.drivers_standings_df = pd.read_sql('SELECT * FROM drivers_standings_df', conn)
 	model.season.standings_manager.constructors_standings_df = pd.read_sql('SELECT * FROM constructors_standings_df', conn)
 
-def load_grid_this_year(conn, model):
+def load_grid_this_year(conn: sqlite3.Connection, model: Model) -> None:
 	model.staff_market.grid_this_year_df = pd.read_sql('SELECT * FROM grid_this_year_df', conn)
 
-def load_grid_next_year(conn, model):
+def load_grid_next_year(conn: sqlite3.Connection, model: Model) -> None:
 	model.staff_market.grid_next_year_df = pd.read_sql('SELECT * FROM grid_next_year_df', conn)
 	model.staff_market.grid_next_year_announced_df = pd.read_sql('SELECT * FROM grid_next_year_announced', conn)
 	model.staff_market.new_contracts_df = pd.read_sql('SELECT * FROM new_contracts_df', conn)
 
-def load_email(conn, model):
+def load_email(conn: sqlite3.Connection, model: Model) -> None:
 	df = pd.read_sql('SELECT * FROM email', conn)
 	model.inbox.load_dataframe(df)
 

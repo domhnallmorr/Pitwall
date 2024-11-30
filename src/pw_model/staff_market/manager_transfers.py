@@ -4,7 +4,7 @@ A set of functions for determine transfer of managers between teams
 '''
 import random
 
-from pw_model import pw_model
+from pw_model import pw_base_model
 from pw_model.pw_model_enums import StaffRoles
 
 def get_free_agents(model, role: StaffRoles, for_player_team: bool=False):
@@ -40,6 +40,7 @@ def determine_technical_director_transfers(model):
 	for team in teams_requiring_tech_director:
 		if team != model.player_team:
 			free_agents = get_free_agents(model, StaffRoles.TECHNICAL_DIRECTOR)
+			assert len(free_agents) > 0, "No more free agents available"
 			team_hire_technical_director(model, team, free_agents)
 
 def team_hire_technical_director(model, team, free_agents: list):

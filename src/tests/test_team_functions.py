@@ -53,3 +53,12 @@ def test_workplace_update():
 	plt.grid()
 	plt.legend()
 	plt.savefig("workforce.png")
+
+def test_rating():
+	model = create_model.create_model(mode="headless")
+
+	williams_model = model.get_team_model("Williams")
+	expected_rating = int( (100 + 75 + 75) / 3 )
+
+	assert williams_model.overall_rating == expected_rating
+	

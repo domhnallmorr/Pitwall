@@ -1,16 +1,28 @@
+from __future__ import annotations
 import random
+from typing import TypedDict, TYPE_CHECKING
+
 from pw_model.season import season_stats
 from pw_model.driver import driver_contract
+from pw_model.team import team_model
 
-def decide_when_retiring(age):
+if TYPE_CHECKING:
+	from pw_model.pw_base_model import Model
+
+def decide_when_retiring(age: int) -> int:
 	retiring_age = random.randint(35, 42)
 	if retiring_age < age:
 		retiring_age = age
 
 	return retiring_age
 
+class DriverDetails(TypedDict):
+	name: str
+	age: int
+
 class DriverModel:
-	def __init__(self, model,
+	def __init__(self,
+			  model : Model,
 			  name : str,
 			  age : int,
 			  country : str,
@@ -36,7 +48,7 @@ class DriverModel:
 		self.setup_season_stats()
 
 	@property
-	def team_model(self):
+	def team_model(self) -> team_model.TeamModel:
 		current_team = None
 
 		for team in self.model.teams:
@@ -51,13 +63,13 @@ class DriverModel:
 		return self.speed
 
 	@property
-	def details(self) -> dict:
+	def details(self) -> DriverDetails:
 		return {
 			"name": self.name,
 			"age": self.age
 		}
 	
-	def __repr__(self):
+	def __repr__(self) -> str:
 		return f"DriverModel <{self.name}>"
 	
 	def end_season(self, increase_age: bool=True) -> None:
@@ -86,8 +98,9 @@ class DriverModel:
 	def setup_season_stats(self) -> None:
 		self.season_stats = season_stats.SeasonStats()
 
-	def hired_by_team(self, team) -> None:
-		assert team is not None
+	# def hired_by_team(self, team) -> None:
+	# 	assert team is not None
 
-		self.team_next_year = team
-		self.contract = driver_contract.DriverContract()
+	# 	self.team_next_year = team
+	# 	self.contract = driver_contract.DriverContract()
+

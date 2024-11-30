@@ -34,7 +34,7 @@ class GridPage(ft.Column):
 		)
 
 		self.buttons_container = custom_container.CustomContainer(self.view, self.buttons_row, expand=False)
-
+	
 	def update_page(self, data):
 		# THIS YEAR
 		self.current_year_btn.text = data["year"]

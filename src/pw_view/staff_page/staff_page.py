@@ -359,7 +359,7 @@ class StaffPage(ft.Column):
 		workforce_dialog = hire_workforce_modal.WorkforceDialog(self.view.main_app, self.view, initial_value=current_workforce)
 
 		# Adding elements to page
-		self.view.main_app.dialog = workforce_dialog
+		self.view.main_app.overlay.append(workforce_dialog)
 
 		workforce_dialog.open = True
 		self.view.main_app.update()

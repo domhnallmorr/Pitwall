@@ -1,8 +1,12 @@
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+	from pw_model.pw_base_model import Model
 
 class TrackModel:
-	def __init__(self, model, data):
+	def __init__(self, model: Model, data: list[str]):
 		self.model = model
 		self.parse_data(data)
 
@@ -20,13 +24,13 @@ class TrackModel:
 
 		self.dist_to_turn1 = 615 # distance from pole to turn 1 in meters
 		
-	def parse_data(self, data):
-		self.name = None
-		self.country = None
-		self.location = None
-		self.title = None
-		self.number_of_laps = None
-		self.base_laptime = None
+	def parse_data(self, data: list[str]) -> None:
+		self.name = ""
+		self.country = ""
+		self.location = ""
+		self.title: str = ""
+		self.number_of_laps = 0
+		self.base_laptime = 0
 
 		for line in data:
 			if line.startswith("Name:"):
@@ -43,10 +47,10 @@ class TrackModel:
 				self.base_laptime = int(line.split(":")[1].lstrip())
 
 
-		assert self.name is not None
-		assert self.country is not None
-		assert self.location is not None
-		assert self.title is not None
-		assert self.number_of_laps is not None
-		assert self.base_laptime is not None
+		assert self.name != ""
+		assert self.country != ""
+		assert self.location != ""
+		assert self.title != ""
+		assert self.number_of_laps > 0
+		assert self.base_laptime > 0
 	

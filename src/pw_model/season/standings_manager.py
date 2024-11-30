@@ -1,6 +1,11 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import pandas as pd
 
-def create_standings_dataframe(teams: dict)-> pd.DataFrame: 
+if TYPE_CHECKING:
+	from pw_model.pw_base_model import Model
+
+def create_standings_dataframe(teams: dict[str, list[str]])-> pd.DataFrame: 
 	'''
 	teams format
 	{"team1": ["Driver1", "Driver2"], "team2": ["Driver3", "Driver4"]}
@@ -25,18 +30,18 @@ def create_standings_dataframe(teams: dict)-> pd.DataFrame:
 	return drivers_standings_df, constructors_standings_df
 
 class StandingsManager:
-	def __init__(self, model):
+	def __init__(self, model: Model):
 		self.model = model
 		self._points_system = [10, 6, 4, 3, 2, 1]
 		self.setup_dataframes()
 
 	@property
-	def player_team_position(self):
+	def player_team_position(self) -> int:
 		index = self.constructors_standings_df[self.constructors_standings_df["Team"] == self.model.player_team].index.values[0]
 
 		return index
 
-	def setup_dataframes(self):
+	def setup_dataframes(self) -> None:
 		teams = {}
 
 		for team in self.model.teams:
@@ -44,7 +49,7 @@ class StandingsManager:
 
 		self.drivers_standings_df, self.constructors_standings_df = create_standings_dataframe(teams)
 	
-	def update_standings(self, result_df):
+	def update_standings(self, result_df: pd.DataFrame) -> None:
 
 		# update points
 		for idx, points in enumerate(self._points_system):
@@ -102,7 +107,7 @@ class StandingsManager:
 		self.drivers_standings_df.reset_index(drop=True, inplace=True)
 		self.constructors_standings_df.reset_index(drop=True, inplace=True)
 
-	def to_dict(self):
+	def to_dict(self) -> dict:
 		return {
 			"drivers_standings_df": self.drivers_standings_df.to_dict(),
 			"constructors_standings_df": self.constructors_standings_df.to_dict(),

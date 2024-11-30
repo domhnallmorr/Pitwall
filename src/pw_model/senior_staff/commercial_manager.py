@@ -1,10 +1,18 @@
-from pw_model.senior_staff import senior_staff
-from pw_model.pw_model_enums import StaffRoles
-import random
+from __future__ import annotations
 
-class CommercialManager(senior_staff.SeniorStaff):
+import random
+from typing import Tuple, TYPE_CHECKING
+
+from pw_model.senior_staff.senior_staff import SeniorStaff
+from pw_model.pw_model_enums import StaffRoles
+
+if TYPE_CHECKING:
+	from pw_model.pw_base_model import Model
+	from pw_model.team.team_model import TeamModel
+
+class CommercialManager(SeniorStaff):
 	def __init__(self,
-			  model,
+			  model : Model,
 			  name : str,
 			  age : int,
 			  skill : int,
@@ -15,7 +23,7 @@ class CommercialManager(senior_staff.SeniorStaff):
 		self.role = StaffRoles.COMMERCIAL_MANAGER
 
 	@property
-	def team_model(self):
+	def team_model(self) -> TeamModel:
 		current_team = None
 
 		for team in self.model.teams:
@@ -25,7 +33,7 @@ class CommercialManager(senior_staff.SeniorStaff):
 
 		return current_team
 	
-	def determine_yearly_sponsorship(self):
+	def determine_yearly_sponsorship(self) -> int:
 		'''
 		First determine min and max possible sponsorship
 		'''
@@ -37,20 +45,20 @@ class CommercialManager(senior_staff.SeniorStaff):
 		'''
 
 		# Linearly interpolate the sponsorship based on the skill
-		sponsorship = min_sponsorship + (self.skill / 100) * (max_sponsorship - min_sponsorship)
+		sponsorship = int(min_sponsorship + (self.skill / 100) * (max_sponsorship - min_sponsorship))
 
 		# TODO add number of staff and finishing position to this calc
 
         # Add random variance: ±5% around the calculated sponsorship
 		variance = random.uniform(-0.15, 0.15)  # Variance between -15% and +15%
-		sponsorship_with_variance = sponsorship * (1 + variance)
+		sponsorship_with_variance = int(sponsorship * (1 + variance))
 
  		# Ensure the sponsorship stays within the defined range
 		sponsorship_with_variance = int(max(min_sponsorship, min(sponsorship_with_variance, max_sponsorship)))
 
 		return sponsorship_with_variance
 	
-	def determine_possible_sponsorship(self):
+	def determine_possible_sponsorship(self) -> Tuple[int, int]:
 		min_sponsorship = 1_000_000
 		max_sponsorship = 50_000_000
 

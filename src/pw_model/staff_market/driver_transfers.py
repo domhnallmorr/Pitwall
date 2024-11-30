@@ -25,6 +25,7 @@ def determine_driver_transfers(model) -> None:
 	transfers = []
 
 	handle_top_3_drivers(model)
+	handle_top_10_drivers(model)
 
 	teams_requiring_driver1 = staff_market.compile_teams_requiring_drivers(StaffRoles.DRIVER1)
 	teams_requiring_driver2 = staff_market.compile_teams_requiring_drivers(StaffRoles.DRIVER2)
@@ -65,16 +66,57 @@ def handle_top_3_drivers(model) -> None:
 		teams_by_rating.remove(model.player_team)
 
 	top_available_drivers = [driver for driver in drivers_by_rating if driver in free_agents]
-	teams_requiring_driver1 = model.staff_market.compile_teams_requiring_drivers(StaffRoles.DRIVER1)
-	top_available_teams = [team for team in teams_by_rating if team in teams_requiring_driver1]
+	teams_requiring_driver = model.staff_market.compile_teams_requiring_any_driver()
+
+	top_available_teams = [team for team in teams_by_rating if team in teams_requiring_driver]
 	
 	if len(top_available_drivers) > 0: # if any of the top drivers are available
 		for team in top_available_teams:
-			team_hire_driver(model, team, StaffRoles.DRIVER1, top_available_drivers)
+			if team in model.staff_market.compile_teams_requiring_drivers(StaffRoles.DRIVER1):
+				team_hire_driver(model, team, StaffRoles.DRIVER1, top_available_drivers)
 			
+			elif team in model.staff_market.compile_teams_requiring_drivers(StaffRoles.DRIVER2):
+				team_hire_driver(model, team, StaffRoles.DRIVER2, top_available_drivers)
+
 			# redefine top available drivers
 			free_agents = get_free_agents(model)
 			top_available_drivers = [driver for driver in drivers_by_rating if driver in free_agents]
+
+			if len(top_available_drivers) == 0: # run out of drivers
+				break
+
+def handle_top_10_drivers(model):
+	'''
+	Ensure the top 10 most skilled drivers in the game are signed up
+	'''
+	drivers_by_rating = model.season.drivers_by_rating
+	drivers_by_rating = [d[0] for d in drivers_by_rating[:10]] # d[0] is drivers name, top 10 drivers selected
+	print(drivers_by_rating)
+	free_agents = get_free_agents(model)
+	top_available_drivers = [driver for driver in drivers_by_rating if driver in free_agents]
+
+
+	teams_requiring_driver = model.staff_market.compile_teams_requiring_any_driver()
+
+	# remove player team if in top 4 teams
+	if model.player_team in teams_requiring_driver:
+		teams_requiring_driver.remove(model.player_team)
+
+	if len(top_available_drivers) > 0: # if any of the top drivers are available
+		for team in teams_requiring_driver:
+			if team in model.staff_market.compile_teams_requiring_drivers(StaffRoles.DRIVER1):
+				team_hire_driver(model, team, StaffRoles.DRIVER1, top_available_drivers)
+
+				# redefine top available drivers
+				free_agents = get_free_agents(model)
+				top_available_drivers = [driver for driver in drivers_by_rating if driver in free_agents]
+
+			elif team in model.staff_market.compile_teams_requiring_drivers(StaffRoles.DRIVER2):
+				team_hire_driver(model, team, StaffRoles.DRIVER2, top_available_drivers)
+
+				# redefine top available drivers
+				free_agents = get_free_agents(model)
+				top_available_drivers = [driver for driver in drivers_by_rating if driver in free_agents]
 
 			if len(top_available_drivers) == 0: # run out of drivers
 				break

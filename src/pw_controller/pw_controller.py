@@ -1,7 +1,7 @@
 import copy
 
 from pw_controller import calander_page_controller, staff_hire_controller, facilities_controller
-from pw_model import pw_model, update_window_functions
+from pw_model import pw_base_model
 from pw_view import view
 from pw_controller import race_controller, page_update_controller
 
@@ -16,7 +16,7 @@ class Controller:
 		self.staff_hire_controller = staff_hire_controller.StaffHireController(self)
 		self.facilities_controller = facilities_controller.FacilitiesController(self)
 		
-		self.model = pw_model.Model(roster, run_directory)
+		self.model = pw_base_model.Model(roster, run_directory)
 
 		team_names = [t.name for t in self.model.teams]
 
@@ -46,12 +46,12 @@ class Controller:
 		self.race_controller = race_controller.RaceController(self)
 
 		self.refresh_ui()
-		self.update_main_window()
+		self.page_update_controller.update_main_window()
 		self.view.return_to_main_window(mode="load")
 
 	# TODO check if can remove this, seems redundant now
 	def refresh_ui(self):
-		self.update_main_window()
+		self.page_update_controller.update_main_window()
 
 		self.page_update_controller.refresh_ui()
 		
@@ -59,7 +59,7 @@ class Controller:
 		self.model.advance()
 
 		if self.mode != "headless":
-			self.update_main_window()
+			self.page_update_controller.update_main_window()
 
 			self.page_update_controller.refresh_ui()
 
@@ -67,18 +67,13 @@ class Controller:
 			self.setup_new_season()
 
 		self.update_email_button()
-		
-	def update_main_window(self):
-		data = update_window_functions.get_main_window_data(self.model)
-		self.view.main_window.update_window(data)
-		# self.update_email_button()
 
 	def setup_new_season(self):
 		
 		if self.mode != "headless":
 			# Setup the calander page to show the races upcoming in the new season
 			self.update_facilities_page(new_season=True)
-			self.update_main_window()
+			self.page_update_controller.update_main_window()
 			self.race_controller = race_controller.RaceController(self)
 
 			self.page_update_controller.refresh_ui(new_season=True)

@@ -90,6 +90,13 @@ class StaffMarket:
 		
 		return teams
 
+	def compile_teams_requiring_any_driver(self) -> list:
+		# this method is different from compile_teams_requiring_drivers in that in accounts for both Driver1 and Driver2
+		teams1 = self.compile_teams_requiring_drivers(StaffRoles.DRIVER1)
+		teams2 = self.compile_teams_requiring_drivers(StaffRoles.DRIVER2)
+
+		return list(set(teams1 + teams2))
+
 	#TODO can merge this with compile drivers method to create 1 single method
 	def compile_teams_requiring_manager(self, role: Enum) -> list:
 		assert role in [StaffRoles.TECHNICAL_DIRECTOR], f"Unsupported manager role {role}"

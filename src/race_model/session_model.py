@@ -50,7 +50,7 @@ class SessionModel:
 
 		data = []
 		for participant in self.race_model.participants: 
-			data.append([participant.position, participant.name, participant.team_name, 0, 0, 0, 0, "-", "running", None, 0, None, 0])
+			data.append([participant.position, participant.name, participant.team_name, 0, 0.0, 0, 0, "-", "running", None, 0, None, 0])
 
 		self.standings_df = pd.DataFrame(columns=columns, data=data)
 		

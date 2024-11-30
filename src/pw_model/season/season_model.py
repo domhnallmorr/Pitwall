@@ -1,18 +1,26 @@
+from __future__ import annotations
 import pandas as pd
+from typing import List, Union, TYPE_CHECKING
 
 from pw_model.season import standings_manager
 
+if TYPE_CHECKING:
+	from pw_model.track.track_model import TrackModel
+	from pw_model.pw_base_model import Model
+	from pw_model.driver.driver_model import DriverModel
+	from pw_model.team.team_model import TeamModel
+
 class SeasonModel:
-	def __init__(self, model):
+	def __init__(self, model: Model):
 		self.model = model
 		self.setup_new_season_variables()
 
 	@property
-	def race_weeks(self):
+	def race_weeks(self) -> List[int]:
 		return self.model.calendar["Week"].values.tolist()
 	
 	@property
-	def in_race_week(self):
+	def in_race_week(self) -> bool:
 		is_race_week = False
 		
 		if self.current_week in self.model.calendar["Week"].values:
@@ -23,7 +31,7 @@ class SeasonModel:
 
 		
 	@property
-	def current_track_model(self):
+	def current_track_model(self) -> TrackModel:
 		current_track = None
 
 		'''
@@ -55,7 +63,7 @@ class SeasonModel:
 			return week
 
 	@property
-	def drivers_by_rating(self) -> list:
+	def drivers_by_rating(self) -> List[List[Union[DriverModel, int]]]:
 		'''
 		compile all drivers on the grid and arrange by their overall rating
 		'''
@@ -74,7 +82,7 @@ class SeasonModel:
 		return drivers
 	
 	@property
-	def teams_by_rating(self) -> list:
+	def teams_by_rating(self) -> List[List[Union[TeamModel, int]]]:
 		'''
 		compile all teams on the grid and arrange by their overall rating
 		'''
@@ -90,31 +98,31 @@ class SeasonModel:
 		'''
 		return teams
 	
-	def setup_new_season_variables(self):
+	def setup_new_season_variables(self) -> None:
 
 		self.current_week = 1
-		self.next_race_idx = 0
+		self.next_race_idx: Union[None, int] = 0
 
-		
 		self.standings_manager = standings_manager.StandingsManager(self.model)
 
-	def advance_one_week(self):
+	def advance_one_week(self) -> None:
 
 		self.current_week += 1
 
 		if self.current_week == 53:
 			self.model.end_season()
 
-	def update_next_race(self):
+	def update_next_race(self) -> None:
 		'''
 		This gets called in the grand_prix model, in post race actions
 		'''
-		self.next_race_idx += 1
+		if self.next_race_idx is not None:
+			self.next_race_idx += 1
 
-		if self.next_race_idx > self.model.calendar.shape[0] - 1:
-			self.next_race_idx = None
+			if self.next_race_idx > self.model.calendar.shape[0] - 1:
+				self.next_race_idx = None
 
-	def post_race_actions(self):
+	def post_race_actions(self) -> None:
 
 		self.update_next_race()
 		# Update finances with race costs

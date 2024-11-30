@@ -1,5 +1,7 @@
 import logging
 import statistics
+from typing import List, Union
+
 
 from pw_model import load_roster
 from pw_model.season import season_model
@@ -8,9 +10,14 @@ from pw_model.staff_market import staff_market
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.staff_market import manager_transfers
 from pw_model import load_save
+from pw_model.track.track_model import TrackModel
+from pw_model.driver.driver_model import DriverModel
+from pw_model.team.team_model import TeamModel
+from pw_model.senior_staff.commercial_manager import CommercialManager
+from pw_model.senior_staff.technical_director import TechnicalDirector
 
 class Model:
-	def __init__(self, roster, run_directory, mode="normal", auto_save=True):
+	def __init__(self, roster: str, run_directory: str, mode: str="normal", auto_save: bool=True):
 		
 		assert mode in ["normal", "headless"]
 
@@ -21,8 +28,14 @@ class Model:
 		self.auto_save = auto_save
 
 		self.inbox = email_model.Inbox(self)
-		self.tracks = []
-		self.retired_drivers = []
+		self.tracks: List[TrackModel] = []
+		self.retired_drivers: List[DriverModel] = []
+		self.teams: List[TeamModel] = [] # gets populated in the load_roster function
+		self.future_drivers: List[DriverModel] = []
+		self.drivers: List[DriverModel] = []
+		self.commercial_managers: List[CommercialManager] = []
+		self.technical_directors: List[TechnicalDirector] = []
+		self.future_managers: List[Union[CommercialManager, TechnicalDirector]] = []
 
 		if roster is not None:
 			load_roster.load_roster(self, roster)
@@ -40,16 +53,16 @@ class Model:
 			self.staff_market.compute_transfers()
 
 	@property
-	def player_team_model(self):
+	def player_team_model(self) -> TeamModel:
 		return self.get_team_model(self.player_team)
 	
 	def load_career(self) -> None:
 		load_save.load(self)
 	
-	def save_career(self):
+	def save_career(self) -> None:
 		load_save.save_game(self)
 
-	def get_driver_model(self, driver_name):
+	def get_driver_model(self, driver_name: str) -> DriverModel:
 		driver_model = None
 
 		for d in self.drivers:
@@ -59,7 +72,7 @@ class Model:
 			
 		return driver_model
 	
-	def get_team_model(self, team_name):
+	def get_team_model(self, team_name: str) -> TeamModel:
 		team_model = None
 
 		for t in self.teams:
@@ -69,7 +82,7 @@ class Model:
 			
 		return team_model
 	
-	def get_commercial_manager_model(self, name):
+	def get_commercial_manager_model(self, name: str) -> CommercialManager:
 		commercial_manager_model = None
 
 		for c in self.commercial_managers:
@@ -79,7 +92,7 @@ class Model:
 			
 		return commercial_manager_model
 
-	def get_technical_director_model(self, name):
+	def get_technical_director_model(self, name: str) -> TechnicalDirector:
 		technical_director_mdoel = None
 
 		for t in self.technical_directors:
@@ -89,7 +102,7 @@ class Model:
 			
 		return technical_director_mdoel
 	
-	def get_track_model(self, track_name):
+	def get_track_model(self, track_name: str) -> TrackModel:
 		track_model = None
 
 		for track in self.tracks:
@@ -100,7 +113,7 @@ class Model:
 
 		return track_model
 	
-	def advance(self):
+	def advance(self) -> None:
 		self.inbox.reset_number_new_emails()
 		
 		if self.season.current_week == 51:
@@ -115,7 +128,7 @@ class Model:
 		if self.auto_save is True:
 			self.save_career()
 
-	def end_season(self, increase_year=True, start_career=False):
+	def end_season(self, increase_year: bool=True, start_career: bool=False) -> None:
 		logging.critical("End Season")
 		'''
 		the order in which the below code is important
@@ -134,8 +147,11 @@ class Model:
 
 		for commercial_manager in self.commercial_managers:
 			commercial_manager.end_season(increase_age=increase_year)
+			# TODO remove this
+			commercial_manager.retiring = False
 
-		
+		for technical_director in self.technical_directors:
+			technical_director.end_season(increase_age=increase_year)
 		# # TODO move the below into a start new season method
 		# for team in self.teams:
 		# 	team.check_drivers_for_next_year()
@@ -154,7 +170,7 @@ class Model:
 		if start_career is False:
 			self.staff_market.compute_transfers() # driver transfers at start of career are handled in the start_career method (once player_team is defined)
 
-	def add_new_drivers(self):
+	def add_new_drivers(self) -> None:
 		new_drivers = [d for d in self.future_drivers if int(d[0]) == self.year]
 
 		for new_driver in new_drivers:
@@ -182,7 +198,7 @@ class Model:
 
 			self.future_managers.remove(new_manager)
 
-	def start_career(self, player_team: str):
+	def start_career(self, player_team: str) -> None:
 		self.player_team = player_team
 
 		if player_team is not None:
@@ -190,6 +206,7 @@ class Model:
 
 		self.staff_market.compute_transfers()
 
+	#TODO Move this to a different file, possibly a stand alone file in the teams folder
 	def gen_team_average_stats(self) -> dict:
 		
 		team_average_stats = {

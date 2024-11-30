@@ -10,14 +10,14 @@ import copy
 import random
 from enum import Enum
 
-from pw_model import pw_model
+from pw_model import pw_base_model
 from pw_model.track import track_model
 from race_model import qualy_model, grand_prix_model
 from race_model import particpant_model
 from race_model.race_model_enums import SessionNames, SessionStatus
 
 class RaceModel:
-	def __init__(self, mode: str, model: pw_model.Model, track_model: track_model.TrackModel):
+	def __init__(self, mode: str, model: pw_base_model.Model, track_model: track_model.TrackModel):
 		assert mode in ["UI", "headless"], f"Unsupported Mode {mode}" # headless is model only, UI means were using the GUI
 
 		self.mode = mode
@@ -27,7 +27,7 @@ class RaceModel:
 
 		self.results = {}
 	
-	def setup_participants(self, model: pw_model.Model) -> None:
+	def setup_participants(self, model: pw_base_model.Model) -> None:
 		# Setup an Paricipant class instance for each competitor
 		# A participant is the combination of a car and a driver
 		self.participants = []

@@ -73,6 +73,7 @@ def test_pitstops():
 	_race_model.setup_race()
 
 	schumacher_model = _race_model.get_particpant_model_by_name("Michael Schumacher")
+	schumacher_model.retires = False # make sure he does not retire
 	
 	schumacher_model.number_of_planned_stops = 3
 	schumacher_model.pit1_lap = 10

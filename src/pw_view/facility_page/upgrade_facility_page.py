@@ -71,7 +71,7 @@ class UpgradeFacilitiesPage(ft.Column):
 	def confirm_upgrade(self, e):
 		current_state = int(self.current_state_text.value.split(":")[1])
 
-		if current_state + self.upgrade_percentage > 90:
+		if current_state + self.upgrade_percentage > 100:
 			self.dlg_modal = ft.AlertDialog(
 				modal=True,
 				title=ft.Text(f"Unable to update"),
