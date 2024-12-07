@@ -1,10 +1,15 @@
+from __future__ import annotations
 import logging
 import random
+from typing import TYPE_CHECKING, List
 
 from pw_model.pw_model_enums import StaffRoles
 
-def get_free_agents(model, for_player_team: bool =False) -> list:
-		free_agents = []
+if TYPE_CHECKING:
+	from pw_model.pw_base_model import Model
+
+def get_free_agents(model: Model, for_player_team: bool =False) -> List[str]:
+		free_agents: List[str] = []
 
 		for driver in model.drivers:
 			if driver.retired is False:
@@ -20,9 +25,8 @@ def get_free_agents(model, for_player_team: bool =False) -> list:
 	
 		return free_agents
 
-def determine_driver_transfers(model) -> None:
+def determine_driver_transfers(model: Model) -> None:
 	staff_market = model.staff_market
-	transfers = []
 
 	handle_top_3_drivers(model)
 	handle_top_10_drivers(model)
@@ -46,7 +50,7 @@ def determine_driver_transfers(model) -> None:
 					assert driver not in model.staff_market.grid_next_year_df[StaffRoles.DRIVER2.value].values
 				team_hire_driver(model, team, driver_idx, free_agents)
 
-def handle_top_3_drivers(model) -> None:
+def handle_top_3_drivers(model: Model) -> None:
 	'''
 	ensure top 3 drivers are in the top 4 teams next season
 	top 3 drivers should be over 25 years old
@@ -85,13 +89,12 @@ def handle_top_3_drivers(model) -> None:
 			if len(top_available_drivers) == 0: # run out of drivers
 				break
 
-def handle_top_10_drivers(model):
+def handle_top_10_drivers(model: Model) -> None:
 	'''
 	Ensure the top 10 most skilled drivers in the game are signed up
 	'''
 	drivers_by_rating = model.season.drivers_by_rating
 	drivers_by_rating = [d[0] for d in drivers_by_rating[:10]] # d[0] is drivers name, top 10 drivers selected
-	print(drivers_by_rating)
 	free_agents = get_free_agents(model)
 	top_available_drivers = [driver for driver in drivers_by_rating if driver in free_agents]
 
@@ -121,7 +124,7 @@ def handle_top_10_drivers(model):
 			if len(top_available_drivers) == 0: # run out of drivers
 				break
 
-def team_hire_driver(model, team: str, driver_idx: str, free_agents: list) -> None:
+def team_hire_driver(model: Model, team: str, driver_idx: str, free_agents: List[str]) -> None:
 	'''
 	This method handles the AI controlled teams hiring a new driver
 	'''
@@ -130,11 +133,4 @@ def team_hire_driver(model, team: str, driver_idx: str, free_agents: list) -> No
 	
 	team_model = model.get_team_model(team)
 	driver_hired = team_model.hire_driver(driver_idx, free_agents)
-
-	# model.staff_market.grid_next_year_df.loc[model.staff_market.grid_next_year_df["team"] == team, driver_idx] = driver_hired
-
-	# week_to_announce = max(random.randint(4, 40), model.season.current_week + 1) # ensure the week is not in the past
-	# model.staff_market.new_contracts_df.loc[len(model.staff_market.new_contracts_df.index)] = [team, week_to_announce, driver_idx, driver_hired, 4_000_000, random.randint(2, 5)]
-
-	# # self.model.inbox.generate_driver_hiring_email(team_model, self.model.get_driver_model(driver_hired))
 	model.staff_market.handle_team_hiring_someone(team, driver_idx, driver_hired)

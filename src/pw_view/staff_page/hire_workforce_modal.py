@@ -43,27 +43,26 @@ class WorkforceDialog(ft.AlertDialog):
 
         self.enable_disable_buttons()
     
-    def increase_workforce(self, e):
+    def increase_workforce(self, e: ft.ControlEvent) -> None:
         # Increase the workforce input by 1
         self.workforce_input.value = str(int(self.workforce_input.value) + 1)
         self.enable_disable_buttons()
         self.page.update()
     
-    def decrease_workforce(self, e):
+    def decrease_workforce(self, e: ft.ControlEvent) -> None:
         # Decrease the workforce input by 1
         self.workforce_input.value = str(int(self.workforce_input.value) - 1)
         self.enable_disable_buttons()
         self.page.update()
     
-    def apply_changes(self, e):
+    def apply_changes(self, e: ft.ControlEvent) -> None:
         # Apply changes and close dialog
         new_workforce = int(self.workforce_input.value)
 
         self.view.controller.staff_hire_controller.update_workforce(new_workforce)
         self.close_dialog(None)
             
-    
-    def enable_disable_buttons(self):
+    def enable_disable_buttons(self) -> None:
         self.decrease_button.disabled = False
         self.increase_button.disabled = False
 

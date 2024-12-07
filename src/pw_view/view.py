@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import os
 
 import flet as ft
@@ -12,8 +14,11 @@ from pw_view.finance_page import finance_page
 from pw_view.car_page import car_page
 from pw_view.facility_page import facility_page, upgrade_facility_page
 
+if TYPE_CHECKING:
+	from pw_controller.pw_controller import Controller
+
 class View:
-	def __init__(self, controller, team_names, run_directory):
+	def __init__(self, controller: Controller, team_names: list[str], run_directory: str):
 		self.controller = controller
 		self.run_directory = run_directory
 
@@ -37,9 +42,9 @@ class View:
                										 side=ft.Border(left=ft.BorderSide(5, "blue")))
 
 		self.positive_button_style = ft.ButtonStyle(color="#111418",
-											  bgcolor={ft.ControlState.DEFAULT: ft.colors.LIGHT_GREEN, ft.ControlState.DISABLED: ft.colors.GREY},
+											  bgcolor={ft.ControlState.DEFAULT: ft.Colors.LIGHT_GREEN, ft.ControlState.DISABLED: ft.Colors.GREY},
 											  alignment=ft.alignment.center_left,)
-		self.clicked_button_style = ft.ButtonStyle(color=ft.colors.BLACK, bgcolor=ft.colors.PRIMARY)
+		self.clicked_button_style = ft.ButtonStyle(color=ft.Colors.BLACK, bgcolor=ft.Colors.PRIMARY)
 
 		self.setup_background_images()
 		self.setup_pages()
@@ -47,7 +52,7 @@ class View:
 
 		self.main_app.views.append(self.main_window)
 
-	def setup_background_images(self):
+	def setup_background_images(self) -> None:
 		image_path = fr"{self.run_directory}\pw_view\assets\background_image.jpg"
 		self.background_image = ft.Image(
 			src=os.path.abspath(image_path),  # Use absolute path for the local image
@@ -66,7 +71,7 @@ class View:
 			fit=ft.ImageFit.COVER  # Ensure it covers the entire area
 		)
 
-	def setup_pages(self):
+	def setup_pages(self) -> None:
 		self.home_page = home_page.HomePage(self)
 		self.email_page = email_page.EmailPage(self)
 		self.standings_page = standings_page.StandingsPage(self)
@@ -81,19 +86,19 @@ class View:
 
 		self.results_window = results_window.ResultsWindow(self)
 
-	def setup_windows(self, team_names):
+	def setup_windows(self, team_names: list[str]) -> None:
 		self.title_screen = title_screen.TitleScreen(self, self.run_directory)
 		self.main_window = main_window.MainWindow(self)
 		self.team_selection_screen = team_selection_screen.TeamSelectionScreen(self, team_names)
 
-	def go_to_race_weekend(self, data):
+	def go_to_race_weekend(self, data: dict) -> None:
 
 		self.race_weekend_window = race_weekend_window.RaceWeekendWindow(self, data)
 		self.main_app.views.append(self.race_weekend_window)
 
 		self.main_app.update()
 
-	def show_simulated_session_results(self):
+	def show_simulated_session_results(self) -> None:
 		# self.results_window.continue_btn.disabled = True
 		self.main_app.views.append(self.results_window)
 

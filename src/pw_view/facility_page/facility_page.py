@@ -1,9 +1,14 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import flet as ft
 
 from pw_view.custom_widgets import custom_container
 
+if TYPE_CHECKING:
+	from pw_view.view import View
+
 class FacilityPage(ft.Column):
-	def __init__(self, view):
+	def __init__(self, view: View):
 
 		self.view = view
 		self.setup_widgets()
@@ -14,7 +19,7 @@ class FacilityPage(ft.Column):
 
 		super().__init__(controls=contents, alignment=ft.MainAxisAlignment.START, expand=True)
 
-	def update_page(self, data):
+	def update_page(self, data: dict) -> None:
 		facility_rows = self.setup_facilities_progress_bars(data)
 
 		facility_column = ft.Column(
@@ -46,13 +51,11 @@ class FacilityPage(ft.Column):
 		self.controls = [
 			ft.Text("Facilities", theme_style=self.view.page_header_style),
 			self.background_stack
-			# self.update_button,
-			# facility_comparison_container,
 		]
 
 		self.view.main_app.update()
 
-	def setup_widgets(self):
+	def setup_widgets(self) -> None:
 		self.update_button = ft.TextButton("Update", icon="upgrade", on_click=self.update_facilities)
 
 		self.buttons_row = ft.Row(
@@ -65,7 +68,7 @@ class FacilityPage(ft.Column):
 
 		self.buttons_container = custom_container.CustomContainer(self.view, self.buttons_row, expand=False)
 
-	def setup_facilities_progress_bars(self, data):
+	def setup_facilities_progress_bars(self, data: dict) -> list[ft.Row]:
 		facility_rows = []
 
 		for team in data["facility_values"]:
@@ -75,7 +78,11 @@ class FacilityPage(ft.Column):
 			row = ft.Row(
 				controls=[
 					ft.Text(f"{team_name}:", width=100),
-					ft.ProgressBar(value=facility/100, width=500, expand=True, bar_height=28)
+					ft.Container(
+						content=ft.ProgressBar(value=facility/100, width=500, expand=True, bar_height=28),
+						height=28,
+						expand=True
+					)
 				],
 				expand=False,
 			)
@@ -83,13 +90,13 @@ class FacilityPage(ft.Column):
 
 		return facility_rows
 	
-	def update_facilities(self, e):
+	def update_facilities(self, e: ft.ControlEvent) -> None:
 		self.view.controller.facilities_controller.clicked_update_facilities()
 		
-	def disable_upgrade_button(self):
+	def disable_upgrade_button(self) -> None:
 		self.update_button.disabled = True
 		self.view.main_app.update()
 
-	def enable_upgrade_button(self):
+	def enable_upgrade_button(self) -> None:
 		self.update_button.disabled = False
 		self.view.main_app.update()

@@ -60,9 +60,9 @@ class TitleScreen(ft.View):
 							ft.Text(
 								"Pitwall",
 								size=80,  # Increased size for the title
-								color=ft.colors.WHITE,
+								color=ft.Colors.WHITE,
 								weight=ft.FontWeight.BOLD,
-								bgcolor=ft.colors.BLACK54,  # Add a semi-transparent background to the text
+								bgcolor=ft.Colors.BLACK54,  # Add a semi-transparent background to the text
 							),
 							button_container,
 						],

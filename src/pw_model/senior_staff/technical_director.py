@@ -1,10 +1,17 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING, Union
+import random
+
 from pw_model.senior_staff import senior_staff
 from pw_model.pw_model_enums import StaffRoles
-import random
+
+if TYPE_CHECKING:
+	from pw_model.pw_base_model import Model
+	from pw_model.team.team_model import TeamModel
 
 class TechnicalDirector(senior_staff.SeniorStaff):
 	def __init__(self,
-			  model,
+			  model: Model,
 			  name : str,
 			  age : int,
 			  skill : int,
@@ -15,7 +22,7 @@ class TechnicalDirector(senior_staff.SeniorStaff):
 		self.role = StaffRoles.TECHNICAL_DIRECTOR
 		
 	@property
-	def team_model(self):
+	def team_model(self) -> Union[None, TeamModel]:
 		current_team = None
 
 		for team in self.model.teams:

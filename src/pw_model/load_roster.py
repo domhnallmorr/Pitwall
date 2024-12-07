@@ -1,6 +1,7 @@
+from __future__ import annotations
 import glob
 import os
-import re
+from typing import TYPE_CHECKING, Tuple, List, Union
 import sqlite3
 
 import pandas as pd
@@ -11,7 +12,10 @@ from pw_model.team import team_model
 from pw_model.track import track_model
 from pw_model.senior_staff import commercial_manager, technical_director
 
-def load_roster(model, roster):
+if TYPE_CHECKING:
+	from pw_model.pw_base_model import Model
+
+def load_roster(model: Model, roster: str) -> None:
 
 	conn = sqlite3.connect(f"{model.run_directory}\\{roster}\\roster.db")
 
@@ -25,7 +29,10 @@ def load_roster(model, roster):
 	model.calendar = load_season(model, season_file)
 	
 
-def load_drivers(model, conn):
+def load_drivers(
+    model: Model, 
+    conn: sqlite3.Connection
+) -> Tuple[List[driver_model.DriverModel], List[List[Tuple[str, driver_model.DriverModel]]]]:
 	drivers = []
 	future_drivers = []
 
@@ -75,7 +82,7 @@ def load_drivers(model, conn):
 
 	return drivers, future_drivers
 
-def load_teams(model, conn):
+def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamModel]:
 	teams = []
 
 	table_name = "teams"
@@ -129,7 +136,10 @@ def load_teams(model, conn):
 
 	return teams
 
-def load_senior_staff(model, conn):
+def load_senior_staff(model: Model, conn: sqlite3.Connection
+					  )-> Tuple[List[commercial_manager.CommercialManager],
+				 List[technical_director.TechnicalDirector],
+				 List[List[Tuple[str, Union[commercial_manager.CommercialManager, technical_director.TechnicalDirector]]]]]:
 	technical_directors = []
 	commercial_managers = []
 	future_managers = []
@@ -162,7 +172,20 @@ def load_senior_staff(model, conn):
 				manager = technical_director.TechnicalDirector(model, name, age, skill, salary, contract_length)
 			elif table_name == "commercial_managers":
 				manager = commercial_manager.CommercialManager(model, name, age, skill, salary, contract_length)
-			
+
+			if "RetiringAge" in column_names:
+				retiring_age_idx = column_names.index("RetiringAge")
+				retiring_age = row[retiring_age_idx]
+				manager.retiring_age = retiring_age
+
+				retiring_idx = column_names.index("Retiring")
+				retiring = bool(row[retiring_idx])
+				manager.retiring = retiring
+
+				retired_idx = column_names.index("Retired")
+				retired = bool(row[retired_idx])
+				manager.retired = retired
+
 			if row[0].lower() == "default":
 				if table_name == "technical_directors":
 					technical_directors.append(manager)
@@ -174,17 +197,17 @@ def load_senior_staff(model, conn):
 	return commercial_managers, technical_directors, future_managers
 
 
-def create_driver(line_data, model):
-	name = line_data[1].lstrip().rstrip()
-	age = int(line_data[2])
-	country = line_data[3]
-	speed = int(line_data[4])
+# def create_driver(line_data: str, model):
+# 	name = line_data[1].lstrip().rstrip()
+# 	age = int(line_data[2])
+# 	country = line_data[3]
+# 	speed = int(line_data[4])
 
-	driver = driver_model.DriverModel(model, name, age, country, speed)
+# 	driver = driver_model.DriverModel(model, name, age, country, speed)
 	
-	return driver
+# 	return driver
 
-def load_season(model, season_file):
+def load_season(model: Model, season_file: str) -> pd.DataFrame:
 
 	with open(season_file) as f:
 		data = f.readlines()
@@ -214,7 +237,7 @@ def load_season(model, season_file):
 
 	return calendar
 	
-def load_tracks(model, track_files):
+def load_tracks(model: Model, track_files: list[str]) -> None:
 	for file in track_files:
 		with open(file) as f:
 			data = f.readlines()
@@ -223,7 +246,7 @@ def load_tracks(model, track_files):
 		track = track_model.TrackModel(model, data)
 		model.tracks.append(track)
 
-def checks(model, roster):
+def checks(model: Model, roster: str) -> Tuple[str, List[str]]:
 
 	season_file = os.path.join(model.run_directory, roster, "season.txt")
 	assert os.path.isfile(season_file), f"Cannot Find {season_file}"

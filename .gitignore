@@ -1,0 +1,7 @@
+*.pyc
+
+# rough work files/folder
+notes.txt
+rough_work_tests/
+test_releases/
+_SS/

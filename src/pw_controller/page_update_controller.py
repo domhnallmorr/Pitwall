@@ -1,23 +1,33 @@
 '''
 A controller dedicated to refreshing the off track UI pages
 '''
+from __future__ import annotations
 import copy
+from typing import TYPE_CHECKING
+
+import pandas as pd
+
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.finance import finance_data
 
+if TYPE_CHECKING:
+	from pw_controller.pw_controller import Controller
+	from pw_model.pw_base_model import Model
+	from pw_view.view import View
+
 class PageUpdateController:
-	def __init__(self, controller):
+	def __init__(self, controller: Controller):
 		self.controller = controller
 
 	@property
-	def model(self):
+	def model(self) -> Model:
 		return self.controller.model
 	
 	@property
-	def view(self):
+	def view(self) -> View:
 		return self.controller.view
 	
-	def refresh_ui(self, new_season: bool=False):
+	def refresh_ui(self, new_season: bool=False) -> None:
 		self.update_calendar_page()
 		self.update_car_page()
 		self.update_email_page()
@@ -33,6 +43,7 @@ class PageUpdateController:
 		staff_values = [[team.name, team.number_of_staff] for team in self.model.teams]
 		staff_values.sort(key=lambda x: x[1], reverse=True) # sort, highest to lowest
 
+		#TODO player_requiring_technical_director works, but seems brittle, needs dedicated method
 		data = {
 			"driver1": team_model.driver1,
 			"driver1_age": team_model.driver1_model.age,
@@ -56,28 +67,27 @@ class PageUpdateController:
 			"commercial_manager_age": team_model.commercial_manager_model.age,
 			"commercial_manager_contract_length": team_model.commercial_manager_model.contract.contract_length,
 			"commercial_manager_skill": team_model.commercial_manager_model.skill,
+			"player_requiring_commercial_manager": self.model.staff_market.compile_teams_requiring_manager(StaffRoles.COMMERCIAL_MANAGER),
 
 			"technical_director": team_model.technical_director,
 			"technical_director_age": team_model.technical_director_model.age,
 			"technical_director_contract_length": team_model.technical_director_model.contract.contract_length,
 			"technical_director_skill": team_model.technical_director_model.skill,
 			"player_requiring_technical_director": self.model.staff_market.compile_teams_requiring_manager(StaffRoles.TECHNICAL_DIRECTOR),
-
+			
 			"staff_values": staff_values,
 
 		}
 
 		self.view.staff_page.update_page(copy.deepcopy(data), new_season)
 
-	def update_standings_page(self):
-		data = {
-			"drivers_standings_df": self.model.season.standings_manager.drivers_standings_df,#.copy(deep=True),
-			"constructors_standings_df": self.model.season.standings_manager.constructors_standings_df#.copy(deep=True)
-		}
+	def update_standings_page(self) -> None:
+		drivers_standings_df = self.model.season.standings_manager.drivers_standings_df.copy(deep=True)
+		constructors_standings_df = self.model.season.standings_manager.constructors_standings_df.copy(deep=True)
 
-		self.view.standings_page.update_standings(data)
+		self.view.standings_page.update_standings(drivers_standings_df, constructors_standings_df)
 
-	def update_email_page(self):
+	def update_email_page(self) -> None:
 		data = {
 			"emails": copy.deepcopy(self.model.inbox.emails),
 		}
@@ -104,18 +114,15 @@ class PageUpdateController:
 
 		self.view.finance_page.update_page(data)
 
-	def update_grid_page(self):
-		data = {
-			"year": self.model.year,
-			"grid_this_year_df": self.model.staff_market.grid_this_year_df.copy(deep=True),
-			"grid_next_year_df": self.model.staff_market.grid_next_year_df.copy(deep=True),
-			"grid_next_year_announced_df": self.model.staff_market.grid_next_year_announced_df.copy(deep=True),
-		}
+	def update_grid_page(self) -> None:
+		year = self.model.year
+		grid_this_year_df = self.model.staff_market.grid_this_year_df.copy(deep=True)
+		grid_next_year_announced_df = self.model.staff_market.grid_next_year_announced_df.copy(deep=True)
 
-		self.view.grid_page.update_page(data)
+		self.view.grid_page.update_page(year, grid_this_year_df, grid_next_year_announced_df)
 		self.view.grid_page.change_display(None)
 
-	def update_home_page(self):
+	def update_home_page(self) -> None:
 		data = {
 			"next_race": self.model.season.next_race,
 			"next_race_week": self.model.season.next_race_week,
@@ -128,6 +135,8 @@ class PageUpdateController:
 			"driver2_contract": self.model.player_team_model.driver2_model.contract.contract_length,
 			"technical_director": self.model.player_team_model.technical_director,
 			"technical_director_contract": self.model.player_team_model.technical_director_model.contract.contract_length,
+			"commercial_manager": self.model.player_team_model.commercial_manager,
+			"commercial_manager_contract": self.model.player_team_model.commercial_manager_model.contract.contract_length,
 
 			"team_average_stats": self.model.gen_team_average_stats(),
 			"player_car": self.model.player_team_model.car_model.speed,
@@ -139,24 +148,17 @@ class PageUpdateController:
 		}
 		self.view.home_page.update_page(data)
 
-	def update_calendar_page(self):
-		data = {
-			"calendar": self.model.calendar.copy(deep=True)
-		}
+	def update_calendar_page(self) -> None:
+		calendar: pd.DataFrame = self.model.calendar.copy(deep=True)
+		self.view.calendar_page.update_page(calendar)
 
-		self.view.calendar_page.update_page(data)
-
-	def update_car_page(self):
-		car_speeds = [[team.name, team.car_model.speed] for team in self.model.teams]
+	def update_car_page(self) -> None:
+		car_speeds = [(team.name, team.car_model.speed) for team in self.model.teams]
 		car_speeds.sort(key=lambda x: x[1], reverse=True) # sort, highest speed to lowest speed
 		
-		data = {
-			"car_speeds": car_speeds,
-		}
+		self.view.car_page.update_page(car_speeds)
 
-		self.view.car_page.update_page(data)
-
-	def update_main_window(self):
+	def update_main_window(self) -> None:
 		data = {}
 	
 		player_team_model = self.model.get_team_model(self.model.player_team)

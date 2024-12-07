@@ -98,9 +98,3 @@ class DriverModel:
 	def setup_season_stats(self) -> None:
 		self.season_stats = season_stats.SeasonStats()
 
-	# def hired_by_team(self, team) -> None:
-	# 	assert team is not None
-
-	# 	self.team_next_year = team
-	# 	self.contract = driver_contract.DriverContract()
-

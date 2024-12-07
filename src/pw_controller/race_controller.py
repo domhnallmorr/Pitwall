@@ -1,11 +1,16 @@
-from tkinter import *
+from __future__ import annotations
+# from tkinter import *
 import threading
+from typing import TYPE_CHECKING
 
 from race_model import race_model
 from race_model.race_model_enums import SessionNames
 
+if TYPE_CHECKING:
+	from pw_controller.pw_controller import Controller
+
 class RaceController:
-	def __init__(self, controller):
+	def __init__(self, controller: Controller):
 		self.controller = controller
 		self.view = controller.view
 		
@@ -13,7 +18,7 @@ class RaceController:
 			self.race_model = race_model.RaceModel("UI", self.controller.model, self.controller.model.season.current_track_model)
 
 
-	def simulate_session(self, session):
+	def simulate_session(self, session: SessionNames) -> None:
 		# if session == "FP Friday":
 		# 	self.race_model.setup_practice(120*60, session)
 		# elif session == "FP Saturday":
@@ -47,7 +52,7 @@ class RaceController:
 		self.view.show_simulated_session_results()
 
 
-	def continue_from_results(self):
+	def continue_from_results(self) -> None:
 		data = {
 			"current_session_name": self.race_model.current_session_name,
 			"fastest_lap_summary": f"{self.race_model.current_session.fastest_lap_driver}: {self.race_model.current_session.fastest_lap_time}",
@@ -67,8 +72,8 @@ class RaceController:
 	# 	self.view.return_to_main_window()
 	# 	self.view.main_window.update_advance_btn("advance")
 
-	def continue_from_lap_chart(self):
+	def continue_from_lap_chart(self) -> None:
 		self.view.continue_from_lap_chart()
 	
-	def show_lap_chart(self):
+	def show_lap_chart(self) -> None:
 		self.view.show_lap_chart()

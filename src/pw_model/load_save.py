@@ -338,7 +338,7 @@ def save_email(model: Model, save_file: sqlite3.Connection) -> None:
 	df = model.inbox.generate_dataframe()
 	df.to_sql("email", save_file, if_exists="replace", index=False)
 
-def load(model: Model, save_file: Union[Optional[str], Optional[sqlite3.Connection]]=None, mode: str="file") -> None:
+def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mode: str="file") -> None:
 	assert mode in ["file", "memory"]
 
 	if mode == "file":

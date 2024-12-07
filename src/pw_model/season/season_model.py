@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
 	from pw_model.driver.driver_model import DriverModel
 	from pw_model.team.team_model import TeamModel
+	from pw_model.senior_staff.technical_director import TechnicalDirector
 
 class SeasonModel:
 	def __init__(self, model: Model):
@@ -63,7 +64,7 @@ class SeasonModel:
 			return week
 
 	@property
-	def drivers_by_rating(self) -> List[List[Union[DriverModel, int]]]:
+	def drivers_by_rating(self) -> list[list[Union[str, int]]]:
 		'''
 		compile all drivers on the grid and arrange by their overall rating
 		'''
@@ -82,9 +83,11 @@ class SeasonModel:
 		return drivers
 	
 	@property
-	def teams_by_rating(self) -> List[List[Union[TeamModel, int]]]:
+	def teams_by_rating(self) -> list[list[Union[str, int]]]:
 		'''
 		compile all teams on the grid and arrange by their overall rating
+		Example output;
+		[['McLaren', 90], ['Ferrari', 84], ['Williams', 80], ['Benetton', 74], .......
 		'''
 		teams = []
 
@@ -93,11 +96,24 @@ class SeasonModel:
 
 		teams = sorted(teams, key=lambda x: x[1], reverse=True)
 
-		'''
-		[['McLaren', 90], ['Ferrari', 84], ['Williams', 80], ['Benetton', 74], .......
-		'''
 		return teams
 	
+	@property
+	def technical_directors_by_rating(self) -> list[list[Union[str, int]]]:
+		'''
+		compile all technical directors on the grid and arrange by their overall rating
+		example output;
+		[['Adrian Newey', 95], ['Ross Brawn', 90], ['Pat Symonds', 80], ....
+		'''
+		technical_directors = []
+
+		for team in self.model.teams:
+			technical_directors.append([team.technical_director, team.technical_director_model.skill])
+
+		technical_directors = sorted(technical_directors, key=lambda x: x[1], reverse=True)
+
+		return technical_directors
+
 	def setup_new_season_variables(self) -> None:
 
 		self.current_week = 1

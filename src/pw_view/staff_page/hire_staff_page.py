@@ -1,11 +1,14 @@
-from enum import Enum
-from typing import Optional
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
 import flet as ft
 
 from pw_model.pw_model_enums import StaffRoles
 
+if TYPE_CHECKING:
+	from pw_view.view import View
+
 class HireStaffPage(ft.Column):
-	def __init__(self, view):
+	def __init__(self, view: View):
 
 		self.view = view
 		self.setup_contract_column()
@@ -21,7 +24,7 @@ class HireStaffPage(ft.Column):
 
 		super().__init__(expand=1, controls=contents)
 
-	def update_free_agent_list(self, free_agents: list, role: Enum):
+	def update_free_agent_list(self, free_agents: list[str], role: StaffRoles) -> None:
 		self.title_text.value = role.value
 		self.curent_role = role
 
@@ -73,7 +76,7 @@ class HireStaffPage(ft.Column):
 
 		self.update_staff(None, name=free_agents[0])
 		
-	def setup_contract_column(self):
+	def setup_contract_column(self) -> None:
 		self.name_text = ft.Text("Driver Name: Some Driver")
 		self.age_text = ft.Text("Driver Age: 99")
 		self.contract_length_text = ft.Text("Contract Length: 2 years")
@@ -102,7 +105,7 @@ class HireStaffPage(ft.Column):
 			)
 
 
-	def setup_page(self):
+	def setup_page(self) -> None:
 		content_row = ft.Row(
 			controls=[
 				self.free_agents_container,

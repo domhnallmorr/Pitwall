@@ -1,9 +1,14 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import flet as ft
-
+import pandas as pd
 from pw_view.custom_widgets import custom_container
 
+if TYPE_CHECKING:
+	from pw_view.view import View
+
 class GridPage(ft.Column):
-	def __init__(self, view):
+	def __init__(self, view: View):
 
 		self.view = view
 
@@ -20,7 +25,7 @@ class GridPage(ft.Column):
 		self.current_year_btn.style = None
 		self.next_year_btn.style = None
 
-	def setup_buttons_row(self):
+	def setup_buttons_row(self) -> None:
 		self.current_year_btn = ft.TextButton("1998", on_click=self.change_display, data="current")
 		self.next_year_btn = ft.TextButton("1999", on_click=self.change_display, data="next")
 
@@ -35,12 +40,10 @@ class GridPage(ft.Column):
 
 		self.buttons_container = custom_container.CustomContainer(self.view, self.buttons_row, expand=False)
 	
-	def update_page(self, data):
+	def update_page(self, year: int, grid_this_year_df: pd.Dataframe, grid_next_year_announced_df: pd.DataFrame) -> None:
 		# THIS YEAR
-		self.current_year_btn.text = data["year"]
-		self.next_year_btn.text = data["year"] + 1
-		
-		grid_this_year_df = data["grid_this_year_df"]
+		self.current_year_btn.text = str(year)
+		self.next_year_btn.text = str(year + 1)
 
 		columns = []
 		for col in grid_this_year_df.columns:
@@ -58,7 +61,7 @@ class GridPage(ft.Column):
 			rows.append(ft.DataRow(cells=cells))
 
 		self.grid_this_year_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
-										   heading_row_color=ft.colors.PRIMARY)
+										   heading_row_color=ft.Colors.PRIMARY)
 
 		self.scrollable_grid_this_year_table = ft.Column(
 			controls=[self.grid_this_year_table],
@@ -68,14 +71,12 @@ class GridPage(ft.Column):
 		)
 
 		# NEXT YEAR
-		grid_next_year_df = data["grid_next_year_announced_df"]
-
 		columns = []
-		for col in grid_next_year_df.columns:
+		for col in grid_next_year_announced_df.columns:
 			column_content = custom_container.HeaderContainer(self.view, col)
 			columns.append(ft.DataColumn(column_content))
 
-		df_data = grid_next_year_df.values.tolist()
+		df_data = grid_next_year_announced_df.values.tolist()
 		rows = []
 
 		for row in df_data:
@@ -86,7 +87,7 @@ class GridPage(ft.Column):
 			rows.append(ft.DataRow(cells=cells))
 
 		self.grid_next_year_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
-										   heading_row_color=ft.colors.PRIMARY)
+										   heading_row_color=ft.Colors.PRIMARY)
 
 		self.scrollable_grid_next_year_table = ft.Column(
 			controls=[self.grid_next_year_table],
@@ -96,7 +97,7 @@ class GridPage(ft.Column):
 		)
 
 
-	def change_display(self, e):
+	def change_display(self, e: ft.ControlEvent) -> None:
 		self.reset_tab_buttons()
 
 		if e is None:

@@ -147,8 +147,6 @@ class Model:
 
 		for commercial_manager in self.commercial_managers:
 			commercial_manager.end_season(increase_age=increase_year)
-			# TODO remove this
-			commercial_manager.retiring = False
 
 		for technical_director in self.technical_directors:
 			technical_director.end_season(increase_age=increase_year)

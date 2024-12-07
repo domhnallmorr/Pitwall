@@ -59,3 +59,21 @@ def test_year_week():
 
 	assert model.year == 1900
 	assert model.season.current_week == 10
+
+def test_retirement_age_senior_manager():
+	model = create_model.create_model()
+
+	brawn_model = model.get_technical_director_model("Ross Brawn")
+	brawn_model.retiring_age = 45
+	brawn_model.retired = True
+	brawn_model.retiring = True
+
+	save_file = load_save.save_game(model, mode="memory")
+	model = create_model.create_model() # reset the model
+	load_save.load(model, save_file, mode="memory") # load data
+
+	brawn_model = model.get_technical_director_model("Ross Brawn")
+
+	assert brawn_model.retired is True
+	assert brawn_model.retiring_age == 45
+	assert brawn_model.retiring is True

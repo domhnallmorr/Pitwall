@@ -3,7 +3,7 @@ from race_model import race_model
 from race_model.race_model_enums import SessionNames
 from pw_model.track import track_model
 
-from tests import test_track_model
+from tests.test_model.track import test_track_model
 
 def test_participants_creation():
 	model = create_model.create_model(mode="headless")

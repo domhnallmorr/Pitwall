@@ -2,7 +2,7 @@ import pytest
 
 from tests import create_model
 from race_model import race_model
-from tests import test_track_model
+from tests.test_model.track import test_track_model
 from race_model.race_model_enums import SessionStatus
 
 def test_pit_strategy_setup():

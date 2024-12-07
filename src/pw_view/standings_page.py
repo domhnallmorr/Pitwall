@@ -1,9 +1,15 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import flet as ft
+import pandas as pd
 
 from pw_view.custom_widgets import custom_container
+if TYPE_CHECKING:
+	from pw_view.view import View
 
 class StandingsPage(ft.Column):
-	def __init__(self, view):
+	def __init__(self, view: View):
 
 		self.view = view
 		self.setup_standings_tables()
@@ -23,7 +29,7 @@ class StandingsPage(ft.Column):
 		self.contructors_btn.style = None
 
 
-	def setup_standings_tables(self):
+	def setup_standings_tables(self) -> None:
 
 		self.drivers_table = ft.DataTable(
 			columns=[
@@ -49,7 +55,7 @@ class StandingsPage(ft.Column):
             ],
         )
 
-	def setup_buttons_row(self):
+	def setup_buttons_row(self) -> None:
 		self.drivers_btn = ft.TextButton("Drivers", on_click=self.display_drivers, expand=False)
 		self.contructors_btn = ft.TextButton("Constructors", on_click=self.display_constructors, expand=False)
 
@@ -64,12 +70,9 @@ class StandingsPage(ft.Column):
 
 		self.buttons_container = custom_container.CustomContainer(self.view, self.buttons_row, expand=False)
 
-	def update_standings(self, data: dict) -> None:
-		
+	def update_standings(self, drivers_standings_df: pd.DataFrame, constructors_standings_df: pd.DataFrame) -> None:
+	
 		# DRIVERS
-		drivers_standings_df = data["drivers_standings_df"]
-		constructors_standings_df = data["constructors_standings_df"]
-
 		columns = []
 		for col in drivers_standings_df.columns:
 			column_content = custom_container.HeaderContainer(self.view, col)
@@ -86,7 +89,7 @@ class StandingsPage(ft.Column):
 			rows.append(ft.DataRow(cells=cells))
 
 		self.drivers_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
-									heading_row_color=ft.colors.PRIMARY)
+									heading_row_color=ft.Colors.PRIMARY)
 
 		self.scrollable_drivers_table = ft.Column(
 			controls=[self.drivers_table],
@@ -116,7 +119,7 @@ class StandingsPage(ft.Column):
 			rows.append(ft.DataRow(cells=cells))
 
 		self.constructors_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
-										 heading_row_color=ft.colors.PRIMARY)		
+										 heading_row_color=ft.Colors.PRIMARY)		
 
 		self.scrollable_constructors_table = ft.Column(
 			controls=[self.constructors_table],

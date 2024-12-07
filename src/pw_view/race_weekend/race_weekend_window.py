@@ -1,8 +1,14 @@
+from __future__ import annotations
 from enum import Enum
+from typing import TYPE_CHECKING
+
 import flet as ft
 
 from pw_view.custom_widgets import custom_container, custom_buttons
 from race_model.race_model_enums import SessionNames
+
+if TYPE_CHECKING:
+	from pw_view.view import View
 
 def create_session_header_text(session):
 
@@ -10,10 +16,10 @@ def create_session_header_text(session):
 
 
 class RaceWeekendWindow(ft.View):
-	def __init__(self, view, data):
+	def __init__(self, view: View, data: dict):
 		self.view = view
-		self.simulate_buttons = {}
-		self.simulate_btns_clicked = []
+		self.simulate_buttons: dict[SessionNames, ft.TextButton] = {}
+		self.simulate_btns_clicked: list[SessionNames] = []
 
 		self.header_text = ft.Text(data["race_title"], theme_style=self.view.page_header_style)
 
@@ -79,7 +85,7 @@ class RaceWeekendWindow(ft.View):
 
 		return container
 	
-	def simulate(self, e):
+	def simulate(self, e: ft.ControlEvent) -> None:
 		session_type = e.control.data
 
 		if session_type not in self.simulate_btns_clicked: # make sure simulate only happens once per session
@@ -106,7 +112,7 @@ class RaceWeekendWindow(ft.View):
 			self.view.controller.race_controller.simulate_session(session_type)
 
 
-	def return_to_main_window(self, e):
+	def return_to_main_window(self, e: ft.ControlEvent) -> None:
 		self.continue_btn.disabled = True
 		self.view.main_app.update()
 		

@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import flet as ft
 
 from pw_view.custom_widgets import custom_container
@@ -5,8 +7,11 @@ from pw_view.staff_page import hire_workforce_modal
 from pw_view.custom_widgets import rating_widget
 from pw_model.pw_model_enums import StaffRoles
 
+if TYPE_CHECKING:
+	from pw_view.view import View
+
 class StaffPage(ft.Column):
-	def __init__(self, view):
+	def __init__(self, view: View):
 
 		self.view = view
 		self.setup_buttons_row()
@@ -24,7 +29,7 @@ class StaffPage(ft.Column):
 		self.manager_button.style = None
 		self.workforce_btn.style = None
 
-	def setup_buttons_row(self):
+	def setup_buttons_row(self) -> None:
 		self.manager_button = ft.TextButton("Management", on_click=self.display_managers,)
 
 		self.drivers_btn = ft.TextButton("Drivers", on_click=self.display_drivers)
@@ -54,7 +59,7 @@ class StaffPage(ft.Column):
 
 		self.workforce_buttons_container = custom_container.CustomContainer(self.view, self.workforce_buttons_row, expand=False)
 
-	def setup_widgets(self):
+	def setup_widgets(self) -> None:
 		self.driver_name_texts = [ft.Text(f"Driver1"), ft.Text(f"Driver2")]
 		self.driver_age_texts = [ft.Text(f"25"), ft.Text(f"32")]
 		self.driver_country_texts = [ft.Text(f"UK"), ft.Text(f"USA")]
@@ -68,7 +73,8 @@ class StaffPage(ft.Column):
 		self.staff_replace_buttons = [
 			ft.TextButton("Replace", disabled=True, icon="find_replace", on_click=self.replace_driver, data=StaffRoles.DRIVER1),
 			ft.TextButton("Replace", disabled=True, icon="find_replace", on_click=self.replace_driver, data=StaffRoles.DRIVER2),
-			ft.TextButton("Replace", disabled=True, icon="find_replace", on_click=self.replace_driver, data=StaffRoles.TECHNICAL_DIRECTOR)
+			ft.TextButton("Replace", disabled=True, icon="find_replace", on_click=self.replace_driver, data=StaffRoles.TECHNICAL_DIRECTOR),
+			ft.TextButton("Replace", disabled=True, icon="find_replace", on_click=self.replace_driver, data=StaffRoles.COMMERCIAL_MANAGER)
 			]
 
 		self.technical_director_text = ft.Text(f"Technical Director Name")
@@ -83,7 +89,7 @@ class StaffPage(ft.Column):
 		self.commercial_manager_contract_status_text = ft.Text(f"Status: Contracted")
 		self.commercial_manager_ability_widget = rating_widget.RatingWidget("Ability:")
 
-	def setup_driver_containers(self):
+	def setup_driver_containers(self) -> None:
 		self.driver_containers = []
 
 		for idx in [0, 1]:
@@ -122,7 +128,7 @@ class StaffPage(ft.Column):
 			]
 		)
 
-	def setup_manager_containers(self):
+	def setup_manager_containers(self) -> None:
 		self.manager_containers = []
 
 		for manager in ["Technical Director", "Commercial Manager"]:
@@ -150,6 +156,7 @@ class StaffPage(ft.Column):
 			elif manager == "Commercial Manager":
 				controls.append(self.commercial_manager_contract_length_text)
 				controls.append(self.commercial_manager_contract_status_text)
+				controls.append(self.staff_replace_buttons[3])
 
 			controls.append(ft.Divider())
 
@@ -176,7 +183,7 @@ class StaffPage(ft.Column):
 			]
 		)
 
-	def update_page(self, data: dict, new_season: bool=False):
+	def update_page(self, data: dict, new_season: bool=False) -> None:
 		if new_season is True:
 			self.enable_hire_workforce_btn()
 			
@@ -215,7 +222,7 @@ class StaffPage(ft.Column):
 
 		# Enable/Disable replace buttons
 		for idx, r in enumerate([data["player_requiring_driver1"], data["player_requiring_driver2"],
-						   data["player_requiring_technical_director"]]):
+						   data["player_requiring_technical_director"], data["player_requiring_commercial_manager"]]):
 			self.staff_replace_buttons[idx].disabled = not r
 		
 		# Update technical director
@@ -237,7 +244,7 @@ class StaffPage(ft.Column):
 	def replace_driver(self, e: ft.ControlEvent) -> None:
 		self.view.controller.staff_hire_controller.launch_replace_staff(e.control.data)
 
-	def display_drivers(self, e):
+	def display_drivers(self, e: ft.ControlEvent) -> None:
 		self.reset_tab_buttons()
 		self.drivers_btn.style = self.view.clicked_button_style
 
@@ -364,8 +371,8 @@ class StaffPage(ft.Column):
 		workforce_dialog.open = True
 		self.view.main_app.update()
 
-	def disable_hire_workforce_btn(self):
+	def disable_hire_workforce_btn(self) -> None:
 		self.hire_workforce_button.disabled = True
 
-	def enable_hire_workforce_btn(self):
+	def enable_hire_workforce_btn(self) -> None:
 		self.hire_workforce_button.disabled = False

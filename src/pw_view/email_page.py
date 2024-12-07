@@ -1,7 +1,13 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import flet as ft
 
+if TYPE_CHECKING:
+	from pw_view.view import View
+	from pw_model.email.email_model import Email
+
 class EmailPage(ft.Column):
-	def __init__(self, view):
+	def __init__(self, view: View):
 
 		self.view = view
 		self.setup_page()
@@ -12,10 +18,10 @@ class EmailPage(ft.Column):
 
 		super().__init__(controls=contents)
 
-	def setup_page(self):
+	def setup_page(self) -> None:
 		self.email_content = ft.Text("Select an email to view its content")
 
-	def update_page(self, data):
+	def update_page(self, data: dict) -> None:
 
 		emails = data["emails"]
 		email_tiles = []
@@ -31,7 +37,7 @@ class EmailPage(ft.Column):
 			content=email_list,
 			width=400,
 			height=self.view.main_app.window.height - 200,  # Updated to use Page.window.height
-			border=ft.border.all(2, ft.colors.WHITE),
+			border=ft.border.all(2, ft.Colors.WHITE),
 		)
 
 		email_row = ft.Row(
@@ -54,7 +60,8 @@ class EmailPage(ft.Column):
 		 
 		self.view.main_app.update()
 
-	def create_email_tile(self, email):
+	#TODO check email can't be accidently modifed by view here
+	def create_email_tile(self, email: Email) -> None:
 		return ft.ListTile(
                 title=ft.Text(f"RE: {email.subject}"),
                 subtitle=ft.Text(f"From: {email.sender}"),
@@ -66,7 +73,6 @@ class EmailPage(ft.Column):
             )
 	
 	
-	def show_email_content(self, e):
+	def show_email_content(self, e: ft.ControlEvent) -> None:
 		self.email_content.value = e.control.data.message
 		self.view.main_app.update()
-		#self.email_content.update()

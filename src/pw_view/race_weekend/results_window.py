@@ -1,5 +1,6 @@
+from __future__ import annotations
 from enum import Enum
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import flet as ft
 import matplotlib.pyplot as plt
@@ -10,8 +11,11 @@ from race_model.race_model_enums import SessionNames
 from pw_view import view
 from pw_view.custom_widgets import custom_container, custom_buttons
 
+if TYPE_CHECKING:
+	from pw_view.view import View
+
 class ResultsWindow(ft.View):
-	def __init__(self, view):
+	def __init__(self, view: View):
 		self.view = view
 
 		self.setup_buttons_row()
@@ -208,7 +212,7 @@ class ResultsWindow(ft.View):
 		lap_chart = MatplotlibChart(self.lap_chart_fig, expand=True, transparent=True, original_size=False)
 		self.lap_chart_container = custom_container.CustomContainer(self.view, lap_chart, expand=True)
 
-	def setup_laptimes_plot(self):
+	def setup_laptimes_plot(self) -> None:
 		px = 1/plt.rcParams['figure.dpi']  # pixel in inches
 		self.laptimes_fig, self.laptimes_ax = plt.subplots(figsize=(1820*px, 700*px))
 

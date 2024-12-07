@@ -1,9 +1,14 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import flet as ft
 
 from pw_view import sidebar
 
+if TYPE_CHECKING:
+	from pw_view.view import View
+
 class MainWindow(ft.View):
-	def __init__(self, view):
+	def __init__(self, view: View):
 		self.view = view
 
 		self.setup_header_bar()
@@ -20,7 +25,7 @@ class MainWindow(ft.View):
 
 		super().__init__(controls=[self.header, self.content_row])
 
-	def setup_header_bar(self):
+	def setup_header_bar(self) -> None:
 		self.team_text = ft.Text("Williams - $1,000,000", theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM)
 		self.week_text = ft.Text("Week 1 - 1998", theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM)
 
@@ -33,8 +38,7 @@ class MainWindow(ft.View):
 			vertical_alignment=ft.CrossAxisAlignment.CENTER  # Align items to the center vertically
 		)
 
-
-	def change_page(self, page_name):
+	def change_page(self, page_name: str) -> None:
 		
 		contents = [self.nav_sidebar]
 
@@ -72,7 +76,7 @@ class MainWindow(ft.View):
 		self.controls = [self.header, self.content_row]
 		self.view.main_app.update()
 		
-	def update_window(self, data):
+	def update_window(self, data: dict) -> None:
 
 		self.team_text.value = data["team"]
 
@@ -86,7 +90,7 @@ class MainWindow(ft.View):
 		
 		self.view.main_app.update()
 		
-	def update_email_button(self, number_of_emails):
+	def update_email_button(self, number_of_emails: int) -> None:
 		if number_of_emails > 0:
 			self.nav_sidebar.email_btn.text = f"Email ({number_of_emails})"
 		else:

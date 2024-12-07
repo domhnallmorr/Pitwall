@@ -1,9 +1,14 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import flet as ft
-
+import pandas as pd
 from pw_view.custom_widgets import custom_container
 
+if TYPE_CHECKING:
+	from pw_view.view import View
+
 class CalendarPage(ft.Column):
-	def __init__(self, view):
+	def __init__(self, view: View):
 
 		self.view = view
 
@@ -14,9 +19,7 @@ class CalendarPage(ft.Column):
 
 		super().__init__(controls=contents, expand=1)
 
-	def update_page(self, data):
-		calendar = data["calendar"]
-
+	def update_page(self, calendar: pd.DataFrame) -> None:
 		# Add a Round column based on index, maybe this should be added to the model
 
 		calendar.insert(0, "#", calendar.index + 1)
@@ -39,7 +42,7 @@ class CalendarPage(ft.Column):
 			rows.append(ft.DataRow(cells=cells))
 
 		self.calendar_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
-									 heading_row_color=ft.colors.PRIMARY, border_radius=15,)
+									 heading_row_color=ft.Colors.PRIMARY, border_radius=15,)
 
 		column = ft.Column(
 			controls=[self.calendar_table],

@@ -1,9 +1,13 @@
-from typing import List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 import flet as ft
 
+if TYPE_CHECKING:
+	from pw_view.view import View
 
 class TeamSelectionScreen(ft.View):
-	def __init__(self, view, team_names : List):
+	def __init__(self, view: View, team_names: list[str]):
 		self.view = view
 		
 		team_buttons = []
@@ -19,10 +23,8 @@ class TeamSelectionScreen(ft.View):
 			),
 		]
 
-		# contents = [nav_sidebar, self.view.home_page]
-
 		super().__init__(controls=controls)
 
-	def start_career(self, e):
+	def start_career(self, e: ft.ControlEvent) -> None:
 		self.view.controller.start_career(e.control.data)
 		

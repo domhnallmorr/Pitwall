@@ -1,11 +1,17 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import flet as ft
 from flet.matplotlib_chart import MatplotlibChart
 import matplotlib.pyplot as plt
 
 from pw_view.custom_widgets import custom_container
 
+if TYPE_CHECKING:
+	from pw_view.view import View
+
 class HomePage(ft.Column):
-	def __init__(self, view):
+	def __init__(self, view: View):
 
 		self.view = view
 
@@ -34,6 +40,7 @@ class HomePage(ft.Column):
 		self.driver1_text = ft.Text("Driver1: XXX - Contract: 2 Year(s)")
 		self.driver2_text = ft.Text("Driver2: XXX - Contract: 2 Year(s)")
 		self.technical_director_text = ft.Text("Technical Director: XXX - Contract: 2 Year(s)")
+		self.commercial_manager_text = ft.Text("Commercial Manager: XXX - Contract: 2 Year(s)")
 
 		staff_column = ft.Column(
 			controls=[
@@ -41,6 +48,7 @@ class HomePage(ft.Column):
 				self.driver1_text,
 				self.driver2_text,
 				self.technical_director_text,
+				self.commercial_manager_text,
 				],
 			expand=True
 		)
@@ -70,7 +78,7 @@ class HomePage(ft.Column):
 			)
 		self.chart_container = custom_container.CustomContainer(self.view, chart_column)
 		
-	def update_page(self, data):
+	def update_page(self, data: dict) -> None:
 		self.update_plot(data)
 
 		self.current_team_pos_text.value = f"Current Position: {data['current_position']}"
@@ -78,13 +86,14 @@ class HomePage(ft.Column):
 		self.driver1_text.value = f"Driver 1: {data['driver1']} - Contract: {data['driver1_contract']} Year(s)"
 		self.driver2_text.value = f"Driver 2: {data['driver2']} - Contract: {data['driver2_contract']} Year(s)"
 		self.technical_director_text.value = f"Technical Director: {data['technical_director']} - Contract: {data['technical_director_contract']} Year(s)"
+		self.commercial_manager_text.value = f"Commercial Manager: {data['commercial_manager']} - Contract: {data['commercial_manager_contract']} Year(s)"
 
 		self.next_race_text.value = f"Next Race: {data['next_race']}"
 		self.next_race_week_text.value = f"Week: {data['next_race_week']}"
 
 		self.view.main_app.update()
 
-	def setup_page(self):
+	def setup_page(self) -> None:
 		row1 = ft.Row(
 			controls=[
 				ft.Container(content=self.standings_container, expand=True),
@@ -126,7 +135,7 @@ class HomePage(ft.Column):
 
 		self.view.main_app.update()
 
-	def update_plot(self, data):
+	def update_plot(self, data: dict) -> None:
 		self.axs.clear()
 
 		team_avg_stats = data["team_average_stats"]

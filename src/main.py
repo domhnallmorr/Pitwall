@@ -14,6 +14,9 @@ def main(page: ft.Page):
 	flet_logger = logging.getLogger("flet_runtime")
 	flet_logger.setLevel(logging.WARNING)
 
+	flet_logger = logging.getLogger("flet")
+	flet_logger.setLevel(logging.WARNING)
+
 	matplotlib_logger = logging.getLogger("matplotlib")
 	matplotlib_logger.setLevel(logging.WARNING)
 
@@ -25,7 +28,7 @@ def main(page: ft.Page):
 
 	page.window.maximized = True
 
-	version = "0.10.0"
+	version = "0.11.0"
 	page.title = f"Pitwall {version}"
 	
 	run_directory = os.path.dirname(os.path.join(os.path.abspath(__file__)))

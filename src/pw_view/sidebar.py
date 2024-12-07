@@ -1,8 +1,13 @@
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import flet as ft
 
+if TYPE_CHECKING:
+	from pw_view.view import View
+
 class Sidebar(ft.Column):
-	def __init__(self, view):
+	def __init__(self, view: View):
 		self.view = view
 
 		btn_width = 200
@@ -36,7 +41,7 @@ class Sidebar(ft.Column):
 
 		super().__init__(controls=contents, width=width, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, expand=False)
 
-	def advance(self, e):
+	def advance(self, e: ft.ControlEvent) -> None:
 		self.advance_btn.disabled = True # disable to avoid potential double click
 
 		self.view.main_app.update()
@@ -45,10 +50,10 @@ class Sidebar(ft.Column):
 		self.advance_btn.disabled = False
 		self.view.main_app.update()
 
-	def go_to_race_weekend(self, e):
+	def go_to_race_weekend(self, e: ft.ControlEvent) -> None:
 		self.view.controller.go_to_race_weekend()
 
-	def update_advance_button(self, mode):
+	def update_advance_button(self, mode: str) -> None:
 		assert mode in ["advance", "go_to_race"]
 
 		if mode == "go_to_race":

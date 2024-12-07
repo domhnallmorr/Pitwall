@@ -7,6 +7,6 @@ class StaffContract:
 	salary: int = 4_000_000 # yearly salary
 
 
-	def end_season(self):
+	def end_season(self) -> None:
 		if self.contract_length > 0:
 			self.contract_length -= 1

@@ -1,7 +1,13 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import flet as ft
 
+if TYPE_CHECKING:
+	from pw_view.view import View
+
 class UpgradeFacilitiesPage(ft.Column):
-	def __init__(self, view):
+	def __init__(self, view: View):
 
 		self.view = view
 
@@ -20,10 +26,10 @@ class UpgradeFacilitiesPage(ft.Column):
 
 		super().__init__(controls=contents, alignment=ft.MainAxisAlignment.START)
 
-	def update_page(self, data):
-		pass
+	# def update_page(self, data):
+	# 	pass
 
-	def setup_widgets(self):
+	def setup_widgets(self) -> None:
 		self.current_state_text = ft.Text("Current State: 100")
 
 		self.decrease_btn = ft.TextButton("-", on_click=self.decrease_percentage)
@@ -43,19 +49,19 @@ class UpgradeFacilitiesPage(ft.Column):
 
 		self.upgrade_button = ft.TextButton("Upgrade", icon="update", on_click=self.confirm_upgrade)
 	
-	def decrease_percentage(self, e):
+	def decrease_percentage(self, e: ft.ControlEvent) -> None:
 		if self.upgrade_percentage > 20:
 			self.upgrade_percentage -= 1
 
 		self.update_progress_bar()
 
-	def increase_percentage(self, e):
+	def increase_percentage(self, e: ft.ControlEvent) -> None:
 		if self.upgrade_percentage < 40:
 			self.upgrade_percentage += 1
 
 		self.update_progress_bar()
 
-	def update_progress_bar(self):
+	def update_progress_bar(self) -> None:
 
 		value = round((self.upgrade_percentage - 20) / 20, 2)
 		self.progress_bar.value = value
@@ -65,10 +71,10 @@ class UpgradeFacilitiesPage(ft.Column):
 		self.update_percentage_text.value = f"{self.upgrade_percentage}%, Cost: ${self.cost :,}"
 		self.view.main_app.update()
 
-	def update_current_state(self, current_state):
+	def update_current_state(self, current_state: int) -> None:
 		self.current_state_text.value = f"Current State: {current_state}"
 
-	def confirm_upgrade(self, e):
+	def confirm_upgrade(self, e: ft.ControlEvent) -> None:
 		current_state = int(self.current_state_text.value.split(":")[1])
 
 		if current_state + self.upgrade_percentage > 100:
@@ -100,7 +106,7 @@ class UpgradeFacilitiesPage(ft.Column):
 		self.dlg_modal.open = True
 		self.view.main_app.update()
 
-	def handle_close(self, e):
+	def handle_close(self, e: ft.ControlEvent) -> None:
 		name = self.dlg_modal.data
 		self.view.main_app.close(self.dlg_modal)
 		action = e.control.text

@@ -1,12 +1,14 @@
 import copy
 
+from flet import Page
+
 from pw_controller import calander_page_controller, staff_hire_controller, facilities_controller
 from pw_model import pw_base_model
 from pw_view import view
 from pw_controller import race_controller, page_update_controller
 
 class Controller:
-	def __init__(self, app, run_directory, mode):
+	def __init__(self, app: Page, run_directory: str, mode: str):
 		self.app = app
 		self.mode = mode
 		roster = "1998_Roster"
@@ -34,13 +36,13 @@ class Controller:
 		
 		self.view.show_title_screen()
 		
-	def start_career(self, team : str):
+	def start_career(self, team: str) -> None:
 		self.model.start_career(team)
 		
 		self.setup_new_season()
 		self.view.return_to_main_window()
 
-	def load_career(self):
+	def load_career(self) -> None:
 		self.model.load_career()
 		#TODO not redefining the race controller here will result in errors in post race actions
 		self.race_controller = race_controller.RaceController(self)
@@ -50,12 +52,12 @@ class Controller:
 		self.view.return_to_main_window(mode="load")
 
 	# TODO check if can remove this, seems redundant now
-	def refresh_ui(self):
+	def refresh_ui(self) -> None:
 		self.page_update_controller.update_main_window()
 
 		self.page_update_controller.refresh_ui()
 		
-	def advance(self):
+	def advance(self) -> None:
 		self.model.advance()
 
 		if self.mode != "headless":
@@ -68,7 +70,7 @@ class Controller:
 
 		self.update_email_button()
 
-	def setup_new_season(self):
+	def setup_new_season(self) -> None:
 		
 		if self.mode != "headless":
 			# Setup the calander page to show the races upcoming in the new season
@@ -78,11 +80,10 @@ class Controller:
 
 			self.page_update_controller.refresh_ui(new_season=True)
 
-	def update_email_button(self):
-		data = {"new_emails": self.model.inbox.new_emails}
+	def update_email_button(self) -> None:
 		self.view.main_window.update_email_button(self.model.inbox.new_emails)
 
-	def update_facilities_page(self, new_season=False):
+	def update_facilities_page(self, new_season: bool=False) -> None:
 		'''
 		new_season is passed here to
 		'''
@@ -99,14 +100,14 @@ class Controller:
 		if new_season is True:
 			self.view.facility_page.enable_upgrade_button()
 
-	def go_to_race_weekend(self):
+	def go_to_race_weekend(self) -> None:
 		self.race_controller = race_controller.RaceController(self)
 		data = {
 			"race_title": self.model.season.current_track_model.title
 		}
 		self.view.go_to_race_weekend(data)
 
-	def return_to_main_window(self):
+	def return_to_main_window(self) -> None:
 		'''
 		Post race, remove race weekend, update advance button to allow progress to next week
 		'''
@@ -115,7 +116,7 @@ class Controller:
 		self.view.return_to_main_window()
 		# self.view.main_window.update_advance_btn("advance")
 
-	def post_race_actions(self):
+	def post_race_actions(self) -> None:
 		self.model.season.post_race_actions()
 		self.model.save_career()
 
