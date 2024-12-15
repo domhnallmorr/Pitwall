@@ -76,14 +76,14 @@ class MainWindow(ft.View):
 		self.controls = [self.header, self.content_row]
 		self.view.main_app.update()
 		
-	def update_window(self, data: dict) -> None:
+	def update_window(self, team: str, date: str, in_race_week: bool) -> None:
 
-		self.team_text.value = data["team"]
+		self.team_text.value = team
 
-		self.week_text.value = data["date"]
+		self.week_text.value = date
 		self.week_text.update()
 
-		if data["in_race_week"] is True:
+		if in_race_week is True:
 			self.nav_sidebar.update_advance_button("go_to_race")
 		else:
 			self.nav_sidebar.update_advance_button("advance")

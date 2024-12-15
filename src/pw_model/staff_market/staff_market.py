@@ -6,7 +6,7 @@ import random
 import pandas as pd
 
 from pw_model.pw_model_enums import StaffRoles
-from pw_model.staff_market import driver_transfers, manager_transfers
+from pw_model.staff_market import driver_transfers, manager_transfers, contract_functions
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -156,13 +156,15 @@ class StaffMarket:
 			team_model.update_managers(row[StaffRoles.TECHNICAL_DIRECTOR.value], tech_director_contract,
 							  row[StaffRoles.COMMERCIAL_MANAGER.value], commercial_manager_contract)
 
-	def complete_hiring(self, person_hired: str, team_name: str, role: Enum) -> None:
+	def complete_hiring(self, person_hired: str, team_name: str, role: StaffRoles) -> None:
 		assert role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2, StaffRoles.TECHNICAL_DIRECTOR, StaffRoles.COMMERCIAL_MANAGER]
 		team_model = self.model.get_team_model(team_name)
 
 		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team_name, role.value] = person_hired
 		if team_name == self.model.player_team:
-			self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team_name, self.model.season.current_week, role.value, person_hired, 4_000_000, random.randint(2, 5)]
+			salary = contract_functions.determine_final_salary(self.model, person_hired, role)
+			contract_length = random.randint(2, 5)
+			self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team_name, self.model.season.current_week, role.value, person_hired, salary, contract_length]
 		
 		# if team_name == self.model.player_team: # make this announced straight away for player hirings
 		self.grid_next_year_announced_df.loc[self.grid_next_year_df["team"] == team_name, role.value] = person_hired

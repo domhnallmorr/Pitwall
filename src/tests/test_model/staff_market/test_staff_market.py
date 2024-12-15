@@ -102,7 +102,7 @@ def test_week_to_announce_signing():
 
 	model = create_model.create_model(mode="headless", auto_save=False)
 
-	for i in range(20*52):
+	for i in range(20*52): # sim 20 seasons
 		weeks = model.staff_market.new_contracts_df["WeekToAnnounce"].values.tolist()
 		if len(weeks) > 0:
 			assert min(weeks) >= 4

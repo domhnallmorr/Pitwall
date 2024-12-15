@@ -134,9 +134,11 @@ class TeamModel:
 
 		if driver1_contract is not None:
 			self.driver1_model.contract.contract_length = driver1_contract["ContractLength"]
+			self.driver1_model.contract.salary = driver1_contract["Salary"]
 
 		if driver2_contract is not None:
 			self.driver2_model.contract.contract_length = driver2_contract["ContractLength"]
+			self.driver2_model.contract.salary = driver2_contract["Salary"]
 
 	def update_managers(self, technical_director: str, technical_director_contract: Dict[str, Any],
 					 commercial_manager: str, commercial_manager_contract: Dict[str, Any]) -> None:
@@ -146,9 +148,11 @@ class TeamModel:
 		#TODO need to improve means of updating contract
 		if technical_director_contract is not None:
 			self.technical_director_model.contract.contract_length = technical_director_contract["ContractLength"]
+			self.technical_director_model.contract.salary = technical_director_contract["Salary"]
 			
 		if commercial_manager_contract is not None:
 			self.commercial_manager_model.contract.contract_length = commercial_manager_contract["ContractLength"]
+			self.commercial_manager_model.contract.salary = commercial_manager_contract["Salary"]
 
 	def update_car_speed(self) -> None:
 		'''

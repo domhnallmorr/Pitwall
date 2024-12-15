@@ -1,9 +1,14 @@
+from __future__ import annotations
 import os
+from typing import TYPE_CHECKING
+
 import flet as ft
 
+if TYPE_CHECKING:
+	from pw_view.view import View
 
 class TitleScreen(ft.View):
-	def __init__(self, view, run_directory):
+	def __init__(self, view: View, run_directory: str):
 		self.view = view
 
 		self.setup_page(run_directory)

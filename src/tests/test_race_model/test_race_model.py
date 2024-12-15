@@ -48,5 +48,17 @@ def test_session_setup():
 			assert run[1] == 3
 			assert run[2] == 3
 
+def test_run_to_turn_1():
+	model = create_model.create_model(mode="headless")
+	track = test_track_model.create_dummy_track()
+	_race_model = race_model.RaceModel("headless", model, track)
 
+	_race_model.setup_race()
+	_race_model.current_session.mode = "simulate"
+	order_after_turn1 = _race_model.current_session.calculate_run_to_turn1()
 
+	assert len(order_after_turn1) == 22
+	names = [p[1] for p in order_after_turn1]
+	assert len(list(set(names))) == 22
+	times = [p[0] for p in order_after_turn1]
+	assert max(times) < 20.0 # make sure theres no unusual large time to turn 1

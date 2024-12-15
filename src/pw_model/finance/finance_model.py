@@ -46,6 +46,8 @@ class FinanceModel:
 		self.balance_history: Deque[int] = collections.deque(maxlen=130) # 130 weeks (2.5 years) in length
 		self.balance_history_dates: Deque[datetime] = collections.deque(maxlen=130)
 
+		self.consecutive_weeks_in_debt = 0
+
 	@property
 	def total_staff_costs_per_year(self) -> int:
 		return self.staff_yearly_cost * self.team_model.number_of_staff
@@ -99,6 +101,11 @@ class FinanceModel:
 		self.balance -= int(self.team_model.commercial_manager_model.contract.salary / 52)
 		
 		self.update_balance_history()
+
+		if self.balance < 0:
+			self.consecutive_weeks_in_debt += 1
+		else:
+			self.consecutive_weeks_in_debt = 0
 		
 	def apply_race_costs(self, race_cost: int=500_000) -> None:
 		self.balance -= race_cost

@@ -3,14 +3,19 @@ This is the model for timed sessions such as practice and qualifying
 This differs from the grand prix model, in that cars are constantly in and out of the pits
 	and also the session ends based on time rather than laps
 '''
+from __future__ import annotations
 import copy
+from typing import TYPE_CHECKING
 
 from race_model import session_model
 from race_model import commentary
 from race_model.race_model_enums import SessionStatus
 
+if TYPE_CHECKING:
+	from race_model.race_model import RaceModel
+
 class TimedSessionModel(session_model.SessionModel):
-	def __init__(self, race_model, session_time):
+	def __init__(self, race_model: RaceModel, session_time: int):
 		super().__init__(race_model)
 
 		self.session_time = session_time
@@ -20,7 +25,7 @@ class TimedSessionModel(session_model.SessionModel):
 
 		self.setup_session()
 
-	def setup_session(self):
+	def setup_session(self) -> None:
 
 		# SET STAUS COLUMN TO "PIT"
 		self.standings_df["Status"] = "PIT"
@@ -30,7 +35,7 @@ class TimedSessionModel(session_model.SessionModel):
 			participant.status = "in_pits"
 
 
-	def advance(self, mode):
+	def advance(self, mode: str) -> None:
 		assert mode in ["UI", "simulate"] # simulate prevents any commentart messages from being generated
 		self.mode = mode
 
@@ -82,7 +87,7 @@ class TimedSessionModel(session_model.SessionModel):
 			self.status = SessionStatus.POST_SESSION
 			self.end_session()
 
-	def find_particpants_leaving_pit_lane(self):
+	def find_particpants_leaving_pit_lane(self) -> None:
 		for p in self.race_model.participants:
 			is_leaving = p.check_leaving_pit_lane(self.time_left)
 
@@ -93,7 +98,7 @@ class TimedSessionModel(session_model.SessionModel):
 				# Update standings
 				self.standings_df.loc[self.standings_df["Driver"] == p.name, "Status"] = "out_lap"
 
-	def update_participants_in_practice(self):
+	def update_participants_in_practice(self) -> None:
 		participants_running = [p for p in self.race_model.participants if p.status == "running"]
 		for p in self.race_model.participants:
 			if p.status == "running":
@@ -107,11 +112,11 @@ class TimedSessionModel(session_model.SessionModel):
 			self.standings_df.loc[self.standings_df["Driver"] == p.name, "Status"] = p.status
 
 
-	def send_player_car_out(self, driver_name, fuel_load_laps, number_laps_to_run):
+	def send_player_car_out(self, driver_name: str, fuel_load_laps: int, number_laps_to_run: int) -> None:
 		particpant_model = self.race_model.get_particpant_model_by_name(driver_name)
 		particpant_model.send_player_car_out(self.time_left, fuel_load_laps, number_laps_to_run)
 
-	def end_session(self):
+	def end_session(self) -> None:
 		fastest_driver = self.standings_df.iloc[0]["Driver"]
 		fastest_laptime = self.standings_df.iloc[0]["Fastest Lap"]
 

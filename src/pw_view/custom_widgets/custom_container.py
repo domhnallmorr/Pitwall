@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 	from pw_view.view import View
 
 class CustomContainer(ft.Container):
-	def __init__(self, view: View, content: list, expand: bool=True, width: Optional[int]=None):
+	def __init__(self, view: View, content: list, expand: bool=True, width: Optional[int]=None, height: Optional[int]=None):
 
 		super(CustomContainer, self).__init__(
 				content=content,
@@ -16,6 +16,7 @@ class CustomContainer(ft.Container):
 				margin=10,
 				padding=10,
 				width=width,
+				height=height,
 				expand=expand,
 				border_radius=15,
 				shadow=ft.BoxShadow(color=ft.Colors.BLACK45, blur_radius=10, spread_radius=2)

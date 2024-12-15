@@ -9,6 +9,7 @@ from pw_view.custom_widgets import custom_container
 
 if TYPE_CHECKING:
 	from pw_view.view import View
+	from pw_controller.page_update_typed_dicts import HomePageData
 
 class HomePage(ft.Column):
 	def __init__(self, view: View):
@@ -78,7 +79,7 @@ class HomePage(ft.Column):
 			)
 		self.chart_container = custom_container.CustomContainer(self.view, chart_column)
 		
-	def update_page(self, data: dict) -> None:
+	def update_page(self, data: HomePageData) -> None:
 		self.update_plot(data)
 
 		self.current_team_pos_text.value = f"Current Position: {data['current_position']}"
@@ -135,7 +136,7 @@ class HomePage(ft.Column):
 
 		self.view.main_app.update()
 
-	def update_plot(self, data: dict) -> None:
+	def update_plot(self, data: HomePageData) -> None:
 		self.axs.clear()
 
 		team_avg_stats = data["team_average_stats"]

@@ -125,3 +125,18 @@ class View:
 		self.main_app.views.append(self.team_selection_screen)
 
 		self.main_app.update()		
+
+	def show_game_over_dialog(self) -> None:
+		game_over_dialog = ft.AlertDialog(
+            title=ft.Text("Game Over!", size=24, weight=ft.FontWeight.BOLD),
+            content=ft.Text("Your game is finished. Better luck next time!", size=18),
+            actions=[
+                ft.TextButton("Exit", on_click=lambda e: self.main_app.window_close())
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+
+		self.main_app.dialog = game_over_dialog
+		game_over_dialog.open = True
+		self.main_app.update()
+

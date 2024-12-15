@@ -3,46 +3,53 @@ This is the baseline class for all session (practice, qualy, race)
 It's main function is to hold methods/variables that are common across all session types
 Most importantly it holds a pandas dataframe called self.standings_df that contains the current standings of the session
 '''
+from __future__ import annotations
 import copy
+from typing import Optional, TYPE_CHECKING
 import pandas as pd
 
 from race_model.race_model_enums import SessionStatus
 
+if TYPE_CHECKING:
+	from race_model.race_model import RaceModel
+
 class SessionModel:
-	def __init__(self, race_model):
+	def __init__(self, race_model: RaceModel):
 		self.race_model = race_model
 		self.setup_standings()
 
 		self.status = SessionStatus.PRE_SESSION
 		self.time_left = None
 
-		self.commentary_messages = []
-		self.commentary_to_process = []
-		self.retirements = []
+		self.commentary_messages: list[str] = []
+		self.commentary_to_process: list[str] = []
+		self.retirements: list[str] = []
 
 		self.current_lap = None
 		self.fastest_laptime = None
 		self.fastest_laptime_driver = None
 
 	@property
-	def fastest_lap_time(self):
+	def fastest_lap_time(self) -> int:
 		fastest_lap_index = self.standings_df["Fastest Lap"].idxmin()
-		fastest_lap_time = self.standings_df["Fastest Lap"][fastest_lap_index]
+		fastest_lap_time = int(self.standings_df["Fastest Lap"][fastest_lap_index])
 
 		return fastest_lap_time
 	
 	@property
-	def fastest_lap_driver(self):
+	def fastest_lap_driver(self) -> str:
 		fastest_lap_index = self.standings_df["Fastest Lap"].idxmin()
-		fastest_lap_driver = self.standings_df["Driver"][fastest_lap_index]
+		fastest_lap_driver = str(self.standings_df["Driver"][fastest_lap_index])
 
 		return fastest_lap_driver
 	
 	@property
-	def leader(self):
-		return self.standings_df.iloc[0]["Driver"]
+	def leader(self) -> str:
+		leader = str(self.standings_df.iloc[0]["Driver"])
+
+		return leader
 	
-	def setup_standings(self):
+	def setup_standings(self) -> None:
 		'''
 		setup pandas dataframe to track standings, assumes participants have been supplied in starting grid order!
 		'''
@@ -61,26 +68,26 @@ class SessionModel:
 		2          3     Fernando Alonso         0           0          0              0        -  running          None    0        None
 		'''
 
-	def calculate_lap_time(self):
+	def calculate_lap_time(self) -> None:
 		pass
 
 
-	def refresh_standings_column(self):
+	def refresh_standings_column(self) -> None:
 		self.standings_df.reset_index(drop=True, inplace=True)
 		self.standings_df["Position"] = self.standings_df.index + 1
 
-	def process_lastest_commentary(self):
+	def process_lastest_commentary(self) -> Optional[list[str]]:
 		latest_commentary = None
 
 		if len(self.commentary_to_process) > 0:
 			latest_commentary = self.commentary_to_process.pop(0)
 
-			if self.model.mode == "headless":
+			if self.race_model.mode == "headless":
 				print(latest_commentary)
 
 		return latest_commentary
 	
-	def process_headless_commentary(self):
+	def process_headless_commentary(self) -> None:
 		assert self.race_model.mode == "headless", f"This method is not supported for mode {self.race_model.mode}"
 
 		while len(self.commentary_to_process) > 0:

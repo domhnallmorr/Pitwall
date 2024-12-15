@@ -1,14 +1,18 @@
 import random
+from typing import Tuple
 
 from race_model import session_model, commentary
 from race_model.race_model_enums import SessionNames, SessionStatus
 
+from pw_model.pw_base_model import Model
+from race_model.particpant_model import ParticpantModel
+
 class GrandPrixModel(session_model.SessionModel):
-	def __init__(self, model):
+	def __init__(self, model: Model):
 		super().__init__(model)
 
 		self.current_lap = 1
-		self.retirements = []
+		self.retirements: list[str] = []
 
 		if SessionNames.QUALIFYING.value in self.race_model.results.keys():
 			self.setup_grid_order()
@@ -16,10 +20,10 @@ class GrandPrixModel(session_model.SessionModel):
 		self.setup_participant_start_fuel_and_tyres()
 
 	@property
-	def leader(self):
-		return self.standings_df.iloc[0]["Driver"]
+	def leader(self) -> str:
+		return str(self.standings_df.iloc[0]["Driver"])
 	
-	def setup_grid_order(self):
+	def setup_grid_order(self) -> None:
 		qualy_results = self.race_model.results[SessionNames.QUALIFYING.value]["results"]
 		grid_order = qualy_results["Driver"]
 
@@ -36,18 +40,18 @@ class GrandPrixModel(session_model.SessionModel):
 			# update Grid column in dataframe
 			self.standings_df.loc[self.standings_df["Driver"] == driver, "Grid"] = idx + 1
 		
-	def setup_participant_start_fuel_and_tyres(self):
+	def setup_participant_start_fuel_and_tyres(self) -> None:
 		for p in self.race_model.participants:
 			p.setup_start_fuel_and_tyres()
 
-	def run_race(self):
-		while self.status != SessionStatus.POST_SESSION:
-			self.advance()
+	# def run_race(self) -> None:
+	# 	while self.status != SessionStatus.POST_SESSION:
+	# 		self.advance()
 
-			self.process_headless_commentary()
-		self.process_headless_commentary()
+	# 		self.process_headless_commentary()
+	# 	self.process_headless_commentary()
 
-	def advance(self, mode):
+	def advance(self, mode: str) -> None:
 		self.mode = mode
 		if self.status == SessionStatus.PRE_SESSION:
 			if self.mode != "simulate":
@@ -71,7 +75,7 @@ class GrandPrixModel(session_model.SessionModel):
 						
 						# self.log_event("Race Over")
 
-	def calculate_start(self):
+	def calculate_start(self) -> None:
 		# Calculate Turn 1
 		order_after_turn1 = self.calculate_run_to_turn1()
 
@@ -94,16 +98,16 @@ class GrandPrixModel(session_model.SessionModel):
 
 		self.current_lap += 1
 
-
-	def calculate_run_to_turn1(self):
+	def calculate_run_to_turn1(self) -> list[Tuple[float, ParticpantModel]]:
 		dist_to_turn1 = self.race_model.track_model.dist_to_turn1
 		average_speed = 47.0 #m/s
 
-		order_after_turn1 = []
+		order_after_turn1: list[Tuple[float, ParticpantModel]] = []
 		for idx, p in enumerate([self.race_model.get_particpant_model_by_name(n) for n in self.standings_df["Driver"].values.tolist()]):
 			random_factor = random.randint(-2000, 2000)/1000
-			time_to_turn1 = round(dist_to_turn1 / (average_speed + random_factor), 3)
-			order_after_turn1.append([time_to_turn1, p])
+			time_to_turn1: float = round(dist_to_turn1 / (average_speed + random_factor), 3)
+			particpant_model: ParticpantModel = p
+			order_after_turn1.append((time_to_turn1, particpant_model))
 			
 			dist_to_turn1 += 5 # add 5 meters per grid slot
 
@@ -119,7 +123,7 @@ class GrandPrixModel(session_model.SessionModel):
 		
 		return order_after_turn1
 
-	def update_standings(self):
+	def update_standings(self) -> None:
 		for driver in self.standings_df["Driver"]:
 			particpant_model = self.race_model.get_particpant_model_by_name(driver)
 			particpant_model.update_fastest_lap()
@@ -157,7 +161,7 @@ class GrandPrixModel(session_model.SessionModel):
 
 		# self.log_event("\nCurrent Standings:\n" + self.standings_df.to_string(index=False))
 
-	def calculate_lap(self):
+	def calculate_lap(self) -> None:
 		'''
 		Process
 			

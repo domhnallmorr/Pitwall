@@ -1,9 +1,12 @@
 import random
 
-from pw_model.driver import driver_model
+from pw_model.driver.driver_model import DriverModel
+from pw_model.car.car_model import CarModel
+from pw_model.track.track_model import TrackModel
+
 class ParticpantModel:
-	def __init__(self, driver,
-			  team_name: str, car, circuit, starting_position: int):
+	def __init__(self, driver: DriverModel,
+			  team_name: str, car: CarModel, circuit: TrackModel, starting_position: int):
 		self.driver = driver
 		self.team_name = team_name
 		self.car_model = car
@@ -20,7 +23,7 @@ class ParticpantModel:
 		return f"<RaceEngineParticpantModel {self.driver.name}>"
 
 	@property
-	def linestyle(self):
+	def linestyle(self) -> str:
 		if self.driver.driver_status == 2:
 			return "--"
 		else:
@@ -28,19 +31,19 @@ class ParticpantModel:
 
 	@property
 	def name(self) -> str:
-		return self.driver.name
+		return str(self.driver.name)
 
 	def setup_variables_for_session(self) -> None:
 		# the core variables associated with a participant for a given session, laptimes, current_lap, etc
 		self.current_lap = 1
 
-		self.laptimes = []
-		self.gaps_to_leader = []
+		self.laptimes: list[int] = []
+		self.gaps_to_leader: list[int] = []
 		self.total_time = 0 # total time to complete the laps run so far
-		self.pitstop_times = []
-		self.pitstop_laps = [] # lap on which pitstop occured, updated when participant pits
-		self.positions_by_lap = [] # not zero indexed
-		self.tyre_wear_by_lap = [] # not zero indexed
+		self.pitstop_times: list[int] = []
+		self.pitstop_laps: list[int] = [] # lap on which pitstop occured, updated when participant pits
+		self.positions_by_lap: list[int] = [] # not zero indexed
+		self.tyre_wear_by_lap: list[int] = [] # not zero indexed
 		self.number_of_pitstops = 0
 		self.starting_position = None # not zero indexed
 
@@ -49,11 +52,11 @@ class ParticpantModel:
 		self.defending = False
 
 		self.fastest_laptime = None
-		self.laptime = None
+		# self.laptime = None
 
-		self.next_update_time = None # for updating practice session
+		# self.next_update_time = None # for updating practice session
 
-	def calculate_base_laptime(self):
+	def calculate_base_laptime(self) -> None:
 		self.base_laptime = self.circuit_model.base_laptime
 
 		# add driver component
@@ -70,7 +73,7 @@ class ParticpantModel:
 
 		# print(f"{self.name}: {self.base_laptime}")
 
-	def calculate_laptime(self, gap_ahead):
+	def calculate_laptime(self, gap_ahead: int) -> None:
 		# reset status if we just made a pitstop
 		if "pitting in" in self.status:
 			self.status = "running"
@@ -98,10 +101,10 @@ class ParticpantModel:
 				self.number_of_pitstops += 1
 				self.pitstop_laps.append(self.current_lap)
 
-	def calculate_lap_time(self, random_element, dirty_air_effect):
+	def calculate_lap_time(self, random_element: int, dirty_air_effect: int) -> None:
 		self.laptime = self.base_laptime + random.randint(0, random_element) + self.car_model.fuel_effect + self.car_model.tyre_wear + dirty_air_effect
 
-	def complete_lap(self):
+	def complete_lap(self) -> None:
 		self.laptimes.append(self.laptime)
 		self.total_time += self.laptime
 
@@ -113,13 +116,13 @@ class ParticpantModel:
 
 		self.current_lap += 1
 
-	def update_fuel_and_tyre_wear(self, new_tyres=False):
+	def update_fuel_and_tyre_wear(self, new_tyres: bool=False) -> None:
 		self.car_model.update_fuel(self.circuit_model)
 		self.car_model.update_tyre_wear(self.circuit_model, new_tyres)
 
 		self.tyre_wear_by_lap.append(self.car_model.tyre_wear)
 
-	def update_pitstop_tyres_fuel(self):
+	def update_pitstop_tyres_fuel(self) -> None:
 		self.car_model.tyre_wear = 0
 
 		planned_laps = [self.pit1_lap, self.pit2_lap, self.pit3_lap, self.circuit_model.number_of_laps]
@@ -130,14 +133,13 @@ class ParticpantModel:
 		
 		self.car_model.fuel_load = self.car_model.calculate_required_fuel(self.circuit_model, required_laps)
 
-
-	def recalculate_laptime_when_passed(self, revised_laptime):
+	def recalculate_laptime_when_passed(self, revised_laptime: int) -> None:
 		self.total_time -= self.laptimes[-1]
 		self.total_time += revised_laptime
 		self.laptime = revised_laptime
 		self.laptimes[-1] = revised_laptime
 		
-	def calculate_pitstop_laps(self):
+	def calculate_pitstop_laps(self) -> None:
 		self.number_of_planned_stops = random.choice([1, 2, 3])
 
 		# set default None values for pit stops 2 and 3
@@ -162,7 +164,7 @@ class ParticpantModel:
 			self.pit2_lap = random.randint(half_distance - 2, half_distance + 2)
 			self.pit3_lap = random.randint(three_quarters_distance - 2, three_quarters_distance + 2)
 
-	def calculate_if_retires(self):
+	def calculate_if_retires(self) -> None:
 		self.retires = False
 		self.retire_lap = None
 
@@ -170,13 +172,13 @@ class ParticpantModel:
 			self.retires = True
 			self.retire_lap = random.randint(3, self.circuit_model.number_of_laps)
 
-	def update_fastest_lap(self):
+	def update_fastest_lap(self) -> None:
 		if self.fastest_laptime is None:
 			self.fastest_laptime = self.laptime
 		elif min(self.laptimes) == self.laptime:
 			self.fastest_laptime = self.laptime
 
-	def update_player_pitstop_laps(self, data):
+	def update_player_pitstop_laps(self, data: dict[str, int]) -> None:
 		'''
 		data is a dict optained from the view
 		{
@@ -188,16 +190,16 @@ class ParticpantModel:
 		self.pit2_lap = data["pit2_lap"]
 		self.pit3_lap = data["pit3_lap"]
 
-	def setup_session(self):
+	def setup_session(self) -> None:
 		self.practice_laps_completed = 0
-		self.practice_runs = [] # [[time_left, fuel, number_laps]]
+		self.practice_runs: list[list[int]] = [] # [[time_left, fuel, number_laps]]
 
-	def setup_start_fuel_and_tyres(self):
+	def setup_start_fuel_and_tyres(self) -> None:
 		# for grand prix only (called in GrandPrix contructor)
 		# setup the fuel and tyres for the start of the race
 		self.car_model.setup_start_fuel_and_tyres(self.circuit_model, self.pit1_lap)
 
-	def generate_practice_runs(self, session_time, session):
+	def generate_practice_runs(self, session_time: int, session: str) -> None:
 		assert session in ["FP"], f"Unsupported Session {session}"
 
 		time_left = int(session_time)
@@ -218,7 +220,7 @@ class ParticpantModel:
 			
 			time_left = int(time_left) # ensure time left is an int (for randint)
 
-	def generate_qualy_runs(self):
+	def generate_qualy_runs(self) -> None:
 		# ASSUMES 1 HOUR QUALY, 12 laps (4 runs, 3 laps each)
 
 		number_laps = 3
@@ -240,7 +242,7 @@ class ParticpantModel:
 		leave_time = random.randint(190, 900)
 		self.practice_runs.append([leave_time, fuel_load, number_laps])
 
-	def check_leaving_pit_lane(self, time_left):
+	def check_leaving_pit_lane(self, time_left: int) -> bool:
 		leaving = False
 
 		if len(self.practice_runs) > 0:
@@ -261,7 +263,7 @@ class ParticpantModel:
 
 		return leaving
 	
-	def update_practice(self, time_left):
+	def update_practice(self, time_left: int) -> None:
 		self.update_fuel_and_tyre_wear()
 		
 		if self.practice_laps_completed == self.pit_in_lap:
@@ -281,10 +283,10 @@ class ParticpantModel:
 				
 			self.update_next_update_time(time_left)
 
-	def update_next_update_time(self, time_left):
+	def update_next_update_time(self, time_left: int) -> None:
 		self.next_update_time = time_left - 90
 
-	def send_player_car_out(self, time_left, fuel_load_laps, number_laps_to_run):
+	def send_player_car_out(self, time_left: int, fuel_load_laps: int, number_laps_to_run: int) -> None:
 		fuel_load_kg = self.car_model.calculate_required_fuel(fuel_load_laps)
 		# TODO fix hard coding of -10 seconds below
 		self.practice_runs.append([time_left-10, fuel_load_kg, number_laps_to_run])

@@ -9,6 +9,7 @@ import pandas as pd
 
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.finance import finance_data
+from pw_controller.page_update_typed_dicts import HomePageData
 
 if TYPE_CHECKING:
 	from pw_controller.pw_controller import Controller
@@ -123,7 +124,7 @@ class PageUpdateController:
 		self.view.grid_page.change_display(None)
 
 	def update_home_page(self) -> None:
-		data = {
+		data: HomePageData = {
 			"next_race": self.model.season.next_race,
 			"next_race_week": self.model.season.next_race_week,
 			"current_position": self.model.player_team_model.current_position + 1, # pos is zero indexed
@@ -159,11 +160,9 @@ class PageUpdateController:
 		self.view.car_page.update_page(car_speeds)
 
 	def update_main_window(self) -> None:
-		data = {}
-	
 		player_team_model = self.model.get_team_model(self.model.player_team)
-		data["team"] = f"{self.model.player_team} - ${player_team_model.finance_model.balance:,}"
-		data["date"] = f"Week {self.model.season.current_week} - {self.model.year}"
-		data["in_race_week"] = self.model.season.in_race_week
+		team = f"{self.model.player_team} - ${player_team_model.finance_model.balance:,}"
+		date = f"Week {self.model.season.current_week} - {self.model.year}"
+		in_race_week = self.model.season.in_race_week
 
-		self.view.main_window.update_window(data)
+		self.view.main_window.update_window(team, date, in_race_week)

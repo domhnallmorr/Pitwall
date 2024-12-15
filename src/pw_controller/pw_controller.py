@@ -70,6 +70,8 @@ class Controller:
 
 		self.update_email_button()
 
+		self.check_game_over()
+
 	def setup_new_season(self) -> None:
 		
 		if self.mode != "headless":
@@ -122,3 +124,16 @@ class Controller:
 
 		self.page_update_controller.update_standings_page()
 		self.return_to_main_window()
+
+	def check_game_over(self):
+		game_over = False
+
+		if self.model.year == 2024:
+			game_over = True
+
+		if game_over is False and self.model.player_team is not None:
+			if self.model.player_team_model.finance_model.consecutive_weeks_in_debt >= 2:
+				game_over = True
+
+		if game_over is True:
+			self.view.show_game_over_dialog()

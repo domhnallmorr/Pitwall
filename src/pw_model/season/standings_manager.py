@@ -37,7 +37,7 @@ class StandingsManager:
 
 	@property
 	def player_team_position(self) -> int:
-		index = self.constructors_standings_df[self.constructors_standings_df["Team"] == self.model.player_team].index.values[0]
+		index = int(self.constructors_standings_df[self.constructors_standings_df["Team"] == self.model.player_team].iloc[0].name)
 
 		return index
 
