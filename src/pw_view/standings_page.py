@@ -91,12 +91,8 @@ class StandingsPage(ft.Column):
 		self.drivers_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
 									heading_row_color=ft.Colors.PRIMARY)
 
-		self.scrollable_drivers_table = ft.Column(
-			controls=[self.drivers_table],
-			# height=self.view.main_app.window.height - self.view.vscroll_buffer,
-			# expand=True,  # Set height to show scrollbar if content exceeds this height
-			scroll=ft.ScrollMode.AUTO  # Automatically show scrollbar when needed
-		)
+		self.scrollable_drivers_table = ft.ListView(expand=1, auto_scroll=True)
+		self.scrollable_drivers_table.controls.append(custom_container.CustomContainer(self.view, self.drivers_table, expand=False))
 
 		# CONSTRUCTORS
 		 

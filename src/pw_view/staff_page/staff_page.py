@@ -256,11 +256,11 @@ class StaffPage(ft.Column):
 			spacing=20
 		)
 
-		self.controls = [
-			ft.Text("Staff", theme_style=self.view.page_header_style),
-			self.buttons_row,
-			self.driver_row,
-		]
+		# self.controls = [
+		# 	ft.Text("Staff", theme_style=self.view.page_header_style),
+		# 	self.buttons_row,
+		# 	self.driver_row,
+		# ]
 
 		self.background_stack = ft.Stack(
 			[

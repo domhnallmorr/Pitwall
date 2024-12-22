@@ -90,8 +90,11 @@ class ResultsWindow(ft.View):
 		self.update_buttons_row(timed_session)
 		self.setup_classification_table(standings_df, current_session)
 
+		self.classification_list_view = ft.ListView(expand=True, spacing=10, padding=20, auto_scroll=True)
+		self.classification_list_view.controls.append(self.classification_container)
+
 		self.content_column = ft.Column(
-			controls=[self.buttons_container, self.classification_container, self.continue_container],
+			controls=[self.buttons_container, self.classification_list_view, self.continue_container],
 			expand=True,
 			spacing=20
 		)
@@ -257,7 +260,7 @@ class ResultsWindow(ft.View):
 		self.reset_tab_buttons()
 		self.classification_btn.style = self.view.clicked_button_style
 
-		self.content_column.controls=[self.buttons_container, self.classification_container, self.continue_container]
+		self.content_column.controls=[self.buttons_container, self.classification_list_view, self.continue_container]
 		self.view.main_app.update()
 
 	def display_pitstops(self, e: ft.ControlEvent) -> None:

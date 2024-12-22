@@ -165,24 +165,43 @@ def save_commercial_managers(model: Model, save_file: sqlite3.Connection) -> Non
 	"Age"	INTEGER,
 	"Skill"	INTEGER,
 	"Salary"	INTEGER,
-	"ContractLength"	INTEGER
+	"ContractLength"	INTEGER,
+	"RetiringAge"	INTEGER,
+	"Retiring"	INTEGER,
+	"Retired"	INTEGER
 			)'''
 				)
 	
 	cursor.execute("DELETE FROM commercial_managers") # clear existing data
 
-	for commercial_manager in model.commercial_managers:
-		cursor.execute('''
-			INSERT INTO commercial_managers (year, name, age, skill, salary, contractlength) 
-			VALUES (?, ?, ?, ?, ?, ?)
-		''', (
-			"default",
-			commercial_manager.name, 
-			commercial_manager.age,
-			commercial_manager.skill,
-			commercial_manager.contract.salary,
-			commercial_manager.contract.contract_length,
-		))
+	for idx, list_type in enumerate([model.commercial_managers, model.future_managers]):
+		for commercial_manager in list_type:
+			process = False
+			if idx == 0:
+				year = "default"
+				process = True
+			elif idx == 1:
+				if commercial_manager[1].role == StaffRoles.COMMERCIAL_MANAGER:
+					year = commercial_manager[0]
+					commercial_manager = commercial_manager[1]
+					process = True
+
+			if process is True:
+
+				cursor.execute('''
+					INSERT INTO commercial_managers (year, name, age, skill, salary, contractlength, retiringage, retiring, retired) 
+					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+				''', (
+					year,
+					commercial_manager.name, 
+					commercial_manager.age,
+					commercial_manager.skill,
+					commercial_manager.contract.salary,
+					commercial_manager.contract.contract_length,
+					commercial_manager.retiring_age,
+					commercial_manager.retiring,
+					commercial_manager.retired,
+				))
 
 def save_technical_directors(model : Model, save_file: sqlite3.Connection) -> None:
 	cursor = save_file.cursor()
