@@ -3,8 +3,8 @@ from __future__ import annotations
 import threading
 from typing import TYPE_CHECKING
 
-from race_model import race_model
-from race_model.race_model_enums import SessionNames
+from race_weekend_model import race_weekend_model
+from race_weekend_model.race_model_enums import SessionNames
 
 if TYPE_CHECKING:
 	from pw_controller.pw_controller import Controller
@@ -15,7 +15,7 @@ class RaceController:
 		self.view = controller.view
 		
 		if self.controller.model.season.current_track_model is not None: # None indicates the season is over, no more races this season
-			self.race_model = race_model.RaceModel("UI", self.controller.model, self.controller.model.season.current_track_model)
+			self.race_model = race_weekend_model.RaceWeekendModel("UI", self.controller.model, self.controller.model.season.current_track_model)
 
 
 	def simulate_session(self, session: SessionNames) -> None:

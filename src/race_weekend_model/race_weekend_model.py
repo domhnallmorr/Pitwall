@@ -12,11 +12,12 @@ from enum import Enum
 
 from pw_model import pw_base_model
 from pw_model.track import track_model
-from race_model import qualy_model, grand_prix_model
-from race_model import particpant_model
-from race_model.race_model_enums import SessionNames, SessionStatus
+from race_weekend_model import qualy_model, grand_prix_model
+from race_weekend_model import particpant_model
+from race_weekend_model.starting_grid import StartingGrid
+from race_weekend_model.race_model_enums import SessionNames, SessionStatus, SessionMode
 
-class RaceModel:
+class RaceWeekendModel:
 	def __init__(self, mode: str, model: pw_base_model.Model, track_model: track_model.TrackModel):
 		assert mode in ["UI", "headless"], f"Unsupported Mode {mode}" # headless is model only, UI means were using the GUI
 
@@ -49,7 +50,7 @@ class RaceModel:
 		self.setup_session()
 
 	def setup_qualifying(self,
-					  session_time: None,# in seconds e.g. 60*60 for 1 hr
+					  session_time: int,# in seconds e.g. 60*60 for 1 hr
 					  session_type: Enum) -> None:
 		assert session_type == SessionNames.QUALIFYING # session is a variable for future development of Q1, Q2, Q3, for the 1998 1hr qualfy
 		
@@ -58,6 +59,7 @@ class RaceModel:
 		self.setup_session()
 
 	def setup_race(self) -> None:
+		self.starting_grid = StartingGrid(self)
 		self.current_session_name = SessionNames.RACE.value
 		self.current_session = grand_prix_model.GrandPrixModel(self)
 		self.setup_session()
@@ -72,5 +74,5 @@ class RaceModel:
 
 	def simulate_session(self) -> None:
 		while self.current_session.status != SessionStatus.POST_SESSION:
-			self.current_session.advance("simulate")
+			self.current_session.advance(SessionMode.SIMULATE)
 

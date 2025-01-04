@@ -1,8 +1,10 @@
 import pytest
 from unittest.mock import Mock
 import pandas as pd
+import matplotlib.pyplot as plt
+
 from pw_view.race_weekend.results_window import ResultsWindow
-from race_model.race_model_enums import SessionNames
+from race_weekend_model.race_model_enums import SessionNames
 import flet as ft
 
 @pytest.fixture
@@ -20,6 +22,11 @@ def mock_view():
 @pytest.fixture
 def results_window(mock_view):
     return ResultsWindow(mock_view)
+
+@pytest.fixture(autouse=True)
+def cleanup_figures():
+    yield
+    plt.close("all")  # Close all figures after each test
 
 def test_initialization(results_window):
     # Test if the ResultsWindow initializes correctly

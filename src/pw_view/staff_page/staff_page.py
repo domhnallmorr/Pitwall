@@ -343,7 +343,11 @@ class StaffPage(ft.Column):
 			row = ft.Row(
 				controls=[
 					ft.Text(f"{team_name} ({staff_value}):", width=100),
-					ft.ProgressBar(value=staff_value/max_staff, width=500, expand=True, bar_height=28)
+					ft.Container(
+						content=ft.ProgressBar(value=staff_value/max_staff, width=500, expand=True, bar_height=28),
+						height=28,
+						expand=True
+						)
 				],
 				expand=True,
 			)

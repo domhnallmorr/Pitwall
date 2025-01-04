@@ -1,13 +1,13 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from race_model import timed_session_model
+from race_weekend_model import timed_session_model
 
 if TYPE_CHECKING:
-	from race_model.race_model import RaceModel
+	from race_weekend_model.race_weekend_model import RaceWeekendModel
 
 class QualyModel(timed_session_model.TimedSessionModel):
-	def __init__(self, model: RaceModel, session_time: int):
+	def __init__(self, model: RaceWeekendModel, session_time: int):
 		super().__init__(model, session_time)
 
 		self.generate_practice_runs()

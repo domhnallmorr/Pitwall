@@ -45,7 +45,7 @@ class ParticpantModel:
 		self.positions_by_lap: list[int] = [] # not zero indexed
 		self.tyre_wear_by_lap: list[int] = [] # not zero indexed
 		self.number_of_pitstops = 0
-		self.starting_position = None # not zero indexed
+		self.starting_position = None # not zero indexed, set in StartingGrid class
 
 		self.status = "in_pit"
 		self.attacking = False

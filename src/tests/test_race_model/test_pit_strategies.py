@@ -1,16 +1,16 @@
 import pytest
 
 from tests import create_model
-from race_model import race_model
+from race_weekend_model import race_weekend_model
 from tests.test_model.track import test_track_model
-from race_model.race_model_enums import SessionStatus
+from race_weekend_model.race_model_enums import SessionStatus, SessionNames, SessionMode
 
 def test_pit_strategy_setup():
 	# check planned pit stop laps are in expected range (based on a 71 lap race)
 
 	model = create_model.create_model()
 	track = test_track_model.create_dummy_track()
-	_race_model = race_model.RaceModel("headless", model, track)
+	_race_model = race_weekend_model.RaceWeekendModel("headless", model, track)
 
 	schumacher_model = _race_model.get_particpant_model_by_name("Michael Schumacher")
 
@@ -50,7 +50,11 @@ def test_starting_fuel():
 
 	model = create_model.create_model()
 	track = test_track_model.create_dummy_track()
-	_race_model = race_model.RaceModel("headless", model, track)
+	_race_model = race_weekend_model.RaceWeekendModel("headless", model, track)
+	
+	# Run qualy to establish a grid order
+	_race_model.setup_qualifying(60*60, SessionNames.QUALIFYING)
+	_race_model.simulate_session()
 
 	schumacher_model = _race_model.get_particpant_model_by_name("Michael Schumacher")
 	schumacher_model.number_of_planned_stops = 1
@@ -68,7 +72,11 @@ def test_starting_fuel():
 def test_pitstops():
 	model = create_model.create_model()
 	track = test_track_model.create_dummy_track()
-	_race_model = race_model.RaceModel("headless", model, track)
+	_race_model = race_weekend_model.RaceWeekendModel("headless", model, track)
+
+	# Run qualy to establish a grid order
+	_race_model.setup_qualifying(60*60, SessionNames.QUALIFYING)
+	_race_model.simulate_session()
 
 	_race_model.setup_race()
 
@@ -81,7 +89,7 @@ def test_pitstops():
 	schumacher_model.pit3_lap = 30
 
 	while _race_model.current_session.status != SessionStatus.POST_SESSION:
-		_race_model.current_session.advance(mode="simulate")
+		_race_model.current_session.advance(mode=SessionMode.SIMULATE)
 
 		if _race_model.current_session.current_lap in [11, 21, 31]:
 			assert schumacher_model.car_model.tyre_wear == 0 # check tyres were changed

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from flet.matplotlib_chart import MatplotlibChart
 
-from race_model.race_model_enums import SessionNames
+from race_weekend_model.race_model_enums import SessionNames
 from pw_view import view
 from pw_view.custom_widgets import custom_container, custom_buttons
 
@@ -90,7 +90,7 @@ class ResultsWindow(ft.View):
 		self.update_buttons_row(timed_session)
 		self.setup_classification_table(standings_df, current_session)
 
-		self.classification_list_view = ft.ListView(expand=True, spacing=10, padding=20, auto_scroll=True)
+		self.classification_list_view = ft.ListView(expand=True, spacing=10, padding=20, auto_scroll=False)
 		self.classification_list_view.controls.append(self.classification_container)
 
 		self.content_column = ft.Column(
@@ -104,7 +104,7 @@ class ResultsWindow(ft.View):
 				self.view.results_background_image,
 				self.content_column,
 			],
-			expand=False,
+			expand=True,
 		)
 
 		contents = [
@@ -150,7 +150,8 @@ class ResultsWindow(ft.View):
 
 		columns = []
 		for col in standings_df.columns:
-			columns.append(ft.DataColumn(ft.Text(col)))
+			column_content = custom_container.HeaderContainer(self.view, col)
+			columns.append(ft.DataColumn(column_content))
 
 		data = standings_df.values.tolist()
 		rows = []
@@ -162,12 +163,16 @@ class ResultsWindow(ft.View):
 
 			rows.append(ft.DataRow(cells=cells))
 
-		self.results_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30)
+		self.results_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30, heading_row_color=ft.Colors.PRIMARY)
 	
 		self.classification_container = custom_container.CustomContainer(self.view, self.results_table, expand=False)
 
 	def setup_pitstops_table(self, pit_stop_summary: dict) -> None:
-		columns = [ft.DataColumn(ft.Text("Driver")), ft.DataColumn(ft.Text("Stops")), ft.DataColumn(ft.Text("Laps"))]
+		columns = []
+		for col in ["Driver", "Stops", "Laps"]:
+			column_content = custom_container.HeaderContainer(self.view, col)
+			columns.append(ft.DataColumn(column_content))
+
 		rows = []
 
 		for driver in pit_stop_summary.keys():
@@ -181,9 +186,12 @@ class ResultsWindow(ft.View):
 
 			rows.append(ft.DataRow(cells=cells))
 
-		self.pitstops_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30)
+		self.pitstops_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30, heading_row_color=ft.Colors.PRIMARY)
 
 		self.pitstops_container = custom_container.CustomContainer(self.view, self.pitstops_table, expand=False)
+		
+		self.pitstops_list_view = ft.ListView(expand=True, spacing=10, padding=20, auto_scroll=False)
+		self.pitstops_list_view.controls.append(self.pitstops_container)
 
 	def setup_lap_chart(self) -> None:
 		px = 1/plt.rcParams['figure.dpi']  # pixel in inches
@@ -267,7 +275,7 @@ class ResultsWindow(ft.View):
 		self.reset_tab_buttons()
 		self.pitstops_btn.style = self.view.clicked_button_style
 
-		self.content_column.controls=[self.buttons_container, self.pitstops_container, self.continue_container]
+		self.content_column.controls=[self.buttons_container, self.pitstops_list_view, self.continue_container]
 		self.view.main_app.update()
 
 	def display_lap_chart(self, e: ft.ControlEvent) -> None:

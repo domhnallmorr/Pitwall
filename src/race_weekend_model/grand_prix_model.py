@@ -1,11 +1,12 @@
 import random
 from typing import Tuple
 
-from race_model import session_model, commentary
-from race_model.race_model_enums import SessionNames, SessionStatus
+from race_weekend_model import session_model, commentary
+from race_weekend_model.race_model_enums import SessionNames, SessionStatus, SessionMode
 
 from pw_model.pw_base_model import Model
-from race_model.particpant_model import ParticpantModel
+from race_weekend_model.particpant_model import ParticpantModel
+from race_weekend_model.session_model import SessionModel
 
 class GrandPrixModel(session_model.SessionModel):
 	def __init__(self, model: Model):
@@ -24,22 +25,8 @@ class GrandPrixModel(session_model.SessionModel):
 		return str(self.standings_df.iloc[0]["Driver"])
 	
 	def setup_grid_order(self) -> None:
-		qualy_results = self.race_model.results[SessionNames.QUALIFYING.value]["results"]
-		grid_order = qualy_results["Driver"]
+		self.standings_df = self.race_model.starting_grid.apply_grid_order_to_standings(self.standings_df)
 
-		self.standings_df.set_index('Driver', inplace=True, drop=False)
-		self.standings_df = self.standings_df.loc[grid_order]
-		self.refresh_standings_column()
-
-		for idx, row in self.standings_df.iterrows():
-			driver = row["Driver"]
-			participant = self.race_model.get_particpant_model_by_name(driver)
-
-			# update position in participant class
-			participant.starting_position = idx + 1
-			# update Grid column in dataframe
-			self.standings_df.loc[self.standings_df["Driver"] == driver, "Grid"] = idx + 1
-		
 	def setup_participant_start_fuel_and_tyres(self) -> None:
 		for p in self.race_model.participants:
 			p.setup_start_fuel_and_tyres()
@@ -54,7 +41,7 @@ class GrandPrixModel(session_model.SessionModel):
 	def advance(self, mode: str) -> None:
 		self.mode = mode
 		if self.status == SessionStatus.PRE_SESSION:
-			if self.mode != "simulate":
+			if self.mode != SessionMode.SIMULATE:
 				self.commentary_to_process.append(commentary.gen_race_start_message())
 			self.calculate_start()
 			self.status = SessionStatus.RUNNING
@@ -68,7 +55,7 @@ class GrandPrixModel(session_model.SessionModel):
 					self.current_lap += 1
 			
 					if self.current_lap > self.race_model.track_model.number_of_laps or self.current_lap == 999:
-						if self.mode != "simulate":
+						if self.mode != SessionMode.SIMULATE:
 							self.commentary_to_process.append(commentary.gen_race_over_message(self.leader))
 						self.status = SessionStatus.POST_SESSION
 						self.post_race_actions()
@@ -118,7 +105,7 @@ class GrandPrixModel(session_model.SessionModel):
 		[[12.761, <RaceEngineParticpantModel Mark Webber>], [13.124, <RaceEngineParticpantModel Sebastian Vettel>], [13.68, <RaceEngineParticpantModel Fernando Alonso>],]
 		'''
 
-		if self.mode != "simulate":
+		if self.mode != SessionMode.SIMULATE:
 			self.commentary_to_process.append(commentary.gen_lead_after_turn1_message(order_after_turn1[0][1].name))
 		
 		return order_after_turn1
@@ -188,7 +175,7 @@ class GrandPrixModel(session_model.SessionModel):
 
 				# IF RETIRED THIS LAP
 				if participant.status == "retired":
-					if self.mode != "simulate":
+					if self.mode != SessionMode.SIMULATE:
 						self.commentary_to_process.append(commentary.gen_retirement_message(participant.name))
 					self.retirements.append(participant.name)
 					# self.log_event(f"{participant.name} retires")
@@ -196,7 +183,7 @@ class GrandPrixModel(session_model.SessionModel):
 
 				else:
 					if participant.status == "pitting in":
-						if self.mode != "simulate":
+						if self.mode != SessionMode.SIMULATE:
 							self.commentary_to_process.append(commentary.gen_entering_pit_lane_message(participant.name))
 					
 					# print(laptime_ahead)
@@ -206,12 +193,12 @@ class GrandPrixModel(session_model.SessionModel):
 						
 						if gap_ahead + delta <= 500 and participant_ahead.status not in ["pitting in", "retired"]: # if car ahead is about to pit, don't handle for overtaking
 							# self.log_event(f"{driver} Attacking {participant_ahead.name}")
-							if self.mode != "simulate":
+							if self.mode != SessionMode.SIMULATE:
 								self.commentary_to_process.append(commentary.gen_attacking_message(driver, participant_ahead.name))
 
 							if random.randint(0, 100) < 25: # overtake successfull
 								# self.log_event(f"{participant.name} passes {participant_ahead.name}")
-								if self.mode != "simulate":
+								if self.mode != SessionMode.SIMULATE:
 									self.commentary_to_process.append(commentary.gen_overtake_message(participant.name, participant_ahead.name))
 
 								# add some random time to overtaking car, held up when passing

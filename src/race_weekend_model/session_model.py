@@ -8,13 +8,13 @@ import copy
 from typing import Optional, TYPE_CHECKING
 import pandas as pd
 
-from race_model.race_model_enums import SessionStatus
+from race_weekend_model.race_model_enums import SessionStatus
 
 if TYPE_CHECKING:
-	from race_model.race_model import RaceModel
+	from race_weekend_model.race_weekend_model import RaceWeekendModel
 
 class SessionModel:
-	def __init__(self, race_model: RaceModel):
+	def __init__(self, race_model: RaceWeekendModel):
 		self.race_model = race_model
 		self.setup_standings()
 

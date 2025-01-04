@@ -1,6 +1,6 @@
 import os
 from pw_model import pw_base_model
-from race_model import race_model
+from race_weekend_model import race_weekend_model
 
 
 def create_model(mode="normal", auto_save=True):
@@ -12,4 +12,4 @@ def create_model(mode="normal", auto_save=True):
 	return pw_base_model.Model(roster, run_directory, mode=mode, auto_save=auto_save)
 
 def create_race_model(model):
-	return race_model.RaceModel("headless", model, model.tracks[0])
+	return race_weekend_model.RaceWeekendModel("headless", model, model.tracks[0])

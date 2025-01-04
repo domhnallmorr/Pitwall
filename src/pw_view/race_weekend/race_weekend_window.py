@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import flet as ft
 
 from pw_view.custom_widgets import custom_container, custom_buttons
-from race_model.race_model_enums import SessionNames
+from race_weekend_model.race_model_enums import SessionNames
 
 if TYPE_CHECKING:
 	from pw_view.view import View

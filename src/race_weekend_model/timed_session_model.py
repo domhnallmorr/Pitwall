@@ -7,15 +7,15 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING
 
-from race_model import session_model
-from race_model import commentary
-from race_model.race_model_enums import SessionStatus
+from race_weekend_model import session_model
+from race_weekend_model import commentary
+from race_weekend_model.race_model_enums import SessionStatus, SessionMode
 
 if TYPE_CHECKING:
-	from race_model.race_model import RaceModel
+	from race_weekend_model.race_weekend_model import RaceWeekendModel
 
 class TimedSessionModel(session_model.SessionModel):
-	def __init__(self, race_model: RaceModel, session_time: int):
+	def __init__(self, race_model: RaceWeekendModel, session_time: int):
 		super().__init__(race_model)
 
 		self.session_time = session_time
@@ -36,13 +36,13 @@ class TimedSessionModel(session_model.SessionModel):
 
 
 	def advance(self, mode: str) -> None:
-		assert mode in ["UI", "simulate"] # simulate prevents any commentart messages from being generated
+		assert mode in ["UI", SessionMode.SIMULATE] # simulate prevents any commentart messages from being generated
 		self.mode = mode
 
 		if self.status == SessionStatus.PRE_SESSION:
 			self.status = SessionStatus.RUNNING
 
-			if mode != "simulate":
+			if mode != SessionMode.SIMULATE:
 				self.commentary_to_process.append(commentary.gen_practice_start_message())
 			# self.update_participants_in_practice()
 		
@@ -92,7 +92,7 @@ class TimedSessionModel(session_model.SessionModel):
 			is_leaving = p.check_leaving_pit_lane(self.time_left)
 
 			if is_leaving is True:
-				if self.mode != "simulate":
+				if self.mode != SessionMode.SIMULATE:
 					self.commentary_to_process.append(commentary.gen_leaving_pit_lane_message(p.name))
 
 				# Update standings

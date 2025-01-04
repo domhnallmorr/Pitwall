@@ -10,3 +10,7 @@ class SessionStatus(Enum):
     PRE_SESSION = "Pre Session"
     RUNNING = "Green"
     POST_SESSION = "Post Session"
+
+class SessionMode(Enum):
+    SIMULATE = "simulate"
+    

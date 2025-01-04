@@ -1,7 +1,7 @@
 import pytest
 
 from tests import create_model
-from race_model import race_model
+from race_weekend_model import race_weekend_model
 from tests.test_model.track import test_track_model
 
 def test_update_car_speed():
@@ -32,7 +32,7 @@ def test_update_car_speed():
 def test_fuel_consumption():
 	model = create_model.create_model(mode="headless")
 	track = test_track_model.create_dummy_track()
-	_race_model = race_model.RaceModel("headless", model, track)
+	_race_model = race_weekend_model.RaceWeekendModel("headless", model, track)
 
 	schumacher_model = _race_model.get_particpant_model_by_name("Michael Schumacher")
 

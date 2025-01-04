@@ -91,7 +91,7 @@ class StandingsPage(ft.Column):
 		self.drivers_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
 									heading_row_color=ft.Colors.PRIMARY)
 
-		self.scrollable_drivers_table = ft.ListView(expand=1, auto_scroll=True)
+		self.scrollable_drivers_table = ft.ListView(expand=True, auto_scroll=False)
 		self.scrollable_drivers_table.controls.append(custom_container.CustomContainer(self.view, self.drivers_table, expand=False))
 
 		# CONSTRUCTORS
@@ -142,13 +142,13 @@ class StandingsPage(ft.Column):
 		assert mode in ["drivers", "constructors"]
 
 		if mode == "drivers":
-			container = custom_container.CustomContainer(self.view, self.scrollable_drivers_table, expand=False)
+			container = custom_container.CustomContainer(self.view, self.scrollable_drivers_table, expand=True)
 		elif mode == "constructors":
 			container = custom_container.CustomContainer(self.view, self.scrollable_constructors_table, expand=False)
 
 		column = ft.Column(
 			controls=[self.buttons_container, container],
-			expand=False,
+			expand=True,
 			spacing=20
 		)
 

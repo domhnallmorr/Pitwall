@@ -1,6 +1,6 @@
 from tests import create_model
-from race_model import race_model
-from race_model.race_model_enums import SessionNames
+from race_weekend_model import race_weekend_model
+from race_weekend_model.race_model_enums import SessionNames, SessionMode
 from pw_model.track import track_model
 
 from tests.test_model.track import test_track_model
@@ -13,7 +13,7 @@ def test_participants_creation():
 	ferrari_model.driver2 = "Jorg Muller"
 
 	track = test_track_model.create_dummy_track()
-	_race_model = race_model.RaceModel("headless", model, track)
+	_race_model = race_weekend_model.RaceWeekendModel("headless", model, track)
 
 	assert len(_race_model.participants) == 22
 
@@ -35,7 +35,7 @@ def test_session_setup():
 	model = create_model.create_model(mode="headless")
 
 	track = test_track_model.create_dummy_track()
-	_race_model = race_model.RaceModel("headless", model, track)
+	_race_model = race_weekend_model.RaceWeekendModel("headless", model, track)
 
 	_race_model.setup_qualifying(60*60, SessionNames.QUALIFYING)
 
@@ -51,10 +51,14 @@ def test_session_setup():
 def test_run_to_turn_1():
 	model = create_model.create_model(mode="headless")
 	track = test_track_model.create_dummy_track()
-	_race_model = race_model.RaceModel("headless", model, track)
+	_race_model = race_weekend_model.RaceWeekendModel("headless", model, track)
 
+	# Run qualy to establish a grid order
+	_race_model.setup_qualifying(60*60, SessionNames.QUALIFYING)
+	_race_model.simulate_session()
+	
 	_race_model.setup_race()
-	_race_model.current_session.mode = "simulate"
+	_race_model.current_session.mode = SessionMode.SIMULATE
 	order_after_turn1 = _race_model.current_session.calculate_run_to_turn1()
 
 	assert len(order_after_turn1) == 22
