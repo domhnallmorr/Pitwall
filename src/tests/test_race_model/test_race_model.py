@@ -1,6 +1,7 @@
 from tests import create_model
 from race_weekend_model import race_weekend_model
 from race_weekend_model.race_model_enums import SessionNames, SessionMode
+from race_weekend_model.race_start_calculations import calculate_run_to_turn1
 from pw_model.track import track_model
 
 from tests.test_model.track import test_track_model
@@ -31,23 +32,6 @@ def test_participants_creation():
 	diniz_model = _race_model.get_particpant_model_by_name("Pedro Diniz")
 	assert diniz_model.driver.speed == 65
 
-def test_session_setup():
-	model = create_model.create_model(mode="headless")
-
-	track = test_track_model.create_dummy_track()
-	_race_model = race_weekend_model.RaceWeekendModel("headless", model, track)
-
-	_race_model.setup_qualifying(60*60, SessionNames.QUALIFYING)
-
-	assert _race_model.current_session.time_left == 3600
-
-	# check particpants have qualy runs generated
-	for participant in _race_model.participants:
-		assert len(participant.practice_runs) == 4
-		for run in participant.practice_runs:
-			assert run[1] == 3
-			assert run[2] == 3
-
 def test_run_to_turn_1():
 	model = create_model.create_model(mode="headless")
 	track = test_track_model.create_dummy_track()
@@ -55,11 +39,10 @@ def test_run_to_turn_1():
 
 	# Run qualy to establish a grid order
 	_race_model.setup_qualifying(60*60, SessionNames.QUALIFYING)
-	_race_model.simulate_session()
 	
 	_race_model.setup_race()
 	_race_model.current_session.mode = SessionMode.SIMULATE
-	order_after_turn1 = _race_model.current_session.calculate_run_to_turn1()
+	order_after_turn1 = calculate_run_to_turn1(_race_model)
 
 	assert len(order_after_turn1) == 22
 	names = [p[1] for p in order_after_turn1]

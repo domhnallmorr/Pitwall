@@ -11,6 +11,8 @@ from race_weekend_model.race_model_enums import SessionNames
 from pw_view import view
 from pw_view.custom_widgets import custom_container, custom_buttons
 
+from race_weekend_model.race_model_enums import ParticipantStatus
+
 if TYPE_CHECKING:
 	from pw_view.view import View
 
@@ -136,7 +138,7 @@ class ResultsWindow(ft.View):
 				if idx == 0:
 					data.append(f"{row['Lap']} Laps")
 				else:
-					if row["Status"] == "retired":
+					if row["Status"] == ParticipantStatus.RETIRED:
 						data.append(f"Retired Lap {row['Lap']}")
 					elif row["Lapped Status"] is None:
 						data.append(self.ms_to_min_sec(row["Gap to Leader"], interval=True))

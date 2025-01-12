@@ -24,9 +24,9 @@ def test_grid_order():
 	_race_model.results[SessionNames.QUALIFYING.value]["results"] = pd.DataFrame(columns=["Driver"], data=grid_order)
 
 	_race_model.setup_race()
-	_race_model.current_session.setup_grid_order()
+	_race_model.current_session.standings_model.setup_grid_order()
 
-	for idx, row in _race_model.current_session.standings_df.iterrows():
+	for idx, row in _race_model.current_session.standings_model.dataframe.iterrows():
 		assert row["Driver"] == grid_order[idx - 1]
 		participant_model = _race_model.get_particpant_model_by_name(row["Driver"])
 		assert participant_model.starting_position == idx

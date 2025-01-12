@@ -14,3 +14,9 @@ class SessionStatus(Enum):
 class SessionMode(Enum):
     SIMULATE = "simulate"
     
+
+class ParticipantStatus(Enum):
+    IN_PITS = "PIT"
+    RETIRED = "Retired"
+    RUNNING = "Running"
+    PITTING_IN = "Pitting In"

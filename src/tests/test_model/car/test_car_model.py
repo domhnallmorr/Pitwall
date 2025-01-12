@@ -44,20 +44,20 @@ def test_fuel_consumption():
 
 	# Test car model assigns correct fuel load at start of race
 
-	schumacher_model.number_of_planned_stops = 1
-	schumacher_model.pit1_lap = 36
+	schumacher_model.pit_strategy.number_of_planned_stops = 1
+	schumacher_model.pit_strategy.pit1_lap = 36
 
 	schumacher_model.setup_start_fuel_and_tyres()
 	assert schumacher_model.car_model.fuel_load == 75
 
-	schumacher_model.number_of_planned_stops = 3
-	schumacher_model.pit1_lap = 10
+	schumacher_model.pit_strategy.number_of_planned_stops = 3
+	schumacher_model.pit_strategy.pit1_lap = 10
 	schumacher_model.setup_start_fuel_and_tyres()
 	assert schumacher_model.car_model.fuel_load == 21
 
 	# random test
-	schumacher_model.calculate_pitstop_laps()
+	schumacher_model.pit_strategy.calculate_pitstop_laps()
 	schumacher_model.setup_start_fuel_and_tyres()
-	assert schumacher_model.car_model.fuel_load == int(2.08 * (schumacher_model.pit1_lap + 0.5))
+	assert schumacher_model.car_model.fuel_load == int(2.08 * (schumacher_model.pit_strategy.pit1_lap + 0.5))
 
 	

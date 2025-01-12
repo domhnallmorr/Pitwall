@@ -29,16 +29,16 @@ class RaceController:
 		# 	self.race_model.setup_practice(60*60, session)
 		elif session == SessionNames.RACE:
 			self.race_model.setup_race()
-		
-		simulation_thread = threading.Thread(target=self.race_model.simulate_session)
-		# self.race_model.simulate_session()
-		simulation_thread.start()
 
-		simulation_thread.join() # wait for simulation to stop running
+			simulation_thread = threading.Thread(target=self.race_model.simulate_session)
+			# self.race_model.simulate_session()
+			simulation_thread.start()
+
+			simulation_thread.join() # wait for simulation to stop running
 
 		data = {
 			"current_session": session,
-			"standings_df": self.race_model.current_session.standings_df.copy(deep=True),
+			"standings_df": self.race_model.current_session.standings_model.dataframe.copy(deep=True),
 		}
 
 		# Add race specific data

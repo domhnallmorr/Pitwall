@@ -16,6 +16,8 @@ from race_weekend_model import qualy_model, grand_prix_model
 from race_weekend_model import particpant_model
 from race_weekend_model.starting_grid import StartingGrid
 from race_weekend_model.race_model_enums import SessionNames, SessionStatus, SessionMode
+from race_weekend_model.race_randomiser import RaceRandomiser
+from race_weekend_model.particpant_model import ParticpantModel
 
 class RaceWeekendModel:
 	def __init__(self, mode: str, model: pw_base_model.Model, track_model: track_model.TrackModel):
@@ -24,6 +26,7 @@ class RaceWeekendModel:
 		self.mode = mode
 		self.model = model
 		self.track_model = track_model
+		self.randomiser = RaceRandomiser()
 		self.setup_participants(model)
 
 		self.results = {}
@@ -39,7 +42,7 @@ class RaceWeekendModel:
 				driver_count += 1
 				self.participants.append(particpant_model.ParticpantModel(driver, team.name, copy.deepcopy(team.car_model), self.track_model, driver_count))
 
-	def get_particpant_model_by_name(self, name: str) -> None:
+	def get_particpant_model_by_name(self, name: str) -> ParticpantModel:
 		for p in self.participants:
 			if p.name == name:
 				return p
@@ -57,6 +60,7 @@ class RaceWeekendModel:
 		self.current_session_name = session_type.value	
 		self.current_session = qualy_model.QualyModel(self, session_time)
 		self.setup_session()
+		self.current_session.generate_results()
 
 	def setup_race(self) -> None:
 		self.starting_grid = StartingGrid(self)

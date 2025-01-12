@@ -125,7 +125,7 @@ class Controller:
 		self.page_update_controller.update_standings_page()
 		self.return_to_main_window()
 
-	def check_game_over(self):
+	def check_game_over(self) -> None:
 		game_over = False
 
 		if self.model.year == 2024:

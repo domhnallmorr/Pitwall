@@ -32,17 +32,3 @@ class StartingGrid:
 
 			# update position in participant class
 			participant.starting_position = idx + 1
-	
-	def apply_grid_order_to_standings(self, standings_df: pd.DataFrame) -> pd.DataFrame:
-		standings_df.set_index('Driver', inplace=True, drop=False)
-		standings_df = standings_df.loc[self.grid_order]
-
-		standings_df.reset_index(drop=True, inplace=True)
-		standings_df["Position"] = standings_df.index + 1
-
-		for idx, row in standings_df.iterrows():
-			driver = row["Driver"]
-			standings_df.loc[standings_df["Driver"] == driver, "Grid"] = idx + 1
-
-		return standings_df
-
