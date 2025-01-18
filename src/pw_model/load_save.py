@@ -363,10 +363,12 @@ def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mod
 	if mode == "file":
 		if save_file is None:
 			conn = sqlite3.connect(f"{model.run_directory}\\save_game.db")
-		else:
+		elif isinstance(save_file, str):
 			conn = sqlite3.connect(save_file)
+		else:
+			raise ValueError("Invalid type for 'save_file' when mode is 'file'")
 
-	else:
+	elif isinstance(save_file, sqlite3.Connection):
 		conn = save_file # db provided in memory
 
 	load_drivers(conn, model)

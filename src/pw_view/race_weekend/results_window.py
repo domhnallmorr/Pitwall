@@ -229,7 +229,7 @@ class ResultsWindow(ft.View):
 		px = 1/plt.rcParams['figure.dpi']  # pixel in inches
 		self.laptimes_fig, self.laptimes_ax = plt.subplots(figsize=(1820*px, 700*px))
 
-	def update_laptimes_plot(self, lap_times: dict) -> None:
+	def update_laptimes_plot(self, lap_times: dict[str, list[int]]) -> None:
 		self.laptimes_ax.cla()
 
 		self.lap_times = lap_times

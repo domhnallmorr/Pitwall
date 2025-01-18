@@ -76,7 +76,6 @@ class Controller:
 		
 		if self.mode != "headless":
 			# Setup the calander page to show the races upcoming in the new season
-			self.update_facilities_page(new_season=True)
 			self.page_update_controller.update_main_window()
 			self.race_controller = race_controller.RaceController(self)
 
@@ -85,22 +84,6 @@ class Controller:
 	def update_email_button(self) -> None:
 		self.view.main_window.update_email_button(self.model.inbox.new_emails)
 
-	def update_facilities_page(self, new_season: bool=False) -> None:
-		'''
-		new_season is passed here to
-		'''
-
-		facility_values = [[team.name, team.facilities_model.factory_rating] for team in self.model.teams]
-		facility_values.sort(key=lambda x: x[1], reverse=True) # sort, highest speed to lowest speed
-		
-		data = {
-			"facility_values": facility_values,
-		}
-
-		self.view.facility_page.update_page(data)
-
-		if new_season is True:
-			self.view.facility_page.enable_upgrade_button()
 
 	def go_to_race_weekend(self) -> None:
 		self.race_controller = race_controller.RaceController(self)

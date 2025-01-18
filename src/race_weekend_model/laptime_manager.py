@@ -9,12 +9,11 @@ import random
 from race_weekend_model.race_model_enums import ParticipantStatus
 from race_weekend_model.on_track_constants import (
 	CAR_SPEED_FACTOR,
-	DIRTY_AIR_THRESHOLD,
-	DIRTY_AIR_EFFECT,
+	LAP1_TIME_LOSS_PER_POSITION,
+	MAX_SPEED,
 	DRIVER_SPEED_FACTOR,
-	RETIREMENT_CHANCE,
+	LAP1_TIME_LOSS,
 	LAP_TIME_VARIATION,
-	PIT_STOP_LOSS_RANGE,
 )
 
 if TYPE_CHECKING:
@@ -23,6 +22,7 @@ if TYPE_CHECKING:
 class LapTimeManager:
 	def __init__(self, participant: ParticpantModel):
 		self.participant = participant
+		self.randomiser = LapManagerRandomiser(self.participant)
 		self.driver = participant.driver
 		self.car_model = participant.car_model
 		self.track_model = participant.track_model
@@ -40,26 +40,34 @@ class LapTimeManager:
 			return min(self.laptimes)
 		
 	def calculate_base_laptime(self) -> None:
+		'''
+		Fastest potential laptime a driver/car combination can achieve
+		'''
 		self.base_laptime = self.track_model.base_laptime
 
 		# add driver component
 		'''
 		driver with 0 speed rating is considered 2s slower than driver with 100 speed rating
 		'''
-		self.base_laptime += (100 - self.driver.speed) * DRIVER_SPEED_FACTOR # 100 * 20 = 2000 (2s in ms)
+		self.base_laptime += (MAX_SPEED - self.driver.speed) * DRIVER_SPEED_FACTOR # 100 * 20 = 2000 (2s in ms)
 
 		# add car component
 		'''
 		car with 0 speed rating is considered 5s slower than car with 100 speed rating
 		'''
-		self.base_laptime += (100 - self.car_model.speed) * CAR_SPEED_FACTOR
+		self.base_laptime += (MAX_SPEED - self.car_model.speed) * CAR_SPEED_FACTOR
 
 	def setup_variables_for_session(self) -> None:
 		self.laptime = None
 		self.laptimes: list[int] = []
 
-	def calculate_lap_time(self, random_element: int, dirty_air_effect: int) -> None:
-		self.laptime = self.base_laptime + random.randint(0, random_element) + self.car_model.fuel_effect + self.car_model.tyre_wear + dirty_air_effect
+	def calculate_laptime(self, dirty_air_effect: int) -> None:
+		'''
+		Calculate the laptime for a given lap
+		if pitting, the time loss in the pits is accounted for
+		'''
+		random_time_loss = self.randomiser.random_laptime_loss()
+		self.laptime = self.base_laptime + random_time_loss + self.car_model.fuel_effect + self.car_model.tyre_wear + dirty_air_effect
 
 		# ADD PIT STOP LOSS IF APPLICABLE
 		if self.participant.status is ParticipantStatus.PITTING_IN:
@@ -71,17 +79,38 @@ class LapTimeManager:
 			self.laptimes.append(self.laptime)
 
 	def calculate_qualfying_laptime(self) -> None:
-		self.calculate_lap_time(700, 0)
+		'''
+		Basic method for calculating a laptime in qualfying
+		'''
+		self.calculate_laptime(0) # zero for no dirty air effect
 		self.complete_lap()
 
 	def calculate_first_lap_laptime(self, idx: int) -> None:
 		'''
 		calculate lap time for first lap based on position after turn 1
+		idx is the position (zero indexed) of the participant after turn 1
 		'''
-		self.laptime = self.track_model.base_laptime + 6_000 + (idx * 1_000) + random.randint(100, 800)
+		random_time_loss = self.randomiser.random_lap1_time_loss()
+		self.laptime = self.track_model.base_laptime + LAP1_TIME_LOSS + (idx * LAP1_TIME_LOSS_PER_POSITION) + random_time_loss
 
 	def recalculate_laptime_when_passed(self, revised_laptime: int) -> None:
+		'''
+		When a car is passed, laptime needs to be increased to account for time lost
+		The laptime calculated already is void
+		The new laptime is calculated in the grand prix model
+		This ensures the passed car's total time is greater than the overtaking car
+		'''
 		if self.laptime is not None:
 			self.laptime = revised_laptime
 			self.laptimes[-1] = revised_laptime
 
+class LapManagerRandomiser:
+	def __init__(self, participant: ParticpantModel):
+		self.participant = participant
+
+	def random_lap1_time_loss(self) -> float:
+		# random amount of time lost on lap 1, given in ms
+		return random.uniform(100, 800)
+	
+	def random_laptime_loss(self) -> float:
+		return random.uniform(0, LAP_TIME_VARIATION)

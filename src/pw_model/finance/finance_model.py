@@ -3,7 +3,7 @@ from __future__ import annotations
 import collections
 from datetime import datetime, timedelta
 from typing import Deque
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -50,7 +50,7 @@ class FinanceModel:
 
 	@property
 	def total_staff_costs_per_year(self) -> int:
-		return self.staff_yearly_cost * self.team_model.number_of_staff
+		return int(self.staff_yearly_cost * self.team_model.number_of_staff)
 	
 	@property
 	def drivers_payments(self) -> int:
@@ -79,7 +79,7 @@ class FinanceModel:
 	@property
 	def total_expenditure(self) -> int:
 		#TODO remove hard coding of race costs
-		return self.total_staff_costs_per_year + self.drivers_salary + self.team_model.technical_director_model.contract.salary + self.team_model.commercial_manager_model.contract.salary + 8_000_000 + self.car_cost
+		return int(self.total_staff_costs_per_year + self.drivers_salary + self.team_model.technical_director_model.contract.salary + self.team_model.commercial_manager_model.contract.salary + 8_000_000 + self.car_cost)
 	
 	def weekly_update(self) -> None:
 		
@@ -129,7 +129,7 @@ class FinanceModel:
 		self.model.inbox.new_sponsor_income_email(sponsorship)
 		self.total_sponsorship = sponsorship
 
-	def to_dict(self) -> dict:
+	def to_dict(self) -> dict[str, Union[int, list[Union[int, str]]]]:
 		return {
 			"balance": self.balance,
 			"staff_yearly_cost": self.staff_yearly_cost,

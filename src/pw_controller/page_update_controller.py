@@ -37,6 +37,7 @@ class PageUpdateController:
 		self.update_home_page()
 		self.update_staff_page(new_season)
 		self.update_standings_page()
+		self.update_facilities_page()
 
 	def update_staff_page(self, new_season: bool=False) -> None:
 		team_model = self.model.get_team_model(self.model.player_team)
@@ -89,10 +90,8 @@ class PageUpdateController:
 		self.view.standings_page.update_standings(drivers_standings_df, constructors_standings_df)
 
 	def update_email_page(self) -> None:
-		data = {
-			"emails": copy.deepcopy(self.model.inbox.emails),
-		}
-		self.view.email_page.update_page(data)
+		emails = copy.deepcopy(self.model.inbox.emails)
+		self.view.email_page.update_page(emails)
 
 	def update_finance_page(self) -> None:
 		data: finance_data.FinanceData = {
@@ -166,3 +165,20 @@ class PageUpdateController:
 		in_race_week = self.model.season.in_race_week
 
 		self.view.main_window.update_window(team, date, in_race_week)
+
+	def update_facilities_page(self, new_season: bool=False) -> None:
+		'''
+		new_season is passed here to
+		'''
+
+		facility_values = [[team.name, team.facilities_model.factory_rating] for team in self.model.teams]
+		facility_values.sort(key=lambda x: x[1], reverse=True) # sort, highest speed to lowest speed
+		
+		data = {
+			"facility_values": facility_values,
+		}
+
+		self.view.facility_page.update_page(data)
+
+		if new_season is True:
+			self.view.facility_page.enable_upgrade_button()

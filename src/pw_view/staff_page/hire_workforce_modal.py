@@ -1,9 +1,13 @@
+from __future__ import annotations
 import flet as ft
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pw_view.view import View
 
 class WorkforceDialog(ft.AlertDialog):
-    def __init__(self, page: ft.Page, view, initial_value: int, on_apply=None):
+    def __init__(self, page: ft.Page, view: View, initial_value: int):
         super().__init__(
             modal=True, 
             title=ft.Text("Adjust Workforce")
@@ -12,7 +16,6 @@ class WorkforceDialog(ft.AlertDialog):
         self.page = page
         self.view = view
         self.initial_value = initial_value
-        self.on_apply = on_apply
         self.workforce_input = ft.TextField(label="Number of Staff", value=str(initial_value), width=150, read_only=True)
         
         # Increase and Decrease buttons

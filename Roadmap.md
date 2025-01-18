@@ -1,51 +1,104 @@
 # Roadmap
 
-## V1
+Objective for V2 is to flesh the game out, with a basic representation of the core game mechanics.
 
-The objective for V1.0 is to have a "bare bones" game with the most basic features. This won't be a particaurly detailed or interesing game, but should provide a good foundation for further development. Features to be included are listed below.
+Off track, this will include car development, sponsorship deals and engine/tyre suppliers. A basic representation of contract negotiation for drivers and senior staff will be added.
 
+On track, extra details in the races will be added, such as crashes and driver mistakes. A timing screen view will be added to view the sessions. 
+
+The bottom of this page includes a high level overview of additions for V2. Below, a specific roadmap to V1.10 is provided.
+
+## V1.10
+
+
+## UI Improvements
+
+Add country flags
+Need page for each track (overtaking difficulty, engine sensitivity and any other track details)
+Improve Email page
+Improve team selection page
+Add engine page
 
 ## Off Track Features
 
-### Drivers
+### Finance
 
-A driver roster from 1998 up to present day will be included. Drivers will retire. Drivers will be able to switch teams.
-
-### Technical Director
-
-Member of staff repsonsible for design of the car. Will directly effect the speed of the car.
-
-### Commerical Manager
-
-Member of staff repsonsible for finding sponsors for the car.
-
-### Facilites
-
-A number between 0 and 100 that represents the qualty of a teams factory. The number effects the speed of the car produced. It should decrease by a certain amount each year until upgraded by the player
-
-### Number of Staff
-
-Total number of staff employed by the team. The number effects the speed of the car. Player can hire more staff, which will cost more.
-
-### Sponsors
-
-Sponsership will be represented by a single number, total income dervived from sponsers. Will be determined based on the commerical manager's skill.
+Add projections for year
+Race costs should vary by distance from Europe
+Crash damage costs
+Track profit/loss
 
 ### Car
 
-The car designed by the player's team will have speed attribute to determine how fast it is. Reliability will be a standard value acrosss all teams. AI teams cars speed will update at the end of each year.
+Car should be split into engine and chassis
+Track should have an attribute on how sensitive performance is to engine performance
+Add engine class
+	power
+	hard code engine suppliers for each team
+	random change each season
 
-### Prize Money
+### Sponsors
 
-Prize money will be payed out based on the finishing position of last year's constructors championship
+Add title sponsors
+	Dependent on commercial manager
+Have "other sponsorship" attribute
 
-### Email
-A simple email system will be included to inform player of events/news.
+### Drivers
+
+Add consistency attribute
+	feed into laptime calculation
+Track driver statistics
+
+### Contract Negotiations
+
+Drivers take some time to respond to offers
+		
+### Other
+
+Add team principal as staff member to AI teams
+Replace real driver names with fake names
+Add winner column to calendar page
+Add track lengths
 
 ## On Track
 
-Basic simulation of all sessions (practice, qualy and race) will be included. Tyre wear, fuel burn effects will be included.
-Dirty air effect will be taken in to account.
-Passing difficulty will vary between tracks.
-Pit stops will be accounted for.
-Random mechanical failures will be included.
+Add overtake difficulty attribute to tracks
+Add random driver crashes
+Improve AI pit strategies
+Proper base laptime for each track
+
+## Refactoring
+
+Add a custom widget for datatables
+Reduce use of dictioaries to improve type hinting
+Improve use of enums
+Review and improve grand_prix_model
+Improve use of randomisers
+
+
+# V2 Overview
+
+In season testing
+Car development
+Next years car development
+Engine/tyre customer/partner/works deals
+Title sponsors
+Wet races (weather will be static)
+Pay Drivers
+Reliability of various components
+Car wear
+Additonal driver attributes
+Additonal details in races
+	Crashes
+	Mistakes
+	Punctures
+	Overtaking difficulty per track
+	broken front wing
+Add practice session
+Add timing screen page for on-track sessions
+Save previous season results/stats
+Improve existing code base
+Images of drivers/staff
+Pay off facility upgrades over time
+Split workforce into commercial, mechanics, design
+Basic contract negotiation for drivers/staff

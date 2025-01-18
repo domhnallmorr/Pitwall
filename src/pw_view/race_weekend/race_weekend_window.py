@@ -10,7 +10,7 @@ from race_weekend_model.race_model_enums import SessionNames
 if TYPE_CHECKING:
 	from pw_view.view import View
 
-def create_session_header_text(session):
+def create_session_header_text(session: str) -> ft.Text:
 
 	return ft.Text(text=session)
 
@@ -44,7 +44,7 @@ class RaceWeekendWindow(ft.View):
 
 		super().__init__(controls=controls, scroll="auto")
 
-	def setup_page(self) -> list:
+	def setup_page(self) -> list[ft.Control]:
 		self.content_column = ft.Column(
 			controls=[self.qualy_container, self.race_container, self.continue_container],
 			expand=True,

@@ -205,7 +205,7 @@ class Model:
 		self.staff_market.compute_transfers()
 
 	#TODO Move this to a different file, possibly a stand alone file in the teams folder
-	def gen_team_average_stats(self) -> dict:
+	def gen_team_average_stats(self) -> dict[str, int]:
 		
 		team_average_stats = {
 			"car_speed": int(statistics.fmean([t.car_model.speed for t in self.teams])),

@@ -25,12 +25,10 @@ def test_email_page_update():
     mock_view.main_app.window.height = 800
     mock_view.background_image = ft.Container()
 
-    mock_data = {
-        "emails": [
+    mock_data = [
             Mock(subject="Subject 1", sender="Sender 1", message="Message 1"),
             Mock(subject="Subject 2", sender="Sender 2", message="Message 2"),
         ]
-    }
 
     page = EmailPage(view=mock_view)
     page.update_page(mock_data)
@@ -42,7 +40,7 @@ def test_email_page_update():
     assert isinstance(email_row, ft.Row)
 
     email_list_container = email_row.controls[0]
-    assert len(email_list_container.content.controls) == len(mock_data["emails"])
+    assert len(email_list_container.content.controls) == len(mock_data)
 
 
 def test_show_email_content():

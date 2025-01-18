@@ -87,13 +87,11 @@ class ParticpantModel:
 				self.status = ParticipantStatus.PITTING_IN
 
 			if self.status is ParticipantStatus.PITTING_IN:
-				# self.laptime += self.track_model.pit_stop_loss
 				self.pitstop_times.append(random.randint(PIT_STOP_LOSS_RANGE[0], PIT_STOP_LOSS_RANGE[1]))
-				# self.laptime += self.pitstop_times[-1] 
 				self.number_of_pitstops += 1
 				self.pitstop_laps.append(self.current_lap)
 			
-			self.laptime_manager.calculate_lap_time(LAP_TIME_VARIATION, dirty_air_effect)	
+			self.laptime_manager.calculate_laptime(dirty_air_effect)	
 
 	def complete_lap(self) -> None:
 		self.laptime_manager.complete_lap()

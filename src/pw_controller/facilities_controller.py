@@ -31,7 +31,7 @@ class FacilitiesController:
 
 		self.controller.view.facility_page.disable_upgrade_button() # ensure player can't update again this season
 
-		self.controller.update_facilities_page()
+		self.controller.page_update_controller.update_facilities_page()
 
 		self.model.inbox.generate_player_facility_update_email()
 		self.controller.page_update_controller.update_email_page()

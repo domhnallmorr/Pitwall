@@ -1,4 +1,5 @@
 from __future__ import annotations
+from collections import deque
 from typing import TYPE_CHECKING
 import flet as ft
 
@@ -25,10 +26,9 @@ class EmailPage(ft.Column):
 		self.email_content_container = CustomContainer(self.view, content=self.email_content, expand=3)
 		self.email_content_container.height = self.view.main_app.window.height - 200
 
-	def update_page(self, data: dict) -> None:
+	def update_page(self, emails: deque[Email]) -> None:
 		self.email_content_container.height = self.view.main_app.window.height - 200
 
-		emails = data["emails"]
 		email_tiles = []
 		for email in emails:
 			email_tiles.append(self.create_email_tile(email))
@@ -66,7 +66,7 @@ class EmailPage(ft.Column):
 		self.view.main_app.update()
 
 	#TODO check email can't be accidently modifed by view here
-	def create_email_tile(self, email: Email) -> None:
+	def create_email_tile(self, email: Email) -> ft.ListTile:
 		return ft.ListTile(
                 title=ft.Text(f"RE: {email.subject}"),
                 subtitle=ft.Text(f"From: {email.sender}"),

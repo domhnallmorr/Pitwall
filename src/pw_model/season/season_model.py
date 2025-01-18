@@ -18,7 +18,7 @@ class SeasonModel:
 
 	@property
 	def race_weeks(self) -> List[int]:
-		return self.model.calendar["Week"].values.tolist()
+		return [int(w) for w in self.model.calendar["Week"].values.tolist()]
 	
 	@property
 	def in_race_week(self) -> bool:
@@ -52,7 +52,7 @@ class SeasonModel:
 			return "Post Season"
 		else:
 			track_name = self.model.calendar.iloc[self.next_race_idx]["Track"]
-			return self.model.get_track_model(track_name).title
+			return str(self.model.get_track_model(track_name).title)
 
 	@property
 	def next_race_week(self) -> str:
@@ -61,7 +61,7 @@ class SeasonModel:
 		else:
 			week = self.model.calendar.iloc[self.next_race_idx]["Week"]
 
-			return week
+			return str(week)
 
 	@property
 	def drivers_by_rating(self) -> list[list[Union[str, int]]]:
