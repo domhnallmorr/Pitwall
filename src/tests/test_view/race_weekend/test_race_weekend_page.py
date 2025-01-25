@@ -18,7 +18,8 @@ def mock_view():
 @pytest.fixture
 def race_data():
     return {
-        "race_title": "Test Race Weekend"
+        "race_title": "Test Race Weekend",
+        "country": "Australia"
     }
 
 

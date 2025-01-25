@@ -107,6 +107,12 @@ class Inbox:
 		email = Email(f"{team} hire {manager}", msg)
 		self.add_email(email)
 
+	def new_transport_cost_email(self, cost: int) -> None:
+		msg = email_generation.transport_costs_email(cost)
+
+		email = Email(f"Transport Costs", msg)
+		self.add_email(email)
+
 	def generate_dataframe(self) -> pd.DataFrame:
 		data = []
 

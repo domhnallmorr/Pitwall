@@ -10,6 +10,9 @@ from flet.matplotlib_chart import MatplotlibChart
 from race_weekend_model.race_model_enums import SessionNames
 from pw_view import view
 from pw_view.custom_widgets import custom_container, custom_buttons
+from pw_view.custom_widgets.custom_datatable import CustomDataTable
+
+from pw_controller.race_controller import RaceSessionData
 
 from race_weekend_model.race_model_enums import ParticipantStatus
 
@@ -75,9 +78,10 @@ class ResultsWindow(ft.View):
 
 		self.view.main_app.update()
 
-	def update_page(self, data: dict) -> None:
+	def update_page(self, data: RaceSessionData) -> None:
 		current_session = data["current_session"]
 		standings_df = data["standings_df"]
+		driver_flags = data["driver_flags"]
 		
 		# update the buttons row
 		timed_session = True
@@ -85,18 +89,15 @@ class ResultsWindow(ft.View):
 			timed_session = False
 
 			# update pitstop table (race only)
-			self.setup_pitstops_table(data["pit_stop_summary"])
+			self.setup_pitstops_table(data["pit_stop_summary"], driver_flags)
 			self.update_lap_chart(data["lap_chart_data"])
 			self.update_laptimes_plot(data["lap_times_summary"])
 
 		self.update_buttons_row(timed_session)
-		self.setup_classification_table(standings_df, current_session)
-
-		self.classification_list_view = ft.ListView(expand=True, spacing=10, padding=20, auto_scroll=False)
-		self.classification_list_view.controls.append(self.classification_container)
+		self.setup_classification_table(standings_df, current_session, driver_flags)
 
 		self.content_column = ft.Column(
-			controls=[self.buttons_container, self.classification_list_view, self.continue_container],
+			controls=[self.buttons_container, self.results_table.list_view, self.continue_container],
 			expand=True,
 			spacing=20
 		)
@@ -119,7 +120,7 @@ class ResultsWindow(ft.View):
 		self.display_classification()
 		self.view.main_app.update()
 
-	def setup_classification_table(self, standings_df: pd.DataFrame, current_session: Enum) -> None:
+	def setup_classification_table(self, standings_df: pd.DataFrame, current_session: Enum, driver_flags: list[str]) -> None:
 		#TODO cleaup actions below should be moved to a stand alone function outside the class for unit testing
 		# Format from ms to min:seconds
 		standings_df.loc[:, "Fastest Lap"] = standings_df["Fastest Lap"].apply(self.ms_to_min_sec)
@@ -150,50 +151,18 @@ class ResultsWindow(ft.View):
 
 		standings_df = standings_df[cols]		
 
-		columns = []
-		for col in standings_df.columns:
-			column_content = custom_container.HeaderContainer(self.view, col)
-			columns.append(ft.DataColumn(column_content))
+		self.results_table = CustomDataTable(self.view, standings_df.columns.tolist())
+		self.results_table.update_table_data(standings_df.values.tolist(), flag_col_idx=1, flags=driver_flags)
 
-		data = standings_df.values.tolist()
-		rows = []
-
-		for row in data:
-			cells = []
-			for cell in row:
-				cells.append(ft.DataCell(ft.Text(cell)))
-
-			rows.append(ft.DataRow(cells=cells))
-
-		self.results_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30, heading_row_color=ft.Colors.PRIMARY)
-	
-		self.classification_container = custom_container.CustomContainer(self.view, self.results_table, expand=False)
-
-	def setup_pitstops_table(self, pit_stop_summary: dict) -> None:
-		columns = []
-		for col in ["Driver", "Stops", "Laps"]:
-			column_content = custom_container.HeaderContainer(self.view, col)
-			columns.append(ft.DataColumn(column_content))
-
-		rows = []
-
+	def setup_pitstops_table(self, pit_stop_summary: dict, driver_flags: list[str]) -> None:
+		data = []
 		for driver in pit_stop_summary.keys():
-			cells = []
 			number_of_stops = str(len(pit_stop_summary[driver]))
 			laps = ", ".join([str(lap) for lap in pit_stop_summary[driver]])
+			data.append([driver, number_of_stops, laps])
 
-			cells.append(ft.DataCell(ft.Text(driver)))
-			cells.append(ft.DataCell(ft.Text(number_of_stops)))
-			cells.append(ft.DataCell(ft.Text(laps)))
-
-			rows.append(ft.DataRow(cells=cells))
-
-		self.pitstops_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30, heading_row_color=ft.Colors.PRIMARY)
-
-		self.pitstops_container = custom_container.CustomContainer(self.view, self.pitstops_table, expand=False)
-		
-		self.pitstops_list_view = ft.ListView(expand=True, spacing=10, padding=20, auto_scroll=False)
-		self.pitstops_list_view.controls.append(self.pitstops_container)
+		self.pitstops_table = CustomDataTable(self.view, ["Driver", "Stops", "Laps"])
+		self.pitstops_table.update_table_data(data, flag_col_idx=0, flags=driver_flags)
 
 	def setup_lap_chart(self) -> None:
 		px = 1/plt.rcParams['figure.dpi']  # pixel in inches
@@ -270,14 +239,14 @@ class ResultsWindow(ft.View):
 		self.reset_tab_buttons()
 		self.classification_btn.style = self.view.clicked_button_style
 
-		self.content_column.controls=[self.buttons_container, self.classification_list_view, self.continue_container]
+		self.content_column.controls=[self.buttons_container, self.results_table.list_view, self.continue_container]
 		self.view.main_app.update()
 
 	def display_pitstops(self, e: ft.ControlEvent) -> None:
 		self.reset_tab_buttons()
 		self.pitstops_btn.style = self.view.clicked_button_style
 
-		self.content_column.controls=[self.buttons_container, self.pitstops_list_view, self.continue_container]
+		self.content_column.controls=[self.buttons_container, self.pitstops_table.list_view, self.continue_container]
 		self.view.main_app.update()
 
 	def display_lap_chart(self, e: ft.ControlEvent) -> None:

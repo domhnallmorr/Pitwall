@@ -13,6 +13,7 @@ from race_weekend_model.on_track_constants import (
 	MAX_SPEED,
 	DRIVER_SPEED_FACTOR,
 	LAP1_TIME_LOSS,
+	LAP_TIME_VARIATION_BASE,
 	LAP_TIME_VARIATION,
 )
 
@@ -27,6 +28,8 @@ class LapTimeManager:
 		self.car_model = participant.car_model
 		self.track_model = participant.track_model
 		self.calculate_base_laptime()
+		additonal_laptime_variaton = int((1 - (self.driver.consistency / 100)) * LAP_TIME_VARIATION)
+		self.laptime_variation = LAP_TIME_VARIATION_BASE + additonal_laptime_variaton
 
 	@property
 	def total_time(self) -> int:
@@ -113,4 +116,4 @@ class LapManagerRandomiser:
 		return random.uniform(100, 800)
 	
 	def random_laptime_loss(self) -> float:
-		return random.uniform(0, LAP_TIME_VARIATION)
+		return random.uniform(0, self.participant.laptime_manager.laptime_variation)

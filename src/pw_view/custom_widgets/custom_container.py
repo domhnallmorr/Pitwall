@@ -23,7 +23,7 @@ class CustomContainer(ft.Container):
 			)
 
 class HeaderContainer(ft.Container):
-	def __init__(self, view: View, text: str, expand: bool=True, width: Optional[int]=None):
+	def __init__(self, view: View, text: str, expand: bool=False, width: Optional[int]=None):
 		'''
 		This is the header row at the top of a CustomContainer
 		'''

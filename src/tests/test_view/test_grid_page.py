@@ -3,6 +3,7 @@ from unittest.mock import Mock, MagicMock
 import pandas as pd
 import flet as ft
 from pw_view.grid_page import GridPage
+from pw_view.custom_widgets.custom_datatable import CustomDataTable
 
 @pytest.fixture
 def mock_view():
@@ -69,9 +70,9 @@ def test_update_page(grid_page, sample_dataframes):
     assert grid_page.next_year_btn.text == "2024"
     
     # Verify DataTable for this year
-    assert isinstance(grid_page.grid_this_year_table, ft.DataTable)
-    assert len(grid_page.grid_this_year_table.rows) == len(df_this_year)
+    assert isinstance(grid_page.grid_this_year_table, CustomDataTable)
+    assert len(grid_page.grid_this_year_table.data_table.rows) == len(df_this_year)
 
     # Verify DataTable for next year
-    assert isinstance(grid_page.grid_next_year_table, ft.DataTable)
-    assert len(grid_page.grid_next_year_table.rows) == len(df_next_year)
+    assert isinstance(grid_page.grid_next_year_table, CustomDataTable)
+    assert len(grid_page.grid_next_year_table.data_table.rows) == len(df_next_year)

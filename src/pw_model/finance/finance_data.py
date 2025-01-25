@@ -1,6 +1,7 @@
 from typing import TypedDict, List, Union
 
 class FinanceData(TypedDict):
+    profit: int
     total_sponsorship: int
     prize_money: int
     drivers_payments: int

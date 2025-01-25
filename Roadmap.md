@@ -13,41 +13,34 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 ## UI Improvements
 
-- Add country flags
-- Need page for each track (overtaking difficulty, engine sensitivity and any other track details)
+- <span style="background-color: #115407">Add country flags</span>
+- Need page for each track (overtaking difficulty and any other track details)
 - Improve Email page
 - Improve team selection page
-- Add engine page
+
 
 ## Off Track Features
 
 ### Finance
 
 - Add projections for year
-- Race costs should vary by distance from Europe
+- <span style="background-color: #115407">Race costs should vary by distance from Europe</span>
 - Crash damage costs
 - Track profit/loss
+- Car development costs
 
 ### Car
 
-- Car should be split into engine and chassis
-- Track should have an attribute on how sensitive performance is to engine performance
-- Add engine class
-	power
-	hard code engine suppliers for each team
-	random change each season
+- Add car development to increase car speed
 
 ### Sponsors
 
 - Add title sponsors
-	Dependent on commercial manager
 - Have "other sponsorship" attribute
 
 ### Drivers
 
-- Add consistency attribute
-	feed into laptime calculation
-- Track driver statistics
+- <span style="background-color: #115407">Add consistency attribute</span>
 
 ### Contract Negotiations
 
@@ -57,28 +50,27 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 - Add team principal as staff member to AI teams
 - Replace real driver names with fake names
-- Add winner column to calendar page
-- Add track lengths
+- <span style="background-color: #115407">Add winner column to calendar page</span>
+- <span style="background-color: #115407">Add track lengths</span>
 
 ## On Track
 
 - Add overtake difficulty attribute to tracks
 - Add random driver crashes
-- Improve AI pit strategies
-- Proper base laptime for each track
+- <span style="background-color: #115407">Proper base laptime for each track</span>
 
 ## Refactoring
 
-- Add a custom widget for datatables
+- <span style="background-color: #115407">Add a custom widget for datatables</span>
 - Reduce use of dictioaries to improve type hinting
 - Improve use of enums
 - Review and improve grand_prix_model
 - Improve use of randomisers
+- Improve load_roster function
 
 
 # V2 Overview
 
-- In season testing
 - Car development
 - Next years car development
 - Engine/tyre customer/partner/works deals
@@ -91,14 +83,14 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 - Additonal details in races
 	Crashes
 	Mistakes
-	Punctures
 	Overtaking difficulty per track
-	broken front wing
-- Add practice session
+	1st turn incidents
 - Add timing screen page for on-track sessions
 - Save previous season results/stats
 - Improve existing code base
+- Improve pit strategies
 - Images of drivers/staff
 - Pay off facility upgrades over time
 - Split workforce into commercial, mechanics, design
 - Basic contract negotiation for drivers/staff
+- Track driver statistics

@@ -3,4 +3,5 @@ Country: Argentina
 Location: Buenos Aries
 Title: Argentinian Grand Prix
 Laps: 72
-Base Laptime: 84_000
+Base Laptime: 80_000
+Length: 4.259

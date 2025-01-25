@@ -30,6 +30,7 @@ def save_game(model: Model, mode: str="file") -> sqlite3.Connection:
 	save_new_contracts_df(model, save_file)
 	save_standings(model, save_file)
 	save_email(model, save_file)
+	save_calendar(model, save_file)
 
 	save_file.commit()
 
@@ -74,6 +75,7 @@ def save_drivers(model: Model, save_file: sqlite3.Connection) -> None:
 		"Age"	INTEGER,
 		"Country"	TEXT,
 		"Speed"	INTEGER,
+		"Consistency"	INTEGER,
 		"ContractLength"	INTEGER,
 		"RetiringAge"	INTEGER,
 		"Retiring"	INTEGER,
@@ -94,14 +96,15 @@ def save_drivers(model: Model, save_file: sqlite3.Connection) -> None:
 
 
 			cursor.execute('''
-				INSERT INTO drivers (year, name, age, country, speed, contractlength, retiringage, retiring, retired, salary) 
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+				INSERT INTO drivers (year, name, age, country, speed, consistency, contractlength, retiringage, retiring, retired, salary) 
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			''', (
 				year,
 				driver.name, 
 				driver.age, 
 				driver.country, 
 				driver.speed, 
+				driver.consistency, 
 				driver.contract.contract_length, 
 				driver.retiring_age, 
 				driver.retiring,
@@ -259,6 +262,7 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 	CREATE TABLE IF NOT EXISTS "teams" (
 	"Year"	TEXT,
 	"Name"	TEXT,
+	"Country"	TEXT,
 	"Driver1"	TEXT,
 	"Driver2"	TEXT,
 	"CarSpeed"	INTEGER,
@@ -276,13 +280,14 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 	for team in model.teams:
 
 		cursor.execute('''
-			INSERT INTO teams (year, name, Driver1, Driver2, CarSpeed, NumberofStaff, Facilities, StartingBalance, StartingSponsorship,
+			INSERT INTO teams (year, name, country, Driver1, Driver2, CarSpeed, NumberofStaff, Facilities, StartingBalance, StartingSponsorship,
 				 CommercialManager, TechnicalDirector) 
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
 				 ?, ?)
 		''', (
 			"default",
 			team.name, 
+			team.country, 
 			team.driver1,
 			team.driver2, 
 			team.car_model.speed, 
@@ -357,6 +362,9 @@ def save_email(model: Model, save_file: sqlite3.Connection) -> None:
 	df = model.inbox.generate_dataframe()
 	df.to_sql("email", save_file, if_exists="replace", index=False)
 
+def save_calendar(model: Model, save_file: sqlite3.Connection) -> None:
+	model.calendar.to_sql("calendar", save_file, if_exists="replace", index=False)
+
 def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mode: str="file") -> None:
 	assert mode in ["file", "memory"]
 
@@ -381,6 +389,7 @@ def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mod
 	load_grid_this_year(conn, model)
 	load_grid_next_year(conn, model)
 	load_email(conn, model)
+	load_calendar(conn, model)
 
 def load_general(conn: sqlite3.Connection, model: Model) -> None:
 	table_name = "general"
@@ -478,3 +487,5 @@ def load_email(conn: sqlite3.Connection, model: Model) -> None:
 	df = pd.read_sql('SELECT * FROM email', conn)
 	model.inbox.load_dataframe(df)
 
+def load_calendar(conn: sqlite3.Connection, model: Model) -> None:
+	model.calendar = pd.read_sql('SELECT * FROM calendar', conn)

@@ -3,4 +3,5 @@ Country: Germany
 Location: Hockenheim
 Title: German Grand Prix
 Laps: 45
-Base Laptime: 84_000
+Base Laptime: 97_000
+Length: 6.823

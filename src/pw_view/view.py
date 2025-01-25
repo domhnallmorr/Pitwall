@@ -46,6 +46,8 @@ class View:
 											  alignment=ft.alignment.center_left,)
 		self.clicked_button_style = ft.ButtonStyle(color=ft.Colors.BLACK, bgcolor=ft.Colors.PRIMARY)
 
+		self.flags_small_path = fr"{self.run_directory}\pw_view\assets\flags_small"
+
 		self.setup_background_images()
 		self.setup_pages()
 		self.setup_windows(team_names)

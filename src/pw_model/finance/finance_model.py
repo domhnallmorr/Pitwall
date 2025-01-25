@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from typing import Deque
 from typing import TYPE_CHECKING, Union
 
+from pw_model.finance.transport_costs import TransportCostsModel
+
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
 	from pw_model.team.team_model import TeamModel
@@ -47,6 +49,12 @@ class FinanceModel:
 		self.balance_history_dates: Deque[datetime] = collections.deque(maxlen=130)
 
 		self.consecutive_weeks_in_debt = 0
+		self.transport_costs_model = TransportCostsModel(self.model)
+		self.season_opening_balance = opening_balance
+
+	@property
+	def season_profit(self) -> int:
+		return self.balance - self.season_opening_balance
 
 	@property
 	def total_staff_costs_per_year(self) -> int:
@@ -107,8 +115,9 @@ class FinanceModel:
 		else:
 			self.consecutive_weeks_in_debt = 0
 		
-	def apply_race_costs(self, race_cost: int=500_000) -> None:
-		self.balance -= race_cost
+	def apply_race_costs(self) -> None:
+		self.transport_costs_model.gen_race_transport_cost()
+		self.balance -= self.transport_costs_model.costs_by_race[-1]
 	
 	def update_balance_history(self) -> None:
 		self.balance_history.append(self.balance)
@@ -128,6 +137,7 @@ class FinanceModel:
 
 		self.model.inbox.new_sponsor_income_email(sponsorship)
 		self.total_sponsorship = sponsorship
+		self.season_opening_balance = self.balance
 
 	def to_dict(self) -> dict[str, Union[int, list[Union[int, str]]]]:
 		return {

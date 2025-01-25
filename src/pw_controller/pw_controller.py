@@ -2,7 +2,8 @@ import copy
 
 from flet import Page
 
-from pw_controller import calander_page_controller, staff_hire_controller, facilities_controller
+from pw_controller import calander_page_controller, facilities_controller
+from pw_controller.staff_page import staff_hire_controller
 from pw_model import pw_base_model
 from pw_view import view
 from pw_controller import race_controller, page_update_controller
@@ -88,7 +89,8 @@ class Controller:
 	def go_to_race_weekend(self) -> None:
 		self.race_controller = race_controller.RaceController(self)
 		data = {
-			"race_title": self.model.season.current_track_model.title
+			"race_title": self.model.season.current_track_model.title,
+			"country": self.model.season.current_track_model.country
 		}
 		self.view.go_to_race_weekend(data)
 
@@ -102,7 +104,7 @@ class Controller:
 		# self.view.main_window.update_advance_btn("advance")
 
 	def post_race_actions(self) -> None:
-		self.model.season.post_race_actions()
+		self.model.season.post_race_actions(self.race_controller.race_model.current_session.winner)
 		self.model.save_career()
 
 		self.page_update_controller.update_standings_page()

@@ -8,6 +8,7 @@ def create_dummy_track():
 		"Title: Austrian Grand Prix",
 		"Laps: 71",
 		"Base Laptime: 84_000",
+		"Length: 4.500"
 	]
 
 	return track_model.TrackModel(None, data)

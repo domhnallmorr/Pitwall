@@ -144,6 +144,8 @@ class GrandPrixModel(session_model.SessionModel):
 			self.retirements.append(participant.name)
 
 	def post_race_actions(self) -> None:
+		self.winner = self.standings_model.leader
+		
 		# update driver stats
 		for idx, row in self.standings_model.dataframe.iterrows():
 			driver = row["Driver"]
@@ -181,8 +183,9 @@ class GrandPrixModel(session_model.SessionModel):
 			self.lap_chart_data[driver][1].insert(0, row["Grid"])
 		
 	def generate_pit_stop_summary(self) -> None:
+		participants = [self.race_weekend_model.get_particpant_model_by_name(driver) for driver in self.standings_model.dataframe["Driver"].values]
 		self.pit_stop_summary = {
-			p.name: p.pitstop_laps for p in self.race_weekend_model.participants
+			p.name: p.pitstop_laps for p in participants
 		}
 
 	def generate_lap_times_summary(self) -> None:

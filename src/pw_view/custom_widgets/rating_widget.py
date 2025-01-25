@@ -3,7 +3,7 @@ import flet as ft
 class RatingWidget(ft.Row):
 	def __init__(self, text: str):
         
-		self.text_widget = ft.Text(text)
+		self.text_widget = ft.Text(text, width=80)
 		self.update_row(50)
 
 		super(RatingWidget, self).__init__(controls=self.controls)

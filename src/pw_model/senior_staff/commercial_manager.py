@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
 	from pw_model.team.team_model import TeamModel
 
-class CommercialManager(SeniorStaff):
+class CommercialManager(SeniorStaff): # type: ignore
 	def __init__(self,
 			  model : Model,
 			  name : str,

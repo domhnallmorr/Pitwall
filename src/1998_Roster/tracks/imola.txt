@@ -1,6 +1,7 @@
 Name: Autodromo Enzo e Dino Ferrari
-Country: Italy
+Country: San Marino
 Location: Imola
 Title: San Marino Grand Prix
 Laps: 62
-Base Laptime: 84_000
+Base Laptime: 81_000
+Length: 4.933

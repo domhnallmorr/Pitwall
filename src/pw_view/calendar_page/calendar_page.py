@@ -3,11 +3,12 @@ from typing import TYPE_CHECKING
 import flet as ft
 import pandas as pd
 from pw_view.custom_widgets import custom_container
+from pw_view.custom_widgets.custom_datatable import CustomDataTable
 
 if TYPE_CHECKING:
 	from pw_view.view import View
 
-class CalendarPage(ft.Column):
+class CalendarPage(ft.Column): # type: ignore
 	def __init__(self, view: View):
 
 		self.view = view
@@ -24,39 +25,16 @@ class CalendarPage(ft.Column):
 
 		calendar.insert(0, "#", calendar.index + 1)
 
-		columns = []
-
 		column_names = calendar.columns.values.tolist()
-		for idx, col in enumerate(column_names):
-			column_content = custom_container.HeaderContainer(self.view, col)
-			columns.append(ft.DataColumn(column_content))
 
-		data = calendar.values.tolist()
-		rows = []
-
-		for row in data:
-			cells = []
-			for cell in row:
-				cells.append(ft.DataCell(ft.Text(cell)))
-
-			rows.append(ft.DataRow(cells=cells))
-
-		self.calendar_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
-									 heading_row_color=ft.Colors.PRIMARY, border_radius=15,)
-
-		column = ft.Column(
-			controls=[self.calendar_table],
-			expand=False,
-			tight=True,
-			spacing=20
-		)
-
-		container = custom_container.CustomContainer(self.view, column, expand=False)
+		self.calendar_table = CustomDataTable(self.view, column_names)
+		flags = calendar["Country"].values.tolist()
+		self.calendar_table.update_table_data(calendar.values.tolist(), flag_col_idx=3, flags=flags)
 
 		self.background_stack = ft.Stack(
 			[
 				self.view.background_image,
-				container
+				self.calendar_table.list_view
 			],
 			expand=True
 		)

@@ -20,13 +20,14 @@ def load_roster(model: Model, roster: str) -> None:
 	conn = sqlite3.connect(f"{model.run_directory}\\{roster}\\roster.db")
 
 	season_file, track_files = checks(model, roster)
-
+	load_tracks(model, track_files)
+	model.calendar = load_season(model, season_file)
+	
 	model.drivers, model.future_drivers = load_drivers(model, conn)
 	model.commercial_managers, model.technical_directors, model.future_managers = load_senior_staff(model, conn)
 	model.teams = load_teams(model, conn)
 
-	load_tracks(model, track_files)
-	model.calendar = load_season(model, season_file)
+
 	
 
 def load_drivers(
@@ -45,6 +46,7 @@ def load_drivers(
 	age_idx = column_names.index("Age")
 	country_idx = column_names.index("Country")
 	speed_idx = column_names.index("Speed")
+	consistency_idx = column_names.index("Consistency")
 	contract_length_idx = column_names.index("ContractLength")
 	salary_idx = column_names.index("Salary")
 
@@ -57,10 +59,11 @@ def load_drivers(
 		age = row[age_idx]
 		country = row[country_idx]
 		speed = row[speed_idx]
+		consistency = row[consistency_idx]
 		contract_length = row[contract_length_idx]
 		salary = row[salary_idx]
 
-		driver = driver_model.DriverModel(model, name, age, country, speed, contract_length, salary)
+		driver = driver_model.DriverModel(model, name, age, country, speed, consistency, contract_length, salary)
 		
 		if "RetiringAge" in column_names:
 			retiring_age_idx = column_names.index("RetiringAge")
@@ -92,6 +95,7 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 	column_names = [column[1] for column in columns]
 
 	name_idx = column_names.index("Name")
+	country_idx = column_names.index("Country")
 	driver1_idx = column_names.index("Driver1")
 	driver2_idx = column_names.index("Driver2")
 	car_speed_idx = column_names.index("CarSpeed")
@@ -111,6 +115,7 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 	for row in teams_table:
 		if row[0].lower() == "default":
 			name = row[name_idx]
+			country = row[country_idx]
 			driver1 = row[driver1_idx]
 			driver2 = row[driver2_idx]
 			car_speed = row[car_speed_idx]
@@ -125,7 +130,7 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 			technical_director = row[technical_director_idx]
 
 			car = car_model.CarModel(car_speed)
-			team = team_model.TeamModel(model, name, driver1, driver2, car, number_of_staff, facilities, starting_balance, starting_sponsorship,
+			team = team_model.TeamModel(model, name, country, driver1, driver2, car, number_of_staff, facilities, starting_balance, starting_sponsorship,
 							   commercial_manager, technical_director)
 			
 			# ensure drivers are correctly loaded
@@ -224,14 +229,14 @@ def load_season(model: Model, season_file: str) -> pd.DataFrame:
 	calendar_data = data[start_idx + 1: end_idx]
 	dataframe_data = []
 
-	columns = ["Week", "Track", "Country", "Location"]
+	columns = ["Week", "Track", "Country", "Location", "Winner"]
 
 	for line in calendar_data:
 		race_data = line.rstrip().split(",")
 		week = int(race_data[1])
 		track = model.get_track_model(race_data[0].rstrip().lstrip())
 
-		dataframe_data.append([week, track.name, track.country, track.location])
+		dataframe_data.append([week, track.name, track.country, track.location, None])
 	
 	calendar = pd.DataFrame(columns=columns, data=dataframe_data)
 

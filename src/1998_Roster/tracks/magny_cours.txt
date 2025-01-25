@@ -3,4 +3,5 @@ Country: France
 Location: Magny-Cours
 Title: French Grand Prix
 Laps: 72
-Base Laptime: 84_000
+Base Laptime: 70_000
+Length: 4.250

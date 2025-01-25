@@ -3,11 +3,12 @@ from typing import TYPE_CHECKING
 import flet as ft
 import pandas as pd
 from pw_view.custom_widgets import custom_container
+from pw_view.custom_widgets.custom_datatable import CustomDataTable
 
 if TYPE_CHECKING:
 	from pw_view.view import View
 
-class GridPage(ft.Column):
+class GridPage(ft.Column): # type: ignore
 	def __init__(self, view: View):
 
 		self.view = view
@@ -45,58 +46,13 @@ class GridPage(ft.Column):
 		self.current_year_btn.text = str(year)
 		self.next_year_btn.text = str(year + 1)
 
-		columns = []
-		for col in grid_this_year_df.columns:
-			column_content = custom_container.HeaderContainer(self.view, col)
-			columns.append(ft.DataColumn(column_content))
-
-		df_data = grid_this_year_df.values.tolist()
-		rows = []
-
-		for row in df_data:
-			cells = []
-			for cell in row:
-				cells.append(ft.DataCell(ft.Text(cell)))
-
-			rows.append(ft.DataRow(cells=cells))
-
-		self.grid_this_year_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
-										   heading_row_color=ft.Colors.PRIMARY)
-
-		self.scrollable_grid_this_year_table = ft.Column(
-			controls=[self.grid_this_year_table],
-			# height=self.view.main_app.window.height - self.view.vscroll_buffer,
-			# expand=True,  # Set height to show scrollbar if content exceeds this height
-			scroll=ft.ScrollMode.AUTO  # Automatically show scrollbar when needed
-		)
+		self.grid_this_year_table = CustomDataTable(self.view, grid_this_year_df.columns.tolist())
+		self.grid_this_year_table.update_table_data(grid_this_year_df.values.tolist())
 
 		# NEXT YEAR
-		columns = []
-		for col in grid_next_year_announced_df.columns:
-			column_content = custom_container.HeaderContainer(self.view, col)
-			columns.append(ft.DataColumn(column_content))
-
-		df_data = grid_next_year_announced_df.values.tolist()
-		rows = []
-
-		for row in df_data:
-			cells = []
-			for cell in row:
-				cells.append(ft.DataCell(ft.Text(cell)))
-
-			rows.append(ft.DataRow(cells=cells))
-
-		self.grid_next_year_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
-										   heading_row_color=ft.Colors.PRIMARY)
-
-		self.scrollable_grid_next_year_table = ft.Column(
-			controls=[self.grid_next_year_table],
-			# height=self.view.main_app.window.height - self.view.vscroll_buffer,
-			# expand=False,  # Set height to show scrollbar if content exceeds this height
-			scroll=ft.ScrollMode.AUTO  # Automatically show scrollbar when needed
-		)
-
-
+		self.grid_next_year_table = CustomDataTable(self.view, grid_next_year_announced_df.columns.tolist())
+		self.grid_next_year_table.update_table_data(grid_next_year_announced_df.values.tolist())
+		
 	def change_display(self, e: ft.ControlEvent) -> None:
 		self.reset_tab_buttons()
 
@@ -107,10 +63,10 @@ class GridPage(ft.Column):
 
 		if mode == "current":
 			self.current_year_btn.style = self.view.clicked_button_style
-			container = custom_container.CustomContainer(self.view, self.scrollable_grid_this_year_table, expand=False)
+			container = self.grid_this_year_table.list_view
 		elif mode == "next":
 			self.next_year_btn.style = self.view.clicked_button_style
-			container = custom_container.CustomContainer(self.view, self.scrollable_grid_next_year_table, expand=False)
+			container = self.grid_next_year_table.list_view
 
 		column = ft.Column(
 			controls=[self.buttons_container, container],

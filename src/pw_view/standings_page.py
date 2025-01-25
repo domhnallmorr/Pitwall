@@ -5,20 +5,20 @@ import flet as ft
 import pandas as pd
 
 from pw_view.custom_widgets import custom_container
+from pw_view.custom_widgets.custom_datatable import CustomDataTable
+
 if TYPE_CHECKING:
 	from pw_view.view import View
 
-class StandingsPage(ft.Column):
+class StandingsPage(ft.Column): # type: ignore
 	def __init__(self, view: View):
 
 		self.view = view
-		self.setup_standings_tables()
 		self.setup_buttons_row()
 
 		contents = [
 			ft.Text("Standings", theme_style=self.view.page_header_style),
 			self.buttons_row,
-			self.drivers_table
 		]
 
 		super().__init__(controls=contents, alignment=ft.MainAxisAlignment.START, expand=True)
@@ -27,33 +27,6 @@ class StandingsPage(ft.Column):
 		# When a button is clicked to view a different tab, reset all buttons style
 		self.drivers_btn.style = None
 		self.contructors_btn.style = None
-
-
-	def setup_standings_tables(self) -> None:
-
-		self.drivers_table = ft.DataTable(
-			columns=[
-                ft.DataColumn(ft.Text("Driver")),
-                ft.DataColumn(ft.Text("Team")),
-                ft.DataColumn(ft.Text("Points"), numeric=True),
-            ],
-            rows=[
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text("Jacques Villeneuve")),
-                        ft.DataCell(ft.Text("Williams")),
-                        ft.DataCell(ft.Text("0")),
-                    ],
-                ),
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text("Jack")),
-                        ft.DataCell(ft.Text("Brown")),
-                        ft.DataCell(ft.Text("19")),
-                    ],
-                ),
-            ],
-        )
 
 	def setup_buttons_row(self) -> None:
 		self.drivers_btn = ft.TextButton("Drivers", on_click=self.display_drivers, expand=False)
@@ -70,59 +43,16 @@ class StandingsPage(ft.Column):
 
 		self.buttons_container = custom_container.CustomContainer(self.view, self.buttons_row, expand=False)
 
-	def update_standings(self, drivers_standings_df: pd.DataFrame, constructors_standings_df: pd.DataFrame) -> None:
+	def update_standings(self, drivers_standings_df: pd.DataFrame, constructors_standings_df: pd.DataFrame,
+					  drivers_flags: list[str], team_flags: list[str]) -> None:
 	
 		# DRIVERS
-		columns = []
-		for col in drivers_standings_df.columns:
-			column_content = custom_container.HeaderContainer(self.view, col)
-			columns.append(ft.DataColumn(column_content))
-
-		data = drivers_standings_df.values.tolist()
-		rows = []
-
-		for row in data:
-			cells = []
-			for cell in row:
-				cells.append(ft.DataCell(ft.Text(cell)))
-
-			rows.append(ft.DataRow(cells=cells))
-
-		self.drivers_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
-									heading_row_color=ft.Colors.PRIMARY)
-
-		self.scrollable_drivers_table = ft.ListView(expand=True, auto_scroll=False)
-		self.scrollable_drivers_table.controls.append(custom_container.CustomContainer(self.view, self.drivers_table, expand=False))
+		self.drivers_table = CustomDataTable(self.view, drivers_standings_df.columns.tolist())
+		self.drivers_table.update_table_data(drivers_standings_df.values.tolist(), flag_col_idx=0, flags=drivers_flags)
 
 		# CONSTRUCTORS
-		 
-		columns = []
-		for col in constructors_standings_df.columns:
-			column_content = custom_container.HeaderContainer(self.view, col)
-			columns.append(ft.DataColumn(column_content))
-
-		data = constructors_standings_df.values.tolist()
-		rows = []
-
-		for row in data:
-			cells = []
-			for idx, cell in enumerate(row):
-				if constructors_standings_df.columns.values.tolist()[idx] == "Rnd":
-					if cell is not None:
-						cell += 1 # best result rnd is zero indexed in the dataframe
-				cells.append(ft.DataCell(ft.Text(cell)))
-
-			rows.append(ft.DataRow(cells=cells))
-
-		self.constructors_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30,
-										 heading_row_color=ft.Colors.PRIMARY)		
-
-		self.scrollable_constructors_table = ft.Column(
-			controls=[self.constructors_table],
-			# height=700,
-			# expand=True,  # Set height to show scrollbar if content exceeds this height
-			scroll=ft.ScrollMode.AUTO  # Automatically show scrollbar when needed
-		)
+		self.constructors_table = CustomDataTable(self.view, constructors_standings_df.columns.tolist())
+		self.constructors_table.update_table_data(constructors_standings_df.values.tolist(), flag_col_idx=0, flags=team_flags)		 
 
 		self.display_drivers(None)
 		self.view.main_app.update()
@@ -142,9 +72,9 @@ class StandingsPage(ft.Column):
 		assert mode in ["drivers", "constructors"]
 
 		if mode == "drivers":
-			container = custom_container.CustomContainer(self.view, self.scrollable_drivers_table, expand=True)
+			container = self.drivers_table.list_view
 		elif mode == "constructors":
-			container = custom_container.CustomContainer(self.view, self.scrollable_constructors_table, expand=False)
+			container = self.constructors_table.list_view
 
 		column = ft.Column(
 			controls=[self.buttons_container, container],

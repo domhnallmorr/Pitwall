@@ -45,7 +45,8 @@ class TrackModel:
 				self.number_of_laps = int(line.split(":")[1].lstrip())
 			if line.startswith("Base Laptime:"):
 				self.base_laptime = int(line.split(":")[1].lstrip())
-
+			if line.startswith("Length:"):
+				self.length = float(line.split(":")[1].lstrip()) # in km
 
 		assert self.name != ""
 		assert self.country != ""
@@ -53,4 +54,5 @@ class TrackModel:
 		assert self.title != ""
 		assert self.number_of_laps > 0
 		assert self.base_laptime > 0
+		assert self.length > 0.0
 	

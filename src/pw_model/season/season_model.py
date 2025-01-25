@@ -120,6 +120,7 @@ class SeasonModel:
 		self.next_race_idx: Union[None, int] = 0
 
 		self.standings_manager = standings_manager.StandingsManager(self.model)
+		self.model.calendar["Winner"] = None
 
 	def advance_one_week(self) -> None:
 
@@ -138,8 +139,9 @@ class SeasonModel:
 			if self.next_race_idx > self.model.calendar.shape[0] - 1:
 				self.next_race_idx = None
 
-	def post_race_actions(self) -> None:
-
-		self.update_next_race()
+	def post_race_actions(self, winner: str) -> None:
+		# Update winner 
+		self.model.calendar.at[self.next_race_idx, "Winner"] = winner
 		# Update finances with race costs
 		self.model.player_team_model.finance_model.apply_race_costs()
+		self.update_next_race()

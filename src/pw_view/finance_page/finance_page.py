@@ -56,6 +56,8 @@ class FinancePage(ft.Column):
 		super().__init__(expand=1, controls=contents)
 
 	def setup_widgets(self) -> None:
+		self.profit_text = ft.Text(f"Profit/Loss This Season: $1")
+
 		self.sponsor_income_text = ft.Text(f"Sponsorship: $1")
 		self.prize_money_income_text = ft.Text(f"Prize Money: $1")
 		self.drivers_payments_text = ft.Text(f"Drivers Payments: $1")
@@ -69,9 +71,29 @@ class FinancePage(ft.Column):
 		self.car_costs_text = ft.Text(f"Car Costs: $1")
 		self.total_expenditure_text = ft.Text(f"Total: $1")
 
+		self.summary_header = custom_container.HeaderContainer(self.view, "Summary")
 		self.income_header = custom_container.HeaderContainer(self.view, "Income")
 		self.expenditure_header = custom_container.HeaderContainer(self.view, "Expenditure")
 
+		#SUMMARY
+		column = ft.Column(
+			controls=[
+					self.summary_header,
+					self.profit_text,
+					ft.Text(),# dummy text widget so that income and expenditure have the same number of rows
+					ft.Text(),
+					ft.Text(),
+					ft.Text(),
+					ft.Text(),
+					ft.Text(),
+					ft.Text(),
+			],
+			expand=True
+		)
+
+		self.summary_container = custom_container.CustomContainer(self.view, column, expand=True)
+
+		# INCOME
 		column = ft.Column(
 			controls=[
 					self.income_header,
@@ -107,7 +129,7 @@ class FinancePage(ft.Column):
 		
 		self.expenditure_container = custom_container.CustomContainer(self.view, column, expand=True)
 
-		self.summary_row = ft.Row(controls=[self.income_container, self.expenditure_container], expand=False)
+		self.summary_row = ft.Row(controls=[self.summary_container, self.income_container, self.expenditure_container], expand=False)
 
 		self.setup_plot()
 
@@ -115,6 +137,8 @@ class FinancePage(ft.Column):
 		self.chart_container = custom_container.CustomContainer(self.view, self.history_chart, expand=True)
 
 	def update_page(self, data: FinanceData) -> None:
+		self.profit_text.value = f"Profit/Loss This Season: ${data['profit']:,}"
+
 		self.sponsor_income_text.value = f"Sponsorship: ${data['total_sponsorship']:,}"
 		self.prize_money_income_text.value = f"Prize Money: ${data['prize_money']:,}"
 		self.drivers_payments_text.value = f"Drivers Payments: ${data['drivers_payments']:,}"
@@ -124,7 +148,7 @@ class FinancePage(ft.Column):
 		self.drivers_salary_text.value = f"Drivers Salary: ${data['drivers_salary']:,}"
 		self.technical_director_salary_text.value = f"Technical Director: ${data['technical_director_salary']:,}"
 		self.commercial_manager_salary_text.value = f"Commercial Manager: ${data['commercial_manager_salary']:,}"
-		self.race_costs_text.value = f"Race Costs: ${data['race_costs']:,}"
+		self.race_costs_text.value = f"Transport Costs: ${data['race_costs']:,} (Estimated)"
 		self.car_costs_text.value = f"Car Costs: ${data['car_costs']:,}"
 		self.total_expenditure_text.value = f"Total: ${data['total_expenditure']:,}"
 

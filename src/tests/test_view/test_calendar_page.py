@@ -37,7 +37,7 @@ def test_update_page_f1_schedule_short(mock_view, f1_schedule_short):
 
     # Verify the table creation
     assert hasattr(calendar_page, "calendar_table")
-    table = calendar_page.calendar_table
+    table = calendar_page.calendar_table.data_table
     assert isinstance(table, ft.DataTable)
     assert len(table.columns) == f1_schedule_short.shape[1]
     assert len(table.rows) == len(f1_schedule_short)  # Rows match the data
@@ -51,7 +51,7 @@ def test_update_page_f1_schedule_short(mock_view, f1_schedule_short):
     first_row = table.rows[0]
     assert first_row.cells[1].content.value == 10  # Week
     assert first_row.cells[2].content.value == "Albert Park"  # Track
-    assert first_row.cells[3].content.value == "Australia"  # Country
+    assert first_row.cells[3].content.controls[1].value == "Australia"  # Country
     assert first_row.cells[4].content.value == "Melbourne"  # Location
 
     # Ensure the view's main_app.update was called

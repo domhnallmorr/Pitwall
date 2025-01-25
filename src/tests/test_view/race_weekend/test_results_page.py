@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 from pw_view.race_weekend.results_window import ResultsWindow
 from race_weekend_model.race_model_enums import SessionNames
+from pw_controller.race_controller import RaceSessionData
 import flet as ft
 
 @pytest.fixture
@@ -69,22 +70,28 @@ def gen_dummy_data():
         "Grid": [1, 2]
     }
     standings_df = pd.DataFrame(sample_data)
+    driver_flags = ["Australia", "Japan"]
     
-    return standings_df
+    return standings_df, driver_flags
 
 def test_setup_classification_table(results_window):
-    standings_df = gen_dummy_data()
-    results_window.setup_classification_table(standings_df, current_session=SessionNames.RACE)
+    standings_df, driver_flags = gen_dummy_data()
+    results_window.setup_classification_table(standings_df, current_session=SessionNames.RACE, driver_flags=driver_flags)
     assert results_window.results_table is not None
-    assert len(results_window.results_table.rows) == len(standings_df)
+    assert len(results_window.results_table.data_table.rows) == len(standings_df)
 
 def test_ms_to_min_sec(results_window):
     assert results_window.ms_to_min_sec(65000) == "1:05.000"
     assert results_window.ms_to_min_sec(30000, interval=True) == "+30.000"
 
 def test_display_classification(results_window):
-    standings_df = gen_dummy_data()
-    results_window.update_page({"current_session": SessionNames.QUALIFYING, "standings_df": standings_df})
+    standings_df, driver_flags = gen_dummy_data()
+    data: RaceSessionData = {
+			"current_session": SessionNames.QUALIFYING,
+			"standings_df": standings_df,
+			"driver_flags": driver_flags
+		}
+    results_window.update_page(data)
     results_window.display_classification()
     assert results_window.classification_btn.style == results_window.view.clicked_button_style
 

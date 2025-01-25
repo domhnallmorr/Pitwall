@@ -3,4 +3,5 @@ Country: Canada
 Location: Montreal
 Title: Canadian Grand Prix
 Laps: 70
-Base Laptime: 84_000
+Base Laptime: 73_000
+Length: 4.421

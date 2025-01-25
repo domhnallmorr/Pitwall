@@ -76,3 +76,10 @@ def sponsor_income_update_email(sponsorship: int) -> str:
     ]
       
     return random.choice(messages)
+
+def transport_costs_email(cost: int) -> str:
+     messages = [
+          f"Transport costs for the last race totalled ${cost :,}"
+     ]
+
+     return random.choice(messages)

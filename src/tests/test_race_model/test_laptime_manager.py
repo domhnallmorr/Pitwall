@@ -10,6 +10,7 @@ def mock_participant():
     mock = Mock()
     mock.track_model = test_track_model.create_dummy_track()
     mock.driver.speed = 90
+    mock.driver.consistency = 50
     mock.car_model.speed = 85
     mock.car_model.fuel_effect = 0.3
     mock.car_model.tyre_wear = 0.2

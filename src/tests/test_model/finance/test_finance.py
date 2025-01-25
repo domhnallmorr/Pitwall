@@ -44,10 +44,9 @@ def test_balance_update():
 		assert team_model.finance_model.balance_history[-1] == team_model.finance_model.balance
 
 		last_balance = team_model.finance_model.balance
-		race_cost = random.randint(80, 2_000_000)
-		team_model.finance_model.apply_race_costs(race_cost)
+		team_model.finance_model.apply_race_costs()
 
-		assert team_model.finance_model.balance == last_balance - race_cost
+		assert team_model.finance_model.balance == last_balance - team_model.finance_model.transport_costs_model.costs_by_race[-1]
 		
 def test_prize_money_update():
 	'''

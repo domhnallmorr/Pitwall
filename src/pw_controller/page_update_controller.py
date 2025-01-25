@@ -10,6 +10,7 @@ import pandas as pd
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.finance import finance_data
 from pw_controller.page_update_typed_dicts import HomePageData
+from pw_controller.staff_page.staff_page_data import get_staff_page_data
 
 if TYPE_CHECKING:
 	from pw_controller.pw_controller import Controller
@@ -40,54 +41,16 @@ class PageUpdateController:
 		self.update_facilities_page()
 
 	def update_staff_page(self, new_season: bool=False) -> None:
-		team_model = self.model.get_team_model(self.model.player_team)
-
-		staff_values = [[team.name, team.number_of_staff] for team in self.model.teams]
-		staff_values.sort(key=lambda x: x[1], reverse=True) # sort, highest to lowest
-
-		#TODO player_requiring_technical_director works, but seems brittle, needs dedicated method
-		data = {
-			"driver1": team_model.driver1,
-			"driver1_age": team_model.driver1_model.age,
-			"driver1_country": team_model.driver1_model.country,
-			"driver1_speed": team_model.driver1_model.speed,
-			"driver1_contract_length": team_model.driver1_model.contract.contract_length,
-			"driver1_salary": team_model.driver1_model.contract.salary,
-			"driver1_retiring": team_model.driver1_model.retiring,
-			"player_requiring_driver1": self.model.staff_market.player_requiring_driver1,
-
-			"driver2": team_model.driver2,
-			"driver2_age": team_model.driver2_model.age,
-			"driver2_country": team_model.driver2_model.country,
-			"driver2_speed": team_model.driver2_model.speed,
-			"driver2_contract_length": team_model.driver2_model.contract.contract_length,
-			"driver2_salary": team_model.driver2_model.contract.salary,
-			"driver2_retiring": team_model.driver2_model.retiring,
-			"player_requiring_driver2": self.model.staff_market.player_requiring_driver2,
-
-			"commercial_manager": team_model.commercial_manager,
-			"commercial_manager_age": team_model.commercial_manager_model.age,
-			"commercial_manager_contract_length": team_model.commercial_manager_model.contract.contract_length,
-			"commercial_manager_skill": team_model.commercial_manager_model.skill,
-			"player_requiring_commercial_manager": self.model.staff_market.compile_teams_requiring_manager(StaffRoles.COMMERCIAL_MANAGER),
-
-			"technical_director": team_model.technical_director,
-			"technical_director_age": team_model.technical_director_model.age,
-			"technical_director_contract_length": team_model.technical_director_model.contract.contract_length,
-			"technical_director_skill": team_model.technical_director_model.skill,
-			"player_requiring_technical_director": self.model.staff_market.compile_teams_requiring_manager(StaffRoles.TECHNICAL_DIRECTOR),
-			
-			"staff_values": staff_values,
-
-		}
-
-		self.view.staff_page.update_page(copy.deepcopy(data), new_season)
+		data = get_staff_page_data(self.model)
+		self.view.staff_page.update_page(data, new_season)
 
 	def update_standings_page(self) -> None:
 		drivers_standings_df = self.model.season.standings_manager.drivers_standings_df.copy(deep=True)
 		constructors_standings_df = self.model.season.standings_manager.constructors_standings_df.copy(deep=True)
 
-		self.view.standings_page.update_standings(drivers_standings_df, constructors_standings_df)
+		drivers_flags = [self.model.get_driver_model(d).country for d in drivers_standings_df["Driver"].values]
+		team_flags = [self.model.get_team_model(t).country for t in constructors_standings_df["Team"].values]
+		self.view.standings_page.update_standings(drivers_standings_df, constructors_standings_df, drivers_flags, team_flags)
 
 	def update_email_page(self) -> None:
 		emails = copy.deepcopy(self.model.inbox.emails)
@@ -95,6 +58,8 @@ class PageUpdateController:
 
 	def update_finance_page(self) -> None:
 		data: finance_data.FinanceData = {
+			"profit": copy.deepcopy(self.model.player_team_model.finance_model.season_profit),
+
 			"total_sponsorship": copy.deepcopy(self.model.player_team_model.finance_model.total_sponsorship),
 			"prize_money": copy.deepcopy(self.model.player_team_model.finance_model.prize_money),
 			"drivers_payments": copy.deepcopy(self.model.player_team_model.finance_model.drivers_payments),
@@ -104,7 +69,7 @@ class PageUpdateController:
 			"drivers_salary": copy.deepcopy(self.model.player_team_model.finance_model.drivers_salary),
 			"technical_director_salary": copy.deepcopy(self.model.player_team_model.technical_director_model.contract.salary),
 			"commercial_manager_salary": copy.deepcopy(self.model.player_team_model.commercial_manager_model.contract.salary),
-			"race_costs": 8_000_000, # hard code this for now TODO, make it variable
+			"race_costs": self.model.player_team_model.finance_model.transport_costs_model.estimated_season_costs,
 			"car_costs": self.model.player_team_model.finance_model.car_cost, 
 			"total_expenditure": copy.deepcopy(self.model.player_team_model.finance_model.total_expenditure), # hard code this for now TODO, make it variable
 			

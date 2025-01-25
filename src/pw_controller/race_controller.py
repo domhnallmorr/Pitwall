@@ -1,13 +1,23 @@
 from __future__ import annotations
 # from tkinter import *
 import threading
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
+
+import pandas as pd
 
 from race_weekend_model import race_weekend_model
 from race_weekend_model.race_model_enums import SessionNames
 
 if TYPE_CHECKING:
 	from pw_controller.pw_controller import Controller
+
+class RaceSessionData(TypedDict):
+	current_session: SessionNames
+	standings_df: pd.DataFrame
+	driver_flags: list[str]
+	lap_chart_data: list | None
+	pit_stop_summary: list | None
+	lap_times_summary: list | None
 
 class RaceController:
 	def __init__(self, controller: Controller):
@@ -36,9 +46,11 @@ class RaceController:
 
 			simulation_thread.join() # wait for simulation to stop running
 
-		data = {
+		standings_df = self.race_model.current_session.standings_model.dataframe.copy(deep=True)
+		data: RaceSessionData = {
 			"current_session": session,
-			"standings_df": self.race_model.current_session.standings_model.dataframe.copy(deep=True),
+			"standings_df": standings_df,
+			"driver_flags": [self.controller.model.get_driver_model(d).country for d in standings_df["Driver"].values]
 		}
 
 		# Add race specific data

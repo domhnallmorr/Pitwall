@@ -17,7 +17,9 @@ if TYPE_CHECKING:
 	from pw_model.car.car_model import CarModel
 
 class TeamModel:
-	def __init__(self, model: Model, name: str, driver1: str, driver2: str,
+	def __init__(self, model: Model, name: str,
+			  country: str,
+			  driver1: str, driver2: str,
 			  car_model: CarModel,
 			  number_of_staff : int, 
 			  facilities : int, 
@@ -28,6 +30,7 @@ class TeamModel:
 		
 		self.model = model
 		self.name = name
+		self.country = country
 		self.driver1 = driver1 # name of driver1/2
 		self.driver2 = driver2
 		self.car_model = car_model

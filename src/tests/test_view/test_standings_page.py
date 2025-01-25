@@ -19,11 +19,6 @@ def standings_page(mock_view):
     """Fixture for initializing the StandingsPage."""
     return StandingsPage(view=mock_view)
 
-def test_initialization(standings_page):
-    """Test if the StandingsPage initializes correctly."""
-    assert standings_page.drivers_table is not None
-    assert standings_page.buttons_row is not None
-
 def test_display_drivers(standings_page, mock_view):
     """Test the display_drivers method."""
     drivers_df, constructors_df = update_standings(standings_page)
@@ -40,10 +35,10 @@ def test_update_standings(standings_page):
     drivers_df, constructors_df = update_standings(standings_page)
 
     assert standings_page.drivers_table is not None
-    assert len(standings_page.drivers_table.rows) == len(drivers_df)
+    assert len(standings_page.drivers_table.data_table.rows) == len(drivers_df)
 
     assert standings_page.constructors_table is not None
-    assert len(standings_page.constructors_table.rows) == len(constructors_df)
+    assert len(standings_page.constructors_table.data_table.rows) == len(constructors_df)
 
 def test_reset_tab_buttons(standings_page):
     """Test the reset_tab_buttons method."""
@@ -66,6 +61,6 @@ def update_standings(standings_page):
     drivers_df = pd.DataFrame(drivers_data)
     constructors_df = pd.DataFrame(constructors_data)
 
-    standings_page.update_standings(drivers_standings_df=drivers_df, constructors_standings_df=constructors_df)
+    standings_page.update_standings(drivers_standings_df=drivers_df, constructors_standings_df=constructors_df, drivers_flags=None, team_flags=None)
     
     return drivers_df, constructors_df

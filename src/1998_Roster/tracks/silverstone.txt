@@ -1,6 +1,7 @@
 Name: Silverstone Circuit
-Country: UK
+Country: United Kingdom
 Location: Silverstone
 Title: British Grand Prix
 Laps: 60
-Base Laptime: 84_000
+Base Laptime: 79_000
+Length: 5.140

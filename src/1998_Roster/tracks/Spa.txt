@@ -3,4 +3,5 @@ Country: Belgium
 Location: Stavelot
 Title: Belgian Grand Prix
 Laps: 44
-Base Laptime: 84_000
+Base Laptime: 104_000
+Length: 6.968

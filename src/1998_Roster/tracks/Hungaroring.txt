@@ -3,4 +3,5 @@ Country: Hungary
 Location: Budapest
 Title: Hungarian Grand Prix
 Laps: 77
-Base Laptime: 84_000
+Base Laptime: 73_000
+Length: 3.972

@@ -21,7 +21,12 @@ class RaceWeekendWindow(ft.View):
 		self.simulate_buttons: dict[SessionNames, ft.TextButton] = {}
 		self.simulate_btns_clicked: list[SessionNames] = []
 
+		flag_path = fr"{self.view.flags_small_path}\{data['country']}.png"
+		flag = ft.Image(
+                                src=flag_path,
+								)
 		self.header_text = ft.Text(data["race_title"], theme_style=self.view.page_header_style)
+		self.header_row = ft.Row(controls=[flag, self.header_text])
 
 		# friday_container = self.setup_session_container("Friday Practice")
 		# saturday_container = self.setup_session_container("Saturday Practice")
@@ -60,7 +65,7 @@ class RaceWeekendWindow(ft.View):
 		)
 
 		controls = [
-			self.header_text,
+			self.header_row,
 			self.background_stack,
 		]
 
