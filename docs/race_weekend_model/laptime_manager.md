@@ -36,7 +36,7 @@ self.laptime_variation = LAP_TIME_VARIATION_BASE + additonal_laptime_variaton
 
 Below shows a laptime comparison of a driver with a consistency rating of 90 and 20.
 
-![consistency](lap_time_consistency.png)
+![consistency](lap_time_consistency.jpg)
 
 ### 3. Calculating a Lap Time
 Each lap time is determined using:
