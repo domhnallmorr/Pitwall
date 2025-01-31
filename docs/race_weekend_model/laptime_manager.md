@@ -34,8 +34,13 @@ self.laptime_variation = LAP_TIME_VARIATION_BASE + additonal_laptime_variaton
 - `LAP_TIME_VARIATION` is an additional 400ms that applies depending on driver consistency.
 - A driver with **100 consistency** has **0ms additional variation**, while a driver with **0 consistency** has the full **400ms additional variation**.
 
+Below shows a laptime comparison of a driver with a consistency rating of 90 and 20.
+
+![consistency](lap_time_consistency.png)
+
 ### 3. Calculating a Lap Time
 Each lap time is determined using:
+
 ```python
 random_time_loss = self.randomiser.random_laptime_loss()
 self.laptime = self.base_laptime + random_time_loss + self.car_model.fuel_effect + self.car_model.tyre_wear + dirty_air_effect
@@ -60,7 +65,8 @@ The first lap is handled differently because cars start from a grid position and
 random_time_loss = self.randomiser.random_lap1_time_loss()
 self.laptime = self.track_model.base_laptime + LAP1_TIME_LOSS + (idx * LAP1_TIME_LOSS_PER_POSITION) + random_time_loss
 ```
-Here, `idx` represents the car's position after turn 1, which increases lap time losses due to congestion.
+
+Here, `idx` represents the car's position after turn 1, which increases lap time losses due to congestion. The intent of this calculation is to spread the field out after turn 1. No position changes after turn 1 can occur.
 
 ### 6. Adjusting Time When Overtaken
 When a car is overtaken, its lap time is revised:
@@ -68,9 +74,11 @@ When a car is overtaken, its lap time is revised:
 self.laptime = revised_laptime
 self.laptimes[-1] = revised_laptime
 ```
+
 This ensures that the total time reflects the real-time loss from being passed.
 
 ## Summary of Factors Affecting Lap Times
+
 | Factor                | Effect on Lap Time |
 |-----------------------|-------------------|
 | Track Base Lap Time  | Baseline for all calculations |
