@@ -13,60 +13,60 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 ## UI Improvements
 
-[x] Add country flags
-- Need page for each track (overtaking difficulty and any other track details)
-[x] Improve Email page
-- Improve team selection page
-[] Need somewhere to view title sponsorss
+- [x] Add country flags
+- [ ] Need page for each track (overtaking difficulty and any other track details)
+- [x] Improve Email page
+- [ ] Improve team selection page
+- [ ] Need somewhere to view title sponsorss
 
 ## Off Track Features
 
 ### Finance
 
-- Add projections for year
-[x] Race costs should vary by distance from Europe
-- Crash damage costs
-- Track profit/loss
-- Car development costs
+- [ ] Add projections for year
+- [x] Race costs should vary by distance from Europe
+- [ ] Crash damage costs
+- [ ] Track profit/loss
+- [ ] Car development costs
 
 ### Car
 
-- Add car development to increase car speed
+- [ ] Add car development to increase car speed
 
 ### Sponsors
 
-[] Add title sponsors, static
-[] Have "other sponsorship" attribute
+- [ ] Add title sponsors, static
+- [ ] Have "other sponsorship" attribute
 
 ### Drivers
 
-[x] Add consistency attribute
+- [x] Add consistency attribute
 
 ### Contract Negotiations
 
-- Drivers take some time to respond to offers
+- [ ] Drivers take some time to respond to offers
 		
 ### Other
 
-- Add team principal as staff member to AI teams, static
-- Replace real driver names with fake names
-[x] Add winner column to calendar page
-[x] Add track lengths
+- [ ] Add team principal as staff member to AI teams, static
+- [ ] Replace real driver names with fake names
+- [x] Add winner column to calendar page
+- [x] Add track lengths
 
 ## On Track
 
-- Add overtake difficulty attribute to tracks
-- Add random driver crashes
-[x] Proper base laptime for each track
+- [ ] Add overtake difficulty attribute to tracks
+- [ ] Add random driver crashes
+- [x] Proper base laptime for each track
 
 ## Refactoring
 
-[x] Add a custom widget for datatables
-- Reduce use of dictionaries to improve type hinting
-- Improve use of enums
-- Review and improve grand_prix_model
-- Improve use of randomisers
-- Improve load_roster function
+- [x] Add a custom widget for datatables
+- [ ] Reduce use of dictionaries to improve type hinting
+- [ ] Improve use of enums
+- [ ] Review and improve grand_prix_model
+- [ ] Improve use of randomisers
+- [ ] Improve load_roster function
 
 
 # V2 Overview
