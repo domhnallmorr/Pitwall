@@ -15,19 +15,19 @@ from pw_model.senior_staff import commercial_manager, technical_director
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
 
-def load_roster(model: Model, roster: str) -> None:
+def load_roster(model: Model, roster: str) -> pd.DataFrame:
 
 	conn = sqlite3.connect(f"{model.run_directory}\\{roster}\\roster.db")
 
 	season_file, track_files = checks(model, roster)
 	load_tracks(model, track_files)
-	model.calendar = load_season(model, season_file)
+	calendar_dataframe = load_season(model, season_file)
 	
 	model.drivers, model.future_drivers = load_drivers(model, conn)
 	model.commercial_managers, model.technical_directors, model.future_managers = load_senior_staff(model, conn)
 	model.teams = load_teams(model, conn)
 
-
+	return calendar_dataframe
 	
 
 def load_drivers(
@@ -238,9 +238,9 @@ def load_season(model: Model, season_file: str) -> pd.DataFrame:
 
 		dataframe_data.append([week, track.name, track.country, track.location, None])
 	
-	calendar = pd.DataFrame(columns=columns, data=dataframe_data)
+	calendar_dataframe = pd.DataFrame(columns=columns, data=dataframe_data)
 
-	return calendar
+	return calendar_dataframe
 	
 def load_tracks(model: Model, track_files: list[str]) -> None:
 	for file in track_files:

@@ -121,7 +121,7 @@ class FinanceModel:
 	
 	def update_balance_history(self) -> None:
 		self.balance_history.append(self.balance)
-		self.balance_history_dates.append(datetime(self.model.year, 1, 1) + timedelta(weeks=self.model.season.current_week - 1))
+		self.balance_history_dates.append(datetime(self.model.year, 1, 1) + timedelta(weeks=self.model.season.calendar.current_week - 1))
 
 	def update_prize_money(self, finishing_position: int) -> None:
 		self.prize_money = calculate_prize_money(finishing_position)
@@ -138,6 +138,7 @@ class FinanceModel:
 		self.model.inbox.new_sponsor_income_email(sponsorship)
 		self.total_sponsorship = sponsorship
 		self.season_opening_balance = self.balance
+		self.transport_costs_model.setup_new_season()
 
 	def to_dict(self) -> dict[str, Union[int, list[Union[int, str]]]]:
 		return {

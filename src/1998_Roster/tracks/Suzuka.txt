@@ -3,5 +3,5 @@ Country: Japan
 Location: Suzuka
 Title: Japanese Grand Prix
 Laps: 53
-Base Laptime: 62_000
+Base Laptime: 90_000
 Length: 5.860

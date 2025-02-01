@@ -4,7 +4,7 @@ Objective for V2 is to flesh the game out, with a basic representation of the co
 
 Off track, this will include car development, sponsorship deals and engine/tyre suppliers. A basic representation of contract negotiation for drivers and senior staff will be added.
 
-On track, extra details in the races will be added, such as crashes and driver mistakes. A timing screen view will be added to view the sessions. 
+On track, extra details in the races will be added, such as crashes and driver mistakes. 
 
 The bottom of this page includes a high level overview of additions for V2. Below, a specific roadmap to V1.10 is provided.
 
@@ -13,18 +13,18 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 ## UI Improvements
 
-- <span style="background-color: #115407">Add country flags</span>
+[x] Add country flags
 - Need page for each track (overtaking difficulty and any other track details)
-- Improve Email page
+[x] Improve Email page
 - Improve team selection page
-
+[] Need somewhere to view title sponsorss
 
 ## Off Track Features
 
 ### Finance
 
 - Add projections for year
-- <span style="background-color: #115407">Race costs should vary by distance from Europe</span>
+[x] Race costs should vary by distance from Europe
 - Crash damage costs
 - Track profit/loss
 - Car development costs
@@ -35,12 +35,12 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 ### Sponsors
 
-- Add title sponsors
-- Have "other sponsorship" attribute
+[] Add title sponsors, static
+[] Have "other sponsorship" attribute
 
 ### Drivers
 
-- <span style="background-color: #115407">Add consistency attribute</span>
+[x] Add consistency attribute
 
 ### Contract Negotiations
 
@@ -48,21 +48,21 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 		
 ### Other
 
-- Add team principal as staff member to AI teams
+- Add team principal as staff member to AI teams, static
 - Replace real driver names with fake names
-- <span style="background-color: #115407">Add winner column to calendar page</span>
-- <span style="background-color: #115407">Add track lengths</span>
+[x] Add winner column to calendar page
+[x] Add track lengths
 
 ## On Track
 
 - Add overtake difficulty attribute to tracks
 - Add random driver crashes
-- <span style="background-color: #115407">Proper base laptime for each track</span>
+[x] Proper base laptime for each track
 
 ## Refactoring
 
-- <span style="background-color: #115407">Add a custom widget for datatables</span>
-- Reduce use of dictioaries to improve type hinting
+[x] Add a custom widget for datatables
+- Reduce use of dictionaries to improve type hinting
 - Improve use of enums
 - Review and improve grand_prix_model
 - Improve use of randomisers
@@ -73,19 +73,17 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 - Car development
 - Next years car development
-- Engine/tyre customer/partner/works deals
+- Engine/tyre suppliers
 - Title sponsors
-- Wet races (weather will be static)
 - Pay Drivers
-- Reliability of various components
+- Reliability of car
 - Car wear
 - Additonal driver attributes
 - Additonal details in races
-	Crashes
-	Mistakes
-	Overtaking difficulty per track
-	1st turn incidents
-- Add timing screen page for on-track sessions
+	- Crashes
+	- Mistakes
+	- Overtaking difficulty per track
+	- 1st turn incidents
 - Save previous season results/stats
 - Improve existing code base
 - Improve pit strategies

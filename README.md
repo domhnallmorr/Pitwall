@@ -55,8 +55,6 @@ poetry run flet main.py
  
 ## Preview
 
-![p0](preview/title_screen.png)
-
 ![p1](preview/preview1.png)
 
 ![p2](preview/preview2.png)

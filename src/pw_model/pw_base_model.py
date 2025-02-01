@@ -38,11 +38,11 @@ class Model:
 		self.future_managers: List[Union[CommercialManager, TechnicalDirector]] = []
 
 		if roster is not None:
-			load_roster.load_roster(self, roster)
+			calendar_dataframe = load_roster.load_roster(self, roster)
 		
 		self.player_team = self.teams[0].name # set player team initally to first team in roster. This is so the view can setup all the pages on startup
 		self.year = 1998
-		self.season = season_model.SeasonModel(self)
+		self.season = season_model.SeasonModel(self, calendar_dataframe)
 
 		self.staff_market = staff_market.StaffMarket(self)
 		self.end_season(increase_year=False, start_career=True)
@@ -116,7 +116,7 @@ class Model:
 	def advance(self) -> None:
 		self.inbox.reset_number_new_emails()
 		
-		if self.season.current_week == 51:
+		if self.season.calendar.current_week == 51:
 			self.staff_market.ensure_player_has_drivers_for_next_season()
 			
 		self.season.advance_one_week()

@@ -4,7 +4,8 @@ import os
 
 import flet as ft
 
-from pw_view import main_window, email_page, standings_page, grid_page
+from pw_view import main_window, standings_page, grid_page
+from pw_view.email_page.email_page import EmailPage
 from pw_view.title_screen import title_screen, team_selection_screen
 from pw_view.race_weekend import race_weekend_window, results_window
 from pw_view.calendar_page import calendar_page
@@ -34,6 +35,7 @@ class View:
 		self.container_border_radius = 15
 
 		self.dark_grey = "#23232A"
+		self.primary_selected_color = "#7FA1C9"
 
 		self.vscroll_buffer = 200
 		
@@ -42,6 +44,7 @@ class View:
                										 side=ft.Border(left=ft.BorderSide(5, "blue")))
 
 		self.positive_button_style = ft.ButtonStyle(color="#111418",
+											  icon_color="#111418",
 											  bgcolor={ft.ControlState.DEFAULT: ft.Colors.LIGHT_GREEN, ft.ControlState.DISABLED: ft.Colors.GREY},
 											  alignment=ft.alignment.center_left,)
 		self.clicked_button_style = ft.ButtonStyle(color=ft.Colors.BLACK, bgcolor=ft.Colors.PRIMARY)
@@ -75,7 +78,7 @@ class View:
 
 	def setup_pages(self) -> None:
 		self.home_page = home_page.HomePage(self)
-		self.email_page = email_page.EmailPage(self)
+		self.email_page = EmailPage(self)
 		self.standings_page = standings_page.StandingsPage(self)
 		self.calendar_page = calendar_page.CalendarPage(self)
 		self.staff_page = staff_page.StaffPage(self)

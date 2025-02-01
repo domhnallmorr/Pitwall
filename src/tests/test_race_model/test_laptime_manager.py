@@ -1,5 +1,10 @@
 import pytest
 from unittest.mock import Mock
+import os
+import numpy as np
+
+import matplotlib.pyplot as plt
+
 from race_weekend_model.laptime_manager import LapTimeManager, LapManagerRandomiser
 from race_weekend_model.race_model_enums import ParticipantStatus
 from tests.test_model.track import test_track_model
@@ -127,5 +132,64 @@ def test_calculate_laptime_pitting_in(lap_time_manager, mock_participant, mock_r
 
     assert lap_time_manager.laptime == expected_laptime
 
+@pytest.fixture
+def simulate_laps():
+    """Simulate laps for a driver with a given consistency using the real randomiser."""
+    def _simulate(consistency, num_laps=20):
+        mock_participant = Mock()
+        mock_participant.track_model.base_laptime = 90000  # Base lap time in ms
+        mock_participant.driver.speed = 90
+        mock_participant.driver.consistency = consistency
+        mock_participant.car_model.speed = 85
+        mock_participant.car_model.fuel_effect = 0.3
+        mock_participant.car_model.tyre_wear = 0.2
+        mock_participant.track_model.pit_stop_loss = 20000
+        mock_participant.pitstop_times = [8000]
+        mock_participant.status = ParticipantStatus.RUNNING
 
+        # ** Use the real LapTimeManager **
+        lap_time_manager = LapTimeManager(mock_participant)
+        lap_time_manager.setup_variables_for_session()  # Ensure lap times list is initialized
 
+        # ** FIX: Assign LapTimeManager to the participant **
+        mock_participant.laptime_manager = lap_time_manager  # Critical Fix
+
+        lap_times = []
+        for _ in range(num_laps):
+            lap_time_manager.calculate_laptime(dirty_air_effect=0)  # Calculate lap time using real randomiser
+            lap_time_manager.complete_lap()
+            lap_times.append(lap_time_manager.laptime)
+
+        return lap_times
+
+    return _simulate
+
+def test_plot_consistency_effect(simulate_laps):
+    """Test that saves the effect of consistency on lap times as a JPEG file."""
+    num_laps = 60
+    driver_A_consistency = 90  # More consistent driver
+    driver_B_consistency = 20  # Less consistent driver
+
+    laps_A = simulate_laps(driver_A_consistency, num_laps)
+    laps_B = simulate_laps(driver_B_consistency, num_laps)
+
+    # Plot results
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(1, num_laps + 1), laps_A, label=f"Driver A (Consistency: {driver_A_consistency})", marker='o')
+    plt.plot(range(1, num_laps + 1), laps_B, label=f"Driver B (Consistency: {driver_B_consistency})", marker='s', linestyle='dashed')
+
+    plt.xlabel("Lap Number")
+    plt.ylabel("Lap Time (ms)")
+    plt.title("Effect of Consistency on Lap Times")
+    plt.legend()
+    plt.grid(True)
+
+    # Ensure the directory exists
+    output_dir = os.path.dirname(__file__)  # Get test script directory
+    output_path = os.path.join(output_dir, "lap_time_consistency.jpg")
+
+    plt.savefig(output_path, format='jpeg', dpi=300)  # Save the figure as a JPEG
+    plt.close()  # Close the plot to free memory
+
+    # Check if file exists to confirm it was saved
+    assert os.path.exists(output_path), f"Graph not saved at {output_path}"

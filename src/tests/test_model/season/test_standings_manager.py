@@ -92,7 +92,7 @@ def test_update_standings():
 	
 	assert standings_manager_instance.drivers_standings_df.head(6).values.tolist() == expected
 
-	model.season.next_race_idx += 1
+	model.season.calendar.next_race_idx += 1
 	data = ["Michael Schumacher", "Eddie Irvine", "Mika Hakkinen", "Jacques Villeneuve", "David Coulthard", "Heinz-Harald Frentzen", "Giancarlo Fisichella", "Alexander Wurz"]
 	result2 = pd.DataFrame(columns=columns, data=data)
 	result2["Position"] = [i + 1 for i in range(len(data))]

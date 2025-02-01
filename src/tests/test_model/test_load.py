@@ -50,7 +50,7 @@ def test_year_week():
 	model = create_model.create_model()
 
 	model.year = 1900
-	model.season.current_week = 10
+	model.season.calendar.current_week = 10
 
 	save_file = load_save.save_game(model, mode="memory")
 
@@ -58,7 +58,7 @@ def test_year_week():
 	load_save.load(model, save_file, mode="memory") # load data
 
 	assert model.year == 1900
-	assert model.season.current_week == 10
+	assert model.season.calendar.current_week == 10
 
 def test_retirement_age_senior_manager():
 	model = create_model.create_model()

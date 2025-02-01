@@ -119,7 +119,7 @@ class StaffMarket:
 		assert role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2, StaffRoles.TECHNICAL_DIRECTOR]
 		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team, role.value] = person_hired
 		
-		week_to_announce = max(random.randint(4, 40), self.model.season.current_week + 1) # ensure the week is not in the past
+		week_to_announce = max(random.randint(4, 40), self.model.season.calendar.current_week + 1) # ensure the week is not in the past
 		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team, week_to_announce, role.value, person_hired, 4_000_000, random.randint(2, 5)]
 
 
@@ -164,7 +164,7 @@ class StaffMarket:
 		if team_name == self.model.player_team:
 			salary = contract_functions.determine_final_salary(self.model, person_hired, role)
 			contract_length = random.randint(2, 5)
-			self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team_name, self.model.season.current_week, role.value, person_hired, salary, contract_length]
+			self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team_name, self.model.season.calendar.current_week, role.value, person_hired, salary, contract_length]
 		
 		# if team_name == self.model.player_team: # make this announced straight away for player hirings
 		self.grid_next_year_announced_df.loc[self.grid_next_year_df["team"] == team_name, role.value] = person_hired
@@ -191,7 +191,7 @@ class StaffMarket:
 			
 	def announce_signings(self) -> None:
 		for idx, row in self.new_contracts_df.iterrows():
-			if row["WeekToAnnounce"] == self.model.season.current_week:
+			if row["WeekToAnnounce"] == self.model.season.calendar.current_week:
 				person_hired = row["Driver"]
 				team_name = row["Team"]
 				role = StaffRoles(row["DriverIdx"]) # role is stored as an enum value (string) in the DF
@@ -200,7 +200,7 @@ class StaffMarket:
 
 	def recompute_transfers_after_player_hiring(self) -> None:
 		# remove any contracts that have not been announced yet
-		self.new_contracts_df = self.new_contracts_df[self.new_contracts_df["WeekToAnnounce"] <= self.model.season.current_week].reset_index(drop=True)
+		self.new_contracts_df = self.new_contracts_df[self.new_contracts_df["WeekToAnnounce"] <= self.model.season.calendar.current_week].reset_index(drop=True)
 
 		# redo grid_next_year_df
 		self.grid_next_year_df = self.grid_next_year_announced_df.copy(deep=True)

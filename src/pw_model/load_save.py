@@ -6,6 +6,7 @@ import pandas as pd
 from pw_model import load_save
 from pw_model import load_roster
 from pw_model.pw_model_enums import StaffRoles
+from pw_model.finance.transport_costs import save_transport_costs_model, load_transport_costs
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -31,6 +32,9 @@ def save_game(model: Model, mode: str="file") -> sqlite3.Connection:
 	save_standings(model, save_file)
 	save_email(model, save_file)
 	save_calendar(model, save_file)
+
+	if  model.player_team_model is not None:
+		save_transport_costs_model(model.player_team_model.finance_model.transport_costs_model, save_file)
 
 	save_file.commit()
 
@@ -58,9 +62,9 @@ def save_general(model: Model, save_file: sqlite3.Connection) -> None:
 		VALUES (?, ?, ?, ?)
 	''', (
 		model.year,
-		model.season.current_week, 
+		model.season.calendar.current_week, 
 		model.player_team, 
-		model.season.next_race_idx
+		model.season.calendar.next_race_idx
 	))
 
 
@@ -363,7 +367,8 @@ def save_email(model: Model, save_file: sqlite3.Connection) -> None:
 	df.to_sql("email", save_file, if_exists="replace", index=False)
 
 def save_calendar(model: Model, save_file: sqlite3.Connection) -> None:
-	model.calendar.to_sql("calendar", save_file, if_exists="replace", index=False)
+	model.season.calendar.dataframe.to_sql("calendar", save_file, if_exists="replace", index=False)
+
 
 def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mode: str="file") -> None:
 	assert mode in ["file", "memory"]
@@ -391,6 +396,9 @@ def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mod
 	load_email(conn, model)
 	load_calendar(conn, model)
 
+	if model.player_team_model is not None:
+		load_transport_costs(conn, model.player_team_model.finance_model.transport_costs_model)
+
 def load_general(conn: sqlite3.Connection, model: Model) -> None:
 	table_name = "general"
 	cursor = conn.execute(f'PRAGMA table_info({table_name})')
@@ -408,10 +416,10 @@ def load_general(conn: sqlite3.Connection, model: Model) -> None:
 
 	data = cursor.fetchall()[0]
 
-	model.season.current_week = data[week_idx]
+	model.season.calendar.current_week = data[week_idx]
 	model.year = data[year_idx]
 	model.player_team = data[player_team_idx]
-	model.season.next_race_idx = data[next_race_idx]
+	model.season.calendar.next_race_idx = data[next_race_idx]
 
 def load_drivers(conn: sqlite3.Connection, model: Model) -> None:
 	drivers, future_drivers = load_roster.load_drivers(model, conn)
@@ -488,4 +496,4 @@ def load_email(conn: sqlite3.Connection, model: Model) -> None:
 	model.inbox.load_dataframe(df)
 
 def load_calendar(conn: sqlite3.Connection, model: Model) -> None:
-	model.calendar = pd.read_sql('SELECT * FROM calendar', conn)
+	model.season.calendar.dataframe = pd.read_sql('SELECT * FROM calendar', conn)

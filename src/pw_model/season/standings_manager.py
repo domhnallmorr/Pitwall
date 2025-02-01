@@ -72,10 +72,10 @@ class StandingsManager:
 
 			if team_model.season_stats.best_result_this_season == 0: # zero is default value at start of season
 				team_model.season_stats.best_result_this_season = position
-				team_model.season_stats.rnd_best_result_scored = self.model.season.next_race_idx
+				team_model.season_stats.rnd_best_result_scored = self.model.season.calendar.next_race_idx
 			elif position < team_model.season_stats.best_result_this_season:
 				team_model.season_stats.best_result_this_season = position
-				team_model.season_stats.rnd_best_result_scored = self.model.season.next_race_idx
+				team_model.season_stats.rnd_best_result_scored = self.model.season.calendar.next_race_idx
 
 		# update driver stats
 		for idx, row in self.drivers_standings_df.iterrows():

@@ -133,12 +133,12 @@ tests = ["pytest", "pytest-cov", "pytest-xdist"]
 
 [[package]]
 name = "flet"
-version = "0.25.1"
+version = "0.26.0"
 description = "Flet for Python - easily build interactive multi-platform apps in Python"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "flet-0.25.1-py3-none-any.whl", hash = "sha256:4a11db637ebd0074bcb6197e1d0626e1f28839f7e021e91b0fcda057c2fb8739"},
+    {file = "flet-0.26.0-py3-none-any.whl", hash = "sha256:779e58dcfb4fbf0760715471121a183bf7ecf48e522fee068556cb26df3490fb"},
 ]
 
 [package.dependencies]
@@ -147,10 +147,10 @@ oauthlib = {version = ">=3.2.2,<4.0.0", markers = "platform_system != \"Pyodide\
 repath = ">=0.9.0,<0.10.0"
 
 [package.extras]
-all = ["flet-cli (==0.25.1)", "flet-desktop (==0.25.1)", "flet-desktop-light (==0.25.1)", "flet-web (==0.25.1)"]
-cli = ["flet-cli (==0.25.1)"]
-desktop = ["flet-desktop (==0.25.1)", "flet-desktop-light (==0.25.1)"]
-web = ["flet-web (==0.25.1)"]
+all = ["flet-cli (==0.26.0)", "flet-desktop (==0.26.0)", "flet-desktop-light (==0.26.0)", "flet-web (==0.26.0)"]
+cli = ["flet-cli (==0.26.0)"]
+desktop = ["flet-desktop (==0.26.0)", "flet-desktop-light (==0.26.0)"]
+web = ["flet-web (==0.26.0)"]
 
 [[package]]
 name = "fonttools"
@@ -907,4 +907,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "1b3c0de2e19e94a8f4a1a922d23f7d950a54816ae597432c21e3d7a07b7df818"
+content-hash = "40c24bdd757e49863cb54b9357eabc8482c292f66b9a4e6b5ae39fb3e75f35bb"

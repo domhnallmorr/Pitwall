@@ -89,8 +89,8 @@ class PageUpdateController:
 
 	def update_home_page(self) -> None:
 		data: HomePageData = {
-			"next_race": self.model.season.next_race,
-			"next_race_week": self.model.season.next_race_week,
+			"next_race": self.model.season.calendar.next_race,
+			"next_race_week": self.model.season.calendar.next_race_week,
 			"current_position": self.model.player_team_model.current_position + 1, # pos is zero indexed
 			"constructors_standings_df": self.model.season.standings_manager.constructors_standings_df.copy(deep=True),
 
@@ -114,7 +114,7 @@ class PageUpdateController:
 		self.view.home_page.update_page(data)
 
 	def update_calendar_page(self) -> None:
-		calendar: pd.DataFrame = self.model.calendar.copy(deep=True)
+		calendar: pd.DataFrame = self.model.season.calendar.dataframe.copy(deep=True)
 		self.view.calendar_page.update_page(calendar)
 
 	def update_car_page(self) -> None:
@@ -126,8 +126,8 @@ class PageUpdateController:
 	def update_main_window(self) -> None:
 		player_team_model = self.model.get_team_model(self.model.player_team)
 		team = f"{self.model.player_team} - ${player_team_model.finance_model.balance:,}"
-		date = f"Week {self.model.season.current_week} - {self.model.year}"
-		in_race_week = self.model.season.in_race_week
+		date = f"Week {self.model.season.calendar.current_week} - {self.model.year}"
+		in_race_week = self.model.season.calendar.in_race_week
 
 		self.view.main_window.update_window(team, date, in_race_week)
 

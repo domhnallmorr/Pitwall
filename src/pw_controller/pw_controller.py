@@ -7,6 +7,7 @@ from pw_controller.staff_page import staff_hire_controller
 from pw_model import pw_base_model
 from pw_view import view
 from pw_controller import race_controller, page_update_controller
+from pw_controller.email_page.email_controller import EmailController
 
 class Controller:
 	def __init__(self, app: Page, run_directory: str, mode: str):
@@ -18,6 +19,7 @@ class Controller:
 		self.calendar_page_controller = calander_page_controller.CalendarPageController(self)
 		self.staff_hire_controller = staff_hire_controller.StaffHireController(self)
 		self.facilities_controller = facilities_controller.FacilitiesController(self)
+		self.email_controller = EmailController(self)
 		
 		self.model = pw_base_model.Model(roster, run_directory)
 
@@ -66,7 +68,7 @@ class Controller:
 
 			self.page_update_controller.refresh_ui()
 
-		if self.model.season.current_week == 1:
+		if self.model.season.calendar.current_week == 1:
 			self.setup_new_season()
 
 		self.update_email_button()
@@ -89,8 +91,8 @@ class Controller:
 	def go_to_race_weekend(self) -> None:
 		self.race_controller = race_controller.RaceController(self)
 		data = {
-			"race_title": self.model.season.current_track_model.title,
-			"country": self.model.season.current_track_model.country
+			"race_title": self.model.season.calendar.current_track_model.title,
+			"country": self.model.season.calendar.current_track_model.country
 		}
 		self.view.go_to_race_weekend(data)
 

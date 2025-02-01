@@ -115,6 +115,10 @@ class TeamModel:
 				self.update_workforce()
 
 			self.update_car_speed()
+		else:
+			# This gets called when the game starts
+			# The transport model needs the season to fully initialised to compute transport costs
+			self.finance_model.transport_costs_model.setup_new_season()
 
 	def setup_season_stats(self) -> None:
 		self.season_stats = season_stats.SeasonStats()
