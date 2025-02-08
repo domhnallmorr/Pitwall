@@ -143,5 +143,5 @@ class SeasonModel:
 		# Update winner 
 		self.calendar.post_race_actions(winner)
 		# Update finances with race costs
-		self.model.player_team_model.finance_model.apply_race_costs()
+		self.model.player_team_model.finance_model.post_race_actions()
 		# self.update_next_race()

@@ -30,7 +30,7 @@ def test_participants_creation():
 	assert schumacher_model.driver.speed == 98
 
 	diniz_model = _race_model.get_particpant_model_by_name("Pedro Diniz")
-	assert diniz_model.driver.speed == 65
+	assert diniz_model.driver.speed == 55
 
 def test_run_to_turn_1():
 	model = create_model.create_model(mode="headless")

@@ -31,11 +31,12 @@ class StaffDetailsContainer:
 		self.contract_status_text = ft.Text("Contract Status: Status")
 
 	def setup_rating_widgets(self) -> None:
-		self.ability_widget = RatingWidget("Ability")
+		text_width = 110
+		self.ability_widget = RatingWidget("Ability", text_width=text_width)
 
 		if self.role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
-			self.speed_widget = RatingWidget("Speed:")
-			self.consistency_widget = RatingWidget("Consistency:")
+			self.speed_widget = RatingWidget("Speed:", text_width=text_width)
+			self.consistency_widget = RatingWidget("Consistency:", text_width=text_width)
 
 	def setup_replace_button(self) -> None:
 		self.replace_button = ft.TextButton("Replace", disabled=True, icon="find_replace", on_click=self.replace, data=self.role)
@@ -78,23 +79,22 @@ class StaffDetailsContainer:
 	def setup_container(self) -> None:
 		self.container = CustomContainer(self.view, self.setup_column(), expand=True)
 
-	def update(self, data: Union[DriverData, SeniorStaffData]) -> None:
+	def update(self, data: Union[DriverData, SeniorStaffData], player_requring_this_role: bool) -> None:
 		self.name_text.value = f"Name: {data.name}"
 		self.age_text.value = f"Age: {data.age} Years"
 
 		self.salary_text.value = f"Salary: ${data.salary:,}"
 		self.contract_length_text.value = f"Contract Length: {data.contract_length} Year(s)"
 
-		replace_btn_disabled = False
+		# replace_btn_disabled = False
 		if data.retiring is True:
 			self.contract_status_text.value = "Contract Status: Retiring"
 		elif data.contract_length < 2:
 			self.contract_status_text.value = "Contract Status: Contract Expiring"
 		else:
 			self.contract_status_text.value = "Contract Status: Contracted"
-			replace_btn_disabled = True
 
-		self.replace_button.disabled = replace_btn_disabled
+		self.replace_button.disabled = not player_requring_this_role
 
 		if self.role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
 			self.country_text.value = f"Country: {data.country}"

@@ -9,7 +9,8 @@ from pw_model.email import email_model
 from pw_model.staff_market import staff_market
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.staff_market import manager_transfers
-from pw_model import load_save
+from pw_model.load_save import load_save 
+from pw_model.game_data import GameData
 from pw_model.track.track_model import TrackModel
 from pw_model.driver.driver_model import DriverModel
 from pw_model.team.team_model import TeamModel
@@ -27,6 +28,7 @@ class Model:
 		self.run_directory = run_directory
 		self.auto_save = auto_save
 
+		self.game_data = GameData(self)
 		self.inbox = email_model.Inbox(self)
 		self.tracks: List[TrackModel] = []
 		self.retired_drivers: List[DriverModel] = []
@@ -117,7 +119,7 @@ class Model:
 		self.inbox.reset_number_new_emails()
 		
 		if self.season.calendar.current_week == 51:
-			self.staff_market.ensure_player_has_drivers_for_next_season()
+			self.staff_market.ensure_player_has_staff_for_next_season()
 			
 		self.season.advance_one_week()
 
@@ -214,8 +216,8 @@ class Model:
 			"staff": int(statistics.fmean([t.number_of_staff for t in self.teams])),
 			"max_staff": max([t.number_of_staff for t in self.teams]),
 			"facilities": int(statistics.fmean([t.facilities_model.factory_rating for t in self.teams])),
-			"max_sponsorship": max([t.finance_model.total_sponsorship for t in self.teams]),
-			"sponsorship": int(statistics.fmean([t.finance_model.total_sponsorship for t in self.teams])),
+			"max_sponsorship": max([t.finance_model.sponsors_model.total_sponsor_income for t in self.teams]),
+			"sponsorship": int(statistics.fmean([t.finance_model.sponsors_model.total_sponsor_income for t in self.teams])),
 		}
 
 		return team_average_stats

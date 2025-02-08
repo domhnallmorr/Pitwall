@@ -11,6 +11,7 @@ from pw_model.driver import driver_model
 from pw_model.team import team_model
 from pw_model.track import track_model
 from pw_model.senior_staff import commercial_manager, technical_director
+from pw_model.load_save.sponsors_load_save import load_sponsors
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -86,6 +87,8 @@ def load_drivers(
 	return drivers, future_drivers
 
 def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamModel]:
+	sponsors_df = load_sponsors(conn)
+
 	teams = []
 
 	table_name = "teams"
@@ -103,7 +106,6 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 	facilities_idx = column_names.index("Facilities")
 
 	balance_idx = column_names.index("StartingBalance")
-	starting_sponsorship_idx = column_names.index("StartingSponsorship")
 
 	commercial_manager_idx = column_names.index("CommercialManager")
 	technical_director_idx = column_names.index("TechnicalDirector")
@@ -124,13 +126,19 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 			number_of_staff = row[number_of_staff_idx]
 
 			starting_balance = row[balance_idx]
-			starting_sponsorship = row[starting_sponsorship_idx]
+			title_sponsor = str(sponsors_df.loc[sponsors_df["Team"] == name, "TitleSponsor"].iloc[0])
+			title_sponsor_value = int(sponsors_df.loc[sponsors_df["Team"] == name, "TitleSponsorValue"].iloc[0])
+			other_sponsorship = int(sponsors_df.loc[sponsors_df["Team"] == name, "OtherSponsorsValue"].iloc[0])
+
+			if title_sponsor_value is not None:
+				title_sponsor_value = int(title_sponsor_value)
 
 			commercial_manager = row[commercial_manager_idx]
 			technical_director = row[technical_director_idx]
 
 			car = car_model.CarModel(car_speed)
-			team = team_model.TeamModel(model, name, country, driver1, driver2, car, number_of_staff, facilities, starting_balance, starting_sponsorship,
+			team = team_model.TeamModel(model, name, country, driver1, driver2, car, number_of_staff, facilities,
+							   starting_balance, other_sponsorship, title_sponsor, title_sponsor_value,
 							   commercial_manager, technical_director)
 			
 			# ensure drivers are correctly loaded

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 	from pw_view.email_page.email_tile import EmailTile
 	from pw_model.email.email_model import Email
 
-class EmailList(ft.ListView):
+class EmailList(ft.ListView): # type: ignore
 	def __init__(self, view: View, email_page: EmailPage):
 		self.email_page = email_page
 		self.view = view

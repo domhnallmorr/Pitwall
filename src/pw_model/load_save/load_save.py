@@ -3,10 +3,12 @@ import sqlite3
 from typing import Union, Optional, TYPE_CHECKING
 import pandas as pd
 
-from pw_model import load_save
 from pw_model import load_roster
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.finance.transport_costs import save_transport_costs_model, load_transport_costs
+from pw_model.load_save.sponsors_load_save import save_sponsor_model
+from pw_model.load_save.finance_load_save import save_finance_model, load_finance_model
+from pw_model.load_save.standings_load_save import save_standings, load_standings
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -32,9 +34,11 @@ def save_game(model: Model, mode: str="file") -> sqlite3.Connection:
 	save_standings(model, save_file)
 	save_email(model, save_file)
 	save_calendar(model, save_file)
+	save_sponsor_model(model, save_file)
 
-	if  model.player_team_model is not None:
+	if model.player_team_model is not None:
 		save_transport_costs_model(model.player_team_model.finance_model.transport_costs_model, save_file)
+		save_finance_model(model, save_file)
 
 	save_file.commit()
 
@@ -273,7 +277,6 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 	"NumberofStaff"	INTEGER,
 	"Facilities"	INTEGER,
 	"StartingBalance"	INTEGER,
-	"StartingSponsorship"	INTEGER,
 	"CommercialManager"	TEXT,
 	"TechnicalDirector"	TEXT
 	)'''
@@ -284,9 +287,9 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 	for team in model.teams:
 
 		cursor.execute('''
-			INSERT INTO teams (year, name, country, Driver1, Driver2, CarSpeed, NumberofStaff, Facilities, StartingBalance, StartingSponsorship,
+			INSERT INTO teams (year, name, country, Driver1, Driver2, CarSpeed, NumberofStaff, Facilities, StartingBalance,
 				 CommercialManager, TechnicalDirector) 
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,
 				 ?, ?)
 		''', (
 			"default",
@@ -298,7 +301,6 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 			team.number_of_staff, 
 			team.facilities_model.factory_rating, 
 			team.finance_model.balance, 
-			team.finance_model.total_sponsorship, 
 			team.commercial_manager,
 			team.technical_director,
 		))
@@ -358,10 +360,6 @@ def save_grid_next_year(model: Model, save_file: sqlite3.Connection) -> None:
 def save_new_contracts_df(model: Model, save_file: sqlite3.Connection) -> None:
 	model.staff_market.new_contracts_df.to_sql("new_contracts_df", save_file, if_exists="replace", index=False)
 
-def save_standings(model: Model, save_file: sqlite3.Connection) -> None:
-	model.season.standings_manager.drivers_standings_df.to_sql("drivers_standings_df", save_file, if_exists="replace", index=False)
-	model.season.standings_manager.constructors_standings_df.to_sql("constructors_standings_df", save_file, if_exists="replace", index=False)
-
 def save_email(model: Model, save_file: sqlite3.Connection) -> None:
 	df = model.inbox.generate_dataframe()
 	df.to_sql("email", save_file, if_exists="replace", index=False)
@@ -398,6 +396,7 @@ def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mod
 
 	if model.player_team_model is not None:
 		load_transport_costs(conn, model.player_team_model.finance_model.transport_costs_model)
+		load_finance_model(model, conn)
 
 def load_general(conn: sqlite3.Connection, model: Model) -> None:
 	table_name = "general"
@@ -479,9 +478,6 @@ def load_teams_stats(conn: sqlite3.Connection, model: Model) -> None:
 		team_model.season_stats.best_result_this_season = best_result_this_season
 		team_model.season_stats.rnd_best_result_scored = rnd_best_result_scored
 
-def load_standings(conn: sqlite3.Connection, model: Model) -> None:
-	model.season.standings_manager.drivers_standings_df = pd.read_sql('SELECT * FROM drivers_standings_df', conn)
-	model.season.standings_manager.constructors_standings_df = pd.read_sql('SELECT * FROM constructors_standings_df', conn)
 
 def load_grid_this_year(conn: sqlite3.Connection, model: Model) -> None:
 	model.staff_market.grid_this_year_df = pd.read_sql('SELECT * FROM grid_this_year_df', conn)

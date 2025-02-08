@@ -5,6 +5,13 @@ from pw_model.pw_base_model import Model
 from pw_model.pw_model_enums import StaffRoles
 
 @dataclass
+class StaffPlayerRequires:
+     player_requiring_driver1: bool
+     player_requiring_driver2: bool
+     player_requiring_technical_director: bool
+     player_requiring_commercial_manager: bool
+     
+@dataclass
 class DriverData:
     name: str
     age: int
@@ -30,8 +37,10 @@ class StaffPageData:
     commercial_manager: SeniorStaffData
     technical_director: SeniorStaffData
     staff_values: list[tuple[str, int]]
+    staff_player_requies: StaffPlayerRequires
     
 def get_staff_page_data(model: Model) -> StaffPageData:
+	staff_market = model.staff_market
 	team_model = model.get_team_model(model.player_team)
 	staff_values = [[team.name, team.number_of_staff] for team in model.teams]
 	staff_values.sort(key=lambda x: x[1], reverse=True) # sort, highest to lowest
@@ -78,6 +87,13 @@ def get_staff_page_data(model: Model) -> StaffPageData:
 		),
           
 		staff_values=staff_values,
+        
+		staff_player_requies=StaffPlayerRequires(
+               player_requiring_driver1=staff_market.player_requiring_driver1,
+               player_requiring_driver2=staff_market.player_requiring_driver2,
+               player_requiring_technical_director=staff_market.player_requiring_technical_director,
+               player_requiring_commercial_manager=staff_market.player_requiring_commercial_manager,
+		)
 	)
 
 	return data

@@ -6,7 +6,8 @@ import flet as ft
 
 from pw_view import main_window, standings_page, grid_page
 from pw_view.email_page.email_page import EmailPage
-from pw_view.title_screen import title_screen, team_selection_screen
+from pw_view.title_screen import title_screen
+from pw_view.team_selection.team_selection_screen import TeamSelectionScreen
 from pw_view.race_weekend import race_weekend_window, results_window
 from pw_view.calendar_page import calendar_page
 from pw_view.home_page import home_page
@@ -31,6 +32,7 @@ class View:
 		self.header3_style = ft.TextThemeStyle.LABEL_MEDIUM
 
 		self.container_header2_size = 25
+		self.SUBHEADER_FONT_SIZE = 18
 
 		self.container_border_radius = 15
 
@@ -94,7 +96,7 @@ class View:
 	def setup_windows(self, team_names: list[str]) -> None:
 		self.title_screen = title_screen.TitleScreen(self, self.run_directory)
 		self.main_window = main_window.MainWindow(self)
-		self.team_selection_screen = team_selection_screen.TeamSelectionScreen(self, team_names)
+		self.team_selection_screen = TeamSelectionScreen(self, team_names)
 
 	def go_to_race_weekend(self, data: dict) -> None:
 
@@ -112,12 +114,18 @@ class View:
 		self.main_app.update() # update again, this is to avoid a problem where the continue button on the results page would not work if the user clicked on it too quickly (on_click not fully assigned by flet?????)
 
 	def return_to_main_window(self, mode: str="post_race") -> None:
-		assert mode in ["post_race", "load"]
+		assert mode in ["post_race", "load", "start_career"]
 		self.main_app.views.clear()
 		self.main_app.views.append(self.main_window)
 
 		if mode == "post_race": # avoid updating the adance button when loading a career
 			self.main_window.nav_sidebar.update_advance_button("advance")
+
+		self.main_app.update()
+
+		# Hack to get background image to appear on home page when the game starts
+		if mode == "start_career":
+			self.main_window.change_page("home")
 
 		self.main_app.update()
 
@@ -127,6 +135,8 @@ class View:
 		self.main_app.update()
 
 	def show_team_selection_screen(self) -> None:
+		# First update the team selection screen to show the first team details
+		self.controller.team_selection_controller.setup_default_team()
 		self.main_app.views.append(self.team_selection_screen)
 
 		self.main_app.update()		
@@ -136,12 +146,11 @@ class View:
             title=ft.Text("Game Over!", size=24, weight=ft.FontWeight.BOLD),
             content=ft.Text("Your game is finished. Better luck next time!", size=18),
             actions=[
-                ft.TextButton("Exit", on_click=lambda e: self.main_app.window_close())
+                ft.TextButton("Exit", on_click=lambda e: self.main_app.window.close())
             ],
             actions_alignment=ft.MainAxisAlignment.END,
+			modal=True
         )
 
-		self.main_app.dialog = game_over_dialog
-		game_over_dialog.open = True
-		self.main_app.update()
+		self.main_app.open(game_over_dialog)
 

@@ -77,9 +77,18 @@ def sponsor_income_update_email(sponsorship: int) -> str:
       
     return random.choice(messages)
 
-def transport_costs_email(cost: int) -> str:
-     messages = [
-          f"Transport costs for the last race totalled ${cost :,}"
-     ]
+def race_financial_summary_email(transport_cost: int, title_sponsor_payment: int, profit: int) -> str:
+    loss_or_profit = "loss"
+    if profit >= 0:
+          loss_or_profit = "profit"
 
-     return random.choice(messages)
+    lines = [
+                f"We made a {loss_or_profit} of ${profit :,} on the last race. See summary below:\n\n",
+                f"Transport Costs: ${transport_cost :,}\n"
+                f"Title Sponsor Payment: ${title_sponsor_payment :,}\n"
+                f"Total Profit: ${profit :,}\n"
+    ]
+    
+    message = "".join(lines)
+    
+    return message

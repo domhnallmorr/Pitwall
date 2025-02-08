@@ -81,7 +81,20 @@ class StaffMarket:
 		else:
 			return False
 				
+	@property
+	def player_requiring_technical_director(self) -> bool:
+		if self.model.player_team in self.compile_teams_requiring_manager(StaffRoles.TECHNICAL_DIRECTOR):
+			return True
+		else:
+			return False
 
+	@property
+	def player_requiring_commercial_manager(self) -> bool:
+		if self.model.player_team in self.compile_teams_requiring_manager(StaffRoles.COMMERCIAL_MANAGER):
+			return True
+		else:
+			return False
+		
 	def compile_teams_requiring_drivers(self, driver_idx: Enum) -> list[str]:
 		assert driver_idx in [StaffRoles.DRIVER1, StaffRoles.DRIVER2], f"Unsupported driver_idx {driver_idx}"
 
@@ -177,7 +190,7 @@ class StaffMarket:
 		if team_name == self.model.player_team: # if the player signs a driver, we must recopute AI signings
 			self.recompute_transfers_after_player_hiring()
 
-	def ensure_player_has_drivers_for_next_season(self) -> None:
+	def ensure_player_has_staff_for_next_season(self) -> None:
 		'''
 		At the end of the season, if the player has failed to hire a driver(s)
 		this method automically hires a random driver
@@ -189,6 +202,14 @@ class StaffMarket:
 		if self.player_requiring_driver2 is True:
 			driver_transfers.team_hire_driver(self.model, self.model.player_team, StaffRoles.DRIVER2, driver_transfers.get_free_agents(self.model))
 			
+		if self.player_requiring_commercial_manager is True:
+			manager_transfers.team_hire_commercial_manager(self.model, self.model.player_team,
+												  manager_transfers.get_free_agents(self.model, StaffRoles.COMMERCIAL_MANAGER))
+
+		if self.player_requiring_technical_director is True:
+			manager_transfers.team_hire_technical_director(self.model, self.model.player_team,
+												  manager_transfers.get_free_agents(self.model, StaffRoles.TECHNICAL_DIRECTOR))
+
 	def announce_signings(self) -> None:
 		for idx, row in self.new_contracts_df.iterrows():
 			if row["WeekToAnnounce"] == self.model.season.calendar.current_week:

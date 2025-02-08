@@ -29,7 +29,7 @@ def test_driver_retirement_team_end_season():
 	assert "Marc Gene" not in driver_transfers.get_free_agents(model)
 
 	# complete all other driver transfers and end the season in the model
-	model.staff_market.ensure_player_has_drivers_for_next_season()
+	model.staff_market.ensure_player_has_staff_for_next_season()
 	model.staff_market.compute_transfers()
 	model.end_season()
 
@@ -65,6 +65,6 @@ def test_driver_retirements_over_several_seasons():
 				model.get_driver_model("Tora Takagi").retiring = True
 
 
-			model.staff_market.ensure_player_has_drivers_for_next_season()
+			model.staff_market.ensure_player_has_staff_for_next_season()
 			model.staff_market.compute_transfers()
 			model.end_season()

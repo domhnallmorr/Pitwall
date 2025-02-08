@@ -5,3 +5,4 @@ Title: Spanish Grand Prix
 Laps: 66
 Base Laptime: 75_000
 Length: 4.728
+Overtaking Delta: 1_800

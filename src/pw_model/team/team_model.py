@@ -8,7 +8,8 @@ from pw_model.season import season_stats
 from pw_model.finance import finance_model
 
 from pw_model.senior_staff import commercial_manager, technical_director
-from pw_model.team import facilities_model
+from pw_model.team.facilities_model import FacilityModel
+from pw_model.finance.sponsors_model import SponsorModel
 from pw_model.pw_model_enums import StaffRoles
 
 if TYPE_CHECKING:
@@ -24,7 +25,9 @@ class TeamModel:
 			  number_of_staff : int, 
 			  facilities : int, 
 			  starting_balance : int,
-			  starting_sponsorship : int,
+			  other_sponsorship : int,
+			  title_sponsor : str,
+			  title_sponsor_value : int,
 			  commercial_manager : str,
 			  technical_director : str):
 		
@@ -36,9 +39,9 @@ class TeamModel:
 		self.car_model = car_model
 
 		self.number_of_staff = number_of_staff
-		self.facilities_model = facilities_model.FacilityModel(self, facilities)
+		self.facilities_model = FacilityModel(self, facilities)
 				
-		self.finance_model = finance_model.FinanceModel(model, self, starting_balance, starting_sponsorship)
+		self.finance_model = finance_model.FinanceModel(model, self, starting_balance, other_sponsorship, title_sponsor, title_sponsor_value)
 
 		self.commercial_manager = commercial_manager
 		self.technical_director = technical_director

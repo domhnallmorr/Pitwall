@@ -31,6 +31,7 @@ class TrackModel:
 		self.title: str = ""
 		self.number_of_laps = 0
 		self.base_laptime = 0
+		self.overtaking_delta = 1_000 # minimum lap time delta required to attempt an overtake
 
 		for line in data:
 			if line.startswith("Name:"):
@@ -47,6 +48,8 @@ class TrackModel:
 				self.base_laptime = int(line.split(":")[1].lstrip())
 			if line.startswith("Length:"):
 				self.length = float(line.split(":")[1].lstrip()) # in km
+			if line.startswith("Overtaking Delta:"):
+				self.overtaking_delta = int(line.split(":")[1].lstrip()) # in ms
 
 		assert self.name != ""
 		assert self.country != ""

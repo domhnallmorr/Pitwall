@@ -31,6 +31,9 @@ def calendar(mock_season, sample_dataframe):
     
 	return calendar
 
+def test_number_of_races(calendar):
+    assert calendar.number_of_races == 3
+    
 def test_race_weeks(calendar):
     assert calendar.race_weeks == [1, 3, 5]
 

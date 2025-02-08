@@ -5,3 +5,4 @@ Title: German Grand Prix
 Laps: 45
 Base Laptime: 97_000
 Length: 6.823
+Overtaking Delta: 600

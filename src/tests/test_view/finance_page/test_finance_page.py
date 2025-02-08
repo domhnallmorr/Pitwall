@@ -50,15 +50,20 @@ def test_update_page(finance_page):
         "balance_history_dates": ["2023-01-01", "2023-02-01"],
         "balance_history": [500000, 850000],
         "profit": 430_002,
+        "title_sponsor": "Some Sponsor",
+        "title_sponsor_value": 20_000_000,
+        "other_sponsorship": 12_000_050,
     }
 
     finance_page.update_page(mock_data)
 
-    assert finance_page.sponsor_income_text.value == "Sponsorship: $500,000"
     assert finance_page.prize_money_income_text.value == "Prize Money: $250,000"
     assert finance_page.total_income_text.value == "Total: $850,000"
     assert finance_page.total_expenditure_text.value == "Total: $700,000"
     assert finance_page.profit_text.value == "Profit/Loss This Season: $430,002"
+    assert finance_page.title_sponsor_text.value == "Title Sponsor: Some Sponsor"
+    assert finance_page.title_sponsor_value_text.value == "Title Sponsorship: $20,000,000"
+    assert finance_page.sponsor_income_text.value == "Other Sponsorship: $12,000,050"
 
     # Simulate chart update (no direct visual assertions, but ensure no errors)
     finance_page.update_history_chart(mock_data)

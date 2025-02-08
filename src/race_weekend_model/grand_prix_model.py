@@ -16,6 +16,7 @@ class GrandPrixModel(session_model.SessionModel):
 
 		self.current_lap = 1
 		self.retirements: list[str] = []
+		self.number_of_overtakes = 0
 
 		self.standings_model.setup_grid_order()
 		self.setup_participant_start_fuel_and_tyres()
@@ -110,29 +111,31 @@ class GrandPrixModel(session_model.SessionModel):
 						delta = participant.laptime_manager.laptime - laptime_ahead
 							# self.log_event(f"{participant.name} Pitting In")
 						
-						if gap_ahead + delta <= 500 and participant_ahead.status not in [ParticipantStatus.PITTING_IN, ParticipantStatus.RETIRED]: # if car ahead is about to pit, don't handle for overtaking
-							# self.log_event(f"{driver} Attacking {participant_ahead.name}")
-							if self.mode != SessionMode.SIMULATE:
-								self.commentary_to_process.append(commentary.gen_attacking_message(driver, participant_ahead.name))
-
-							if random.randint(0, 100) < 25: # overtake successfull
-								# self.log_event(f"{participant.name} passes {participant_ahead.name}")
+						if delta < 0 and abs(delta) >= self.race_weekend_model.track_model.overtaking_delta:
+							if gap_ahead + delta <= 500 and participant_ahead.status not in [ParticipantStatus.PITTING_IN, ParticipantStatus.RETIRED]: # if car ahead is about to pit, don't handle for overtaking
+								# self.log_event(f"{driver} Attacking {participant_ahead.name}")
 								if self.mode != SessionMode.SIMULATE:
-									self.commentary_to_process.append(commentary.gen_overtake_message(participant.name, participant_ahead.name))
+									self.commentary_to_process.append(commentary.gen_attacking_message(driver, participant_ahead.name))
 
-								# add some random time to overtaking car, held up when passing
-								participant.laptime_manager.laptime += random.randint(700, 1_500)
+								if random.randint(0, 100) < 25: # overtake successfull
+									self.number_of_overtakes += 1
+									# self.log_event(f"{participant.name} passes {participant_ahead.name}")
+									if self.mode != SessionMode.SIMULATE:
+										self.commentary_to_process.append(commentary.gen_overtake_message(participant.name, participant_ahead.name))
 
-								# recalculate delta due to laptime updated above
-								delta = participant.laptime_manager.laptime - laptime_ahead 
-								
-								#update participant that has been passed so laptime brings them behind overtaking car
-								orig_gap = gap_ahead + delta
-								#if orig_gap >= 0:
-								revised_laptime = participant_ahead.laptime_manager.laptime + orig_gap + random.randint(700, 1_500)
-								participant_ahead.laptime_manager.recalculate_laptime_when_passed(revised_laptime)
-							else: # overtake unsuccessfull
-								participant.laptime_manager.laptime = laptime_ahead + random.randint(100, 1_400)
+									# add some random time to overtaking car, held up when passing
+									participant.laptime_manager.laptime += random.randint(700, 1_500)
+
+									# recalculate delta due to laptime updated above
+									delta = participant.laptime_manager.laptime - laptime_ahead 
+									
+									#update participant that has been passed so laptime brings them behind overtaking car
+									orig_gap = gap_ahead + delta
+									#if orig_gap >= 0:
+									revised_laptime = participant_ahead.laptime_manager.laptime + orig_gap + random.randint(700, 1_500)
+									participant_ahead.laptime_manager.recalculate_laptime_when_passed(revised_laptime)
+								else: # overtake unsuccessfull
+									participant.laptime_manager.laptime = laptime_ahead + random.randint(100, 1_400)
 								
 					laptime_ahead = participant.laptime_manager.laptime
 					participant_ahead = participant
@@ -144,6 +147,7 @@ class GrandPrixModel(session_model.SessionModel):
 			self.retirements.append(participant.name)
 
 	def post_race_actions(self) -> None:
+		print(f"No. Overtakes: {self.number_of_overtakes}")
 		self.winner = self.standings_model.leader
 		
 		# update driver stats

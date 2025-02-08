@@ -36,8 +36,6 @@ class TransportCostsModel:
 		self.total_costs += cost
 		self.costs_by_race.append(cost)
 
-		self.model.inbox.new_transport_cost_email(cost)
-
 	def setup_country_costs(self) -> None:
 		self.country_costs = {
 			"Australia": TransportCosts.MAX,

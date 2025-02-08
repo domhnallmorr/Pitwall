@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 	from pw_view.view import View
 	from pw_model.email.email_model import Email
 
-class EmailPage(ft.Column):
+class EmailPage(ft.Column): # type: ignore
 	def __init__(self, view: View):
 
 		self.view = view

@@ -5,3 +5,4 @@ Title: Australian Grand Prix
 Laps: 58
 Base Laptime: 84_000
 Length: 5.303
+Overtaking Delta: 1_200

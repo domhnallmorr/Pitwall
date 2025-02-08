@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Deque
 from typing import TYPE_CHECKING, Union
 
+from pw_model.finance.sponsors_model import SponsorModel
 from pw_model.finance.transport_costs import TransportCostsModel
 
 if TYPE_CHECKING:
@@ -33,7 +34,9 @@ def calculate_prize_money(finishing_position: int) -> int:
 	return prize_money[finishing_position]
 
 class FinanceModel:
-	def __init__(self, model: Model, team_model: TeamModel, opening_balance: int, total_sponsorship: int):
+	def __init__(self, model: Model, team_model: TeamModel, opening_balance: int, other_sponsorship: int,
+			  title_sponsor: str, title_sponsor_value: int):
+		
 		self.model = model
 		self.team_model = team_model
 		self.balance = opening_balance
@@ -41,7 +44,6 @@ class FinanceModel:
 		self.staff_yearly_cost = 28_000
 
 		self.prize_money = 13_000_000
-		self.total_sponsorship = total_sponsorship
 
 		self.car_cost = 7_000_000 # generic value to cover car production and development costs
 
@@ -49,6 +51,7 @@ class FinanceModel:
 		self.balance_history_dates: Deque[datetime] = collections.deque(maxlen=130)
 
 		self.consecutive_weeks_in_debt = 0
+		self.sponsors_model = SponsorModel(model, self.team_model, other_sponsorship, title_sponsor, title_sponsor_value)
 		self.transport_costs_model = TransportCostsModel(self.model)
 		self.season_opening_balance = opening_balance
 
@@ -82,7 +85,7 @@ class FinanceModel:
 
 	@property
 	def total_income(self) -> int:
-		return self.prize_money + self.total_sponsorship + self.drivers_payments
+		return int(self.prize_money + self.sponsors_model.total_sponsor_income + self.drivers_payments)
 	
 	@property
 	def total_expenditure(self) -> int:
@@ -93,9 +96,6 @@ class FinanceModel:
 		
 		# add prize money
 		self.balance += int(self.prize_money / 52)
-
-		# add sponsorship
-		self.balance += int(self.total_sponsorship / 52)
 
 		# staff cost
 		self.balance -= int((self.staff_yearly_cost / 52) * self.team_model.number_of_staff)
@@ -114,10 +114,34 @@ class FinanceModel:
 			self.consecutive_weeks_in_debt += 1
 		else:
 			self.consecutive_weeks_in_debt = 0
+
+	def post_race_actions(self) -> None:
+		start_balance = self.balance
+		transport_cost = self.apply_race_costs()
+		title_sponsor_payment = self.process_race_income()
+
+		profit = self.balance - start_balance
+		# self.race_profits.append(profit)
+
+		self.model.inbox.new_race_finance_email(transport_cost, title_sponsor_payment, profit)
 		
-	def apply_race_costs(self) -> None:
+	def process_race_income(self) -> int:
+		self.sponsors_model.process_sponsor_post_race_payments()
+		
+		other_sponsors_payments = self.sponsors_model.other_sponser_payments[-1]
+		self.balance += other_sponsors_payments
+
+		title_sponsor_payment = int(self.sponsors_model.title_sponser_payments[-1])
+		self.balance += title_sponsor_payment
+
+		return title_sponsor_payment
+	
+	def apply_race_costs(self) -> int:
 		self.transport_costs_model.gen_race_transport_cost()
-		self.balance -= self.transport_costs_model.costs_by_race[-1]
+		transport_cost = int(self.transport_costs_model.costs_by_race[-1])
+		self.balance -= transport_cost
+
+		return transport_cost
 	
 	def update_balance_history(self) -> None:
 		self.balance_history.append(self.balance)
@@ -132,20 +156,19 @@ class FinanceModel:
 		self.balance -= cost
 
 	def end_season(self) -> None:
-		# determine sponsorship
-		sponsorship = self.team_model.commercial_manager_model.determine_yearly_sponsorship()
-
-		self.model.inbox.new_sponsor_income_email(sponsorship)
-		self.total_sponsorship = sponsorship
 		self.season_opening_balance = self.balance
+		self.sponsors_model.setup_new_season()
 		self.transport_costs_model.setup_new_season()
 
-	def to_dict(self) -> dict[str, Union[int, list[Union[int, str]]]]:
-		return {
-			"balance": self.balance,
-			"staff_yearly_cost": self.staff_yearly_cost,
-			"prize_money": self.prize_money,
-			"total_sponsorship": self.total_sponsorship,
-			"balance_history": list(self.balance_history),
-			"balance_history_dates": [d.strftime("%Y-%m-%d") for d in self.balance_history_dates],
-		}
+		self.race_profits : list[int] = []
+
+	#TODO delete this
+	# def to_dict(self) -> dict[str, Union[int, list[Union[int, str]]]]:
+	# 	return {
+	# 		"balance": self.balance,
+	# 		"staff_yearly_cost": self.staff_yearly_cost,
+	# 		"prize_money": self.prize_money,
+	# 		"total_sponsorship": self.total_sponsorship,
+	# 		"balance_history": list(self.balance_history),
+	# 		"balance_history_dates": [d.strftime("%Y-%m-%d") for d in self.balance_history_dates],
+	# 	}

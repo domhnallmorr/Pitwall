@@ -59,8 +59,10 @@ class PageUpdateController:
 	def update_finance_page(self) -> None:
 		data: finance_data.FinanceData = {
 			"profit": copy.deepcopy(self.model.player_team_model.finance_model.season_profit),
+			"title_sponsor": copy.deepcopy(self.model.player_team_model.finance_model.sponsors_model.title_sponsor),
 
-			"total_sponsorship": copy.deepcopy(self.model.player_team_model.finance_model.total_sponsorship),
+			"title_sponsor_value": copy.deepcopy(self.model.player_team_model.finance_model.sponsors_model.title_sponsor_value),
+			"other_sponsorship": copy.deepcopy(self.model.player_team_model.finance_model.sponsors_model.other_sponsorship),
 			"prize_money": copy.deepcopy(self.model.player_team_model.finance_model.prize_money),
 			"drivers_payments": copy.deepcopy(self.model.player_team_model.finance_model.drivers_payments),
 			"total_income": copy.deepcopy(self.model.player_team_model.finance_model.total_income),
@@ -109,7 +111,7 @@ class PageUpdateController:
 			"player_managers": self.model.player_team_model.average_manager_skill,
 			"player_staff": self.model.player_team_model.number_of_staff,
 			"player_facilities": self.model.player_team_model.facilities_model.factory_rating,
-			"player_sponsorship": self.model.player_team_model.finance_model.total_sponsorship,
+			"player_sponsorship": self.model.player_team_model.finance_model.sponsors_model.total_sponsor_income,
 		}
 		self.view.home_page.update_page(data)
 

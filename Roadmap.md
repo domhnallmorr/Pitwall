@@ -16,8 +16,7 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 - [x] Add country flags
 - [ ] Need page for each track (overtaking difficulty and any other track details)
 - [x] Improve Email page
-- [ ] Improve team selection page
-- [ ] Need somewhere to view title sponsorss
+- [x] Improve team selection page
 
 ## Off Track Features
 
@@ -35,8 +34,8 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 ### Sponsors
 
-- [ ] Add title sponsors, static
-- [ ] Have "other sponsorship" attribute
+- [x] Add title sponsors, static
+- [X] Have "other sponsorship" attribute
 
 ### Drivers
 
@@ -55,7 +54,7 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 ## On Track
 
-- [ ] Add overtake difficulty attribute to tracks
+- [x] Add overtake difficulty attribute to tracks
 - [ ] Add random driver crashes
 - [x] Proper base laptime for each track
 

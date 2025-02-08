@@ -17,6 +17,10 @@ class Calendar:
 		self.dataframe = dataframe
 
 	@property
+	def number_of_races(self) -> int:
+		return int(self.dataframe.shape[0])
+	
+	@property
 	def race_weeks(self) -> list[int]:
 		return [int(w) for w in self.dataframe["Week"].values.tolist()]
 

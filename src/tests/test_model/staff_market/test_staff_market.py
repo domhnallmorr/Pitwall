@@ -119,3 +119,28 @@ def test_team_requiring_staff_method():
 	teams_requiring_tech_director = _staff_market.compile_teams_requiring_manager(StaffRoles.TECHNICAL_DIRECTOR)
 
 	assert teams_requiring_tech_director == ["Jordan", "Prost", "Arrows", "Stewart", "Tyrrell"]
+
+def test_player_with_no_staff_at_season_end():
+	model = create_model.create_model(mode="headless", auto_save=False)
+	model.player_team = "Williams"
+	model.player_team_model.driver1_model.contract.contract_length = 1
+	model.player_team_model.driver2_model.contract.contract_length = 1
+	model.player_team_model.technical_director_model.contract.contract_length = 1
+	model.player_team_model.commercial_manager_model.contract.contract_length = 1
+
+	_staff_market = staff_market.StaffMarket(model)
+	_staff_market.setup_dataframes()
+
+	assert _staff_market.player_requiring_technical_director is True
+	_staff_market.compute_transfers()
+	model.season.calendar.current_week = 51
+	model.staff_market = _staff_market
+	model.advance()
+
+	model.end_season()
+
+	# check model automatically hired staff for player
+	assert model.player_team_model.driver1_model.contract.contract_length > 0
+	assert model.player_team_model.driver2_model.contract.contract_length > 0
+	assert model.player_team_model.technical_director_model.contract.contract_length > 0
+	assert model.player_team_model.commercial_manager_model.contract.contract_length > 0

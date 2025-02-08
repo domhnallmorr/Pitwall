@@ -21,7 +21,6 @@ def test_driver_retirement_team_end_season():
 	assert "Ferrari" in model.staff_market.compile_teams_requiring_manager(StaffRoles.TECHNICAL_DIRECTOR)
 
 	model.staff_market.compute_transfers()
-	print(model.staff_market.grid_next_year_df)
 	model.end_season()
 
 	assert "Ross Brawn" not in manager_transfers.get_free_agents(model, StaffRoles.TECHNICAL_DIRECTOR)

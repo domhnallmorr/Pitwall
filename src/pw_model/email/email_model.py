@@ -103,9 +103,9 @@ class Inbox:
 		title = f"{team} hire {manager}"
 		self.add_email(msg, title)
 
-	def new_transport_cost_email(self, cost: int) -> None:
-		msg = email_generation.transport_costs_email(cost)
-		title = f"Transport Costs"
+	def new_race_finance_email(self, transport_cost: int, title_sponsor_payment: int, profit: int) -> None:
+		msg = email_generation.race_financial_summary_email(transport_cost, title_sponsor_payment, profit)
+		title = f"Race Financial Summary"
 		self.add_email(msg, title)
 
 	def generate_dataframe(self) -> pd.DataFrame:

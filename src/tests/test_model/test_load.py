@@ -2,7 +2,7 @@
 import pytest
 
 from tests import create_model
-from pw_model import load_save
+from pw_model.load_save.load_save import save_game, load
 
 def test_retirements():
 
@@ -16,10 +16,10 @@ def test_retirements():
 	model.staff_market.setup_dataframes()
 	model.staff_market.compute_transfers()
 
-	save_file = load_save.save_game(model, mode="memory")
+	save_file = save_game(model, mode="memory")
 
 	model = create_model.create_model() # reset the model
-	load_save.load(model, save_file, mode="memory") # load data
+	load(model, save_file, mode="memory") # load data
 
 	schumacher_model = model.get_driver_model("Michael Schumacher")
 	assert schumacher_model.retiring is True
@@ -38,10 +38,10 @@ def test_retirment_age():
 	model.staff_market.setup_dataframes()
 	model.staff_market.compute_transfers()
 
-	save_file = load_save.save_game(model, mode="memory")
+	save_file = save_game(model, mode="memory")
 
 	model = create_model.create_model() # reset the model
-	load_save.load(model, save_file, mode="memory") # load data
+	load(model, save_file, mode="memory") # load data
 
 	schumacher_model = model.get_driver_model("Michael Schumacher")
 	assert schumacher_model.retiring_age == 55
@@ -52,10 +52,10 @@ def test_year_week():
 	model.year = 1900
 	model.season.calendar.current_week = 10
 
-	save_file = load_save.save_game(model, mode="memory")
+	save_file = save_game(model, mode="memory")
 
 	model = create_model.create_model() # reset the model
-	load_save.load(model, save_file, mode="memory") # load data
+	load(model, save_file, mode="memory") # load data
 
 	assert model.year == 1900
 	assert model.season.calendar.current_week == 10
@@ -68,9 +68,9 @@ def test_retirement_age_senior_manager():
 	brawn_model.retired = True
 	brawn_model.retiring = True
 
-	save_file = load_save.save_game(model, mode="memory")
+	save_file = save_game(model, mode="memory")
 	model = create_model.create_model() # reset the model
-	load_save.load(model, save_file, mode="memory") # load data
+	load(model, save_file, mode="memory") # load data
 
 	brawn_model = model.get_technical_director_model("Ross Brawn")
 

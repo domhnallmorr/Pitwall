@@ -21,7 +21,7 @@ from pw_view.custom_widgets import custom_container
 if TYPE_CHECKING:
 	from pw_view.view import View
 
-class FinancePage(ft.Column):
+class FinancePage(ft.Column): # type: ignore
 	def __init__(self, view: View):
 
 		self.view = view
@@ -57,7 +57,9 @@ class FinancePage(ft.Column):
 
 	def setup_widgets(self) -> None:
 		self.profit_text = ft.Text(f"Profit/Loss This Season: $1")
+		self.title_sponsor_text = ft.Text(f"Title Sponsor: Some Sponsor")
 
+		self.title_sponsor_value_text = ft.Text(f"Title Sponsorship: $1")
 		self.sponsor_income_text = ft.Text(f"Sponsorship: $1")
 		self.prize_money_income_text = ft.Text(f"Prize Money: $1")
 		self.drivers_payments_text = ft.Text(f"Drivers Payments: $1")
@@ -80,8 +82,8 @@ class FinancePage(ft.Column):
 			controls=[
 					self.summary_header,
 					self.profit_text,
+					self.title_sponsor_text,
 					ft.Text(),# dummy text widget so that income and expenditure have the same number of rows
-					ft.Text(),
 					ft.Text(),
 					ft.Text(),
 					ft.Text(),
@@ -98,10 +100,10 @@ class FinancePage(ft.Column):
 			controls=[
 					self.income_header,
 					# ft.Text("Income", weight=ft.FontWeight.BOLD, size=25,),
+					self.title_sponsor_value_text,
 					self.sponsor_income_text,
 					self.prize_money_income_text,
 					self.drivers_payments_text,
-					ft.Text(),# dummy text widget so that income and expenditure have the same number of rows
 					ft.Text(),# dummy text widget so that income and expenditure have the same number of rows
 					ft.Text(),# dummy text widget so that income and expenditure have the same number of rows
 					ft.Divider(),
@@ -138,8 +140,10 @@ class FinancePage(ft.Column):
 
 	def update_page(self, data: FinanceData) -> None:
 		self.profit_text.value = f"Profit/Loss This Season: ${data['profit']:,}"
+		self.title_sponsor_text.value = f"Title Sponsor: {data['title_sponsor']}"
 
-		self.sponsor_income_text.value = f"Sponsorship: ${data['total_sponsorship']:,}"
+		self.title_sponsor_value_text.value = f"Title Sponsorship: ${data['title_sponsor_value']:,}"
+		self.sponsor_income_text.value = f"Other Sponsorship: ${data['other_sponsorship']:,}"
 		self.prize_money_income_text.value = f"Prize Money: ${data['prize_money']:,}"
 		self.drivers_payments_text.value = f"Drivers Payments: ${data['drivers_payments']:,}"
 		self.total_income_text.value = f"Total: ${data['total_income']:,}"

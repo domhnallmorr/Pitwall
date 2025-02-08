@@ -1,7 +1,7 @@
 import pandas as pd
 
 from tests import create_model
-from pw_model import load_save
+from pw_model.load_save.load_save import save_game, load
 
 def test_load_standings():
 	model = create_model.create_model()
@@ -29,11 +29,11 @@ def test_load_standings():
 	assert teams_row1[1] == 32 # check points for leading team (1-2 in both races)
 
 	# SAVE THE MODEL
-	save_file = load_save.save_game(model, mode="memory")
+	save_file = save_game(model, mode="memory")
 
 	model = create_model.create_model() #recreate model (simulate start new game)
 
-	load_save.load(model, save_file, mode="memory")
+	load(model, save_file, mode="memory")
 
 	driver_row1 = model.season.standings_manager.drivers_standings_df.values.tolist()[0]
 	teams_row1 = model.season.standings_manager.constructors_standings_df.values.tolist()[0]

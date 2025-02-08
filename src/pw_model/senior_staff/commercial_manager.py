@@ -60,17 +60,17 @@ class CommercialManager(SeniorStaff): # type: ignore
 	
 	def determine_possible_sponsorship(self) -> Tuple[int, int]:
 		min_sponsorship = 1_000_000
-		max_sponsorship = 50_000_000
+		max_sponsorship = 20_000_000
 
 		'''
 		Account for size of team
 		'''
 
 		if self.team_model.number_of_staff < 150:
-			max_sponsorship = 40_000_000
+			max_sponsorship = 15_000_000
 		if self.team_model.number_of_staff < 120:
-			max_sponsorship = 30_000_000
+			max_sponsorship = 11_000_000
 		if self.team_model.number_of_staff < 100:
-			max_sponsorship = 20_000_000
+			max_sponsorship = 7_000_000
 
 		return min_sponsorship, max_sponsorship

@@ -1,9 +1,10 @@
+from typing import Optional
 import flet as ft
 
-class RatingWidget(ft.Row):
-	def __init__(self, text: str):
+class RatingWidget(ft.Row): # type: ignore
+	def __init__(self, text: str, text_width: Optional[int]=None):
         
-		self.text_widget = ft.Text(text, width=80)
+		self.text_widget = ft.Text(text, width=text_width)
 		self.update_row(50)
 
 		super(RatingWidget, self).__init__(controls=self.controls)
@@ -41,4 +42,7 @@ class RatingWidget(ft.Row):
 	def update_row(self, rating: int) -> None:
 		star_rating = self.attribute_to_stars(rating)
 		self.create_star_row(star_rating)
+	
+	def update_text(self, text: str) -> None:
+		self.text_widget.value = text
 

@@ -1,8 +1,13 @@
+'''
+Typed dict that gets passed to the view to update UI
+'''
 from typing import TypedDict, List, Union
 
 class FinanceData(TypedDict):
     profit: int
-    total_sponsorship: int
+    title_sponsor: str
+    title_sponsor_value: int
+    other_sponsorship: int
     prize_money: int
     drivers_payments: int
     total_income: int

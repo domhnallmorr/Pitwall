@@ -8,6 +8,7 @@ from pw_model import pw_base_model
 from pw_view import view
 from pw_controller import race_controller, page_update_controller
 from pw_controller.email_page.email_controller import EmailController
+from pw_controller.team_selection.team_selection_controller import TeamSelectionController
 
 class Controller:
 	def __init__(self, app: Page, run_directory: str, mode: str):
@@ -20,6 +21,7 @@ class Controller:
 		self.staff_hire_controller = staff_hire_controller.StaffHireController(self)
 		self.facilities_controller = facilities_controller.FacilitiesController(self)
 		self.email_controller = EmailController(self)
+		self.team_selection_controller = TeamSelectionController(self)
 		
 		self.model = pw_base_model.Model(roster, run_directory)
 
@@ -43,7 +45,7 @@ class Controller:
 		self.model.start_career(team)
 		
 		self.setup_new_season()
-		self.view.return_to_main_window()
+		self.view.return_to_main_window(mode="start_career")
 
 	def load_career(self) -> None:
 		self.model.load_career()
