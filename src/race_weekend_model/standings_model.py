@@ -16,7 +16,7 @@ class StandingsModel:
 		columns = ["Position", "Driver", "Team", "Lap",
 			"Total Time", "Gap Ahead", "Gap to Leader", "Last Lap",
 			"Status", "Lapped Status", "Pit", "Fastest Lap",
-			"Grid"]
+			"Grid", "Retirement Reason"]
 	
 		data = []
 
@@ -25,7 +25,7 @@ class StandingsModel:
 					[participant.position, participant.name, participant.team_name, 0,
 					0.0, 0, 0, "-",
 					"running", None, 0, None,
-					0]
+					0, None]
 				)
 		
 		self.dataframe = pd.DataFrame(columns=columns, data=data)
@@ -77,6 +77,7 @@ class StandingsModel:
 			self.dataframe.loc[self.dataframe["Driver"] == driver, "Lap"] = particpant_model.current_lap
 			self.dataframe.loc[self.dataframe["Driver"] == driver, "Status"] = particpant_model.status
 			self.dataframe.loc[self.dataframe["Driver"] == driver, "Pit"] = particpant_model.number_of_pitstops
+			self.dataframe.loc[self.dataframe["Driver"] == driver, "Retirement Reason"] = particpant_model.retirement_reason
 			
 
 	def update_order(self) -> None:

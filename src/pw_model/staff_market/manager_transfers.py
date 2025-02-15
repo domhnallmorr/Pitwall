@@ -65,7 +65,11 @@ def handle_top_5_technical_directors(model: Model) -> None:
 	Ensure that the top 5 technical directors are hired for next year (if not retiring)
 	'''
 	top_available_tech_directors = get_top_available_technical_directors(model, 5)
-	teams_requiring_tech_director =model.staff_market.compile_teams_requiring_manager(StaffRoles.TECHNICAL_DIRECTOR)
+	teams_requiring_tech_director = model.staff_market.compile_teams_requiring_manager(StaffRoles.TECHNICAL_DIRECTOR)
+
+	if model.player_team in teams_requiring_tech_director: # make sure we don't over ride the players choice
+		teams_requiring_tech_director.remove(model.player_team)
+
 	random.shuffle(teams_requiring_tech_director)
 
 	if len(top_available_tech_directors) > 0: # if any of the technical directors are available

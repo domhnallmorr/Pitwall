@@ -15,6 +15,9 @@ from pw_view.staff_page import staff_page, hire_staff_page
 from pw_view.finance_page import finance_page
 from pw_view.car_page import car_page
 from pw_view.facility_page import facility_page, upgrade_facility_page
+from pw_view.track_page.track_page import TrackPage
+
+from pw_view.view_enums import ViewPageEnums
 
 if TYPE_CHECKING:
 	from pw_controller.pw_controller import Controller
@@ -52,12 +55,14 @@ class View:
 		self.clicked_button_style = ft.ButtonStyle(color=ft.Colors.BLACK, bgcolor=ft.Colors.PRIMARY)
 
 		self.flags_small_path = fr"{self.run_directory}\pw_view\assets\flags_small"
+		self.track_maps_path = fr"{self.run_directory}\pw_view\assets\track_maps"
 
 		self.setup_background_images()
 		self.setup_pages()
 		self.setup_windows(team_names)
 
 		self.main_app.views.append(self.main_window)
+		# self.view_page_enums: ViewPageEnums = ViewPageEnums()
 
 	def setup_background_images(self) -> None:
 		image_path = fr"{self.run_directory}\pw_view\assets\background_image.jpg"
@@ -90,6 +95,7 @@ class View:
 		self.car_page = car_page.CarPage(self)
 		self.facility_page = facility_page.FacilityPage(self)
 		self.upgrade_facility_page = upgrade_facility_page.UpgradeFacilitiesPage(self)
+		self.track_page = TrackPage(self)
 
 		self.results_window = results_window.ResultsWindow(self)
 
@@ -125,7 +131,7 @@ class View:
 
 		# Hack to get background image to appear on home page when the game starts
 		if mode == "start_career":
-			self.main_window.change_page("home")
+			self.main_window.change_page(ViewPageEnums.HOME)
 
 		self.main_app.update()
 

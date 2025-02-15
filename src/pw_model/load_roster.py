@@ -99,6 +99,7 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 
 	name_idx = column_names.index("Name")
 	country_idx = column_names.index("Country")
+	team_principal_idx = column_names.index("TeamPrincipal")
 	driver1_idx = column_names.index("Driver1")
 	driver2_idx = column_names.index("Driver2")
 	car_speed_idx = column_names.index("CarSpeed")
@@ -118,6 +119,7 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 		if row[0].lower() == "default":
 			name = row[name_idx]
 			country = row[country_idx]
+			team_principal = row[team_principal_idx]
 			driver1 = row[driver1_idx]
 			driver2 = row[driver2_idx]
 			car_speed = row[car_speed_idx]
@@ -137,7 +139,7 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 			technical_director = row[technical_director_idx]
 
 			car = car_model.CarModel(car_speed)
-			team = team_model.TeamModel(model, name, country, driver1, driver2, car, number_of_staff, facilities,
+			team = team_model.TeamModel(model, name, country, team_principal, driver1, driver2, car, number_of_staff, facilities,
 							   starting_balance, other_sponsorship, title_sponsor, title_sponsor_value,
 							   commercial_manager, technical_director)
 			

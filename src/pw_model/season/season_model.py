@@ -19,53 +19,6 @@ class SeasonModel:
 		self.calendar = Calendar(self, calendar_dataframe)
 		self.setup_new_season_variables()
 
-	# @property
-	# def race_weeks(self) -> List[int]:
-	# 	return [int(w) for w in self.model.calendar["Week"].values.tolist()]
-	
-	# @property
-	# def in_race_week(self) -> bool:
-	# 	is_race_week = False
-		
-	# 	if self.current_week in self.calendar.race_weeks:
-	# 		if self.calendar.get_week_of_next_race() == self.current_week:
-	# 			is_race_week = True
-				
-	# 	return is_race_week
-
-		
-	# @property
-	# def current_track_model(self) -> TrackModel:
-	# 	current_track = None
-
-	# 	'''
-	# 	DETERMINE THE TRACK MODEL FOR THE NEXT UPCOMING RACE
-	# 	'''
-	# 	for idx, row in self.model.calendar.iterrows():
-	# 		if row["Week"] >= self.current_week:
-	# 			current_track = self.model.get_track_model(row["Track"])
-	# 			assert current_track is not None, f"Failed to find track {row['Track']}"
-	# 			break
-
-	# 	return current_track
-
-	# @property	
-	# def next_race(self) -> str:
-	# 	if self.next_race_idx is None:
-	# 		return "Post Season"
-	# 	else:
-	# 		track_name = self.model.calendar.iloc[self.next_race_idx]["Track"]
-	# 		return str(self.model.get_track_model(track_name).title)
-
-	# @property
-	# def next_race_week(self) -> str:
-	# 	if self.next_race_idx is None:
-	# 		return "-"
-	# 	else:
-	# 		week = self.model.calendar.iloc[self.next_race_idx]["Week"]
-
-	# 		return str(week)
-
 	@property
 	def drivers_by_rating(self) -> list[list[Union[str, int]]]:
 		'''

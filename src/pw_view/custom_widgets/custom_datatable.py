@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Callable, Any
 import os
 
 import flet as ft
@@ -68,3 +68,9 @@ class CustomDataTable:
 					)
 		
 		return cell
+
+	def assign_on_tap_callback(self, column_index: int, callback: Callable[[Any], Any]) -> None:
+		"""Assigns an `on_tap` event to all cells in a specific column."""
+		for row in self.data_table.rows:
+			cell = row.cells[column_index]  # Get the specific column cell
+			cell.on_tap = callback  # Assign the callback function

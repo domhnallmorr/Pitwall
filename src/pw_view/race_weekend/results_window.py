@@ -14,7 +14,7 @@ from pw_view.custom_widgets.custom_datatable import CustomDataTable
 
 from pw_controller.race_controller import RaceSessionData
 
-from race_weekend_model.race_model_enums import ParticipantStatus
+from race_weekend_model.race_model_enums import ParticipantStatus, RetirementReasons
 
 if TYPE_CHECKING:
 	from pw_view.view import View
@@ -140,7 +140,7 @@ class ResultsWindow(ft.View):
 					data.append(f"{row['Lap']} Laps")
 				else:
 					if row["Status"] == ParticipantStatus.RETIRED:
-						data.append(f"Retired Lap {row['Lap']}")
+						data.append(f"Retired Lap {row['Lap']} ({row['Retirement Reason'].value})")
 					elif row["Lapped Status"] is None:
 						data.append(self.ms_to_min_sec(row["Gap to Leader"], interval=True))
 					else:

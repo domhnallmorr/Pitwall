@@ -147,7 +147,6 @@ class GrandPrixModel(session_model.SessionModel):
 			self.retirements.append(participant.name)
 
 	def post_race_actions(self) -> None:
-		print(f"No. Overtakes: {self.number_of_overtakes}")
 		self.winner = self.standings_model.leader
 		
 		# update driver stats

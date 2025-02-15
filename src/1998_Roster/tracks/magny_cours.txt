@@ -5,4 +5,4 @@ Title: French Grand Prix
 Laps: 72
 Base Laptime: 70_000
 Length: 4.250
-Overtaking Delta: 1_400
+Overtaking Delta: 1_500

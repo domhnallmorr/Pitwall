@@ -6,6 +6,7 @@ import pandas as pd
 from pw_model import load_roster
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.finance.transport_costs import save_transport_costs_model, load_transport_costs
+from pw_model.load_save.email_load_save import save_email, load_email
 from pw_model.load_save.sponsors_load_save import save_sponsor_model
 from pw_model.load_save.finance_load_save import save_finance_model, load_finance_model
 from pw_model.load_save.standings_load_save import save_standings, load_standings
@@ -271,6 +272,7 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 	"Year"	TEXT,
 	"Name"	TEXT,
 	"Country"	TEXT,
+	"TeamPrincipal"	TEXT,
 	"Driver1"	TEXT,
 	"Driver2"	TEXT,
 	"CarSpeed"	INTEGER,
@@ -287,14 +289,15 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 	for team in model.teams:
 
 		cursor.execute('''
-			INSERT INTO teams (year, name, country, Driver1, Driver2, CarSpeed, NumberofStaff, Facilities, StartingBalance,
+			INSERT INTO teams (year, name, country, TeamPrincipal, Driver1, Driver2, CarSpeed, NumberofStaff, Facilities, StartingBalance,
 				 CommercialManager, TechnicalDirector) 
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
 				 ?, ?)
 		''', (
 			"default",
 			team.name, 
 			team.country, 
+			team.team_principal,
 			team.driver1,
 			team.driver2, 
 			team.car_model.speed, 
@@ -360,9 +363,6 @@ def save_grid_next_year(model: Model, save_file: sqlite3.Connection) -> None:
 def save_new_contracts_df(model: Model, save_file: sqlite3.Connection) -> None:
 	model.staff_market.new_contracts_df.to_sql("new_contracts_df", save_file, if_exists="replace", index=False)
 
-def save_email(model: Model, save_file: sqlite3.Connection) -> None:
-	df = model.inbox.generate_dataframe()
-	df.to_sql("email", save_file, if_exists="replace", index=False)
 
 def save_calendar(model: Model, save_file: sqlite3.Connection) -> None:
 	model.season.calendar.dataframe.to_sql("calendar", save_file, if_exists="replace", index=False)
@@ -486,10 +486,6 @@ def load_grid_next_year(conn: sqlite3.Connection, model: Model) -> None:
 	model.staff_market.grid_next_year_df = pd.read_sql('SELECT * FROM grid_next_year_df', conn)
 	model.staff_market.grid_next_year_announced_df = pd.read_sql('SELECT * FROM grid_next_year_announced', conn)
 	model.staff_market.new_contracts_df = pd.read_sql('SELECT * FROM new_contracts_df', conn)
-
-def load_email(conn: sqlite3.Connection, model: Model) -> None:
-	df = pd.read_sql('SELECT * FROM email', conn)
-	model.inbox.load_dataframe(df)
 
 def load_calendar(conn: sqlite3.Connection, model: Model) -> None:
 	model.season.calendar.dataframe = pd.read_sql('SELECT * FROM calendar', conn)

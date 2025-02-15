@@ -7,6 +7,8 @@ DIRTY_AIR_THRESHOLD = 1_500 # in ms, 1_500 means dirty air comes into affect whe
 DIRTY_AIR_EFFECT = 500 # in ms, 500 means car loses 0.5s in pace when running in dirty air
 
 RETIREMENT_CHANCE = 20 # % chance of retiring
+CRASH_CHANCE = 10 # % chance of crashing out
+
 LAP_TIME_VARIATION_BASE = 300 # in ms, lap time variation for every driver, independant of consistency attribute
 LAP_TIME_VARIATION = 400 # in ms, driver with 0 consistency has 0.4s add to laptime variation, driver with 100 consistency has 0.0s added
 

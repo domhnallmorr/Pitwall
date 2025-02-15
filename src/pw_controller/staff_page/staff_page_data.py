@@ -37,7 +37,7 @@ class StaffPageData:
     commercial_manager: SeniorStaffData
     technical_director: SeniorStaffData
     staff_values: list[tuple[str, int]]
-    staff_player_requies: StaffPlayerRequires
+    staff_player_requires: StaffPlayerRequires
     
 def get_staff_page_data(model: Model) -> StaffPageData:
 	staff_market = model.staff_market
@@ -88,7 +88,7 @@ def get_staff_page_data(model: Model) -> StaffPageData:
           
 		staff_values=staff_values,
         
-		staff_player_requies=StaffPlayerRequires(
+		staff_player_requires=StaffPlayerRequires(
                player_requiring_driver1=staff_market.player_requiring_driver1,
                player_requiring_driver2=staff_market.player_requiring_driver2,
                player_requiring_technical_director=staff_market.player_requiring_technical_director,

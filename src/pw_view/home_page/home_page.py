@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 	from pw_view.view import View
 	from pw_controller.page_update_typed_dicts import HomePageData
 
-class HomePage(ft.Column):
+class HomePage(ft.Column): # type: ignore
 	def __init__(self, view: View):
 
 		self.view = view

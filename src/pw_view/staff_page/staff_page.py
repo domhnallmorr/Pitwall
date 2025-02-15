@@ -87,10 +87,10 @@ class StaffPage(ft.Column): # type: ignore
 		if new_season is True:
 			self.enable_hire_workforce_btn()
 
-		self.driver1_container.update(data.drivers[0], data.staff_player_requies.player_requiring_driver1)
-		self.driver2_container.update(data.drivers[1], data.staff_player_requies.player_requiring_driver2)
-		self.technical_director_container.update(data.technical_director, data.staff_player_requies.player_requiring_technical_director)
-		self.commercial_manager_container.update(data.commercial_manager, data.staff_player_requies.player_requiring_commercial_manager)
+		self.driver1_container.update(data.drivers[0], data.staff_player_requires.player_requiring_driver1)
+		self.driver2_container.update(data.drivers[1], data.staff_player_requires.player_requiring_driver2)
+		self.technical_director_container.update(data.technical_director, data.staff_player_requires.player_requiring_technical_director)
+		self.commercial_manager_container.update(data.commercial_manager, data.staff_player_requires.player_requiring_commercial_manager)
 
 		self.workforce_container = self.setup_staff_value_progress_bars(data.staff_values)
 

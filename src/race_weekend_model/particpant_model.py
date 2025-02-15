@@ -5,10 +5,11 @@ from pw_model.car.car_model import CarModel
 from pw_model.track.track_model import TrackModel
 from race_weekend_model.pit_strategy import PitStrategy
 from race_weekend_model.laptime_manager import LapTimeManager
-from race_weekend_model.race_model_enums import ParticipantStatus
+from race_weekend_model.race_model_enums import ParticipantStatus, RetirementReasons
 from race_weekend_model.on_track_constants import (
 	DIRTY_AIR_THRESHOLD,
 	DIRTY_AIR_EFFECT,
+	CRASH_CHANCE,
 	RETIREMENT_CHANCE,
 	LAP_TIME_VARIATION,
 	PIT_STOP_LOSS_RANGE,
@@ -125,9 +126,18 @@ class ParticpantModel:
 	def calculate_if_retires(self) -> None:
 		self.retires = False
 		self.retire_lap = None
+		self.retirement_reason = None
 
 		if random.randint(0, 100) < RETIREMENT_CHANCE:
 			self.retires = True
+			self.retirement_reason = RetirementReasons.MECHANICAL
+
+		if self.retires is not True:
+			if random.randint(0, 100) < CRASH_CHANCE:
+				self.retires = True
+				self.retirement_reason = RetirementReasons.CRASH
+
+		if self.retires is True: # determine lap when participant retires
 			self.retire_lap = random.randint(3, self.track_model.number_of_laps)
 
 	def setup_start_fuel_and_tyres(self) -> None:

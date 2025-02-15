@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import MagicMock
 from pw_view.staff_page.staff_page import StaffPage
 from pw_model.pw_model_enums import StaffRoles
-from pw_controller.staff_page.staff_page_data import StaffPageData, DriverData, SeniorStaffData
+from pw_controller.staff_page.staff_page_data import StaffPageData, DriverData, SeniorStaffData, StaffPlayerRequires
 
 @pytest.fixture
 def mock_view():
@@ -29,7 +29,14 @@ def test_update_page(staff_page):
         ],
         technical_director=SeniorStaffData(name="Tech Director", age=50, salary=200000, contract_length=3, skill=95, retiring=True),
         commercial_manager=SeniorStaffData(name="Comm Manager", age=45, salary=150000, contract_length=1, skill=88, retiring=False),
-        staff_values=[["Ferrari", 200], ["Williams", 180]]
+        staff_values=[["Ferrari", 200], ["Williams", 180]],
+        
+        staff_player_requires = StaffPlayerRequires(
+            player_requiring_driver1=False,
+            player_requiring_driver2=True,
+            player_requiring_commercial_manager=True,
+            player_requiring_technical_director=False,
+        )
     )
 
     staff_page.update_page(mock_data)
@@ -57,7 +64,7 @@ def test_update_page(staff_page):
     assert staff_page.technical_director_container.salary_text.value == "Salary: $200,000"
     assert staff_page.technical_director_container.contract_length_text.value == "Contract Length: 3 Year(s)"
     assert staff_page.technical_director_container.contract_status_text.value == "Contract Status: Retiring"
-    assert staff_page.technical_director_container.replace_button.disabled is False
+    assert staff_page.technical_director_container.replace_button.disabled is True
 
     assert staff_page.commercial_manager_container.name_text.value == "Name: Comm Manager"
     assert staff_page.commercial_manager_container.age_text.value == "Age: 45 Years"

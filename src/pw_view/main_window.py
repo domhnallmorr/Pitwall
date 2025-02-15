@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 import flet as ft
 
 from pw_view import sidebar
+from pw_view.view_enums import ViewPageEnums
 
 if TYPE_CHECKING:
 	from pw_view.view import View
@@ -42,29 +43,31 @@ class MainWindow(ft.View):
 		
 		contents = [self.nav_sidebar]
 
-		if page_name == "home":
+		if page_name == ViewPageEnums.HOME:
 			contents.append(self.view.home_page)
-		elif page_name == "email":
+		elif page_name == ViewPageEnums.EMAIL:
 			contents.append(self.view.email_page)
 			self.update_email_button(0) # reset email btn to remove number of new mails
-		elif page_name == "standings":
+		elif page_name == ViewPageEnums.STANDINGS:
 			contents.append(self.view.standings_page)
-		elif page_name == "calendar":
+		elif page_name == ViewPageEnums.CALENDAR:
 			contents.append(self.view.calendar_page)
-		elif page_name == "staff":
+		elif page_name == ViewPageEnums.STAFF:
 			contents.append(self.view.staff_page)
 		elif page_name == "hire_staff":
 			contents.append(self.view.hire_staff_page)
-		elif page_name == "grid":
+		elif page_name == ViewPageEnums.GRID:
 			contents.append(self.view.grid_page)
-		elif page_name == "finance":
+		elif page_name == ViewPageEnums.FINANCE:
 			contents.append(self.view.finance_page)
-		elif page_name == "car":
+		elif page_name == ViewPageEnums.CAR:
 			contents.append(self.view.car_page)
-		elif page_name == "facility":
+		elif page_name == ViewPageEnums.FACILITY:
 			contents.append(self.view.facility_page)
 		elif page_name == "upgrade_facility":
 			contents.append(self.view.upgrade_facility_page)
+		elif page_name == ViewPageEnums.TRACKPAGE:
+			contents.append(self.view.track_page)
 
 		self.content_row = ft.Row(
 			contents,

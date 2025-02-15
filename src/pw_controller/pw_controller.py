@@ -9,6 +9,7 @@ from pw_view import view
 from pw_controller import race_controller, page_update_controller
 from pw_controller.email_page.email_controller import EmailController
 from pw_controller.team_selection.team_selection_controller import TeamSelectionController
+from pw_controller.track_page.track_page_controller import TrackPageController
 
 class Controller:
 	def __init__(self, app: Page, run_directory: str, mode: str):
@@ -22,6 +23,7 @@ class Controller:
 		self.facilities_controller = facilities_controller.FacilitiesController(self)
 		self.email_controller = EmailController(self)
 		self.team_selection_controller = TeamSelectionController(self)
+		self.track_page_controller = TrackPageController(self)
 		
 		self.model = pw_base_model.Model(roster, run_directory)
 

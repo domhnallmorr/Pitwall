@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import flet as ft
 from pw_view.main_window import MainWindow
+from pw_view.view_enums import ViewPageEnums
 
 @pytest.fixture
 def mock_view():
@@ -36,11 +37,11 @@ def test_initialization(main_window):
 
 def test_change_page(main_window, mock_view):
     """Test the change_page method."""
-    main_window.change_page("email")
+    main_window.change_page(ViewPageEnums.EMAIL)
     assert isinstance(main_window.content_row.controls[1], ft.Container)  # Should be email_page
     assert main_window.content_row.controls[1] == mock_view.email_page
 
-    main_window.change_page("home")
+    main_window.change_page(ViewPageEnums.HOME)
     assert main_window.content_row.controls[1] == mock_view.home_page
 
 def test_update_window(main_window, mock_view):

@@ -14,7 +14,7 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 ## UI Improvements
 
 - [x] Add country flags
-- [ ] Need page for each track (overtaking difficulty and any other track details)
+- [x] Need page for each track (overtaking difficulty and any other track details)
 - [x] Improve Email page
 - [x] Improve team selection page
 
@@ -43,19 +43,18 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 ### Contract Negotiations
 
-- [ ] Drivers take some time to respond to offers
+- [ ] Drivers randomnly accept/decline player offer
 		
 ### Other
 
 - [ ] Add team principal as staff member to AI teams, static
-- [ ] Replace real driver names with fake names
 - [x] Add winner column to calendar page
 - [x] Add track lengths
 
 ## On Track
 
 - [x] Add overtake difficulty attribute to tracks
-- [ ] Add random driver crashes
+- [x] Add random driver crashes
 - [x] Proper base laptime for each track
 
 ## Refactoring
@@ -86,7 +85,6 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 - Save previous season results/stats
 - Improve existing code base
 - Improve pit strategies
-- Images of drivers/staff
 - Pay off facility upgrades over time
 - Split workforce into commercial, mechanics, design
 - Basic contract negotiation for drivers/staff

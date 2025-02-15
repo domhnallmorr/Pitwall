@@ -33,13 +33,14 @@ class StaffMarket:
 		columns = ["Team", "WeekToAnnounce", "DriverIdx", "Driver", "Salary", "ContractLength"]
 		self.new_contracts_df = pd.DataFrame(columns=columns) # dataframe for tracking details of new contracts offered to new hires
 
-		columns = ["team", StaffRoles.DRIVER1.value, StaffRoles.DRIVER2.value, StaffRoles.TECHNICAL_DIRECTOR.value, StaffRoles.COMMERCIAL_MANAGER.value]
+		columns = ["team", StaffRoles.TEAM_PRINCIPAL.value, StaffRoles.DRIVER1.value, StaffRoles.DRIVER2.value,
+			 StaffRoles.TECHNICAL_DIRECTOR.value, StaffRoles.COMMERCIAL_MANAGER.value]
 		this_year_data = [] # grid for upcoming season
 		next_year_data = [] # grid for next year
 
 		for team in self.model.teams:
-			this_year_data.append([team.name])
-			next_year_data.append([team.name])
+			this_year_data.append([team.name, team.team_principal])
+			next_year_data.append([team.name, team.team_principal])
 
 			for staff_model in [team.driver1_model, team.driver2_model, team.technical_director_model, team.commercial_manager_model]:
 				this_year_data[-1].append(staff_model.name)

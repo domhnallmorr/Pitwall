@@ -3,10 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import flet as ft
 
+from pw_view.view_enums import ViewPageEnums
+
 if TYPE_CHECKING:
 	from pw_view.view import View
 
-class Sidebar(ft.Column):
+class Sidebar(ft.Column): # type: ignore
 	def __init__(self, view: View):
 		self.view = view
 
@@ -15,18 +17,18 @@ class Sidebar(ft.Column):
 		self.advance_btn = ft.TextButton("Advance", icon="play_arrow", width=btn_width, on_click=self.advance)
 		self.advance_btn.style = self.view.positive_button_style
 
-		self.email_btn = ft.TextButton("Email", icon="email", on_click=lambda _: view.main_window.change_page("email"), width=btn_width, style=self.view.default_button_style)
+		self.email_btn = ft.TextButton("Email", icon="email", on_click=lambda _: view.main_window.change_page(ViewPageEnums.EMAIL), width=btn_width, style=self.view.default_button_style)
 
 		nav_buttons = [
-			ft.TextButton("Home", icon="home", on_click=lambda _: view.main_window.change_page("home"), width=btn_width, style=self.view.default_button_style),
+			ft.TextButton("Home", icon="home", on_click=lambda _: view.main_window.change_page(ViewPageEnums.HOME), width=btn_width, style=self.view.default_button_style),
 			self.email_btn,
-			ft.TextButton("Standings", icon="table_chart", on_click=lambda _: view.main_window.change_page("standings"), width=btn_width, style=self.view.default_button_style),
-			ft.TextButton("Calendar", icon="CALENDAR_MONTH", on_click=lambda _: view.main_window.change_page("calendar"), width=btn_width, style=self.view.default_button_style),
-			ft.TextButton("Staff", icon="account_box_rounded", on_click=lambda _: view.main_window.change_page("staff"), width=btn_width, style=self.view.default_button_style),
-			ft.TextButton("Grid", icon="border_all", on_click=lambda _: view.main_window.change_page("grid"), width=btn_width, style=self.view.default_button_style),
-			ft.TextButton("Finance", icon="attach_money", on_click=lambda _: view.main_window.change_page("finance"), width=btn_width, style=self.view.default_button_style),
-			ft.TextButton("Car", icon="DIRECTIONS_CAR", on_click=lambda _: view.main_window.change_page("car"), width=btn_width, style=self.view.default_button_style),
-			ft.TextButton("Facilities", icon="FACTORY", on_click=lambda _: view.main_window.change_page("facility"), width=btn_width, style=self.view.default_button_style),
+			ft.TextButton("Standings", icon="table_chart", on_click=lambda _: view.main_window.change_page(ViewPageEnums.STANDINGS), width=btn_width, style=self.view.default_button_style),
+			ft.TextButton("Calendar", icon="CALENDAR_MONTH", on_click=lambda _: view.main_window.change_page(ViewPageEnums.CALENDAR), width=btn_width, style=self.view.default_button_style),
+			ft.TextButton("Staff", icon="account_box_rounded", on_click=lambda _: view.main_window.change_page(ViewPageEnums.STAFF), width=btn_width, style=self.view.default_button_style),
+			ft.TextButton("Grid", icon="border_all", on_click=lambda _: view.main_window.change_page(ViewPageEnums.GRID), width=btn_width, style=self.view.default_button_style),
+			ft.TextButton("Finance", icon="attach_money", on_click=lambda _: view.main_window.change_page(ViewPageEnums.FINANCE), width=btn_width, style=self.view.default_button_style),
+			ft.TextButton("Car", icon="DIRECTIONS_CAR", on_click=lambda _: view.main_window.change_page(ViewPageEnums.CAR), width=btn_width, style=self.view.default_button_style),
+			ft.TextButton("Facilities", icon="FACTORY", on_click=lambda _: view.main_window.change_page(ViewPageEnums.FACILITY), width=btn_width, style=self.view.default_button_style),
 
 			# self.advance_btn
 		]

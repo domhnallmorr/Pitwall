@@ -20,3 +20,7 @@ class ParticipantStatus(Enum):
     RETIRED = "Retired"
     RUNNING = "Running"
     PITTING_IN = "Pitting In"
+
+class RetirementReasons(Enum):
+    MECHANICAL = "Mechanical"
+    CRASH = "Crash"

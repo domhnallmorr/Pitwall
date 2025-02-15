@@ -12,6 +12,7 @@ class CalendarPage(ft.Column): # type: ignore
 	def __init__(self, view: View):
 
 		self.view = view
+		self.track_page_controller = view.controller.track_page_controller
 
 		self.header_text = ft.Text("Calendar", theme_style=self.view.page_header_style)
 		contents = [
@@ -30,6 +31,7 @@ class CalendarPage(ft.Column): # type: ignore
 		self.calendar_table = CustomDataTable(self.view, column_names)
 		flags = calendar["Country"].values.tolist()
 		self.calendar_table.update_table_data(calendar.values.tolist(), flag_col_idx=3, flags=flags)
+		self.calendar_table.assign_on_tap_callback(2, self.track_column_clicked)
 
 		self.background_stack = ft.Stack(
 			[
@@ -46,3 +48,7 @@ class CalendarPage(ft.Column): # type: ignore
 
 		self.controls = contents
 		self.view.main_app.update()
+
+	def track_column_clicked(self, e: ft.ControlEvent) -> None:
+		track_clicked = e.control.content.value
+		self.track_page_controller.go_to_track_page(track_clicked)

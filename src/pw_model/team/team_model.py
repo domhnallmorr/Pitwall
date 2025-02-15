@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 class TeamModel:
 	def __init__(self, model: Model, name: str,
 			  country: str,
+			  team_principal: str,
 			  driver1: str, driver2: str,
 			  car_model: CarModel,
 			  number_of_staff : int, 
@@ -34,6 +35,7 @@ class TeamModel:
 		self.model = model
 		self.name = name
 		self.country = country
+		self.team_principal = team_principal
 		self.driver1 = driver1 # name of driver1/2
 		self.driver2 = driver2
 		self.car_model = car_model
