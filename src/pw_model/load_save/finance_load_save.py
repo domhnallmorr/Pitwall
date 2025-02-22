@@ -29,7 +29,7 @@ def save_finance_model(model: Model, save_file: sqlite3.Connection) -> None:
 			get_weeks_in_debt(model.player_team_model)
 		))
 
-def load_finance_model(model: Model, conn: sqlite3.Connection):
+def load_finance_model(model: Model, conn: sqlite3.Connection) -> None:
 	finance_df = pd.read_sql('SELECT * FROM finance', conn)
 
 	for idx, row in finance_df.iterrows():

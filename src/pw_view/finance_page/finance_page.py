@@ -70,7 +70,7 @@ class FinancePage(ft.Column): # type: ignore
 		self.technical_director_salary_text = ft.Text(f"Technical Director: $1")
 		self.commercial_manager_salary_text = ft.Text(f"Commercial Manager: $1")
 		self.race_costs_text = ft.Text(f"Races: $1 (per race)")
-		self.car_costs_text = ft.Text(f"Car Costs: $1")
+		self.damage_costs_text = ft.Text(f"Damage Costs: $1")
 		self.total_expenditure_text = ft.Text(f"Total: $1")
 
 		self.summary_header = custom_container.HeaderContainer(self.view, "Summary")
@@ -122,7 +122,7 @@ class FinancePage(ft.Column): # type: ignore
 					self.technical_director_salary_text,
 					self.commercial_manager_salary_text,
 					self.race_costs_text,
-					self.car_costs_text,
+					self.damage_costs_text,
 					ft.Divider(),
 					self.total_expenditure_text
 			],
@@ -153,7 +153,7 @@ class FinancePage(ft.Column): # type: ignore
 		self.technical_director_salary_text.value = f"Technical Director: ${data['technical_director_salary']:,}"
 		self.commercial_manager_salary_text.value = f"Commercial Manager: ${data['commercial_manager_salary']:,}"
 		self.race_costs_text.value = f"Transport Costs: ${data['race_costs']:,} (Estimated)"
-		self.car_costs_text.value = f"Car Costs: ${data['car_costs']:,}"
+		self.damage_costs_text.value = f"Damage Costs: ${data['damage_costs']:,} (To Date)"
 		self.total_expenditure_text.value = f"Total: ${data['total_expenditure']:,}"
 
 		self.update_history_chart(data)

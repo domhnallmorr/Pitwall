@@ -41,6 +41,13 @@ class ParticpantModel:
 	@property
 	def name(self) -> str:
 		return str(self.driver.name)
+	
+	@property
+	def crashed(self) -> bool:
+		if self.status == ParticipantStatus.RETIRED and self.retirement_reason == RetirementReasons.CRASH:
+			return True
+		else:
+			return False
 
 	def setup_variables_for_session(self) -> None:
 		# the core variables associated with a participant for a given session, laptimes, current_lap, etc

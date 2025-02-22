@@ -92,9 +92,10 @@ class SeasonModel:
 	# 		if self.next_race_idx > self.model.calendar.shape[0] - 1:
 	# 			self.next_race_idx = None
 
-	def post_race_actions(self, winner: str) -> None:
+	def post_race_actions(self, winner: str, player_driver1_crashed: bool, player_driver2_crashed: bool) -> None:
+		# was working on this last
 		# Update winner 
 		self.calendar.post_race_actions(winner)
 		# Update finances with race costs
-		self.model.player_team_model.finance_model.post_race_actions()
+		self.model.player_team_model.finance_model.post_race_actions(player_driver1_crashed, player_driver2_crashed)
 		# self.update_next_race()

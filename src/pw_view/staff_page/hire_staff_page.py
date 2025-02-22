@@ -3,18 +3,22 @@ from typing import Optional, TYPE_CHECKING
 import flet as ft
 
 from pw_model.pw_model_enums import StaffRoles
+from pw_view.staff_page.staff_dialogs import RejectionDialog, AcceptDialog
 
 if TYPE_CHECKING:
 	from pw_view.view import View
 
 class HireStaffPage(ft.Column):
 	def __init__(self, view: View):
-
+		
 		self.view = view
+		self.accept_dialog = AcceptDialog(view)
+		self.rejection_dialog = RejectionDialog()
+
 		self.setup_contract_column()
 
 		self.title_text = ft.Text("Hire Driver", theme_style=self.view.page_header_style)
-		self.curent_role = None # tracks wether player is hiring driver, technical director, etc
+		self.current_role = None # tracks wether player is hiring driver, technical director, etc
 
 		contents = [
 			self.title_text,
@@ -24,16 +28,23 @@ class HireStaffPage(ft.Column):
 
 		super().__init__(expand=1, controls=contents)
 
-	def update_free_agent_list(self, free_agents: list[str], role: StaffRoles) -> None:
+	def update_free_agent_list(self, free_agents: list[str], role: StaffRoles, previously_approached: list[str]) -> None:
 		self.title_text.value = role.value
-		self.curent_role = role
+		self.current_role = role
 
 		rows = []
+		self.name_text_buttons: list[ft.TextButton] = []
 
 		for name in free_agents:
+			disabled = False
+			if name in previously_approached:
+				disabled = True
+
+			self.name_text_buttons.append(ft.TextButton(name, data=name, on_click=self.update_staff, disabled=disabled))
+
 			row = ft.DataRow(
 				cells = [
-						ft.DataCell(ft.TextButton(name, data=name, on_click=self.update_staff))
+						ft.DataCell(self.name_text_buttons[-1])
 				]
 			)
 			
@@ -125,32 +136,39 @@ class HireStaffPage(ft.Column):
 		if name is None:
 			name = e.control.data
 
-		details = self.view.controller.staff_hire_controller.get_staff_details(name, self.curent_role)
+		details = self.view.controller.staff_hire_controller.get_staff_details(name, self.current_role)
 		self.name_text.value = f"Driver Name: {details['name']}"
 		self.age_text.value = f"Driver Age: {details['age']}"
 
 		self.offer_btn.data = name
+		self.offer_btn.disabled = False
 		self.view.main_app.update()
 
 	def approach_staff(self, e: ft.ControlEvent) -> None:
 		name = e.control.data
 
-		self.dlg_modal = ft.AlertDialog(
-			modal=True,
-			title=ft.Text(f"Confirm"),
-			content=ft.Text(f"Complete Hiring of {name}?"),
-			actions=[
-				ft.TextButton("Yes", on_click=self.handle_close),
-				ft.TextButton("No", on_click=self.handle_close),
-			],
-			actions_alignment=ft.MainAxisAlignment.END,
-			data=name
-		)
+		if self.current_role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
+			self.view.controller.staff_hire_controller.make_driver_offer(name, self.current_role)
+			self.offer_btn.disabled = True
+			self.disable_name_text_button(name)
+			self.view.main_app.update()
+		else:
+			self.dlg_modal = ft.AlertDialog(
+				modal=True,
+				title=ft.Text(f"Confirm"),
+				content=ft.Text(f"Complete Hiring of {name}?"),
+				actions=[
+					ft.TextButton("Yes", on_click=self.handle_close),
+					ft.TextButton("No", on_click=self.handle_close),
+				],
+				actions_alignment=ft.MainAxisAlignment.END,
+				data=name
+			)
 
-		# self.view.main_app.open(dlg_modal)
-		self.view.main_app.overlay.append(self.dlg_modal)
-		self.dlg_modal.open = True
-		self.view.main_app.update()
+			# self.view.main_app.open(dlg_modal)
+			self.view.main_app.overlay.append(self.dlg_modal)
+			self.dlg_modal.open = True
+			self.view.main_app.update()
 		
 	def handle_close(self, e: ft.ControlEvent) -> None:
 		name = self.dlg_modal.data
@@ -158,5 +176,31 @@ class HireStaffPage(ft.Column):
 		action = e.control.text
 
 		if action.lower() == "yes":
-			self.view.controller.staff_hire_controller.complete_hire(name, self.curent_role)
-		
+			self.view.controller.staff_hire_controller.complete_hire(name, self.current_role)
+
+	def show_accept_dialog(self, name: str, role: StaffRoles) -> None:
+		self.accept_dialog.update_text_widget(name, role)
+
+		if self.accept_dialog in self.view.main_app.overlay:
+			self.view.main_app.overlay.remove(self.accept_dialog)
+	
+		self.view.main_app.overlay.append(self.accept_dialog)
+		self.accept_dialog.open = True
+		self.view.main_app.update()
+
+	def show_rejection_dialog(self, name: str) -> None:
+		self.rejection_dialog.update_text_widget(name)
+
+		if self.rejection_dialog in self.view.main_app.overlay:
+			self.view.main_app.overlay.remove(self.rejection_dialog)
+
+		self.view.main_app.overlay.append(self.rejection_dialog)
+		self.rejection_dialog.open = True
+		self.view.main_app.update()
+
+	def disable_name_text_button(self, name: str) -> None:
+		for btn in self.name_text_buttons:
+			if btn.data == name:
+				btn.disabled = True
+				break
+		self.view.main_app.update()

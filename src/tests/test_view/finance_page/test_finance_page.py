@@ -45,7 +45,7 @@ def test_update_page(finance_page):
         "technical_director_salary": 150000,
         "commercial_manager_salary": 120000,
         "race_costs": 50000,
-        "car_costs": 80000,
+        "damage_costs": 80000,
         "total_expenditure": 700000,
         "balance_history_dates": ["2023-01-01", "2023-02-01"],
         "balance_history": [500000, 850000],

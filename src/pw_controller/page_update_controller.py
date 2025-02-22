@@ -72,7 +72,7 @@ class PageUpdateController:
 			"technical_director_salary": copy.deepcopy(self.model.player_team_model.technical_director_model.contract.salary),
 			"commercial_manager_salary": copy.deepcopy(self.model.player_team_model.commercial_manager_model.contract.salary),
 			"race_costs": self.model.player_team_model.finance_model.transport_costs_model.estimated_season_costs,
-			"car_costs": self.model.player_team_model.finance_model.car_cost, 
+			"damage_costs": self.model.player_team_model.finance_model.damage_costs_model.damage_costs_this_season, 
 			"total_expenditure": copy.deepcopy(self.model.player_team_model.finance_model.total_expenditure), # hard code this for now TODO, make it variable
 			
 			"balance_history": copy.deepcopy(self.model.player_team_model.finance_model.balance_history),

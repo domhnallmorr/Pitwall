@@ -13,3 +13,6 @@ class GameData:
 
 	def get_number_of_races(self) -> int:
 		return int(self.model.season.calendar.number_of_races)
+	
+	def current_week(self) -> int:
+		return int(self.model.season.calendar.current_week)

@@ -10,6 +10,7 @@ from pw_controller import race_controller, page_update_controller
 from pw_controller.email_page.email_controller import EmailController
 from pw_controller.team_selection.team_selection_controller import TeamSelectionController
 from pw_controller.track_page.track_page_controller import TrackPageController
+from pw_controller.game_modes import GameModes
 
 class Controller:
 	def __init__(self, app: Page, run_directory: str, mode: str):
@@ -29,19 +30,16 @@ class Controller:
 
 		team_names = [t.name for t in self.model.teams]
 
-		if self.mode in ["normal"]:
+		if self.mode in [GameModes.NORMAL]:
 			self.view = view.View(self, team_names, run_directory)
+			self.page_update_controller.update_staff_page()
 		else:
-			self.view = None # running headless tests
-
-		self.page_update_controller.update_staff_page()
-
-		# if self.mode in ["normal"]:
-		# 	self.view.setup_race_pages()
+			self.view = None # running headless
 
 		self.setup_new_season()
 		
-		self.view.show_title_screen()
+		if self.mode in [GameModes.NORMAL]:
+			self.view.show_title_screen()
 		
 	def start_career(self, team: str) -> None:
 		self.model.start_career(team)
@@ -67,7 +65,7 @@ class Controller:
 	def advance(self) -> None:
 		self.model.advance()
 
-		if self.mode != "headless":
+		if self.mode != GameModes.HEADLESS:
 			self.page_update_controller.update_main_window()
 
 			self.page_update_controller.refresh_ui()
@@ -81,7 +79,7 @@ class Controller:
 
 	def setup_new_season(self) -> None:
 		
-		if self.mode != "headless":
+		if self.mode in [GameModes.NORMAL]:
 			# Setup the calander page to show the races upcoming in the new season
 			self.page_update_controller.update_main_window()
 			self.race_controller = race_controller.RaceController(self)
@@ -110,7 +108,11 @@ class Controller:
 		# self.view.main_window.update_advance_btn("advance")
 
 	def post_race_actions(self) -> None:
-		self.model.season.post_race_actions(self.race_controller.race_model.current_session.winner)
+		winner = self.race_controller.race_model.current_session.winner
+		player_driver1_crashed = self.race_controller.race_model.current_session.player_driver1_crashed
+		player_driver2_crashed = self.race_controller.race_model.current_session.player_driver2_crashed
+
+		self.model.season.post_race_actions(winner, player_driver1_crashed, player_driver2_crashed)
 		self.model.save_career()
 
 		self.page_update_controller.update_standings_page()

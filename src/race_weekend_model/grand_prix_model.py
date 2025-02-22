@@ -149,6 +149,10 @@ class GrandPrixModel(session_model.SessionModel):
 	def post_race_actions(self) -> None:
 		self.winner = self.standings_model.leader
 		
+		# for determining crash damage in finance model
+		self.player_driver1_crashed = self.race_weekend_model.player_driver1_participant.crashed 
+		self.player_driver2_crashed = self.race_weekend_model.player_driver2_participant.crashed 
+
 		# update driver stats
 		for idx, row in self.standings_model.dataframe.iterrows():
 			driver = row["Driver"]

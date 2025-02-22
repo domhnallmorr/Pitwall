@@ -1,3 +1,4 @@
+from enum import Enum
 import logging 
 import os 
 import time
@@ -5,6 +6,7 @@ import time
 import flet as ft
 
 from pw_controller import pw_controller
+from pw_controller.game_modes import GameModes
 
 def main(page: ft.Page):
 	# disable debug messages
@@ -28,12 +30,12 @@ def main(page: ft.Page):
 
 	page.window.maximized = True
 
-	version = "1.4.0"
+	version = "1..0"
 	page.title = f"Pitwall {version}"
 	
 	run_directory = os.path.dirname(os.path.join(os.path.abspath(__file__)))
 
-	controller = pw_controller.Controller(page, run_directory, "normal")
+	controller = pw_controller.Controller(page, run_directory, GameModes.NORMAL)
 
 	page.window.full_screen = True
 	page.update()

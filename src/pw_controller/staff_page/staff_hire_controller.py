@@ -6,6 +6,9 @@ from typing import TYPE_CHECKING
 from pw_model.staff_market import staff_market
 from pw_model.staff_market import driver_transfers, manager_transfers
 from pw_model.pw_model_enums import StaffRoles
+from pw_model.driver_negotiation.driver_interest import determine_driver_interest, DriverInterest
+from pw_view.view_enums import ViewPageEnums
+
 
 if TYPE_CHECKING:
 	from pw_controller.pw_controller import Controller
@@ -29,20 +32,32 @@ class StaffHireController:
 
 		if role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
 			free_agents = driver_transfers.get_free_agents(self.model, for_player_team=True)
+			previously_approached = self.model.driver_offers.drivers_who_have_been_approached()
 		else:
 			free_agents = manager_transfers.get_free_agents(self.model, role, for_player_team=True)
+			previously_approached = []
 
-		self.controller.view.hire_staff_page.update_free_agent_list(free_agents, role)
+		self.controller.view.hire_staff_page.update_free_agent_list(free_agents, role, previously_approached)
 		self.controller.view.main_window.change_page("hire_staff")
 		self.controller.view.main_app.update()
 
-	def complete_hire(self, driver_hired: str, role: Enum) -> None:
-		
-		self.model.staff_market.complete_hiring(driver_hired, self.model.player_team, role)
+	def make_driver_offer(self, driver: str, role: StaffRoles):
+		driver_interest = determine_driver_interest(self.model, driver)
+
+		# add offer to dataframe of previous offers
+		self.model.driver_offers.add_offer(driver)
+
+		if driver_interest in [DriverInterest.NOT_INTERESTED]:
+			self.controller.view.hire_staff_page.show_rejection_dialog(driver)
+		elif driver_interest in [DriverInterest.VERY_INTERESTED]:
+			self.controller.view.hire_staff_page.show_accept_dialog(driver, role)
+
+	def complete_hire(self, name_hired: str, role: Enum) -> None:	
+		self.model.staff_market.complete_hiring(name_hired, self.model.player_team, role)
 		self.controller.page_update_controller.update_grid_page()
 		self.controller.page_update_controller.update_email_page()
 		self.controller.page_update_controller.update_staff_page()
-		self.controller.view.main_window.change_page("email")
+		self.controller.view.main_window.change_page(ViewPageEnums.EMAIL)
 
 	def get_staff_details(self, name: str, role: Enum) -> StaffPersonDetails:
 		'''

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Union
 
 from pw_model.finance.sponsors_model import SponsorModel
 from pw_model.finance.transport_costs import TransportCostsModel
+from pw_model.finance.damage_costs import DamageCosts
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -45,7 +46,7 @@ class FinanceModel:
 
 		self.prize_money = 13_000_000
 
-		self.car_cost = 7_000_000 # generic value to cover car production and development costs
+		# self.car_cost = 7_000_000 # generic value to cover car production and development costs
 
 		self.balance_history: Deque[int] = collections.deque(maxlen=130) # 130 weeks (2.5 years) in length
 		self.balance_history_dates: Deque[datetime] = collections.deque(maxlen=130)
@@ -53,6 +54,8 @@ class FinanceModel:
 		self.consecutive_weeks_in_debt = 0
 		self.sponsors_model = SponsorModel(model, self.team_model, other_sponsorship, title_sponsor, title_sponsor_value)
 		self.transport_costs_model = TransportCostsModel(self.model)
+		self.damage_costs_model = DamageCosts()
+
 		self.season_opening_balance = opening_balance
 
 	@property
@@ -90,7 +93,9 @@ class FinanceModel:
 	@property
 	def total_expenditure(self) -> int:
 		#TODO remove hard coding of race costs
-		return int(self.total_staff_costs_per_year + self.drivers_salary + self.team_model.technical_director_model.contract.salary + self.team_model.commercial_manager_model.contract.salary + 8_000_000 + self.car_cost)
+		return int(self.total_staff_costs_per_year + self.drivers_salary + self.team_model.technical_director_model.contract.salary
+			 + self.team_model.commercial_manager_model.contract.salary
+			 + self.transport_costs_model.estimated_season_costs + self.damage_costs_model.damage_costs_this_season)
 	
 	def weekly_update(self) -> None:
 		
@@ -115,15 +120,15 @@ class FinanceModel:
 		else:
 			self.consecutive_weeks_in_debt = 0
 
-	def post_race_actions(self) -> None:
+	def post_race_actions(self, player_driver1_crashed: bool, player_driver2_crashed: bool) -> None:
 		start_balance = self.balance
-		transport_cost = self.apply_race_costs()
+		transport_cost, damage_cost = self.apply_race_costs(player_driver1_crashed, player_driver2_crashed)
 		title_sponsor_payment = self.process_race_income()
 
 		profit = self.balance - start_balance
 		# self.race_profits.append(profit)
 
-		self.model.inbox.new_race_finance_email(transport_cost, title_sponsor_payment, profit)
+		self.model.inbox.new_race_finance_email(transport_cost, damage_cost, title_sponsor_payment, profit)
 		
 	def process_race_income(self) -> int:
 		self.sponsors_model.process_sponsor_post_race_payments()
@@ -136,12 +141,18 @@ class FinanceModel:
 
 		return title_sponsor_payment
 	
-	def apply_race_costs(self) -> int:
+	def apply_race_costs(self, player_driver1_crashed: bool, player_driver2_crashed: bool) -> tuple[int, int]:
+		# Transport
 		self.transport_costs_model.gen_race_transport_cost()
 		transport_cost = int(self.transport_costs_model.costs_by_race[-1])
 		self.balance -= transport_cost
 
-		return transport_cost
+		# Crash Costs
+		self.damage_costs_model.calculate_race_damage_costs(player_driver1_crashed, player_driver2_crashed)
+		damage_cost = int(self.damage_costs_model.damage_costs[-1])
+		self.balance -= damage_cost
+
+		return transport_cost, damage_cost
 	
 	def update_balance_history(self) -> None:
 		self.balance_history.append(self.balance)

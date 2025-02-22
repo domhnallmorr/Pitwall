@@ -6,8 +6,8 @@ CAR_SPEED_FACTOR = 5_0 # factor, 50 means a car with 0 speed is 5s slower than o
 DIRTY_AIR_THRESHOLD = 1_500 # in ms, 1_500 means dirty air comes into affect when running 1.5s behind car in front
 DIRTY_AIR_EFFECT = 500 # in ms, 500 means car loses 0.5s in pace when running in dirty air
 
-RETIREMENT_CHANCE = 20 # % chance of retiring
-CRASH_CHANCE = 10 # % chance of crashing out
+RETIREMENT_CHANCE = 27 # % chance of retiring due to mechanical failure
+CRASH_CHANCE = 21 # % chance of crashing out
 
 LAP_TIME_VARIATION_BASE = 300 # in ms, lap time variation for every driver, independant of consistency attribute
 LAP_TIME_VARIATION = 400 # in ms, driver with 0 consistency has 0.4s add to laptime variation, driver with 100 consistency has 0.0s added

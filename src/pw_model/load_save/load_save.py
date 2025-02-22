@@ -6,9 +6,10 @@ import pandas as pd
 from pw_model import load_roster
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.finance.transport_costs import save_transport_costs_model, load_transport_costs
+from pw_model.load_save.driver_offers_load_save import save_driver_offers, load_driver_offers
 from pw_model.load_save.email_load_save import save_email, load_email
-from pw_model.load_save.sponsors_load_save import save_sponsor_model
 from pw_model.load_save.finance_load_save import save_finance_model, load_finance_model
+from pw_model.load_save.sponsors_load_save import save_sponsor_model
 from pw_model.load_save.standings_load_save import save_standings, load_standings
 
 if TYPE_CHECKING:
@@ -36,6 +37,7 @@ def save_game(model: Model, mode: str="file") -> sqlite3.Connection:
 	save_email(model, save_file)
 	save_calendar(model, save_file)
 	save_sponsor_model(model, save_file)
+	save_driver_offers(model, save_file)
 
 	if model.player_team_model is not None:
 		save_transport_costs_model(model.player_team_model.finance_model.transport_costs_model, save_file)
@@ -393,6 +395,7 @@ def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mod
 	load_grid_next_year(conn, model)
 	load_email(conn, model)
 	load_calendar(conn, model)
+	load_driver_offers(conn, model)
 
 	if model.player_team_model is not None:
 		load_transport_costs(conn, model.player_team_model.finance_model.transport_costs_model)

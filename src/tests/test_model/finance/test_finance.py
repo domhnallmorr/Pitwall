@@ -1,84 +1,12 @@
-# from tests import create_model
-# from pw_model.finance import finance_model
-
-# import random
-
-# import pandas as pd
-# import pytest
-
-
-# def test_balance_update():
-# 	for i in range(50):
-# 		model = create_model.create_model()
-
-# 		team_model = model.get_team_model("Jordan")
-
-# 		# set some dummy values
-# 		team_model.finance_model.balance = 0
-# 		team_model.number_of_staff = 111
-# 		team_model.finance_model.prize_money = random.randint(1, 25_000_000)
-# 		team_model.finance_model.total_sponsorship = random.randint(1, 50_000_000)
-
-# 		team_model.driver1_model.contract.salary = random.randint(1, 10_000_000)
-# 		team_model.driver2_model.contract.salary = random.randint(1, 10_000_000)
-
-# 		team_model.technical_director_model.contract.salary = random.randint(1, 10_000_000)
-# 		team_model.commercial_manager_model.contract.salary = random.randint(1, 10_000_000)
-
-# 		team_model.finance_model.staff_yearly_cost = 28_000
-
-# 		assert team_model.finance_model.total_staff_costs_per_year == 3_108_000 #number staff * yearly wage
-
-# 		team_model.finance_model.weekly_update()
-
-# 		expected_income = team_model.finance_model.prize_money + team_model.finance_model.total_sponsorship
-# 		expected_costs = team_model.driver1_model.contract.salary + team_model.driver2_model.contract.salary
-# 		expected_costs += team_model.finance_model.total_staff_costs_per_year
-# 		expected_costs += team_model.technical_director_model.contract.salary
-# 		expected_costs += team_model.commercial_manager_model.contract.salary
-
-# 		expected_balance = expected_income - expected_costs
-# 		weekly_change = int(expected_balance / 52)
-
-# 		assert abs(team_model.finance_model.balance - weekly_change) < 10 # allow a little leaway for conversion to integer errors
-# 		assert team_model.finance_model.balance_history[-1] == team_model.finance_model.balance
-
-# 		last_balance = team_model.finance_model.balance
-# 		team_model.finance_model.apply_race_costs()
-
-# 		assert team_model.finance_model.balance == last_balance - team_model.finance_model.transport_costs_model.costs_by_race[-1]
-		
-# def test_prize_money_update():
-# 	'''
-# 	Do a spot check on ending the season and check if prize money is updated
-# 	set player_team to Williams, create a dummy dataframe for contructors championship and test if prize money gets updated
-# 	'''
-# 	model = create_model.create_model(mode="headless")
-
-# 	# Redfine constructors standings
-# 	data = [
-# 		"Ferrari",
-# 		"Benetton",
-# 		"Jordan",
-# 		"Stewart",
-# 		"Williams",
-# 		"Prost"
-# 	]
-
-# 	model.season.standings_manager.constructors_standings_df = pd.DataFrame(data=data, columns=["Team"])
-
-# 	# model.staff_market.ensure_player_has_drivers_for_next_season()
-# 	model.player_team = "Williams"
-# 	model.player_team_model.finance_model.prize_money = 0 # set to zero and check if it gets updated
-# 	model.end_season()
-# 	assert model.player_team_model.finance_model.prize_money == 13_000_000
-
-
 import pytest
 from unittest.mock import MagicMock
 
 from pw_model.finance.finance_model import FinanceModel, calculate_prize_money
+from race_weekend_model.race_model_enums import SessionNames
 # from FinanceModel import FinanceModel, calculate_prize_money
+from tests import create_model
+from tests.test_model.track import test_track_model
+from race_weekend_model import race_weekend_model
 
 @pytest.fixture
 def mock_model():
@@ -169,13 +97,30 @@ def test_weekly_update(finance_model, mock_team_model):
     assert len(finance_model.balance_history) == 1 #\"Balance history should record a new entry\"
 
 def test_post_race_actions(finance_model, mock_model):
-    # The post_race_actions might call transport costs and sponsor payments
+    # Test scenario 1: No crashes
     starting_balance = finance_model.balance
-
-    finance_model.post_race_actions()
-
-    # We expect some changes in the balance after transport, sponsor payments, etc.
-    assert finance_model.balance != starting_balance #\"Balance should change after post_race_actions\"
+    finance_model.post_race_actions(player_driver1_crashed=False, player_driver2_crashed=False)
+    balance_no_crashes = finance_model.balance
+    
+    # We expect some changes in the balance after transport costs and sponsor payments
+    assert balance_no_crashes != starting_balance #"Balance should change after post_race_actions"
+    
+    # Test scenario 2: Driver 1 crashes
+    starting_balance = finance_model.balance
+    finance_model.post_race_actions(player_driver1_crashed=True, player_driver2_crashed=False)
+    balance_with_crash = finance_model.balance
+    
+    # Balance should be lower due to crash damage
+    assert balance_with_crash < starting_balance #"Balance should decrease more when driver crashes"
+    
+    # Test scenario 3: Both drivers crash
+    starting_balance = finance_model.balance
+    finance_model.post_race_actions(player_driver1_crashed=True, player_driver2_crashed=True)
+    balance_both_crash = finance_model.balance
+    
+    # Balance should be even lower with both drivers crashing
+    assert balance_both_crash < starting_balance #"Balance should decrease more when both drivers crash"
+    assert finance_model.damage_costs_model.damage_costs[-1] > 0 #"Damage costs should be positive when crashes occur"
 
 def test_update_prize_money(finance_model):
     # Let's pick finishing position 0 = 1st place
@@ -201,3 +146,64 @@ def test_end_season(finance_model):
     # The actual logic for sponsor_model.setup_new_season etc. is tested externally
     finance_model.end_season()
     assert finance_model.season_opening_balance == finance_model.balance #\\\n        \"At season end, opening_balance should match current balance\"
+
+def test_race_crash_damage_flow():
+    """Test that driver crashes in race properly flow through to damage costs"""
+    # Create basic model setup
+    model = create_model.create_model(mode="headless")
+    model.player_team = "Williams"
+    model.player_team_model.finance_model.prize_money = 0
+    model.player_team_model.finance_model.sponsors_model.other_sponsorship = 0
+    model.player_team_model.finance_model.sponsors_model.title_sponsor_value = 0
+
+    track = test_track_model.create_dummy_track()
+    race_model = race_weekend_model.RaceWeekendModel("headless", model, track)
+    #TODO add function in race_model to setup and run a race
+    race_model.setup_qualifying(60*60, SessionNames.QUALIFYING)
+    race_model.setup_race()
+    
+    # Get initial balance to compare later
+    initial_balance = model.player_team_model.finance_model.balance
+    
+    # Simulate different crash scenarios
+    crash_scenarios = [
+        (False, False),  # No crashes
+        (True, False),   # Only driver 1 crashes
+        (False, True),   # Only driver 2 crashes
+        (True, True)     # Both drivers crash
+    ]
+    
+    for driver1_crashed, driver2_crashed in crash_scenarios:
+        # Reset balance
+        model.player_team_model.finance_model.balance = initial_balance
+        
+        # Simulate race with crashes
+        race_model.current_session.player_driver1_crashed = driver1_crashed
+        race_model.current_session.player_driver2_crashed = driver2_crashed
+        
+        # Process post-race actions
+        model.season.post_race_actions(
+            winner="Test Driver",
+            player_driver1_crashed=driver1_crashed,
+            player_driver2_crashed=driver2_crashed
+        )
+        
+        # Get the latest damage costs
+        latest_damage = model.player_team_model.finance_model.damage_costs_model.damage_costs[-1]
+        
+        if not driver1_crashed and not driver2_crashed:
+            assert latest_damage == 0, "No damage costs should be applied when no crashes occur"
+        else:
+            assert latest_damage > 0, "Damage costs should be applied when crashes occur"
+            assert model.player_team_model.finance_model.balance < initial_balance, "Balance should decrease after crash damage"
+            
+            # Verify individual driver crash costs
+            if driver1_crashed:
+                assert model.player_team_model.finance_model.damage_costs_model.driver1_latest_crash_cost > 0
+            else:
+                assert model.player_team_model.finance_model.damage_costs_model.driver1_latest_crash_cost == 0
+                
+            if driver2_crashed:
+                assert model.player_team_model.finance_model.damage_costs_model.driver2_latest_crash_cost > 0
+            else:
+                assert model.player_team_model.finance_model.damage_costs_model.driver2_latest_crash_cost == 0

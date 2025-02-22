@@ -4,15 +4,18 @@ from typing import List, Union
 
 
 from pw_model import load_roster
-from pw_model.season import season_model
+
+from pw_model.driver.driver_model import DriverModel
+from pw_model.driver_negotiation.driver_offers import DriverOffers
 from pw_model.email import email_model
+from pw_model.season import season_model
 from pw_model.staff_market import staff_market
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.staff_market import manager_transfers
 from pw_model.load_save import load_save 
 from pw_model.game_data import GameData
 from pw_model.track.track_model import TrackModel
-from pw_model.driver.driver_model import DriverModel
+
 from pw_model.team.team_model import TeamModel
 from pw_model.senior_staff.commercial_manager import CommercialManager
 from pw_model.senior_staff.technical_director import TechnicalDirector
@@ -47,6 +50,8 @@ class Model:
 		self.season = season_model.SeasonModel(self, calendar_dataframe)
 
 		self.staff_market = staff_market.StaffMarket(self)
+		self.driver_offers = DriverOffers(self)
+
 		self.end_season(increase_year=False, start_career=True)
 
 		if mode == "headless":
@@ -162,6 +167,7 @@ class Model:
 			logging.critical(f"Start Season {self.year}")
 			self.add_new_drivers()
 			self.add_new_managers()
+			self.driver_offers.setup_new_season()
 
 		self.staff_market.setup_dataframes()
 

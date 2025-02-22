@@ -30,11 +30,23 @@ class RaceWeekendModel:
 		self.setup_participants(model)
 
 		self.results = {}
-	
+
+		# Initialize these as None by default
+		self.player_driver1_participant = None
+		self.player_driver2_participant = None
+
+		# Only try to set player participants if we have a player team
+		if self.model.player_team_model is not None:
+			for particpant in self.participants:
+				if particpant.driver.name == self.model.player_team_model.driver1:
+					self.player_driver1_participant = particpant
+				elif particpant.driver.name == self.model.player_team_model.driver2:
+					self.player_driver2_participant = particpant
+
 	def setup_participants(self, model: pw_base_model.Model) -> None:
 		# Setup an Paricipant class instance for each competitor
 		# A participant is the combination of a car and a driver
-		self.participants = []
+		self.participants: ParticpantModel = []
 
 		driver_count = 0
 		for team in model.teams:
