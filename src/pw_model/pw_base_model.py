@@ -59,6 +59,10 @@ class Model:
 			# this is called in start_career method, when player is  (mode=normal)
 			self.staff_market.compute_transfers()
 
+		for team in self.teams:
+			# call any functions that need the model fully initialised
+			team.car_development_model.setup_new_season()
+
 	@property
 	def player_team_model(self) -> TeamModel:
 		return self.get_team_model(self.player_team)
@@ -130,6 +134,12 @@ class Model:
 
 		if self.player_team is not None:
 			self.get_team_model(self.player_team).advance()
+
+		# advance functions for AI teams
+		for team in self.teams:
+			if team.name != self.player_team:
+				team.car_development_model.advance()
+
 		self.staff_market.announce_signings()
 
 		if self.auto_save is True:

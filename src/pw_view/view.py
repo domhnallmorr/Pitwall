@@ -16,6 +16,7 @@ from pw_view.finance_page import finance_page
 from pw_view.car_page import car_page
 from pw_view.facility_page import facility_page, upgrade_facility_page
 from pw_view.track_page.track_page import TrackPage
+from pw_view.custom_widgets.dialogs import ConfirmDialog
 
 from pw_view.view_enums import ViewPageEnums
 
@@ -62,6 +63,7 @@ class View:
 		self.setup_windows(team_names)
 
 		self.main_app.views.append(self.main_window)
+		self.confirm_dialog = ConfirmDialog(self)
 		# self.view_page_enums: ViewPageEnums = ViewPageEnums()
 
 	def setup_background_images(self) -> None:
@@ -160,3 +162,8 @@ class View:
 
 		self.main_app.open(game_over_dialog)
 
+	def show_confirm_dialog(self, message: str, on_result=None) -> None:
+		if on_result:
+			self.confirm_dialog.on_result = on_result
+		self.confirm_dialog.update_text_widget(message)
+		self.main_app.open(self.confirm_dialog)

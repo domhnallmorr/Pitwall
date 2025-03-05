@@ -24,13 +24,13 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 - [ ] Add projections for year
 - [x] Race costs should vary by distance from Europe
-- [ ] Crash damage costs
+- [x] Crash damage costs
 - [ ] Track profit/loss
-- [ ] Car development costs
+- [x] Car development costs
 
 ### Car
 
-- [ ] Add car development to increase car speed
+- [x] Add car development to increase car speed
 
 ### Sponsors
 
@@ -43,7 +43,7 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 ### Contract Negotiations
 
-- [ ] Drivers randomnly accept/decline player offer
+- [x] Drivers randomnly accept/decline player offer
 		
 ### Other
 

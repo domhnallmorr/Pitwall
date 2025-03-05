@@ -11,6 +11,7 @@ from pw_model.senior_staff import commercial_manager, technical_director
 from pw_model.team.facilities_model import FacilityModel
 from pw_model.finance.sponsors_model import SponsorModel
 from pw_model.pw_model_enums import StaffRoles
+from pw_model.car_development.car_development_model import CarDevelopmentModel
 
 if TYPE_CHECKING:
 	from pw_model.driver import driver_model
@@ -39,6 +40,7 @@ class TeamModel:
 		self.driver1 = driver1 # name of driver1/2
 		self.driver2 = driver2
 		self.car_model = car_model
+		self.car_development_model = CarDevelopmentModel(self.model, self)
 
 		self.number_of_staff = number_of_staff
 		self.facilities_model = FacilityModel(self, facilities)
@@ -105,13 +107,18 @@ class TeamModel:
 		return int(self.model.season.standings_manager.team_position(self.name))
 	
 	def advance(self) -> None:
+		'''
+		Advance the team by one week
+		'''
 		self.finance_model.weekly_update()
+		self.car_development_model.advance()
 		
 	def end_season(self, increase_year: bool) -> None:
 		self.setup_season_stats()
 
 		if increase_year is True:
 			self.facilities_model.end_season()
+			self.car_development_model.setup_new_season()
 
 			if self.is_player_team:
 				self.finance_model.end_season()

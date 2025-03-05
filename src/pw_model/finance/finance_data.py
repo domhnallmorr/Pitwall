@@ -16,7 +16,7 @@ class FinanceData(TypedDict):
     technical_director_salary: int
     commercial_manager_salary: int
     race_costs: int
-    car_costs: int
+    car_development_costs: int
     total_expenditure: int
     balance_history: List[Union[int, float]]
     balance_history_dates: List[Union[int, float]]

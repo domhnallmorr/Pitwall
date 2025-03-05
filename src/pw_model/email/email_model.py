@@ -9,6 +9,7 @@ from pw_model.driver.driver_model import DriverModel
 from pw_model.senior_staff.technical_director import TechnicalDirector
 from pw_model.team.team_model import TeamModel
 from pw_model.email import email_generation
+from pw_model.email import car_development_emails
 from pw_model.pw_model_enums import StaffRoles
 
 if TYPE_CHECKING:
@@ -106,6 +107,21 @@ class Inbox:
 	def new_race_finance_email(self, transport_cost: int, damage_cost: int, title_sponsor_payment: int, profit: int) -> None:
 		msg = email_generation.race_financial_summary_email(transport_cost, damage_cost, title_sponsor_payment, profit)
 		title = f"Race Financial Summary"
+		self.add_email(msg, title)
+
+	def generate_car_development_started_email(self, development_type: str, time_left: int, cost: int) -> None:
+		msg = car_development_emails.car_development_started_email(development_type, time_left, cost)
+		title = f"Development of {development_type} upgrade has begun!"
+		self.add_email(msg, title)
+
+	def generate_car_development_completed_email(self, development_type: str, speed_increase: int) -> None:
+		msg = car_development_emails.car_development_completed_email(development_type, speed_increase)
+		title = f"Development of {development_type} upgrade has been completed!"
+		self.add_email(msg, title)
+
+	def generate_ai_development_completed_email(self, development_type: str, team: str) -> None:
+		msg = car_development_emails.ai_development_completed_email(development_type, team)
+		title = f"{team} {development_type.capitalize()} Upgrade!"
 		self.add_email(msg, title)
 
 	def generate_dataframe(self) -> pd.DataFrame:

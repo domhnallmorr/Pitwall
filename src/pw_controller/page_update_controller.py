@@ -9,6 +9,7 @@ import pandas as pd
 
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.finance import finance_data
+from pw_controller.car_development.car_page_data import get_car_page_data, CarPageData
 from pw_controller.page_update_typed_dicts import HomePageData
 from pw_controller.staff_page.staff_page_data import get_staff_page_data
 
@@ -73,6 +74,7 @@ class PageUpdateController:
 			"commercial_manager_salary": copy.deepcopy(self.model.player_team_model.commercial_manager_model.contract.salary),
 			"race_costs": self.model.player_team_model.finance_model.transport_costs_model.estimated_season_costs,
 			"damage_costs": self.model.player_team_model.finance_model.damage_costs_model.damage_costs_this_season, 
+			"car_development_costs": copy.deepcopy(self.model.player_team_model.finance_model.car_development_costs_model.costs_this_season),
 			"total_expenditure": copy.deepcopy(self.model.player_team_model.finance_model.total_expenditure), # hard code this for now TODO, make it variable
 			
 			"balance_history": copy.deepcopy(self.model.player_team_model.finance_model.balance_history),
@@ -120,10 +122,9 @@ class PageUpdateController:
 		self.view.calendar_page.update_page(calendar)
 
 	def update_car_page(self) -> None:
-		car_speeds = [(team.name, team.car_model.speed) for team in self.model.teams]
-		car_speeds.sort(key=lambda x: x[1], reverse=True) # sort, highest speed to lowest speed
+		data = get_car_page_data(self.model)
 		
-		self.view.car_page.update_page(car_speeds)
+		self.view.car_page.update_page(data)
 
 	def update_main_window(self) -> None:
 		player_team_model = self.model.get_team_model(self.model.player_team)

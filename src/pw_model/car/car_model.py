@@ -39,3 +39,6 @@ class CarModel:
 		self.fuel_load = self.calculate_required_fuel(circuit_model, first_stop_lap)
 		self.tyre_wear = 0 # fit new tyres
 		
+	def implement_car_development(self, speed_increase: int) -> None:
+		self.speed += speed_increase
+		

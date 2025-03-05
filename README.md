@@ -23,12 +23,8 @@ See the [acknowledgements](acknowledgements.md) file for credit of any assets us
 - Standard of factory facilities varies between teams
 - Load/save (note game save automatically to save_game.db in src folder)
 - Basic email system
-
-## Gameplay Features
-
-- Player can hire drivers/staff.
-- Player can upgrade facilities
-- Player can increase/decrease the teams workforce
+- Basic car development system
+- Basic facilities system
 
 
 ## RUNNING THE GAME

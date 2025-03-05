@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Union
 from pw_model.finance.sponsors_model import SponsorModel
 from pw_model.finance.transport_costs import TransportCostsModel
 from pw_model.finance.damage_costs import DamageCosts
+from pw_model.finance.car_development_costs import CarDevelopmentCosts
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -55,6 +56,7 @@ class FinanceModel:
 		self.sponsors_model = SponsorModel(model, self.team_model, other_sponsorship, title_sponsor, title_sponsor_value)
 		self.transport_costs_model = TransportCostsModel(self.model)
 		self.damage_costs_model = DamageCosts()
+		self.car_development_costs_model = CarDevelopmentCosts()
 
 		self.season_opening_balance = opening_balance
 
@@ -95,7 +97,8 @@ class FinanceModel:
 		#TODO remove hard coding of race costs
 		return int(self.total_staff_costs_per_year + self.drivers_salary + self.team_model.technical_director_model.contract.salary
 			 + self.team_model.commercial_manager_model.contract.salary
-			 + self.transport_costs_model.estimated_season_costs + self.damage_costs_model.damage_costs_this_season)
+			 + self.transport_costs_model.estimated_season_costs + self.damage_costs_model.damage_costs_this_season
+			 + self.car_development_costs_model.costs_this_season)
 	
 	def weekly_update(self) -> None:
 		
@@ -113,6 +116,9 @@ class FinanceModel:
 		self.balance -= int(self.team_model.technical_director_model.contract.salary / 52)
 		self.balance -= int(self.team_model.commercial_manager_model.contract.salary / 52)
 		
+		# Car development costs
+		self.balance -= self.car_development_costs_model.process_weekly_payment() # apply weekly car development costs
+
 		self.update_balance_history()
 
 		if self.balance < 0:
@@ -153,7 +159,7 @@ class FinanceModel:
 		self.balance -= damage_cost
 
 		return transport_cost, damage_cost
-	
+
 	def update_balance_history(self) -> None:
 		self.balance_history.append(self.balance)
 		self.balance_history_dates.append(datetime(self.model.year, 1, 1) + timedelta(weeks=self.model.season.calendar.current_week - 1))
@@ -170,16 +176,7 @@ class FinanceModel:
 		self.season_opening_balance = self.balance
 		self.sponsors_model.setup_new_season()
 		self.transport_costs_model.setup_new_season()
+		self.car_development_costs_model.setup_new_season()
 
 		self.race_profits : list[int] = []
 
-	#TODO delete this
-	# def to_dict(self) -> dict[str, Union[int, list[Union[int, str]]]]:
-	# 	return {
-	# 		"balance": self.balance,
-	# 		"staff_yearly_cost": self.staff_yearly_cost,
-	# 		"prize_money": self.prize_money,
-	# 		"total_sponsorship": self.total_sponsorship,
-	# 		"balance_history": list(self.balance_history),
-	# 		"balance_history_dates": [d.strftime("%Y-%m-%d") for d in self.balance_history_dates],
-	# 	}

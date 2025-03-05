@@ -71,8 +71,9 @@ class FinancePage(ft.Column): # type: ignore
 		self.commercial_manager_salary_text = ft.Text(f"Commercial Manager: $1")
 		self.race_costs_text = ft.Text(f"Races: $1 (per race)")
 		self.damage_costs_text = ft.Text(f"Damage Costs: $1")
-		self.total_expenditure_text = ft.Text(f"Total: $1")
-
+		self.car_development_costs_text = ft.Text(f"Car Development Costs: $1")		
+		self.total_expenditure_text = ft.Text(f"Total: $1")		
+		
 		self.summary_header = custom_container.HeaderContainer(self.view, "Summary")
 		self.income_header = custom_container.HeaderContainer(self.view, "Income")
 		self.expenditure_header = custom_container.HeaderContainer(self.view, "Expenditure")
@@ -89,6 +90,7 @@ class FinancePage(ft.Column): # type: ignore
 					ft.Text(),
 					ft.Text(),
 					ft.Text(),
+					ft.Text(),			
 			],
 			expand=True
 		)
@@ -104,6 +106,7 @@ class FinancePage(ft.Column): # type: ignore
 					self.sponsor_income_text,
 					self.prize_money_income_text,
 					self.drivers_payments_text,
+					ft.Text(),# dummy text widget so that income and expenditure have the same number of rows
 					ft.Text(),# dummy text widget so that income and expenditure have the same number of rows
 					ft.Text(),# dummy text widget so that income and expenditure have the same number of rows
 					ft.Divider(),
@@ -123,6 +126,7 @@ class FinancePage(ft.Column): # type: ignore
 					self.commercial_manager_salary_text,
 					self.race_costs_text,
 					self.damage_costs_text,
+					self.car_development_costs_text,
 					ft.Divider(),
 					self.total_expenditure_text
 			],
@@ -154,8 +158,9 @@ class FinancePage(ft.Column): # type: ignore
 		self.commercial_manager_salary_text.value = f"Commercial Manager: ${data['commercial_manager_salary']:,}"
 		self.race_costs_text.value = f"Transport Costs: ${data['race_costs']:,} (Estimated)"
 		self.damage_costs_text.value = f"Damage Costs: ${data['damage_costs']:,} (To Date)"
-		self.total_expenditure_text.value = f"Total: ${data['total_expenditure']:,}"
-
+		self.car_development_costs_text.value = f"Car Development Costs: ${data['car_development_costs']:,} (To Date)"		
+		self.total_expenditure_text.value = f"Total: ${data['total_expenditure']:,} (To Date)"		
+		
 		self.update_history_chart(data)
 
 	def setup_plot(self) -> None:

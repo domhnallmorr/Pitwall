@@ -1,19 +1,27 @@
 from __future__ import annotations
-
+from enum import Enum
 from typing import TYPE_CHECKING, Union, Tuple
 import flet as ft
 
 from pw_view.custom_widgets import custom_container
+from pw_view.custom_widgets.custom_buttons import buttons_row
+from pw_view.car_page.car_comparison_graph import CarComparisonGraph
+from pw_view.car_page.car_development_tab import CarDevelopmentTab
 
 if TYPE_CHECKING:
 	from pw_view.view import View
+	from pw_controller.car_development.car_page_data import CarPageData
 
-CarSpeeds = list[Tuple[str, int]]
+class CarPageTabEnums(Enum):
+	CAR_DEVELOPMENT = "car_development"
+	CAR_COMPARISON = "car_comparison"
 
 class CarPage(ft.Column):
 	def __init__(self, view: View):
 
 		self.view = view
+		self.setup_buttons_row()
+		self.setup_tabs()
 
 		contents = [
 			ft.Text("Car", theme_style=self.view.page_header_style)
@@ -21,23 +29,45 @@ class CarPage(ft.Column):
 
 		super().__init__(controls=contents, alignment=ft.MainAxisAlignment.START, expand=True)
 
-	def update_page(self, car_speeds: CarSpeeds) -> None:
-		car_speed_rows = self.setup_car_speed_progress_bars(car_speeds)
+		self.show_tab(CarPageTabEnums.CAR_DEVELOPMENT)
 
+	def setup_buttons_row(self) -> None:
+		self.car_development_btn = ft.TextButton("Car Development", on_click=self.display_car_development)
+		self.car_comparison_btn = ft.TextButton("Car Comparison", on_click=self.display_car_comparison)
+
+		self.car_development_btn.style = self.view.clicked_button_style
+		self.buttons_row = buttons_row(self.view, [self.car_development_btn, self.car_comparison_btn])
+
+	def setup_tabs(self) -> None:
+		self.car_comparison_graph = CarComparisonGraph(self.view)
+		self.car_development_tab = CarDevelopmentTab(self.view)
+
+	def update_page(self, data: CarPageData) -> None:
+		self.car_comparison_graph.setup_rows(data.car_speeds)
+		self.car_development_tab.update_tab(data)
+		self.car_comparison_container = custom_container.CustomContainer(self.view, self.car_comparison_graph, expand=False)
+
+		self.view.main_app.update()
+
+	def show_tab(self, tab_name: CarPageTabEnums) -> None:
+		page_controls = [self.buttons_row]
+
+		if tab_name == CarPageTabEnums.CAR_COMPARISON:
+			page_controls.append(self.car_comparison_container)
+		elif tab_name == CarPageTabEnums.CAR_DEVELOPMENT:
+			page_controls.append(self.car_development_tab)
+		
 		column = ft.Column(
-			controls=car_speed_rows,
+			controls=page_controls,
 			expand=False,
-			tight=True,
 			spacing=20
 		)
-
-		car_comparison_container = custom_container.CustomContainer(self.view, column, expand=False)
 
 		self.background_stack = ft.Stack(
 			[
 				# Add the resizable background image
 				self.view.background_image,
-				car_comparison_container
+				column
 			],
 			expand=True,  # Make sure the stack expands to fill the window
 		)
@@ -49,27 +79,19 @@ class CarPage(ft.Column):
 		]
 
 		self.view.main_app.update()
+	def reset_tab_buttons(self) -> None:
+		# When a button is clicked to view a different tab, reset all buttons style
+		self.car_development_btn.style = None
+		self.car_comparison_btn.style = None
 
-	def setup_car_speed_progress_bars(self, car_speeds: CarSpeeds) -> list[ft.Row]:
-		car_speed_rows = []
+	def display_car_development(self, e: ft.ControlEvent) -> None:
+		self.reset_tab_buttons()
+		self.car_development_btn.style = self.view.clicked_button_style
 
-		for team in car_speeds:
-			team_name = team[0]
-			speed = team[1]
-			
-			# Note, at V0.11.0, flet version for updated to V0.25.1, the progress bar had to be put in a container 
-			# in order for the bar_height property to be respected (was showing with default height)
-			row = ft.Row(
-				controls=[
-					ft.Text(f"{team_name}:", width=100,),
-					ft.Container(
-						content=ft.ProgressBar(value=speed/100, width=500, expand=True, bar_height=28),
-						height=28,
-						expand=True
-					)
-				],
-				expand=False,
-			)
-			car_speed_rows.append(row)
+		self.show_tab(CarPageTabEnums.CAR_DEVELOPMENT)
 
-		return car_speed_rows
+	def display_car_comparison(self, e: ft.ControlEvent) -> None:
+		self.reset_tab_buttons()
+		self.car_comparison_btn.style = self.view.clicked_button_style
+
+		self.show_tab(CarPageTabEnums.CAR_COMPARISON)

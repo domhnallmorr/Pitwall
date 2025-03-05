@@ -4,6 +4,7 @@ from flet import Page
 
 from pw_controller import calander_page_controller, facilities_controller
 from pw_controller.staff_page import staff_hire_controller
+from pw_controller.car_development import car_development_controller
 from pw_model import pw_base_model
 from pw_view import view
 from pw_controller import race_controller, page_update_controller
@@ -21,6 +22,7 @@ class Controller:
 		self.page_update_controller = page_update_controller.PageUpdateController(self)
 		self.calendar_page_controller = calander_page_controller.CalendarPageController(self)
 		self.staff_hire_controller = staff_hire_controller.StaffHireController(self)
+		self.car_development_controller = car_development_controller.CarDevelopmentController(self)
 		self.facilities_controller = facilities_controller.FacilitiesController(self)
 		self.email_controller = EmailController(self)
 		self.team_selection_controller = TeamSelectionController(self)
