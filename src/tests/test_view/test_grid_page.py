@@ -1,78 +1,70 @@
 import pytest
-from unittest.mock import Mock, MagicMock
 import pandas as pd
 import flet as ft
 from pw_view.grid_page import GridPage
-from pw_view.custom_widgets.custom_datatable import CustomDataTable
+
+# Dummy main_app that tracks update calls
+class DummyMainApp:
+    def __init__(self):
+        self.update_called = False
+
+    def update(self):
+        self.update_called = True
+
+# Dummy view with the minimal attributes required by GridPage
+class DummyView:
+    def __init__(self):
+        self.page_header_style = ft.TextThemeStyle.DISPLAY_MEDIUM
+        self.background_image = ft.Image(src="dummy_image.png")
+        self.main_app = DummyMainApp()
+        self.dark_grey = "#23232A"
 
 @pytest.fixture
-def mock_view():
-    """Fixture to mock the View object."""
-    view = Mock()
-    view.page_header_style = "headlineLarge"
-    view.clicked_button_style = ft.ButtonStyle(color=ft.Colors.RED)
-    view.main_app = Mock()
-    view.main_app.update = Mock()
-    view.background_image = ft.Container()  # Mock background image
-    return view
+def dummy_view():
+    return DummyView()
 
 @pytest.fixture
 def sample_dataframes():
-    """Fixture to provide sample dataframes for testing."""
-    df_this_year = pd.DataFrame({"Col1": [1, 2], "Col2": ["A", "B"]})
-    df_next_year = pd.DataFrame({"Col3": [3, 4], "Col4": ["C", "D"]})
+    # Sample dataframe for grid_this_year_df
+    df_this_year = pd.DataFrame({
+        "Column1": ["row1_col1", "row2_col1"],
+        "Column2": ["row1_col2", "row2_col2"]
+    })
+    # Sample dataframe for grid_next_year_announced_df
+    df_next_year = pd.DataFrame({
+        "Column1": ["row1_col1_next", "row2_col1_next"],
+        "Column2": ["row1_col2_next", "row2_col2_next"]
+    })
     return df_this_year, df_next_year
 
-@pytest.fixture
-def grid_page(mock_view):
-    """Fixture to create a GridPage instance."""
-    return GridPage(view=mock_view)
-
-def test_initialization(grid_page):
-    """Test if the GridPage is initialized correctly."""
-    assert grid_page.view is not None
-    assert isinstance(grid_page.current_year_btn, ft.TextButton)
-    assert isinstance(grid_page.next_year_btn, ft.TextButton)
-    assert grid_page.current_year_btn.text == "1998"
-    assert grid_page.next_year_btn.text == "1999"
-
-def test_reset_tab_buttons(grid_page):
-    """Test the reset_tab_buttons method."""
-    grid_page.current_year_btn.style = ft.ButtonStyle(color=ft.Colors.GREEN)
-    grid_page.next_year_btn.style = ft.ButtonStyle(color=ft.Colors.BLUE)
-    grid_page.reset_tab_buttons()
-    assert grid_page.current_year_btn.style is None
-    assert grid_page.next_year_btn.style is None
-
-def test_change_display(grid_page, sample_dataframes):
-    """Test the change_display method."""
+def test_update_page(dummy_view, sample_dataframes):
     df_this_year, df_next_year = sample_dataframes
-    grid_page.update_page(2023, df_this_year, df_next_year)
-    
-    mock_event = Mock()
-    mock_event.control.data = "next"
-    grid_page.change_display(mock_event)
-    assert grid_page.next_year_btn.style == grid_page.view.clicked_button_style
-    assert grid_page.current_year_btn.style is None
 
-    mock_event.control.data = "current"
-    grid_page.change_display(mock_event)
-    assert grid_page.current_year_btn.style == grid_page.view.clicked_button_style
-    assert grid_page.next_year_btn.style is None
+    # Create the GridPage instance using the dummy view.
+    grid_page_obj = GridPage(dummy_view)
 
-def test_update_page(grid_page, sample_dataframes):
-    """Test the update_page method with sample data."""
-    df_this_year, df_next_year = sample_dataframes
-    grid_page.update_page(2023, df_this_year, df_next_year)
-    
-    # Verify button text updates
-    assert grid_page.current_year_btn.text == "2023"
-    assert grid_page.next_year_btn.text == "2024"
-    
-    # Verify DataTable for this year
-    assert isinstance(grid_page.grid_this_year_table, CustomDataTable)
-    assert len(grid_page.grid_this_year_table.data_table.rows) == len(df_this_year)
+    # Check initial placeholder tab texts
+    assert grid_page_obj.current_year_tab.text == "1998"
+    assert grid_page_obj.next_year_tab.text == "1999"
 
-    # Verify DataTable for next year
-    assert isinstance(grid_page.grid_next_year_table, CustomDataTable)
-    assert len(grid_page.grid_next_year_table.data_table.rows) == len(df_next_year)
+    # Reset the dummy main_app update flag.
+    dummy_view.main_app.update_called = False
+
+    # Call update_page with a specific year and the sample dataframes.
+    grid_page_obj.update_page(2022, df_this_year, df_next_year)
+
+    # Verify that the tab texts are updated correctly.
+    assert grid_page_obj.current_year_tab.text == "2022"
+    assert grid_page_obj.next_year_tab.text == "2023"
+
+    # Verify that the content of each tab is updated with the corresponding list_view.
+    list_view_this_year = grid_page_obj.grid_this_year_table.list_view
+    list_view_next_year = grid_page_obj.grid_next_year_table.list_view
+    assert grid_page_obj.current_year_tab.content.content == list_view_this_year
+    assert grid_page_obj.next_year_tab.content.content == list_view_next_year
+
+    # Verify that the tabs' selected index is reset to 0.
+    assert grid_page_obj.tabs.selected_index == 0
+
+    # Verify that the view.main_app.update() was called.
+    assert dummy_view.main_app.update_called is True

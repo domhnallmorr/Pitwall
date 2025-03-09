@@ -15,10 +15,12 @@ def email_content(mock_view):
 def test_email_content_initialization(email_content):
     assert email_content.subject_text.value == "Subject"
     assert email_content.from_text.value == "From:"
+    assert email_content.week_text.value == "Week:"
     assert email_content.content_text.value == "Select an email to view its content"
 
 def test_update_email_content(email_content):
-    email_content.update("Test Message", "Test Subject")
+    email_content.update("Test Message", "Test Subject", 14)
     
     assert email_content.subject_text.value == "Subject: Test Subject"
+    assert email_content.week_text.value == "Week: 14"
     assert email_content.content_text.value == "Test Message"

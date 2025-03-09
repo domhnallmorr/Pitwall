@@ -1,6 +1,6 @@
 from __future__ import annotations
 import collections
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from enum import Enum
 
 import pandas as pd
@@ -20,12 +20,13 @@ class EmailStatusEnums(Enum):
 	UNREAD = "unread"
 
 class Email:
-	def __init__(self, subject: str, message: str, email_id: int,  status: EmailStatusEnums, sender: str=""):
+	def __init__(self, subject: str, message: str, email_id: int, status: EmailStatusEnums, sender: str="", week: int=0):
 		self.subject = subject
 		self.message = message
 		self.status = status
 		self.sender = sender
 		self.email_id = email_id
+		self.week = week
 
 class Inbox:
 	def __init__(self, model: Model):
@@ -35,17 +36,23 @@ class Inbox:
 		self.reset_number_new_emails()
 		self.setup_email_list()
 
+		# Send welcome email with week=1 since season isn't initialized yet
 		msg = "Welcome to Pitwall!"
 		title = "Welcome"
 		sender = "The board"
-
-		self.add_email(msg, title, sender=sender)
+		
+		# Pass week=1 explicitly for the welcome email
+		self.add_email(msg, title, sender=sender, week=1)
 
 	def reset_number_new_emails(self) -> None:
 		self.new_emails = 0
 
-	def add_email(self, msg: str, title: str, sender: str="", status: EmailStatusEnums=EmailStatusEnums.UNREAD) -> None:
-		email = Email(title, msg, self.new_email_id, status=status)
+	def add_email(self, msg: str, title: str, sender: str="", status: EmailStatusEnums=EmailStatusEnums.UNREAD, week: Optional[int]=None) -> None:
+		# Use provided week or get it from the model
+		if week is None:
+			week = self.model.season.calendar.current_week
+			
+		email = Email(title, msg, self.new_email_id, status=status, sender=sender, week=week)
 		self.emails.appendleft(email)
 		self.new_emails += 1
 		self.new_email_id += 1
@@ -128,21 +135,22 @@ class Inbox:
 		data = []
 
 		for email in self.emails:
-			data.append([email.subject, email.message, email.sender, email.status.value])
+			data.append([email.subject, email.message, email.sender, email.status.value, email.week])
 
 		data.reverse()
-		return pd.DataFrame(columns=["Subject", "Message", "Sender", "Status"], data=data)
+		return pd.DataFrame(columns=["Subject", "Message", "Sender", "Status", "Week"], data=data)
 	
 	def load_dataframe(self, df: pd.DataFrame) -> None:
 		self.emails.clear()
-
 		self.new_email_id = 0
 
 		for idx, row in df.iterrows():
-
 			subject = row["Subject"]
 			message = row["Message"]
 			sender = row["Sender"]
 			status = row["Status"]
+			week = row["Week"]
 			self.add_email(message, subject, sender=sender, status=EmailStatusEnums(status))
+			# Update the week manually since add_email uses current_week
+			self.emails[0].week = week
 

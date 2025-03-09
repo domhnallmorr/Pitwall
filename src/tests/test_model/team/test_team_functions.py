@@ -61,4 +61,51 @@ def test_rating():
 	expected_rating = int( (100 + 75 + 75) / 3 )
 
 	assert williams_model.overall_rating == expected_rating
+
+def test_team_principal_influence():
+	"""Test that team principal skill influences car speed for AI teams only"""
+	model = create_model.create_model(mode="headless")
 	
+	# Test AI team (Ferrari)
+	ferrari_model = model.get_team_model("Ferrari")
+	# Make Ferrari non-player team by setting a different team as player team
+	model.player_team = "Williams"
+	
+	# Store original speed calculation components
+	base_staff_speed = ferrari_model.number_of_staff * 0.4
+	base_facilities = ferrari_model.facilities_model.factory_rating
+	base_tech_director = ferrari_model.technical_director_model.skill
+	
+	# Test with high skill principal (75)
+	ferrari_model.team_principal_model.skill = 75
+	ferrari_model.update_car_speed()
+	speed_with_good_principal = ferrari_model.car_model.speed
+	
+	# Test with low skill principal (25)
+	ferrari_model.team_principal_model.skill = 25
+	ferrari_model.update_car_speed()
+	speed_with_poor_principal = ferrari_model.car_model.speed
+	
+	# High skill principal should result in higher speed
+	assert speed_with_good_principal > speed_with_poor_principal
+	
+	# Test player team
+	williams_model = model.get_team_model("Williams")
+	# Make Williams the player team
+	model.player_team = "Williams"
+	
+	# Test with high skill principal
+	williams_model.team_principal_model.skill = 75
+	williams_model.update_car_speed()
+	player_speed_good_principal = williams_model.car_model.speed
+	
+	# Test with low skill principal
+	williams_model.team_principal_model.skill = 25
+	williams_model.update_car_speed()
+	player_speed_poor_principal = williams_model.car_model.speed
+	
+	# Principal skill should not affect player team speed
+	# Note: Due to random elements, we can't check for exact equality
+	# Instead, verify the difference is minimal (only due to random factor)
+	speed_difference = abs(player_speed_good_principal - player_speed_poor_principal)
+	assert speed_difference <= 30  # Maximum random variation is -30 to 20

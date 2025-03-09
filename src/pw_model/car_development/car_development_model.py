@@ -30,7 +30,8 @@ class CarDevelopmentModel:
 		self.current_status = CarDevelopmentStatusEnums.NOT_STARTED
 		self.time_left = 0
 		self.current_development_type = CarDevelopmentEnums.NONE
-		self.planned_updates = []
+		self.planned_updates: list[tuple[int, CarDevelopmentEnums]] = []
+
 	@property
 	def is_player_team(self) -> bool:
 		return self.team_model.is_player_team
@@ -85,6 +86,8 @@ class CarDevelopmentModel:
 			return 3
 		elif self.current_development_type == CarDevelopmentEnums.MAJOR:
 			return 5
+		else:
+			raise ValueError(f"Unexpected development type: {self.current_development_type}")
 
 	def gen_ai_updates(self) -> None:  # FOR AI CONTROLLED TEAMS
 		number_of_updates = random.randint(2, 6)
@@ -93,7 +96,7 @@ class CarDevelopmentModel:
 		# Select random race weeks for updates, ensuring they're spread out
 		min_gap = max(2, len(race_weeks) // (number_of_updates * 2))  # Ensure minimum gap between updates
 		available_weeks = race_weeks.copy()
-		selected_weeks = []
+		selected_weeks: list[int] = []
 		
 		while len(selected_weeks) < number_of_updates and available_weeks:
 			week = random.choice(available_weeks)

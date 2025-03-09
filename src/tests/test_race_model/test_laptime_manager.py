@@ -17,8 +17,12 @@ def mock_participant():
     mock.driver.speed = 90
     mock.driver.consistency = 50
     mock.car_model.speed = 85
-    mock.car_model.fuel_effect = 0.3
-    mock.car_model.tyre_wear = 0.2
+    
+    # Create car_state with fuel and tyre effects
+    mock.car_state = Mock()
+    mock.car_state.fuel_effect = 0.3
+    mock.car_state.tyre_wear = 0.2
+    
     mock.track_model.base_laptime = 90000  # Base lap time in ms
     mock.track_model.pit_stop_loss = 20000
     mock.pitstop_times = [8000]
@@ -61,8 +65,8 @@ def test_calculate_laptime(lap_time_manager, mock_participant, mock_randomiser):
     expected_laptime = (
         lap_time_manager.base_laptime
         + mock_randomiser.random_laptime_loss()
-        + mock_participant.car_model.fuel_effect
-        + mock_participant.car_model.tyre_wear
+        + mock_participant.car_state.fuel_effect
+        + mock_participant.car_state.tyre_wear
         + dirty_air_effect
     )
 
@@ -124,8 +128,8 @@ def test_calculate_laptime_pitting_in(lap_time_manager, mock_participant, mock_r
     expected_laptime = (
         lap_time_manager.base_laptime
         + mock_randomiser.random_laptime_loss()
-        + mock_participant.car_model.fuel_effect
-        + mock_participant.car_model.tyre_wear
+        + mock_participant.car_state.fuel_effect
+        + mock_participant.car_state.tyre_wear
         + mock_participant.track_model.pit_stop_loss
         + mock_participant.pitstop_times[-1]
     )
@@ -141,8 +145,12 @@ def simulate_laps():
         mock_participant.driver.speed = 90
         mock_participant.driver.consistency = consistency
         mock_participant.car_model.speed = 85
-        mock_participant.car_model.fuel_effect = 0.3
-        mock_participant.car_model.tyre_wear = 0.2
+        
+        # Update to use car_state
+        mock_participant.car_state = Mock()
+        mock_participant.car_state.fuel_effect = 0.3
+        mock_participant.car_state.tyre_wear = 0.2
+        
         mock_participant.track_model.pit_stop_loss = 20000
         mock_participant.pitstop_times = [8000]
         mock_participant.status = ParticipantStatus.RUNNING

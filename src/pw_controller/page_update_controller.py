@@ -89,7 +89,7 @@ class PageUpdateController:
 		grid_next_year_announced_df = self.model.staff_market.grid_next_year_announced_df.copy(deep=True)
 
 		self.view.grid_page.update_page(year, grid_this_year_df, grid_next_year_announced_df)
-		self.view.grid_page.change_display(None)
+		# Removed the change_display call since tab management is now handled by Flet
 
 	def update_home_page(self) -> None:
 		data: HomePageData = {

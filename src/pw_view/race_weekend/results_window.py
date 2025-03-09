@@ -121,17 +121,16 @@ class ResultsWindow(ft.View):
 		self.view.main_app.update()
 
 	def setup_classification_table(self, standings_df: pd.DataFrame, current_session: Enum, driver_flags: list[str]) -> None:
-		#TODO cleaup actions below should be moved to a stand alone function outside the class for unit testing
-		# Format from ms to min:seconds
-		standings_df.loc[:, "Fastest Lap"] = standings_df["Fastest Lap"].apply(self.ms_to_min_sec)
+		# Create a new column for formatted lap times
+		standings_df["Formatted Lap"] = standings_df["Fastest Lap"].apply(self.ms_to_min_sec)
 		
 		if current_session == SessionNames.QUALIFYING:
-			cols = ["Position", "Driver", "Team", "Fastest Lap", "Gap"]
-			# create the gap column, prior to V0.10.0, pandas gave warning for unsupported dtype when overwriting "Gap To Leader" col
+			cols = ["Position", "Driver", "Team", "Formatted Lap", "Gap"]
+			# create the gap column
 			standings_df.loc[:, "Gap"] = standings_df["Gap to Leader"].apply(lambda x: self.ms_to_min_sec(x, interval=True))
 
 		elif current_session == SessionNames.RACE:
-			cols = ["Position", "Driver", "Team", "Fastest Lap", "Gap to Leader", "Pit", "Grid"]
+			cols = ["Position", "Driver", "Team", "Formatted Lap", "Gap to Leader", "Pit", "Grid"]
 			
 			# cleanup Gap to Leader column
 			data = []
@@ -148,7 +147,7 @@ class ResultsWindow(ft.View):
 
 			standings_df["Gap to Leader"] = data
 
-
+		# Use the new formatted column instead of overwriting the original
 		standings_df = standings_df[cols]		
 
 		self.results_table = CustomDataTable(self.view, standings_df.columns.tolist())

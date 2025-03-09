@@ -66,7 +66,7 @@ def test_starting_fuel():
 
 	_race_model.setup_race()
 	assert schumacher_model.pit_strategy.pit1_lap == 10
-	assert schumacher_model.car_model.fuel_load == int(2.08 * (schumacher_model.pit_strategy.pit1_lap + 0.5))
+	assert schumacher_model.car_state.fuel_load == int(2.08 * (schumacher_model.pit_strategy.pit1_lap + 0.5))
 
 def test_pitstops():
 	model = create_model.create_model()
@@ -90,8 +90,8 @@ def test_pitstops():
 		_race_model.current_session.advance(mode=SessionMode.SIMULATE)
 
 		if _race_model.current_session.current_lap in [11, 21, 31]:
-			assert schumacher_model.car_model.tyre_wear == 0 # check tyres were changed
+			assert schumacher_model.car_state.tyre_wear == 0 # check tyres were changed
 		if _race_model.current_session.current_lap in [11, 21]:
-			assert schumacher_model.car_model.fuel_load == 21 # check 10 laps of fuel was put in
+			assert schumacher_model.car_state.fuel_load == 21 # check 10 laps of fuel was put in
 		if _race_model.current_session.current_lap == 31:
-			assert schumacher_model.car_model.fuel_load == 86 # check 41 laps of fuel was put in
+			assert schumacher_model.car_state.fuel_load == 86 # check 41 laps of fuel was put in

@@ -6,65 +6,60 @@ Off track, this will include car development, sponsorship deals and engine/tyre 
 
 On track, extra details in the races will be added, such as crashes and driver mistakes. 
 
-The bottom of this page includes a high level overview of additions for V2. Below, a specific roadmap to V1.20 is provided.
+The bottom of this page includes a high level overview of additions for V2. Below, a specific roadmap to V1.10 is provided.
 
-## V1.20
+## V1.10
 
 
 ## UI Improvements
 
-- [ ] Improve driver negotiation page
-- [ ] Turn improve facility page into a modal
-
+- [x] Add country flags
+- [x] Need page for each track (overtaking difficulty and any other track details)
+- [x] Improve Email page
+- [x] Improve team selection page
 
 ## Off Track Features
 
 ### Finance
 
-- [ ] Add cost for engines (depened on works, supplier, customer deal)
-- [ ] Add cost for tyres (depened on works, supplier, customer deal)
-- [ ] Testing costs
+- [ ] Add projections for year
+- [x] Race costs should vary by distance from Europe
+- [x] Crash damage costs
+- [ ] Track profit/loss
+- [x] Car development costs
 
 ### Car
 
-- [ ] Add engine model, engine suppliers to be static, performance changes year by year
-- [ ] Add tyre model, tyre suppliers to be static, performance changes year by year
+- [x] Add car development to increase car speed
 
 ### Sponsors
 
-- [ ] Flesh out title sponsors in roster
-- [ ] Title sponsors "retire" from the sport
-- [ ] Commercial manager responsible for title sponsor
-- [ ] AI teams change title sponsor
-
+- [x] Add title sponsors, static
+- [X] Have "other sponsorship" attribute
 
 ### Drivers
 
-- [ ] Add qualifying attribute
+- [x] Add consistency attribute
 
 ### Contract Negotiations
 
-- [ ] Top drivers refuse to sign for poorly ranked player team
-- [ ] Add salary negotiation
+- [x] Drivers randomnly accept/decline player offer
 		
 ### Other
 
-- [ ] Flesh out team principals in roster
-- [ ] Team principals retire
-- [ ] AI change team principals
-- [ ] Add test sesssions, player chooses testing to be done, car performance can improve
-
+- [x] Add team principal as staff member to AI teams, static
+- [x] Add winner column to calendar page
+- [x] Add track lengths
 
 ## On Track
 
-- [ ] Tracks should have a engine power attribute
-- [ ] Implement tyre grip/wear from tyre model
-- [ ] Add commentary to Grand Prix model. Commentary to be displayed in Results window
-- [ ] Add lap 1, turn 1 incidents, limited to spins for now
-
+- [x] Add overtake difficulty attribute to tracks
+- [x] Add random driver crashes
+- [x] Proper base laptime for each track
 
 ## Refactoring
 
+- [x] Add a custom widget for datatables
 - [ ] Reduce use of dictionaries to improve type hinting
 - [ ] Improve use of enums
 - [ ] Review and improve grand_prix_model

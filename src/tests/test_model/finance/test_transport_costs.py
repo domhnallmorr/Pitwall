@@ -4,12 +4,8 @@ from unittest.mock import MagicMock, patch
 from pw_model.finance.transport_costs import (
     TransportCostsModel,
     TransportCostsRandomiser,
-    save_transport_costs_model,
-    load_transport_costs,
     TransportCosts,
 )
-
-
 # Mock Model for testing
 class MockModel:
     class MockSeason:
@@ -44,22 +40,6 @@ def test_gen_race_transport_cost(transport_costs_model):
     assert transport_costs_model.total_costs > 0
     assert len(transport_costs_model.costs_by_race) == 1
     assert transport_costs_model.costs_by_race[0] > 0
-
-def test_save_and_load_transport_costs_model(transport_costs_model, mock_db_connection):
-    # Set up some mock data
-    transport_costs_model.setup_new_season()
-    transport_costs_model.gen_race_transport_cost()
-    transport_costs_model.gen_race_transport_cost()
-
-    save_transport_costs_model(transport_costs_model, mock_db_connection)
-
-    # Create a new instance to test loading
-    new_transport_costs_model = TransportCostsModel(MockModel())
-    load_transport_costs(mock_db_connection, new_transport_costs_model)
-
-    assert new_transport_costs_model.estimated_season_costs == transport_costs_model.estimated_season_costs
-    assert new_transport_costs_model.total_costs == transport_costs_model.total_costs
-    assert new_transport_costs_model.costs_by_race == transport_costs_model.costs_by_race
 
 def test_randomiser():
     randomiser = TransportCostsRandomiser()

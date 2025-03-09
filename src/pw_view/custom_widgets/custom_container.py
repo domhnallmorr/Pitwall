@@ -27,6 +27,8 @@ class HeaderContainer(ft.Container):
 		'''
 		This is the header row at the top of a CustomContainer
 		'''
+		text = text.replace("_", " ").replace("1", " 1").replace("2", " 2").title()
+
 		super(HeaderContainer, self).__init__(
 				content=ft.Text(text, weight="bold", color=view.dark_grey, size=20),
 				alignment=ft.alignment.center,

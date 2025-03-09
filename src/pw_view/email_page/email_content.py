@@ -16,12 +16,14 @@ class EmailContent:
 	def setup_widgets(self) -> None:
 		self.subject_text = ft.Text("Subject")
 		self.from_text = ft.Text("From:")
+		self.week_text = ft.Text("Week:")
 		self.content_text = ft.Text("Select an email to view its content")
 
 		content = ft.Column(
 			controls= [
 				self.subject_text,
 				self.from_text,
+				self.week_text,
 				ft.Divider(),
 				self.content_text
 			]
@@ -30,6 +32,7 @@ class EmailContent:
 		self.container = CustomContainer(self.view, content=content, expand=3)
 		# self.email_content_container.height = self.view.main_app.window.height - 200
 
-	def update(self, message: str, subject: str) -> None:
+	def update(self, message: str, subject: str, week: int) -> None:
 		self.subject_text.value = f"Subject: {subject}"
+		self.week_text.value = f"Week: {week}"
 		self.content_text.value = message

@@ -1,9 +1,9 @@
 from enum import Enum
 
 
-class StaffRoles(Enum):
-	TEAM_PRINCIPAL = "Team Principal"
-	DRIVER1 = "Driver1"
-	DRIVER2 = "Driver2"
-	COMMERCIAL_MANAGER = "Commercial Manager"
-	TECHNICAL_DIRECTOR = "Technical Director"
+class StaffRoles(str, Enum):
+	TEAM_PRINCIPAL = "team_principal"
+	DRIVER1 = "driver1"
+	DRIVER2 = "driver2"
+	TECHNICAL_DIRECTOR = "technical_director"
+	COMMERCIAL_MANAGER = "commercial_manager"

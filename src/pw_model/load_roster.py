@@ -10,7 +10,9 @@ from pw_model.car import car_model
 from pw_model.driver import driver_model
 from pw_model.team import team_model
 from pw_model.track import track_model
-from pw_model.senior_staff import commercial_manager, technical_director
+from pw_model.senior_staff.commercial_manager import CommercialManager
+from pw_model.senior_staff.technical_director import TechnicalDirector
+from pw_model.senior_staff.team_principal import TeamPrincipalModel
 from pw_model.load_save.sponsors_load_save import load_sponsors
 
 if TYPE_CHECKING:
@@ -25,7 +27,7 @@ def load_roster(model: Model, roster: str) -> pd.DataFrame:
 	calendar_dataframe = load_season(model, season_file)
 	
 	model.drivers, model.future_drivers = load_drivers(model, conn)
-	model.commercial_managers, model.technical_directors, model.future_managers = load_senior_staff(model, conn)
+	model.commercial_managers, model.technical_directors, model.team_principals, model.future_managers = load_senior_staff(model, conn)
 	model.teams = load_teams(model, conn)
 
 	return calendar_dataframe
@@ -151,16 +153,13 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 
 	return teams
 
-def load_senior_staff(model: Model, conn: sqlite3.Connection
-					  )-> Tuple[List[commercial_manager.CommercialManager],
-				 List[technical_director.TechnicalDirector],
-				 List[List[Tuple[str, Union[commercial_manager.CommercialManager, technical_director.TechnicalDirector]]]]]:
+def load_senior_staff(model: Model, conn: sqlite3.Connection) -> Tuple[List[CommercialManager], List[TechnicalDirector], List[TeamPrincipalModel], List[Union[CommercialManager, TechnicalDirector, TeamPrincipalModel]]]:
 	technical_directors = []
 	commercial_managers = []
 	future_managers = []
+	team_principals = []
 
-	for table_name in ["technical_directors", "commercial_managers"]:
-
+	for table_name in ["technical_directors", "commercial_managers", "team_principals"]:
 		cursor = conn.execute(f'PRAGMA table_info({table_name})')
 		columns = cursor.fetchall()
 		column_names = [column[1] for column in columns]
@@ -169,7 +168,9 @@ def load_senior_staff(model: Model, conn: sqlite3.Connection
 		age_idx = column_names.index("Age")
 		skill_idx = column_names.index("Skill")
 		contract_length_idx = column_names.index("ContractLength")
-		salary_idx = column_names.index("Salary")
+		
+		if "Salary" in column_names: # salary is not in team principals table
+			salary_idx = column_names.index("Salary")
 
 		cursor = conn.cursor()
 		cursor.execute(f"SELECT * FROM {table_name}")
@@ -180,13 +181,16 @@ def load_senior_staff(model: Model, conn: sqlite3.Connection
 			age = row[age_idx]
 			skill = row[skill_idx]
 			contract_length = row[contract_length_idx]
-			salary = row[salary_idx]
-
 			
+			if "Salary" in column_names: # salary is not in team principals table:
+				salary = row[salary_idx]
+
 			if table_name == "technical_directors":
-				manager = technical_director.TechnicalDirector(model, name, age, skill, salary, contract_length)
+				manager = TechnicalDirector(model, name, age, skill, salary, contract_length)
 			elif table_name == "commercial_managers":
-				manager = commercial_manager.CommercialManager(model, name, age, skill, salary, contract_length)
+				manager = CommercialManager(model, name, age, skill, salary, contract_length)
+			elif table_name == "team_principals":
+				manager = TeamPrincipalModel(model, name, age, skill, contract_length)
 
 			if "RetiringAge" in column_names:
 				retiring_age_idx = column_names.index("RetiringAge")
@@ -206,10 +210,12 @@ def load_senior_staff(model: Model, conn: sqlite3.Connection
 					technical_directors.append(manager)
 				elif table_name == "commercial_managers":
 					commercial_managers.append(manager)
+				elif table_name == "team_principals":
+					team_principals.append(manager)
 			else:
 				future_managers.append([row[0], manager])
 
-	return commercial_managers, technical_directors, future_managers
+	return commercial_managers, technical_directors, team_principals, future_managers
 
 
 # def create_driver(line_data: str, model):

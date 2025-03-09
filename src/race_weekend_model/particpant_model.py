@@ -14,6 +14,7 @@ from race_weekend_model.on_track_constants import (
 	LAP_TIME_VARIATION,
 	PIT_STOP_LOSS_RANGE,
 )
+from race_weekend_model.car_state import CarState
 
 class ParticpantModel:
 	def __init__(self, driver: DriverModel,
@@ -21,6 +22,7 @@ class ParticpantModel:
 		self.driver = driver
 		self.team_name = team_name
 		self.car_model = car
+		self.car_state = CarState()
 		self.track_model = track_model
 		self.position = starting_position
 
@@ -114,13 +116,12 @@ class ParticpantModel:
 		self.current_lap += 1
 
 	def update_fuel_and_tyre_wear(self, new_tyres: bool=False) -> None:
-		self.car_model.update_fuel(self.track_model)
-		self.car_model.update_tyre_wear(self.track_model, new_tyres)
-
-		self.tyre_wear_by_lap.append(self.car_model.tyre_wear)
+		self.car_state.update_fuel(self.track_model)
+		self.car_state.update_tyre_wear(self.track_model, new_tyres)
+		self.tyre_wear_by_lap.append(self.car_state.tyre_wear)
 
 	def update_pitstop_tyres_fuel(self) -> None:
-		self.car_model.tyre_wear = 0
+		self.car_state.tyre_wear = 0
 
 		planned_laps = self.pit_strategy.lap_ranges
 		planned_laps = [l for l in planned_laps if l is not None]# remove None if assigned to pit2/3 lap
@@ -128,7 +129,7 @@ class ParticpantModel:
 
 		required_laps = min(planned_laps) - self.current_lap
 		
-		self.car_model.fuel_load = self.car_model.calculate_required_fuel(self.track_model, required_laps)
+		self.car_state.fuel_load = self.car_state.calculate_required_fuel(self.track_model, required_laps)
 		
 	def calculate_if_retires(self) -> None:
 		self.retires = False
@@ -150,5 +151,5 @@ class ParticpantModel:
 	def setup_start_fuel_and_tyres(self) -> None:
 		# for grand prix only (called in GrandPrix contructor)
 		# setup the fuel and tyres for the start of the race
-		self.car_model.setup_start_fuel_and_tyres(self.track_model, self.pit_strategy.pit1_lap)
+		self.car_state.setup_start_fuel_and_tyres(self.track_model, self.pit_strategy.pit1_lap)
 

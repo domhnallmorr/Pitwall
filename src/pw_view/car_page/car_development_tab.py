@@ -19,9 +19,12 @@ class CarDevelopmentTab(ft.Column): # type: ignore
 		self.setup_widgets()
 		self.setup_container()
 
-		super().__init__(controls=[self.container], expand=False,
+		super().__init__(
+			controls=[self.container], 
+			expand=False,
 			tight=True,
-			spacing=20)
+			spacing=20
+		)
 
 	def setup_widgets(self) -> None:
 		self.current_status_header = ft.Text("Current Status", weight=ft.FontWeight.BOLD, size=self.view.SUBHEADER_FONT_SIZE,)
@@ -55,7 +58,11 @@ class CarDevelopmentTab(ft.Column): # type: ignore
 		self.minor_row = ft.Row(controls=[self.minor_update_text, self.minor_update_time_text, self.minor_cost_text, self.minor_develop_btn], spacing=spacing)
 
 	def setup_container(self) -> None:
-		self.container = CustomContainer(self.view, self.setup_column(), expand=True)
+		self.container = CustomContainer(
+			self.view, 
+			self.setup_column(), 
+			expand=False  # Changed from True to False
+		)
 
 	def setup_column(self) -> None:
 		controls = [
@@ -69,7 +76,12 @@ class CarDevelopmentTab(ft.Column): # type: ignore
 			self.minor_row
 		]
 
-		return ft.Column(controls=controls, expand=False, tight=True, spacing=20)
+		return ft.Column(
+			controls=controls, 
+			expand=False,  # Make sure this is False too
+			tight=True, 
+			spacing=20
+		)
 	
 	def start_development(self, e: ft.ControlEvent) -> None:
 		self.view.controller.car_development_controller.car_development_selected(e.control.data)

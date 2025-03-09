@@ -8,6 +8,15 @@ from pw_model.email.email_model import Inbox, EmailStatusEnums
 class MockModel:
     def __init__(self):
         self.inbox = Inbox(self)
+        self.season = Season()
+
+class Season:
+    def __init__(self):
+        self.calendar = Calendar()
+
+class Calendar:
+    def __init__(self):
+        self.current_week = 15
 
 def test_save_and_load_email():
     # Setup: Create a mock model and add emails

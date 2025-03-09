@@ -26,6 +26,7 @@ class LapTimeManager:
 		self.randomiser = LapManagerRandomiser(self.participant)
 		self.driver = participant.driver
 		self.car_model = participant.car_model
+		self.car_state = participant.car_state
 		self.track_model = participant.track_model
 		self.calculate_base_laptime()
 		additonal_laptime_variaton = int((1 - (self.driver.consistency / 100)) * LAP_TIME_VARIATION)
@@ -70,7 +71,7 @@ class LapTimeManager:
 		if pitting, the time loss in the pits is accounted for
 		'''
 		random_time_loss = self.randomiser.random_laptime_loss()
-		self.laptime = self.base_laptime + random_time_loss + self.car_model.fuel_effect + self.car_model.tyre_wear + dirty_air_effect
+		self.laptime = self.base_laptime + random_time_loss + self.car_state.fuel_effect + self.car_state.tyre_wear + dirty_air_effect
 
 		# ADD PIT STOP LOSS IF APPLICABLE
 		if self.participant.status is ParticipantStatus.PITTING_IN:

@@ -19,6 +19,7 @@ from pw_model.track.track_model import TrackModel
 from pw_model.team.team_model import TeamModel
 from pw_model.senior_staff.commercial_manager import CommercialManager
 from pw_model.senior_staff.technical_director import TechnicalDirector
+from pw_model.senior_staff.team_principal import TeamPrincipalModel
 
 class Model:
 	def __init__(self, roster: str, run_directory: str, mode: str="normal", auto_save: bool=True):
@@ -41,6 +42,7 @@ class Model:
 		self.commercial_managers: List[CommercialManager] = []
 		self.technical_directors: List[TechnicalDirector] = []
 		self.future_managers: List[Union[CommercialManager, TechnicalDirector]] = []
+		self.team_principals: List[TeamPrincipalModel] = []
 
 		if roster is not None:
 			calendar_dataframe = load_roster.load_roster(self, roster)
@@ -237,4 +239,15 @@ class Model:
 		}
 
 		return team_average_stats
+
+	def get_team_principal_model(self, team_principal_name: str) -> Union[TeamPrincipalModel, None]:
+		team_principal_model = None
+
+		for tp in self.team_principals:
+			if tp.name == team_principal_name:
+				team_principal_model = tp
+				break
+
+		assert team_principal_model is not None, f"Team Principal {team_principal_name} not found"
+		return team_principal_model
 

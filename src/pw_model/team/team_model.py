@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Dict, Any
 from pw_model.season import season_stats
 from pw_model.finance import finance_model
 
-from pw_model.senior_staff import commercial_manager, technical_director
+from pw_model.senior_staff import commercial_manager, technical_director, team_principal
 from pw_model.team.facilities_model import FacilityModel
 from pw_model.finance.sponsors_model import SponsorModel
 from pw_model.pw_model_enums import StaffRoles
@@ -68,10 +68,7 @@ class TeamModel:
 	
 	@property
 	def is_player_team(self) -> bool:
-		if self.name == self.model.player_team:
-			return True
-		else:
-			return False
+		return self.name == self.model.player_team
 	
 	@property
 	def driver1_model(self) -> driver_model.DriverModel:
@@ -88,6 +85,10 @@ class TeamModel:
 	@property
 	def technical_director_model(self) -> technical_director.TechnicalDirector:
 		return self.model.get_technical_director_model(self.technical_director)
+
+	@property
+	def team_principal_model(self) -> team_principal.TeamPrincipalModel:
+		return self.model.get_team_principal_model(self.team_principal)
 	
 	#TODO make a property in driver model to calculate average skill
 	@property
@@ -97,10 +98,14 @@ class TeamModel:
 	@property
 	def average_manager_skill(self) -> int:
 		skill = 0
-		for idx, manager in enumerate([self.commercial_manager_model, self.technical_director_model]):
+		for idx, manager in enumerate([
+			self.commercial_manager_model,
+			self.technical_director_model,
+			self.team_principal_model
+		]):
 			skill += manager.average_skill
 
-		return int(skill / (idx + 1)) # return average skill of all managers
+		return int(skill / (idx + 1))  # return average skill of all managers
 
 	@property
 	def current_position(self) -> int: #in constructors championship, 0 indexed
@@ -177,20 +182,26 @@ class TeamModel:
 		'''
 		Recalculate the car speed at the end of the year for the next season
 		'''
-
-		staff_ceoff = 0.4
+		staff_coeff = 0.4
 		random_element = random.randint(-30, 20)
 		
-		staff_speed = (self.number_of_staff * staff_ceoff)
-
+		staff_speed = (self.number_of_staff * staff_coeff)
 		facilities_speed = self.facilities_model.factory_rating
-
-		speed = (staff_speed + facilities_speed + self.technical_director_model.skill + random_element) / 3
-
-		speed = max(1, min(100, speed)) # make sure speed is between 1 and 100
-
+		
+		# Calculate base speed first
+		base_speed = (staff_speed + facilities_speed + self.technical_director_model.skill + random_element) / 3
+		
+		# Apply modest team principal influence for AI teams only
+		if not self.is_player_team:
+			# Apply a small boost/penalty based on team principal skill
+			# Skill of 50 = no effect, above 50 = small boost, below 50 = small penalty
+			principal_modifier = (self.team_principal_model.skill - 50) * 0.0025  # 0.5% influence per skill point from baseline
+			base_speed *= (1 + principal_modifier)
+		
+		speed = max(1, min(100, base_speed))  # make sure speed is between 1 and 100
+		
 		self.car_model.update_speed(speed)
-
+		
 		if self.is_player_team is True:
 			self.model.inbox.new_car_update_email()
 

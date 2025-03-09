@@ -12,172 +12,140 @@ from pw_controller.staff_page.staff_page_data import StaffPageData
 if TYPE_CHECKING:
 	from pw_view.view import View
 
-class StaffPage(ft.Column): # type: ignore
+class StaffPage(ft.Column):
 	def __init__(self, view: View):
-
 		self.view = view
-		self.setup_buttons_row()
-		self.setup_driver_containers()
-		self.setup_manager_containers()
+		self.setup_workforce_buttons()
+		self.setup_staff_containers()
+		self.setup_tabs()
 
-		super().__init__(expand=1, controls=[])
-		self.display_drivers(None)
-
-	def reset_tab_buttons(self) -> None:
-		# When a button is clicked to view a different tab, reset all buttons style
-
-		self.drivers_btn.style = None
-		self.manager_button.style = None
-		self.workforce_btn.style = None
-
-	def setup_buttons_row(self) -> None:
-		self.manager_button = ft.TextButton("Management", on_click=self.display_managers,)
-
-		self.drivers_btn = ft.TextButton("Drivers", on_click=self.display_drivers)
-		self.workforce_btn = ft.TextButton("Workforce", on_click=self.display_workforce)
-
-		self.buttons_row = ft.Row(
-			controls=[
-				self.drivers_btn,
-				self.manager_button,
-				self.workforce_btn,
+		self.background_stack = ft.Stack(
+			[
+				self.view.background_image,
+				self.tabs
 			],
-			expand=False,
-			tight=True
+			expand=True
 		)
 
-		self.buttons_container = custom_container.CustomContainer(self.view, self.buttons_row, expand=False)
+		super().__init__(
+			controls=[
+				ft.Text("Staff", theme_style=self.view.page_header_style),
+				self.background_stack
+			],
+			alignment=ft.MainAxisAlignment.START,
+			expand=True
+		)
 
-		self.hire_workforce_button = ft.TextButton("Hire", icon="upgrade", on_click=self.hire_workforce)
+	def setup_workforce_buttons(self) -> None:
+		self.hire_workforce_button = ft.TextButton(
+			"Hire", 
+			icon="upgrade", 
+			on_click=self.hire_workforce
+		)
 
 		self.workforce_buttons_row = ft.Row(
-			controls=[
-				self.hire_workforce_button,
-			],
+			controls=[self.hire_workforce_button],
 			expand=False,
 			tight=True
 		)
 
-		self.workforce_buttons_container = custom_container.CustomContainer(self.view, self.workforce_buttons_row, expand=False)
+		self.workforce_buttons_container = custom_container.CustomContainer(
+			self.view, 
+			self.workforce_buttons_row, 
+			expand=False
+		)
 
-	def setup_driver_containers(self) -> None:		
+	def setup_staff_containers(self) -> None:
+		# Drivers
 		self.driver1_container = StaffDetailsContainer(self.view, StaffRoles.DRIVER1)
 		self.driver2_container = StaffDetailsContainer(self.view, StaffRoles.DRIVER2)
-
 		self.driver_row = ft.Row(
-			# expand=1,
 			controls=[
 				self.driver1_container.container,
 				self.driver2_container.container
-			]
+			],
+			expand=False,
+			alignment=ft.MainAxisAlignment.CENTER  # Center the containers horizontally
 		)
 
-	def setup_manager_containers(self) -> None:
+		# Management
 		self.technical_director_container = StaffDetailsContainer(self.view, StaffRoles.TECHNICAL_DIRECTOR)
 		self.commercial_manager_container = StaffDetailsContainer(self.view, StaffRoles.COMMERCIAL_MANAGER)
-
 		self.manager_row = ft.Row(
-			controls = [
+			controls=[
 				self.technical_director_container.container,
 				self.commercial_manager_container.container,
-			]
+			],
+			expand=False,
+			alignment=ft.MainAxisAlignment.CENTER  # Center the containers horizontally
+		)
+
+	def setup_tabs(self) -> None:
+		self.drivers_tab = ft.Tab(
+			text="Drivers",
+			content=ft.Container(
+				content=ft.Column(
+					[self.driver_row],
+					expand=False,
+					horizontal_alignment=ft.CrossAxisAlignment.CENTER  # Center the row vertically
+				),
+				expand=False,
+				alignment=ft.alignment.top_center
+			)
+		)
+		
+		self.management_tab = ft.Tab(
+			text="Management",
+			content=ft.Container(
+				content=ft.Column(
+					[self.manager_row],
+					expand=False,
+					horizontal_alignment=ft.CrossAxisAlignment.CENTER  # Center the row vertically
+				),
+				expand=False,
+				alignment=ft.alignment.top_center
+			)
+		)
+
+		self.workforce_tab = ft.Tab(
+			text="Workforce",
+			content=ft.Container(
+				expand=False,
+				alignment=ft.alignment.top_center
+			)
+		)
+
+		self.tabs = ft.Tabs(
+			selected_index=0,
+			animation_duration=300,
+			tabs=[
+				self.drivers_tab,
+				self.management_tab,
+				self.workforce_tab
+			],
+			expand=True
 		)
 
 	def update_page(self, data: StaffPageData, new_season: bool=False) -> None:
 		if new_season is True:
 			self.enable_hire_workforce_btn()
 
+		# Update staff containers
 		self.driver1_container.update(data.drivers[0], data.staff_player_requires.player_requiring_driver1)
 		self.driver2_container.update(data.drivers[1], data.staff_player_requires.player_requiring_driver2)
 		self.technical_director_container.update(data.technical_director, data.staff_player_requires.player_requiring_technical_director)
 		self.commercial_manager_container.update(data.commercial_manager, data.staff_player_requires.player_requiring_commercial_manager)
 
-		self.workforce_container = self.setup_staff_value_progress_bars(data.staff_values)
-
-		self.view.main_app.update()
-
-	# TODO delete, moved to staff_details_container
-	def replace_driver(self, e: ft.ControlEvent) -> None:
-		self.view.controller.staff_hire_controller.launch_replace_staff(e.control.data)
-
-	def display_drivers(self, e: ft.ControlEvent) -> None:
-		self.reset_tab_buttons()
-		self.drivers_btn.style = self.view.clicked_button_style
-
-		page_controls = [self.buttons_container, self.driver_row]
-
-		column = ft.Column(
-			controls=page_controls,
+		# Update workforce tab content
+		workforce_content = ft.Column(
+			controls=[
+				self.setup_staff_value_progress_bars(data.staff_values),
+				self.workforce_buttons_container
+			],
 			expand=False,
 			spacing=20
 		)
-
-		self.background_stack = ft.Stack(
-			[
-				self.view.background_image,
-				column,
-			],
-			expand=True,
-		)
-
-		self.controls = [
-			ft.Text("Staff", theme_style=self.view.page_header_style),
-			self.background_stack
-		]
-		
-		self.view.main_app.update()
-
-	def display_managers(self, e: ft.ControlEvent) -> None:
-		self.reset_tab_buttons()
-		self.manager_button.style = self.view.clicked_button_style
-
-		page_controls = [self.buttons_container, self.manager_row]
-
-		column = ft.Column(
-			controls=page_controls,
-			expand=False,
-			spacing=20
-		)
-
-		self.background_stack = ft.Stack(
-			[
-				self.view.background_image,
-				column,
-			],
-			expand=True
-		)
-
-		self.controls = [
-			ft.Text("Staff", theme_style=self.view.page_header_style),
-			self.background_stack
-		]
-
-		self.view.main_app.update()
-
-	def display_workforce(self, e: ft.ControlEvent) -> None:
-		self.reset_tab_buttons()
-		self.workforce_btn.style = self.view.clicked_button_style
-
-		page_controls = [self.buttons_container, self.workforce_container, self.workforce_buttons_container]
-
-		column = ft.Column(
-			controls=page_controls,
-			expand=False,
-			spacing=20
-		)
-
-		self.background_stack = ft.Stack(
-			[
-				self.view.background_image,
-				column,
-			],
-			expand=True
-		)
-
-		self.controls = [
-			ft.Text("Staff", theme_style=self.view.page_header_style),
-			self.background_stack
-		]
+		self.workforce_tab.content.content = workforce_content
 
 		self.view.main_app.update()
 
@@ -197,7 +165,7 @@ class StaffPage(ft.Column): # type: ignore
 						content=ft.ProgressBar(value=staff_value/max_staff, width=500, expand=True, bar_height=28),
 						height=28,
 						expand=True
-						)
+					)
 				],
 				expand=True,
 			)
@@ -205,23 +173,18 @@ class StaffPage(ft.Column): # type: ignore
 
 		column = ft.Column(
 			controls=staff_value_rows,
-			expand=True,
+			expand=False,
 			spacing=20
 		)
 
-		workforce_container = custom_container.CustomContainer(self.view, column, expand=False)
+		return custom_container.CustomContainer(self.view, column, expand=False)
 
-		return workforce_container
-	
 	def hire_workforce(self, e: ft.ControlEvent) -> None:
 		self.view.controller.staff_hire_controller.hire_workforce()
 
 	def open_workforce_dialog(self, current_workforce: int) -> None:
 		workforce_dialog = hire_workforce_modal.WorkforceDialog(self.view.main_app, self.view, initial_value=current_workforce)
-
-		# Adding elements to page
 		self.view.main_app.overlay.append(workforce_dialog)
-
 		workforce_dialog.open = True
 		self.view.main_app.update()
 

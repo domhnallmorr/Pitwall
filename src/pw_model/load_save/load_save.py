@@ -5,7 +5,6 @@ import pandas as pd
 
 from pw_model import load_roster
 from pw_model.pw_model_enums import StaffRoles
-from pw_model.finance.transport_costs import save_transport_costs_model, load_transport_costs
 from pw_model.load_save.driver_offers_load_save import save_driver_offers, load_driver_offers
 from pw_model.load_save.email_load_save import save_email, load_email
 from pw_model.load_save.finance_load_save import save_finance_model, load_finance_model
@@ -13,6 +12,8 @@ from pw_model.load_save.sponsors_load_save import save_sponsor_model
 from pw_model.load_save.standings_load_save import save_standings, load_standings
 from pw_model.load_save.car_development_load_save import save_car_development, load_car_development
 from pw_model.load_save.calendar_load_save import save_calendar, load_calendar
+from pw_model.load_save.transport_costs_load_save import save_transport_costs_model, load_transport_costs
+from pw_model.load_save.team_principal_load_save import save_team_principals
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -40,6 +41,7 @@ def save_game(model: Model, mode: str="file") -> sqlite3.Connection:
 	save_calendar(model, save_file)
 	save_sponsor_model(model, save_file)
 	save_driver_offers(model, save_file)
+	save_team_principals(model, save_file)
 
 	if model.player_team_model is not None:
 		save_transport_costs_model(model.player_team_model.finance_model.transport_costs_model, save_file)
@@ -453,10 +455,11 @@ def load_drivers_stats(conn: sqlite3.Connection, model: Model) -> None:
 
 
 def load_senior_staff(conn: sqlite3.Connection, model: Model) -> None:
-	commercial_managers, technical_directors, future_managers = load_roster.load_senior_staff(model, conn)
+	commercial_managers, technical_directors, team_principals, future_managers = load_roster.load_senior_staff(model, conn)
 	model.commercial_managers = commercial_managers
 	model.technical_directors = technical_directors
 	model.future_managers = future_managers
+	model.team_principals = team_principals  # Add this line to properly handle team principals
 
 def load_teams(conn: sqlite3.Connection, model: Model) -> None:
 	teams = load_roster.load_teams(model, conn)

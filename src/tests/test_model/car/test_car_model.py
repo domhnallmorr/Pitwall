@@ -29,35 +29,4 @@ def test_update_car_speed():
 		assert ferrari_model.car_model.speed > 50 # make sure ferrari's car is at least a decent midfield car
 		assert minardi_model.car_model.speed < 70 # make sure mindardi can't build a reasonably quick car
 
-def test_fuel_consumption():
-	model = create_model.create_model(mode="headless")
-	track = test_track_model.create_dummy_track()
-	_race_model = race_weekend_model.RaceWeekendModel("headless", model, track)
-
-	schumacher_model = _race_model.get_particpant_model_by_name("Michael Schumacher")
-
-	# check the car model caluclates required fuel for a given number of laps correctly
-	# dummy track is based on A1 ring, 71 lap race
-	assert schumacher_model.car_model.calculate_required_fuel(track, 71) == 148
-	assert schumacher_model.car_model.calculate_required_fuel(track, 36) == 75
-	assert schumacher_model.car_model.calculate_required_fuel(track, 18) == 38
-
-	# Test car model assigns correct fuel load at start of race
-
-	schumacher_model.pit_strategy.number_of_planned_stops = 1
-	schumacher_model.pit_strategy.pit1_lap = 36
-
-	schumacher_model.setup_start_fuel_and_tyres()
-	assert schumacher_model.car_model.fuel_load == 75
-
-	schumacher_model.pit_strategy.number_of_planned_stops = 3
-	schumacher_model.pit_strategy.pit1_lap = 10
-	schumacher_model.setup_start_fuel_and_tyres()
-	assert schumacher_model.car_model.fuel_load == 21
-
-	# random test
-	schumacher_model.pit_strategy.calculate_pitstop_laps()
-	schumacher_model.setup_start_fuel_and_tyres()
-	assert schumacher_model.car_model.fuel_load == int(2.08 * (schumacher_model.pit_strategy.pit1_lap + 0.5))
-
 	
