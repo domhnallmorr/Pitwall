@@ -5,6 +5,7 @@ import flet as ft
 from pw_view.custom_widgets import custom_container
 from pw_view.car_page.car_comparison_graph import CarComparisonGraph
 from pw_view.car_page.car_development_tab import CarDevelopmentTab
+from pw_view.car_page.engine_tab import EngineTab
 
 if TYPE_CHECKING:
     from pw_view.view import View
@@ -35,6 +36,8 @@ class CarPage(ft.Column):
     def setup_tabs(self) -> None:
         self.car_development_tab = CarDevelopmentTab(self.view)
         self.car_comparison_graph = CarComparisonGraph(self.view)
+        self.engine_tab = EngineTab(self.view)
+        
         self.car_comparison_container = custom_container.CustomContainer(
             self.view, 
             self.car_comparison_graph, 
@@ -46,7 +49,17 @@ class CarPage(ft.Column):
             animation_duration=300,
             tabs=[
                 ft.Tab(
+                    text="Engine",
+                    icon=ft.Icons.SETTINGS,
+                    content=ft.Container(
+                        content=self.engine_tab,
+                        expand=False,
+                        alignment=ft.alignment.top_center
+                    )
+                ),
+                ft.Tab(
                     text="Car Development",
+                    icon=ft.Icons.HARDWARE,
                     content=ft.Container(
                         content=self.car_development_tab,
                         expand=False,
@@ -55,12 +68,13 @@ class CarPage(ft.Column):
                 ),
                 ft.Tab(
                     text="Car Comparison",
+                    icon=ft.Icons.SHOW_CHART,
                     content=ft.Container(
                         content=self.car_comparison_container,
                         expand=False,
                         alignment=ft.alignment.top_center
                     )
-                ),
+                ),           
             ],
             expand=True
         )
@@ -68,4 +82,5 @@ class CarPage(ft.Column):
     def update_page(self, data: CarPageData) -> None:
         self.car_comparison_graph.setup_rows(data.car_speeds)
         self.car_development_tab.update_tab(data)
+        self.engine_tab.update_tab(data)
         self.view.main_app.update()

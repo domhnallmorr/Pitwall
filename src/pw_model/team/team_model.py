@@ -11,7 +11,9 @@ from pw_model.senior_staff import commercial_manager, technical_director, team_p
 from pw_model.team.facilities_model import FacilityModel
 from pw_model.finance.sponsors_model import SponsorModel
 from pw_model.pw_model_enums import StaffRoles
+from pw_model.team.suppliers_model import SupplierModel
 from pw_model.car_development.car_development_model import CarDevelopmentModel
+from pw_model.engine.engine_supplier_model import EngineSupplierModel
 
 if TYPE_CHECKING:
 	from pw_model.driver import driver_model
@@ -31,7 +33,10 @@ class TeamModel:
 			  title_sponsor : str,
 			  title_sponsor_value : int,
 			  commercial_manager : str,
-			  technical_director : str):
+			  technical_director : str,
+			  engine_supplier : str,
+			  engine_supplier_deal : str,
+			  engine_supplier_cost : int):
 		
 		self.model = model
 		self.name = name
@@ -49,6 +54,7 @@ class TeamModel:
 
 		self.commercial_manager = commercial_manager
 		self.technical_director = technical_director
+		self.supplier_model = SupplierModel(self.model, engine_supplier, engine_supplier_deal, engine_supplier_cost)
 
 		self.setup_season_stats()
 
@@ -68,7 +74,10 @@ class TeamModel:
 	
 	@property
 	def is_player_team(self) -> bool:
-		return self.name == self.model.player_team
+		if self.name == self.model.player_team:
+			return True
+		else:
+			return False
 	
 	@property
 	def driver1_model(self) -> driver_model.DriverModel:
@@ -90,6 +99,10 @@ class TeamModel:
 	def team_principal_model(self) -> team_principal.TeamPrincipalModel:
 		return self.model.get_team_principal_model(self.team_principal)
 	
+	@property
+	def engine_supplier_model(self) -> EngineSupplierModel:
+		return self.model.get_engine_supplier_model(self.supplier_model.engine_supplier)
+
 	#TODO make a property in driver model to calculate average skill
 	@property
 	def average_driver_skill(self) -> int:

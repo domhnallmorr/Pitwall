@@ -98,7 +98,7 @@ class FinanceModel:
 		return int(self.total_staff_costs_per_year + self.drivers_salary + self.team_model.technical_director_model.contract.salary
 			 + self.team_model.commercial_manager_model.contract.salary
 			 + self.transport_costs_model.estimated_season_costs + self.damage_costs_model.damage_costs_this_season
-			 + self.car_development_costs_model.costs_this_season)
+			 + self.car_development_costs_model.costs_this_season + self.team_model.supplier_model.engine_supplier_cost)
 	
 	def weekly_update(self) -> None:
 		
@@ -130,11 +130,12 @@ class FinanceModel:
 		start_balance = self.balance
 		transport_cost, damage_cost = self.apply_race_costs(player_driver1_crashed, player_driver2_crashed)
 		title_sponsor_payment = self.process_race_income()
+		engine_payment = self.team_model.supplier_model.engine_payments[-1]
 
 		profit = self.balance - start_balance
 		# self.race_profits.append(profit)
 
-		self.model.inbox.new_race_finance_email(transport_cost, damage_cost, title_sponsor_payment, profit)
+		self.model.inbox.new_race_finance_email(transport_cost, damage_cost, title_sponsor_payment, engine_payment, profit)
 		
 	def process_race_income(self) -> int:
 		self.sponsors_model.process_sponsor_post_race_payments()
@@ -157,6 +158,11 @@ class FinanceModel:
 		self.damage_costs_model.calculate_race_damage_costs(player_driver1_crashed, player_driver2_crashed)
 		damage_cost = int(self.damage_costs_model.damage_costs[-1])
 		self.balance -= damage_cost
+
+		# Supplier Costs
+		self.team_model.supplier_model.process_race_payments()
+		engine_cost = int(self.team_model.supplier_model.engine_payments[-1])
+		self.balance -= engine_cost
 
 		return transport_cost, damage_cost
 

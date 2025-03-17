@@ -83,6 +83,7 @@ class StaffPage(ft.Column):
 	def setup_tabs(self) -> None:
 		self.drivers_tab = ft.Tab(
 			text="Drivers",
+			icon=ft.Icons.SPORTS_MOTORSPORTS,
 			content=ft.Container(
 				content=ft.Column(
 					[self.driver_row],
@@ -96,6 +97,7 @@ class StaffPage(ft.Column):
 		
 		self.management_tab = ft.Tab(
 			text="Management",
+			icon=ft.Icons.WORK,
 			content=ft.Container(
 				content=ft.Column(
 					[self.manager_row],
@@ -109,6 +111,7 @@ class StaffPage(ft.Column):
 
 		self.workforce_tab = ft.Tab(
 			text="Workforce",
+			icon=ft.Icons.PEOPLE,
 			content=ft.Container(
 				expand=False,
 				alignment=ft.alignment.top_center

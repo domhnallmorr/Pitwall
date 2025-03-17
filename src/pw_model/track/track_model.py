@@ -32,6 +32,7 @@ class TrackModel:
 		self.number_of_laps = 0
 		self.base_laptime = 0
 		self.overtaking_delta = 1_000 # minimum lap time delta required to attempt an overtake
+		self.power = 5 # power sensitivity of track
 
 		for line in data:
 			if line.startswith("Name:"):
@@ -50,6 +51,8 @@ class TrackModel:
 				self.length = float(line.split(":")[1].lstrip()) # in km
 			if line.startswith("Overtaking Delta:"):
 				self.overtaking_delta = int(line.split(":")[1].lstrip()) # in ms
+			if line.startswith("Power:"):
+				self.power = int(line.split(":")[1].lstrip()) # in ms
 
 		assert self.name != ""
 		assert self.country != ""
@@ -58,4 +61,5 @@ class TrackModel:
 		assert self.number_of_laps > 0
 		assert self.base_laptime > 0
 		assert self.length > 0.0
+		assert self.power > 0 and self.power <= 10
 	

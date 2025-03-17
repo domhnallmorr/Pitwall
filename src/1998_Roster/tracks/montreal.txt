@@ -6,3 +6,4 @@ Laps: 70
 Base Laptime: 73_000
 Length: 4.421
 Overtaking Delta: 700
+Power: 8

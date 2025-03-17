@@ -72,6 +72,7 @@ class PageUpdateController:
 			"drivers_salary": copy.deepcopy(self.model.player_team_model.finance_model.drivers_salary),
 			"technical_director_salary": copy.deepcopy(self.model.player_team_model.technical_director_model.contract.salary),
 			"commercial_manager_salary": copy.deepcopy(self.model.player_team_model.commercial_manager_model.contract.salary),
+			"engine_supplier_cost": copy.deepcopy(self.model.player_team_model.supplier_model.engine_supplier_cost),
 			"race_costs": self.model.player_team_model.finance_model.transport_costs_model.estimated_season_costs,
 			"damage_costs": self.model.player_team_model.finance_model.damage_costs_model.damage_costs_this_season, 
 			"car_development_costs": copy.deepcopy(self.model.player_team_model.finance_model.car_development_costs_model.costs_this_season),

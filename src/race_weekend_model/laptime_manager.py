@@ -15,6 +15,7 @@ from race_weekend_model.on_track_constants import (
 	LAP1_TIME_LOSS,
 	LAP_TIME_VARIATION_BASE,
 	LAP_TIME_VARIATION,
+	POWER_SENSITIVITY,
 )
 
 if TYPE_CHECKING:
@@ -55,11 +56,32 @@ class LapTimeManager:
 		'''
 		self.base_laptime += (MAX_SPEED - self.driver.speed) * DRIVER_SPEED_FACTOR # 100 * 20 = 2000 (2s in ms)
 
+		# determine power effect
+		power_effect = self.calculate_engine_power_effect()
+		self.base_laptime += power_effect # add power effect to base laptime
+
 		# add car component
 		'''
 		car with 0 speed rating is considered 5s slower than car with 100 speed rating
 		'''
 		self.base_laptime += (MAX_SPEED - self.car_model.speed) * CAR_SPEED_FACTOR
+
+	def calculate_engine_power_effect(self) -> int:
+		"""Calculate time loss/gain due to engine power and track sensitivity"""
+		# Get engine power (0-100 scale) from engine supplier
+		engine_power = self.participant.team_model.engine_supplier_model.power
+		
+		# Track power sensitivity (1-10) affects how much engine power matters
+		track_power_sensitivity = self.participant.track_model.power
+		
+		# Calculate power effect
+		# POWER_SENSITIVITY (2000ms = 2s) is the maximum possible effect at power sensitivity 10
+		# At sensitivity 1, effect is reduced to 10% of maximum
+		power_effect = (POWER_SENSITIVITY * track_power_sensitivity / 10)
+		
+		# A power rating of 50 is neutral (no gain/loss)
+		# Below 50 loses time, above 50 gains time
+		return int(power_effect * (50 - engine_power) / 100)
 
 	def setup_variables_for_session(self) -> None:
 		self.laptime = None

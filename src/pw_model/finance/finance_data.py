@@ -15,6 +15,7 @@ class FinanceData(TypedDict):
     drivers_salary: int
     technical_director_salary: int
     commercial_manager_salary: int
+    engine_supplier_cost: int
     race_costs: int
     car_development_costs: int
     total_expenditure: int

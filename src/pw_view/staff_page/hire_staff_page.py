@@ -4,6 +4,7 @@ import flet as ft
 
 from pw_model.pw_model_enums import StaffRoles
 from pw_view.staff_page.staff_dialogs import RejectionDialog, AcceptDialog
+from pw_view.custom_widgets import custom_container
 
 if TYPE_CHECKING:
 	from pw_view.view import View
@@ -20,16 +21,11 @@ class HireStaffPage(ft.Column):
 		self.title_text = ft.Text("Hire Driver", theme_style=self.view.page_header_style)
 		self.current_role = None # tracks wether player is hiring driver, technical director, etc
 
-		contents = [
-			self.title_text,
-			# self.buttons_row,
-			# self.driver_row,
-		]
-
-		super().__init__(expand=1, controls=contents)
+		super().__init__(expand=1)
 
 	def update_free_agent_list(self, free_agents: list[str], role: StaffRoles, previously_approached: list[str]) -> None:
-		self.title_text.value = role.value
+		title = role.value.title().replace("1", " 1").replace("2", " 2")
+		self.title_text.value = f"Hire: {title}"
 		self.current_role = role
 
 		rows = []
@@ -73,15 +69,11 @@ class HireStaffPage(ft.Column):
 			expand=True
 		)
 
-		self.free_agents_container = ft.Container(
-				content=self.free_agents_column,
-				bgcolor=self.view.dark_grey,
-				margin=20,
-				padding=10,
-				width=200,
-				expand=True,
-				border_radius=15,
-			)
+		self.free_agents_container = custom_container.CustomContainer(
+			self.view,
+			self.free_agents_column,
+			expand=True
+		)
 		
 		self.setup_page()
 
@@ -104,16 +96,11 @@ class HireStaffPage(ft.Column):
 			]
 		)
 
-		self.container_container = ft.Container(
-				# expand=1,
-				content=self.contract_column,
-				bgcolor=self.view.dark_grey,
-				margin=20,
-				padding=10,
-				width=200,
-				expand=True,
-				border_radius=15,
-			)
+		self.container_container = custom_container.CustomContainer(
+			self.view,
+			self.contract_column,
+			expand=True
+		)
 
 
 	def setup_page(self) -> None:
@@ -125,9 +112,17 @@ class HireStaffPage(ft.Column):
 			expand=True
 		)
 
+		self.background_stack = ft.Stack(
+			[
+				self.view.background_image,
+				content_row
+			],
+			expand=True
+		)
+
 		self.controls = [
-			ft.Text("Hire Driver", theme_style=self.view.page_header_style),
-			content_row
+			self.title_text,
+			self.background_stack
 		]
 
 		self.view.main_app.update()

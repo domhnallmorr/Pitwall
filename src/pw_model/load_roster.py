@@ -14,6 +14,9 @@ from pw_model.senior_staff.commercial_manager import CommercialManager
 from pw_model.senior_staff.technical_director import TechnicalDirector
 from pw_model.senior_staff.team_principal import TeamPrincipalModel
 from pw_model.load_save.sponsors_load_save import load_sponsors
+from pw_model.load_save.sponsors_load_save import load_sponsors
+from pw_model.load_save.engine_suppliers_load_save import load_engine_suppliers
+from pw_model.team.suppliers_model import SupplierDeals
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -29,6 +32,7 @@ def load_roster(model: Model, roster: str) -> pd.DataFrame:
 	model.drivers, model.future_drivers = load_drivers(model, conn)
 	model.commercial_managers, model.technical_directors, model.team_principals, model.future_managers = load_senior_staff(model, conn)
 	model.teams = load_teams(model, conn)
+	model.engine_suppliers = load_engine_suppliers(model, conn)
 
 	return calendar_dataframe
 	
@@ -107,6 +111,9 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 	car_speed_idx = column_names.index("CarSpeed")
 	number_of_staff_idx = column_names.index("NumberofStaff")
 	facilities_idx = column_names.index("Facilities")
+	engine_supplier_idx = column_names.index("EngineSupplier")
+	engine_supplier_deal_idx = column_names.index("EngineSupplierDeal")
+	engine_supplier_cost_idx = column_names.index("EngineSupplierCosts")
 
 	balance_idx = column_names.index("StartingBalance")
 
@@ -128,6 +135,9 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 
 			facilities = row[facilities_idx]
 			number_of_staff = row[number_of_staff_idx]
+			engine_supplier = row[engine_supplier_idx]
+			engine_supplier_deal = SupplierDeals(row[engine_supplier_deal_idx])
+			engine_supplier_cost = row[engine_supplier_cost_idx]
 
 			starting_balance = row[balance_idx]
 			title_sponsor = str(sponsors_df.loc[sponsors_df["Team"] == name, "TitleSponsor"].iloc[0])
@@ -143,7 +153,8 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 			car = car_model.CarModel(car_speed)
 			team = team_model.TeamModel(model, name, country, team_principal, driver1, driver2, car, number_of_staff, facilities,
 							   starting_balance, other_sponsorship, title_sponsor, title_sponsor_value,
-							   commercial_manager, technical_director)
+							   commercial_manager, technical_director,
+							   engine_supplier, engine_supplier_deal, engine_supplier_cost)
 			
 			# ensure drivers are correctly loaded
 			assert team.driver1_model is not None
@@ -279,6 +290,4 @@ def checks(model: Model, roster: str) -> Tuple[str, List[str]]:
 
 	return season_file, track_files
 
-
-	
 

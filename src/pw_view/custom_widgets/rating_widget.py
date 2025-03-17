@@ -23,12 +23,6 @@ class RatingWidget(ft.Row):  # type: ignore
     def attribute_to_stars(self, attribute: int) -> int:
         """
         Converts an attribute value (within a defined min-max range) into a 1-5 star rating.
-
-        Args:
-            attribute (int): The attribute value to convert.
-
-        Returns:
-            int: The corresponding star rating (1-5).
         """
         # Clamp the attribute within the range
         attribute = max(self.min_value, min(self.max_value, attribute))
@@ -36,8 +30,8 @@ class RatingWidget(ft.Row):  # type: ignore
         # Normalize the attribute to a 0-1 scale
         normalized_value = (attribute - self.min_value) / (self.max_value - self.min_value)
 
-        # Scale to 1-5 star rating
-        return max(1, min(self.number_of_stars, int(normalized_value * self.number_of_stars -1) + 1))
+        # Scale to 1-5 star rating (removed the -1 to make it more generous)
+        return max(1, min(self.number_of_stars, int(normalized_value * self.number_of_stars + 1)))
 
     def create_star_row(self, star_rating: int) -> None:
         """

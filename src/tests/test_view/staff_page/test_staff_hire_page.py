@@ -45,6 +45,7 @@ class DummyView:
         self.page_header_style = "header-style"
         self.dark_grey = "#333333"
         self.vscroll_buffer = 50
+        self.background_image = None
         self.main_app = DummyMainApp()
         self.controller = DummyController()
 
@@ -68,7 +69,7 @@ def test_update_free_agent_list():
     page.update_free_agent_list(free_agents, role, previously_approached)
     
     # Verify that the title and current role are updated
-    assert page.title_text.value == role.value
+    assert page.title_text.value == f"Hire: Driver 1"
     assert page.current_role == role
     
     # Check that two buttons were created and the disabled states are set correctly

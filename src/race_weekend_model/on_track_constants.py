@@ -18,3 +18,5 @@ LAP1_TIME_LOSS = 6_000 # in ms, how much longer lap 1 takes compared to a normal
 LAP1_TIME_LOSS_PER_POSITION = 1_000 # in ms, how much longer lap 1 takes, per position down the field
 
 MAX_SPEED = 100 # the speed scale for car and driver is between 0 and 100, 100 defined here as the max value
+
+POWER_SENSITIVITY = 2_000 # 

@@ -69,6 +69,7 @@ class FinancePage(ft.Column): # type: ignore
 		self.drivers_salary_text = ft.Text(f"Drivers Salary: $1")
 		self.technical_director_salary_text = ft.Text(f"Technical Director: $1")
 		self.commercial_manager_salary_text = ft.Text(f"Commercial Manager: $1")
+		self.engine_supplier_cost_text = ft.Text(f"Engine Supplier: $1")		
 		self.race_costs_text = ft.Text(f"Races: $1 (per race)")
 		self.damage_costs_text = ft.Text(f"Damage Costs: $1")
 		self.car_development_costs_text = ft.Text(f"Car Development Costs: $1")		
@@ -85,6 +86,7 @@ class FinancePage(ft.Column): # type: ignore
 					self.profit_text,
 					self.title_sponsor_text,
 					ft.Text(),# dummy text widget so that income and expenditure have the same number of rows
+					ft.Text(),
 					ft.Text(),
 					ft.Text(),
 					ft.Text(),
@@ -109,6 +111,7 @@ class FinancePage(ft.Column): # type: ignore
 					ft.Text(),# dummy text widget so that income and expenditure have the same number of rows
 					ft.Text(),# dummy text widget so that income and expenditure have the same number of rows
 					ft.Text(),# dummy text widget so that income and expenditure have the same number of rows
+					ft.Text(),# dummy text widget so that income and expenditure have the same number of rows
 					ft.Divider(),
 					self.total_income_text
 			],
@@ -124,6 +127,7 @@ class FinancePage(ft.Column): # type: ignore
 					self.drivers_salary_text,
 					self.technical_director_salary_text,
 					self.commercial_manager_salary_text,
+					self.engine_supplier_cost_text,				
 					self.race_costs_text,
 					self.damage_costs_text,
 					self.car_development_costs_text,
@@ -156,7 +160,8 @@ class FinancePage(ft.Column): # type: ignore
 		self.drivers_salary_text.value = f"Drivers Salary: ${data['drivers_salary']:,}"
 		self.technical_director_salary_text.value = f"Technical Director: ${data['technical_director_salary']:,}"
 		self.commercial_manager_salary_text.value = f"Commercial Manager: ${data['commercial_manager_salary']:,}"
-		self.race_costs_text.value = f"Transport Costs: ${data['race_costs']:,} (Estimated)"
+		self.engine_supplier_cost_text.value = f"Engine Supplier: ${data['engine_supplier_cost']:,}"		
+		self.race_costs_text.value = f"Transport Costs: ${data['race_costs']:,} (Estimated) (per race)"
 		self.damage_costs_text.value = f"Damage Costs: ${data['damage_costs']:,} (To Date)"
 		self.car_development_costs_text.value = f"Car Development Costs: ${data['car_development_costs']:,} (To Date)"		
 		self.total_expenditure_text.value = f"Total: ${data['total_expenditure']:,} (To Date)"		

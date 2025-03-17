@@ -3,6 +3,7 @@ import random
 from pw_model.driver.driver_model import DriverModel
 from pw_model.car.car_model import CarModel
 from pw_model.track.track_model import TrackModel
+from pw_model.team.team_model import TeamModel
 from race_weekend_model.pit_strategy import PitStrategy
 from race_weekend_model.laptime_manager import LapTimeManager
 from race_weekend_model.race_model_enums import ParticipantStatus, RetirementReasons
@@ -51,6 +52,10 @@ class ParticpantModel:
 		else:
 			return False
 
+	@property
+	def team_model(self) -> TeamModel:
+		return self.driver.team_model
+	
 	def setup_variables_for_session(self) -> None:
 		# the core variables associated with a participant for a given session, laptimes, current_lap, etc
 		self.current_lap = 1

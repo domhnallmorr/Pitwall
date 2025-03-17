@@ -14,6 +14,7 @@ from pw_model.load_save.car_development_load_save import save_car_development, l
 from pw_model.load_save.calendar_load_save import save_calendar, load_calendar
 from pw_model.load_save.transport_costs_load_save import save_transport_costs_model, load_transport_costs
 from pw_model.load_save.team_principal_load_save import save_team_principals
+from pw_model.load_save.staff_market_load_save import save_grid_this_year, save_grid_next_year, save_new_contracts_df, load_grid_this_year, load_grid_next_year
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -287,7 +288,10 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 	"Facilities"	INTEGER,
 	"StartingBalance"	INTEGER,
 	"CommercialManager"	TEXT,
-	"TechnicalDirector"	TEXT
+	"TechnicalDirector"	TEXT,
+	"EngineSupplier"	TEXT,
+	"EngineSupplierDeal"	TEXT,
+	"EngineSupplierCosts"	INTEGER
 	)'''
 				)
 	
@@ -297,9 +301,9 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 
 		cursor.execute('''
 			INSERT INTO teams (year, name, country, TeamPrincipal, Driver1, Driver2, CarSpeed, NumberofStaff, Facilities, StartingBalance,
-				 CommercialManager, TechnicalDirector) 
+				 CommercialManager, TechnicalDirector, EngineSupplier, EngineSupplierDeal, EngineSupplierCosts) 
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-				 ?, ?)
+				 ?, ?, ?, ?, ?)
 		''', (
 			"default",
 			team.name, 
@@ -313,6 +317,9 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 			team.finance_model.balance, 
 			team.commercial_manager,
 			team.technical_director,
+			team.supplier_model.engine_supplier,
+			team.supplier_model.engine_supplier_deal.value,
+			team.supplier_model.engine_supplier_cost
 		))
 
 def save_teams_stats(model: Model, save_file: sqlite3.Connection) -> None:
@@ -359,19 +366,6 @@ def save_teams_stats(model: Model, save_file: sqlite3.Connection) -> None:
 			best_result_this_season,
 			rnd_best_result_scored,
 		))
-
-def save_grid_this_year(model: Model, save_file: sqlite3.Connection) -> None:
-	model.staff_market.grid_this_year_df.to_sql("grid_this_year_df", save_file, if_exists="replace", index=False)
-
-def save_grid_next_year(model: Model, save_file: sqlite3.Connection) -> None:
-	model.staff_market.grid_next_year_df.to_sql("grid_next_year_df", save_file, if_exists="replace", index=False)
-	model.staff_market.grid_next_year_announced_df.to_sql("grid_next_year_announced", save_file, if_exists="replace", index=False)
-
-def save_new_contracts_df(model: Model, save_file: sqlite3.Connection) -> None:
-	model.staff_market.new_contracts_df.to_sql("new_contracts_df", save_file, if_exists="replace", index=False)
-
-
-
 
 
 def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mode: str="file") -> None:
@@ -488,11 +482,5 @@ def load_teams_stats(conn: sqlite3.Connection, model: Model) -> None:
 		team_model.season_stats.rnd_best_result_scored = rnd_best_result_scored
 
 
-def load_grid_this_year(conn: sqlite3.Connection, model: Model) -> None:
-	model.staff_market.grid_this_year_df = pd.read_sql('SELECT * FROM grid_this_year_df', conn)
 
-def load_grid_next_year(conn: sqlite3.Connection, model: Model) -> None:
-	model.staff_market.grid_next_year_df = pd.read_sql('SELECT * FROM grid_next_year_df', conn)
-	model.staff_market.grid_next_year_announced_df = pd.read_sql('SELECT * FROM grid_next_year_announced', conn)
-	model.staff_market.new_contracts_df = pd.read_sql('SELECT * FROM new_contracts_df', conn)
 

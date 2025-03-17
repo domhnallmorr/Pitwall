@@ -35,6 +35,7 @@ class StandingsPage(ft.Column):
 	def setup_tabs(self) -> None:
 		self.drivers_tab = ft.Tab(
 			text="Drivers",
+			icon=ft.Icons.SPORTS_MOTORSPORTS,
 			content=ft.Container(
 				expand=False,
 				alignment=ft.alignment.top_center
@@ -43,6 +44,7 @@ class StandingsPage(ft.Column):
 		
 		self.constructors_tab = ft.Tab(
 			text="Constructors",
+			icon=ft.Icons.FACTORY,
 			content=ft.Container(
 				expand=False,
 				alignment=ft.alignment.top_center

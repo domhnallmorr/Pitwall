@@ -20,6 +20,7 @@ from pw_model.team.team_model import TeamModel
 from pw_model.senior_staff.commercial_manager import CommercialManager
 from pw_model.senior_staff.technical_director import TechnicalDirector
 from pw_model.senior_staff.team_principal import TeamPrincipalModel
+from pw_model.engine.engine_supplier_model import EngineSupplierModel
 
 class Model:
 	def __init__(self, roster: str, run_directory: str, mode: str="normal", auto_save: bool=True):
@@ -43,6 +44,7 @@ class Model:
 		self.technical_directors: List[TechnicalDirector] = []
 		self.future_managers: List[Union[CommercialManager, TechnicalDirector]] = []
 		self.team_principals: List[TeamPrincipalModel] = []
+		self.engine_suppliers: List[EngineSupplierModel] = []
 
 		if roster is not None:
 			calendar_dataframe = load_roster.load_roster(self, roster)
@@ -126,6 +128,16 @@ class Model:
 
 		return track_model
 	
+	def get_engine_supplier_model(self, name: str) -> EngineSupplierModel:
+		engine_supplier_model = None
+
+		for e in self.engine_suppliers:
+			if e.name == name:
+				engine_supplier_model = e
+				break
+			
+		return engine_supplier_model
+
 	def advance(self) -> None:
 		self.inbox.reset_number_new_emails()
 		

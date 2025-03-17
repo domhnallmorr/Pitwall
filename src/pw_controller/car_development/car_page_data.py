@@ -12,6 +12,12 @@ class CarPageData:
     car_speeds: list[tuple[str, int]]  # List of (team_name, car_speed) tuples
     current_status: str
     progress: float = 0.0  # Add progress field, defaulting to 0
+    # Add engine supplier data
+    engine_supplier_name: str = ""
+    engine_supplier_deal: str = ""
+    engine_power: int = 0
+    engine_resources: int = 0
+    engine_overall_rating: int = 0
 
 def get_car_page_data(model: Model) -> CarPageData:
     """Creates CarPageData from the model"""
@@ -19,6 +25,9 @@ def get_car_page_data(model: Model) -> CarPageData:
     car_speeds.sort(key=lambda x: x[1], reverse=True)  # sort, highest speed to lowest speed
     
     car_dev_model = model.player_team_model.car_development_model
+    engine_supplier_model = model.player_team_model.engine_supplier_model
+    engine_supplier_deal = model.player_team_model.supplier_model.engine_supplier_deal
+
     # Calculate progress as percentage (time completed / total time)
     progress = 0.0
     if car_dev_model.current_status == CarDevelopmentStatusEnums.IN_PROGRESS:
@@ -30,9 +39,14 @@ def get_car_page_data(model: Model) -> CarPageData:
             total_time = 5
         time_completed = total_time - car_dev_model.time_left
         progress = (time_completed / total_time) * 100
-    
+
     return CarPageData(
         car_speeds=car_speeds,
-        current_status=car_dev_model.current_status.value,
-        progress=progress
+        current_status=car_dev_model.current_status.value,  # Changed from status to current_status
+        progress=progress,
+        engine_supplier_name=engine_supplier_model.name,
+        engine_supplier_deal=engine_supplier_deal.value,
+        engine_power=engine_supplier_model.power,
+        engine_resources=engine_supplier_model.resources,
+        engine_overall_rating=engine_supplier_model.overall_rating
     )

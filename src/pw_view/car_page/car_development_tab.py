@@ -64,7 +64,7 @@ class CarDevelopmentTab(ft.Column): # type: ignore
 			expand=False  # Changed from True to False
 		)
 
-	def setup_column(self) -> None:
+	def setup_column(self) -> ft.Column:
 		controls = [
 			self.current_status_header,
 			self.current_status_text,

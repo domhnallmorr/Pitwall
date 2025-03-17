@@ -40,6 +40,8 @@ class TeamSelectionController:
 			"technical_director_rating": team_model.technical_director_model.average_skill,
 			"commercial_manager": team_model.commercial_manager,
 			"commercial_manager_rating": team_model.commercial_manager_model.average_skill,
+			"engine_supplier": team_model.engine_supplier_model.name,
+			"engine_supplier_overall_rating": team_model.engine_supplier_model.overall_rating,
 
 			"title_sponsor": get_team_title_sponsor(team_model),
 			"title_sponsor_value": get_team_title_sponsor_value(team_model),
@@ -56,22 +58,24 @@ class TeamSelectionController:
 		self.controller.view.team_selection_screen.teams_details_container.update(data)
 
 class TeamData(TypedDict):
-    name: str
-    country: str
-    facilities: int
+	name: str
+	country: str
+	facilities: int
 
-    technical_director: str
-    technical_director_rating: int
-    commercial_manager: str
-    commercial_manager_rating: int
+	technical_director: str
+	technical_director_rating: int
+	commercial_manager: str
+	commercial_manager_rating: int
+	engine_supplier: str
+	engine_supplier_overall_rating: int
 
-    title_sponsor: str
-    title_sponsor_value: int
-    income: int
-    expenditure: int
-    balance: int
+	title_sponsor: str
+	title_sponsor_value: int
+	income: int
+	expenditure: int
+	balance: int
 
-    driver1: str
-    driver1_rating: int
-    driver2: str
-    driver2_rating: int
+	driver1: str
+	driver1_rating: int
+	driver2: str
+	driver2_rating: int
