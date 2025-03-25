@@ -20,3 +20,9 @@ LAP1_TIME_LOSS_PER_POSITION = 1_000 # in ms, how much longer lap 1 takes, per po
 MAX_SPEED = 100 # the speed scale for car and driver is between 0 and 100, 100 defined here as the max value
 
 POWER_SENSITIVITY = 2_000 # 
+
+QUALIFYING_EXCEPTIONAL_CHANCE_FACTOR = 0.05  # Base chance per qualifying point (5%)
+QUALIFYING_EXCEPTIONAL_BOOST_MAX = 400  # Maximum boost for exceptional laps (500ms = 0.5s)
+
+TYRE_GRIP_BOOST = 2_000 # in ms, means a tyre with 100 grip rating gives 2s boost to laptime
+TYRE_WEAR_INCREASE = 50 # in ms, means a tyre with 0 wear rating gives 0.05s increase to wear

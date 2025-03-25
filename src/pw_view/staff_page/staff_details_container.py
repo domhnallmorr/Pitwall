@@ -36,6 +36,7 @@ class StaffDetailsContainer:
 
 		if self.role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
 			self.speed_widget = RatingWidget("Speed:", text_width=text_width)
+			self.qualifying_widget = RatingWidget("Qualifying:", min_value=1, max_value=5, text_width=text_width)
 			self.consistency_widget = RatingWidget("Consistency:", text_width=text_width)
 
 	def setup_replace_button(self) -> None:
@@ -72,6 +73,7 @@ class StaffDetailsContainer:
 
 		if self.role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
 			controls.append(self.speed_widget)
+			controls.append(self.qualifying_widget)
 			controls.append(self.consistency_widget)
 
 		return ft.Column(controls=controls, expand=True)
@@ -100,6 +102,7 @@ class StaffDetailsContainer:
 			self.country_text.value = f"Country: {data.country}"
 			self.ability_widget.update_row(data.speed)
 			self.speed_widget.update_row(data.speed)
+			self.qualifying_widget.update_row(data.qualifying)
 			self.consistency_widget.update_row(data.consistency)
 
 		elif self.role in [StaffRoles.TECHNICAL_DIRECTOR, StaffRoles.COMMERCIAL_MANAGER]:

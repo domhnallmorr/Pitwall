@@ -77,7 +77,8 @@ def sponsor_income_update_email(sponsorship: int) -> str:
       
     return random.choice(messages)
 
-def race_financial_summary_email(transport_cost: int, damage_cost: int, title_sponsor_payment: int, engine_payment: int, profit: int) -> str:
+def race_financial_summary_email(transport_cost: int, damage_cost: int, title_sponsor_payment: int,
+                                 engine_payment: int, tyre_payment: int, profit: int, driver_race_costs: int) -> str:
     loss_or_profit = "loss"
     if profit >= 0:
           loss_or_profit = "profit"
@@ -87,7 +88,10 @@ def race_financial_summary_email(transport_cost: int, damage_cost: int, title_sp
                 f"Transport Costs: ${transport_cost :,}\n"
                 f"Crash Damage Costs: ${damage_cost :,}\n"
                 f"Engine Supplier Cost: ${engine_payment :,}\n"
+                f"Tyre Supplier Cost: ${tyre_payment :,}\n"
                 f"Title Sponsor Payment: ${title_sponsor_payment :,}\n"
+                f"Driver Race Costs: ${driver_race_costs :,}\n"
+                "---------------------------------------------\n"
                 f"Total Profit: ${profit :,}\n"
     ]
     

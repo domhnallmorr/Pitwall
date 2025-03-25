@@ -6,6 +6,7 @@ from pw_view.custom_widgets import custom_container
 from pw_view.car_page.car_comparison_graph import CarComparisonGraph
 from pw_view.car_page.car_development_tab import CarDevelopmentTab
 from pw_view.car_page.engine_tab import EngineTab
+from pw_view.car_page.tyre_tab import TyreTab
 
 if TYPE_CHECKING:
     from pw_view.view import View
@@ -37,6 +38,7 @@ class CarPage(ft.Column):
         self.car_development_tab = CarDevelopmentTab(self.view)
         self.car_comparison_graph = CarComparisonGraph(self.view)
         self.engine_tab = EngineTab(self.view)
+        self.tyre_tab = TyreTab(self.view)
         
         self.car_comparison_container = custom_container.CustomContainer(
             self.view, 
@@ -53,6 +55,15 @@ class CarPage(ft.Column):
                     icon=ft.Icons.SETTINGS,
                     content=ft.Container(
                         content=self.engine_tab,
+                        expand=False,
+                        alignment=ft.alignment.top_center
+                    )
+                ),
+                ft.Tab(
+                    text="Tyres",
+                    icon=ft.Icons.CIRCLE,
+                    content=ft.Container(
+                        content=self.tyre_tab,
                         expand=False,
                         alignment=ft.alignment.top_center
                     )
@@ -83,4 +94,5 @@ class CarPage(ft.Column):
         self.car_comparison_graph.setup_rows(data.car_speeds)
         self.car_development_tab.update_tab(data)
         self.engine_tab.update_tab(data)
+        self.tyre_tab.update_tab(data)
         self.view.main_app.update()

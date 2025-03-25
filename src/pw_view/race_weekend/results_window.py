@@ -150,6 +150,8 @@ class ResultsWindow(ft.View):
 		# Use the new formatted column instead of overwriting the original
 		standings_df = standings_df[cols]		
 
+		standings_df = standings_df.rename(columns={"Formatted Lap": "Fastest Lap"})
+
 		self.results_table = CustomDataTable(self.view, standings_df.columns.tolist())
 		self.results_table.update_table_data(standings_df.values.tolist(), flag_col_idx=1, flags=driver_flags)
 

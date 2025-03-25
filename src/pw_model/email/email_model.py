@@ -111,8 +111,9 @@ class Inbox:
 		title = f"{team} hire {manager}"
 		self.add_email(msg, title)
 
-	def new_race_finance_email(self, transport_cost: int, damage_cost: int, title_sponsor_payment: int, engine_payment: int, profit: int) -> None:
-		msg = email_generation.race_financial_summary_email(transport_cost, damage_cost, title_sponsor_payment, engine_payment, profit)
+	def new_race_finance_email(self, transport_cost: int, damage_cost: int, title_sponsor_payment: int,
+							engine_payment: int, tyre_payment: int, profit: int, driver_race_costs: int) -> None:
+		msg = email_generation.race_financial_summary_email(transport_cost, damage_cost, title_sponsor_payment, engine_payment, tyre_payment, profit, driver_race_costs)
 		title = f"Race Financial Summary"
 		self.add_email(msg, title)
 

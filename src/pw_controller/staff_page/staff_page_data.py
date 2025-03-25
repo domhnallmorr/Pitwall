@@ -18,6 +18,7 @@ class DriverData:
     country: str
     speed: int
     consistency: int
+    qualifying: int
     contract_length: int
     salary: int
     retiring: bool
@@ -53,6 +54,7 @@ def get_staff_page_data(model: Model) -> StaffPageData:
 				country=team_model.driver1_model.country,
 				speed=team_model.driver1_model.speed,
 				consistency=team_model.driver1_model.consistency,
+				qualifying=team_model.driver1_model.qualifying,
 				contract_length=team_model.driver1_model.contract.contract_length,
 				salary=team_model.driver1_model.contract.salary,
 				retiring=team_model.driver1_model.retiring,
@@ -63,6 +65,7 @@ def get_staff_page_data(model: Model) -> StaffPageData:
 				country=team_model.driver2_model.country,
 				speed=team_model.driver2_model.speed,
 				consistency=team_model.driver2_model.consistency,
+				qualifying=team_model.driver2_model.qualifying,
 				contract_length=team_model.driver2_model.contract.contract_length,
 				salary=team_model.driver2_model.contract.salary,
 				retiring=team_model.driver2_model.retiring,

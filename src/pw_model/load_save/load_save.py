@@ -5,6 +5,7 @@ import pandas as pd
 
 from pw_model import load_roster
 from pw_model.pw_model_enums import StaffRoles
+from pw_model.load_save.drivers_load_save import save_drivers, load_drivers
 from pw_model.load_save.driver_offers_load_save import save_driver_offers, load_driver_offers
 from pw_model.load_save.email_load_save import save_email, load_email
 from pw_model.load_save.finance_load_save import save_finance_model, load_finance_model
@@ -14,6 +15,7 @@ from pw_model.load_save.car_development_load_save import save_car_development, l
 from pw_model.load_save.calendar_load_save import save_calendar, load_calendar
 from pw_model.load_save.transport_costs_load_save import save_transport_costs_model, load_transport_costs
 from pw_model.load_save.team_principal_load_save import save_team_principals
+from pw_model.load_save.tyres_load_save import save_tyre_suppliers, load_tyre_suppliers
 from pw_model.load_save.staff_market_load_save import save_grid_this_year, save_grid_next_year, save_new_contracts_df, load_grid_this_year, load_grid_next_year
 
 if TYPE_CHECKING:
@@ -43,6 +45,7 @@ def save_game(model: Model, mode: str="file") -> sqlite3.Connection:
 	save_sponsor_model(model, save_file)
 	save_driver_offers(model, save_file)
 	save_team_principals(model, save_file)
+	save_tyre_suppliers(model, save_file)
 
 	if model.player_team_model is not None:
 		save_transport_costs_model(model.player_team_model.finance_model.transport_costs_model, save_file)
@@ -81,53 +84,7 @@ def save_general(model: Model, save_file: sqlite3.Connection) -> None:
 	))
 
 
-def save_drivers(model: Model, save_file: sqlite3.Connection) -> None:
 
-	cursor = save_file.cursor()
-
-	cursor.execute('''
-		CREATE TABLE IF NOT EXISTS "drivers" (
-		"Year"	TEXT,
-		"Name"	TEXT,
-		"Age"	INTEGER,
-		"Country"	TEXT,
-		"Speed"	INTEGER,
-		"Consistency"	INTEGER,
-		"ContractLength"	INTEGER,
-		"RetiringAge"	INTEGER,
-		"Retiring"	INTEGER,
-		"Retired"	INTEGER,
-		"Salary"	INTEGER
-		)'''
-				)
-	
-	cursor.execute("DELETE FROM drivers") # clear existing data
-
-	for idx, driver_type in enumerate([model.drivers, model.future_drivers]):
-		for driver in driver_type:
-			if idx == 0:
-				year = "default"
-			else:
-				year = driver[0]
-				driver = driver[1]
-
-
-			cursor.execute('''
-				INSERT INTO drivers (year, name, age, country, speed, consistency, contractlength, retiringage, retiring, retired, salary) 
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-			''', (
-				year,
-				driver.name, 
-				driver.age, 
-				driver.country, 
-				driver.speed, 
-				driver.consistency, 
-				driver.contract.contract_length, 
-				driver.retiring_age, 
-				driver.retiring,
-				driver.retired,
-				driver.contract.salary
-			))
 
 def save_drivers_stats(model: Model, save_file: sqlite3.Connection) -> None:
 
@@ -291,7 +248,10 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 	"TechnicalDirector"	TEXT,
 	"EngineSupplier"	TEXT,
 	"EngineSupplierDeal"	TEXT,
-	"EngineSupplierCosts"	INTEGER
+	"EngineSupplierCosts"	INTEGER,
+	"TyreSupplier"	TEXT,
+	"TyreSupplierDeal"	TEXT,
+	"TyreSupplierCosts"	INTEGER	
 	)'''
 				)
 	
@@ -300,10 +260,14 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 	for team in model.teams:
 
 		cursor.execute('''
-			INSERT INTO teams (year, name, country, TeamPrincipal, Driver1, Driver2, CarSpeed, NumberofStaff, Facilities, StartingBalance,
-				 CommercialManager, TechnicalDirector, EngineSupplier, EngineSupplierDeal, EngineSupplierCosts) 
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-				 ?, ?, ?, ?, ?)
+			INSERT INTO teams (year, name, country, TeamPrincipal, Driver1,
+				 Driver2, CarSpeed, NumberofStaff, Facilities, StartingBalance,
+				 CommercialManager, TechnicalDirector, EngineSupplier, EngineSupplierDeal, EngineSupplierCosts,
+				 TyreSupplier, TyreSupplierDeal, TyreSupplierCosts) 
+			VALUES (?, ?, ?, ?, ?,
+				 ?, ?, ?, ?, ?,
+				 ?, ?, ?, ?, ?,
+				 ?, ?, ?)
 		''', (
 			"default",
 			team.name, 
@@ -319,7 +283,10 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 			team.technical_director,
 			team.supplier_model.engine_supplier,
 			team.supplier_model.engine_supplier_deal.value,
-			team.supplier_model.engine_supplier_cost
+			team.supplier_model.engine_supplier_cost,
+			team.supplier_model.tyre_supplier,
+			team.supplier_model.tyre_supplier_deal.value,
+			team.supplier_model.tyre_supplier_cost
 		))
 
 def save_teams_stats(model: Model, save_file: sqlite3.Connection) -> None:
@@ -394,6 +361,7 @@ def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mod
 	load_email(conn, model)
 	load_calendar(conn, model)
 	load_driver_offers(conn, model)
+	load_tyre_suppliers(model, conn)
 
 	if model.player_team_model is not None:
 		load_transport_costs(conn, model.player_team_model.finance_model.transport_costs_model)
@@ -422,10 +390,6 @@ def load_general(conn: sqlite3.Connection, model: Model) -> None:
 	model.player_team = data[player_team_idx]
 	model.season.calendar.next_race_idx = data[next_race_idx]
 
-def load_drivers(conn: sqlite3.Connection, model: Model) -> None:
-	drivers, future_drivers = load_roster.load_drivers(model, conn)
-	model.drivers = drivers
-	model.future_drivers = future_drivers
 
 def load_drivers_stats(conn: sqlite3.Connection, model: Model) -> None:
 	stats_df = pd.read_sql('SELECT * FROM drivers_stats', conn)

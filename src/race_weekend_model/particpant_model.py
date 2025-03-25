@@ -27,8 +27,10 @@ class ParticpantModel:
 		self.track_model = track_model
 		self.position = starting_position
 
+		self.tyre_compound = self.driver.team_model.tyre_supplier_model.compound # Changed from compound to tyre_compound
 		self.laptime_manager = LapTimeManager(self)
 		self.pit_strategy = PitStrategy(self.track_model.number_of_laps)
+		
 		self.calculate_if_retires()
 
 	def __repr__(self) -> str:
@@ -122,7 +124,7 @@ class ParticpantModel:
 
 	def update_fuel_and_tyre_wear(self, new_tyres: bool=False) -> None:
 		self.car_state.update_fuel(self.track_model)
-		self.car_state.update_tyre_wear(self.track_model, new_tyres)
+		self.car_state.update_tyre_wear(self.track_model, self.tyre_compound, new_tyres)
 		self.tyre_wear_by_lap.append(self.car_state.tyre_wear)
 
 	def update_pitstop_tyres_fuel(self) -> None:

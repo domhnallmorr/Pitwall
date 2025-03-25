@@ -54,7 +54,8 @@ def test_update_page(finance_page):
         "title_sponsor_value": 20_000_000,
         "other_sponsorship": 12_000_050,
         "car_development_costs": 100_000,
-        "engine_supplier_cost": 124_000
+        "engine_supplier_cost": 124_000,
+        "tyre_supplier_cost": 424_000
     }
 
     finance_page.update_page(mock_data)
@@ -68,7 +69,7 @@ def test_update_page(finance_page):
     assert finance_page.sponsor_income_text.value == "Other Sponsorship: $12,000,050"
     assert finance_page.car_development_costs_text.value == "Car Development Costs: $100,000 (To Date)"
     assert finance_page.engine_supplier_cost_text.value == "Engine Supplier: $124,000"
-    # Simulate chart update (no direct visual assertions, but ensure no errors)
+    assert finance_page.tyre_supplier_cost_text.value == "Tyre Supplier: $424,000"        # Simulate chart update (no direct visual assertions, but ensure no errors)
     finance_page.update_history_chart(mock_data)
 
 def test_balance_formatter(finance_page):

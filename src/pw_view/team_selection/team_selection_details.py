@@ -23,6 +23,7 @@ class TeamSelectionDetailsContainer:
 		self.facilties_rating_widget = RatingWidget("Facilities:", text_width=text_width)
 
 		self.engine_supplier_rating_widget = RatingWidget("Engine Supplier: Some Company", text_width=text_width)
+		self.tyre_supplier_rating_widget = RatingWidget("Tyre Supplier: Some Company", text_width=text_width)
 
 		self.technical_director_rating_widget = RatingWidget("Technical Director: Some Lad", text_width=text_width)
 		self.commercial_manager_rating_widget = RatingWidget("Commercial Manager: Some Lad", text_width=text_width)
@@ -47,6 +48,7 @@ class TeamSelectionDetailsContainer:
 
 				ft.Text("Suppliers", weight=ft.FontWeight.BOLD, size=self.view.SUBHEADER_FONT_SIZE),
 				self.engine_supplier_rating_widget,
+				self.tyre_supplier_rating_widget,
 
 				ft.Text("Senior Staff", weight=ft.FontWeight.BOLD, size=self.view.SUBHEADER_FONT_SIZE),
 				self.technical_director_rating_widget,
@@ -74,6 +76,8 @@ class TeamSelectionDetailsContainer:
 
 		self.engine_supplier_rating_widget.update_text(f"Engine Supplier: {data["engine_supplier"]}")
 		self.engine_supplier_rating_widget.update_row(data["engine_supplier_overall_rating"])
+
+		self.tyre_supplier_rating_widget.update_text(f"Tyre Supplier: {data["tyre_supplier"]}")
 
 		self.technical_director_rating_widget.update_text(f"Technical Director: {data["technical_director"]}")
 		self.technical_director_rating_widget.update_row(data["technical_director_rating"])

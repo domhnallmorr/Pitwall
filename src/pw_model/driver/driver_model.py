@@ -28,6 +28,7 @@ class DriverModel:
 			  country : str,
 			  speed : int,
 			  consistency : int,
+			  qualifying : int,
 			  contract_length : int,
 			  salary: int):
 		
@@ -37,6 +38,7 @@ class DriverModel:
 		self.country = country
 		self.speed = speed
 		self.consistency = consistency
+		self.qualifying = qualifying
 
 		self.retiring = False
 		self.retired = False

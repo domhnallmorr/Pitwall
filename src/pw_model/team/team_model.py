@@ -14,6 +14,7 @@ from pw_model.pw_model_enums import StaffRoles
 from pw_model.team.suppliers_model import SupplierModel
 from pw_model.car_development.car_development_model import CarDevelopmentModel
 from pw_model.engine.engine_supplier_model import EngineSupplierModel
+from pw_model.tyre.tyre_supplier_model import TyreSupplierModel
 
 if TYPE_CHECKING:
 	from pw_model.driver import driver_model
@@ -36,7 +37,12 @@ class TeamModel:
 			  technical_director : str,
 			  engine_supplier : str,
 			  engine_supplier_deal : str,
-			  engine_supplier_cost : int):
+			  engine_supplier_cost : int,
+			  tyre_supplier : str,
+			  tyre_supplier_deal : str,
+			  tyre_supplier_cost : int,
+			  finishing_position : int = None # last season finishing position
+			  ):
 		
 		self.model = model
 		self.name = name
@@ -50,11 +56,12 @@ class TeamModel:
 		self.number_of_staff = number_of_staff
 		self.facilities_model = FacilityModel(self, facilities)
 				
-		self.finance_model = finance_model.FinanceModel(model, self, starting_balance, other_sponsorship, title_sponsor, title_sponsor_value)
+		self.finance_model = finance_model.FinanceModel(model, self, starting_balance, other_sponsorship, title_sponsor, title_sponsor_value, finishing_position)
 
 		self.commercial_manager = commercial_manager
 		self.technical_director = technical_director
-		self.supplier_model = SupplierModel(self.model, engine_supplier, engine_supplier_deal, engine_supplier_cost)
+		self.supplier_model = SupplierModel(self.model, engine_supplier, engine_supplier_deal, engine_supplier_cost,
+									  tyre_supplier, tyre_supplier_deal, tyre_supplier_cost)
 
 		self.setup_season_stats()
 
@@ -102,6 +109,10 @@ class TeamModel:
 	@property
 	def engine_supplier_model(self) -> EngineSupplierModel:
 		return self.model.get_engine_supplier_model(self.supplier_model.engine_supplier)
+
+	@property
+	def tyre_supplier_model(self) -> TyreSupplierModel:
+		return self.model.get_tyre_supplier_model(self.supplier_model.tyre_supplier)
 
 	#TODO make a property in driver model to calculate average skill
 	@property

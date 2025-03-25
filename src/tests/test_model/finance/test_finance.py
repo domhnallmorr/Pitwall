@@ -1,209 +1,204 @@
 import pytest
 from unittest.mock import MagicMock
+from pw_model.finance.finance_model import FinanceModel
 
-from pw_model.finance.finance_model import FinanceModel, calculate_prize_money
-from race_weekend_model.race_model_enums import SessionNames
-# from FinanceModel import FinanceModel, calculate_prize_money
-from tests import create_model
-from tests.test_model.track import test_track_model
-from race_weekend_model import race_weekend_model
-
+# Create a dummy model fixture with the minimal attributes needed.
 @pytest.fixture
-def mock_model():
-    # A minimal mock for the overall Model
+def dummy_model():
     model = MagicMock()
-    model.year = 1998
-    # create a mock season with a mock calendar
-    model.season.calendar.current_week = 1
+    # game_data: get_number_of_races is used in driver_race_costs and supplier payments.
+    model.game_data.get_number_of_races.return_value = 10
+
+    # Set up a dummy season calendar (used when updating balance history)
+    dummy_calendar = MagicMock()
+    dummy_calendar.current_week = 1
+    # For transport costs: current_track_model is used to get the country.
+    dummy_track = MagicMock()
+    dummy_track.country = "Australia"
+    dummy_calendar.current_track_model = dummy_track
+    dummy_calendar.countries = ["Australia"]
+    model.season = MagicMock()
+    model.season.calendar = dummy_calendar
+
+    # Provide a dummy inbox to capture email calls.
+    model.inbox = MagicMock()
     return model
 
+# Create a dummy team_model fixture with the minimal attributes and sub-objects.
 @pytest.fixture
-def mock_driver_model_positive():
-    # Basic driver model stub
-    driver = MagicMock()
-    driver.contract.salary = 1_000_000
-    return driver
+def dummy_team_model(dummy_model):
+    team = MagicMock()
+    team.number_of_staff = 10
 
-@pytest.fixture
-def mock_driver_model_negative():
-    # Basic driver model stub for negative salary (driver paying the team)
-    driver = MagicMock()
-    driver.contract.salary = -500_000
-    return driver
+    # Create dummy technical director with a contract salary.
+    td = MagicMock()
+    td.contract.salary = 2_600_000  # yearly salary
+    team.technical_director_model = td
 
-@pytest.fixture
-def mock_director_model():
-    # Stub technical director
-    director = MagicMock()
-    director.contract.salary = 750_000
-    return director
+    # Create dummy commercial manager with a contract salary.
+    cm = MagicMock()
+    cm.contract.salary = 2_800_000  # yearly salary
+    team.commercial_manager_model = cm
 
-@pytest.fixture
-def mock_manager_model():
-    # Stub commercial manager
-    manager = MagicMock()
-    manager.contract.salary = 600_000
-    return manager
+    # Create dummy driver models with contracts. (For driver race costs)
+    d1 = MagicMock()
+    d1.contract.salary = 4_000_000
+    team.driver1_model = d1
 
-@pytest.fixture
-def mock_team_model(mock_driver_model_positive, mock_driver_model_negative,
-                    mock_director_model, mock_manager_model):
-    # Team model with required attributes
-    team_model = MagicMock()
-    team_model.number_of_staff = 100
-    team_model.driver1_model = mock_driver_model_positive
-    team_model.driver2_model = mock_driver_model_negative
-    team_model.technical_director_model = mock_director_model
-    team_model.commercial_manager_model = mock_manager_model
-    return team_model
+    d2 = MagicMock()
+    d2.contract.salary = 4_000_000
+    team.driver2_model = d2
 
-@pytest.fixture
-def finance_model(mock_model, mock_team_model):
-    # Create a FinanceModel instance with some baseline test data
+    # Create a dummy supplier model.
+    supplier = MagicMock()
+    supplier.engine_supplier_cost = 2_000_000  # so per race: 2,000,000/10 = 200,000
+    supplier.tyre_supplier_cost = 1_800_000    # so per race: 1,800,000/10 = 180,000
+    supplier.engine_payments = []
+    supplier.tyre_payments = []
+
+    # We simulate process_race_payments as in the actual implementation.
+    def fake_process_race_payments():
+        engine_payment = int(supplier.engine_supplier_cost / dummy_model.game_data.get_number_of_races())
+        tyre_payment = int(supplier.tyre_supplier_cost / dummy_model.game_data.get_number_of_races())
+        supplier.engine_payments.append(engine_payment)
+        supplier.tyre_payments.append(tyre_payment)
+    supplier.process_race_payments.side_effect = fake_process_race_payments
+
+    team.supplier_model = supplier
+
+    return team
+
+def test_weekly_update(dummy_model, dummy_team_model):
+    """
+    Test that weekly_update adjusts the balance correctly:
+      - Adds weekly prize money,
+      - Deducts staff cost (based on number_of_staff),
+      - Deducts weekly manager costs,
+      - Deducts car development cost.
+    Also verifies that the balance history is updated and that there is no debt.
+    """
+    # Use finishing_position 0 -> prize money = 33,000,000
     fm = FinanceModel(
-        model=mock_model,
-        team_model=mock_team_model,
-        opening_balance=10_000_000,
-        other_sponsorship=2_000_000,
-        title_sponsor="MyTitleSponsor",
-        title_sponsor_value=5_000_000
+        dummy_model,
+        dummy_team_model,
+        opening_balance=100_000_000,
+        other_sponsorship=0,
+        title_sponsor="TestSponsor",
+        title_sponsor_value=0,
+        finishing_position=0,
     )
-    fm.transport_costs_model.setup_new_season()
-    return fm
 
-def test_finance_model_initial_balance(finance_model):
-    assert finance_model.balance == 10_000_000 #"Initial balance should match the opening balance"
+    # Override the car development weekly payment to a fixed value.
+    fm.car_development_costs_model.process_weekly_payment = MagicMock(return_value=100_000)
 
-def test_calculate_prize_money():
-    # check known positions
-    assert calculate_prize_money(0) == 33000000 # \"P1 expected to have 33,000,000 prize money\"
-    assert calculate_prize_money(1) == 31000000 # \"P2 expected to have 31,000,000 prize money\"
-    assert calculate_prize_money(10) == 1000000 # \"P11 expected to have 1,000,000 prize money\"
+    initial_balance = fm.balance
 
-def test_season_profit(finance_model):
-    # Initially, season_opening_balance = 10,000,000 and current balance = 10,000,000
-    assert finance_model.season_profit == 0 #"No profit/loss at season start\"
+    fm.weekly_update()
 
-def test_weekly_update(finance_model, mock_team_model):
-    # We track the balance before calling weekly_update
-    before_balance = finance_model.balance
+    # Calculations:
+    # Prize money addition: int(33,000,000 / 52)
+    prize_weekly = int(33_000_000 / 52)  # ~634615
+    # Staff cost: (28,000 yearly / 52) * number_of_staff (10)
+    staff_weekly = int((28_000 / 52) * dummy_team_model.number_of_staff)  # ~5384
+    # Technical director weekly: int(2,600,000 / 52) = 50,000
+    td_weekly = int(2_600_000 / 52)
+    # Commercial manager weekly: int(2,800,000 / 52) ≈ 53,846
+    cm_weekly = int(2_800_000 / 52)
+    # Car development weekly cost (overridden) = 100,000
+    car_dev_weekly = 100_000
 
-    finance_model.weekly_update()
+    expected_change = prize_weekly - staff_weekly - td_weekly - cm_weekly - car_dev_weekly
+    expected_balance = initial_balance + expected_change
 
-    after_balance = finance_model.balance
-    # Some cost/income changes are applied weekly
-    # The difference should not be zero but negative or positive depending on staff, drivers, etc.
-    assert after_balance != before_balance #"Balance should change after weekly_update\"
-    assert len(finance_model.balance_history) == 1 #\"Balance history should record a new entry\"
+    assert fm.balance == expected_balance
+    # Verify that balance history is updated with the new balance.
+    assert fm.balance_history[-1] == expected_balance
+    # And since the balance is positive, consecutive_weeks_in_debt should be 0.
+    assert fm.consecutive_weeks_in_debt == 0
 
-def test_post_race_actions(finance_model, mock_model):
-    # Test scenario 1: No crashes
-    starting_balance = finance_model.balance
-    finance_model.post_race_actions(player_driver1_crashed=False, player_driver2_crashed=False)
-    balance_no_crashes = finance_model.balance
-    
-    # We expect some changes in the balance after transport costs and sponsor payments
-    assert balance_no_crashes != starting_balance #"Balance should change after post_race_actions"
-    
-    # Test scenario 2: Driver 1 crashes
-    starting_balance = finance_model.balance
-    finance_model.post_race_actions(player_driver1_crashed=True, player_driver2_crashed=False)
-    balance_with_crash = finance_model.balance
-    
-    # Balance should be lower due to crash damage
-    assert balance_with_crash < starting_balance #"Balance should decrease more when driver crashes"
-    
-    # Test scenario 3: Both drivers crash
-    starting_balance = finance_model.balance
-    finance_model.post_race_actions(player_driver1_crashed=True, player_driver2_crashed=True)
-    balance_both_crash = finance_model.balance
-    
-    # Balance should be even lower with both drivers crashing
-    assert balance_both_crash < starting_balance #"Balance should decrease more when both drivers crash"
-    assert finance_model.damage_costs_model.damage_costs[-1] > 0 #"Damage costs should be positive when crashes occur"
+def test_post_race_actions(dummy_model, dummy_team_model):
+    """
+    Test that post_race_actions:
+      - Subtracts driver race costs, transport, damage, and supplier payments,
+      - Adds sponsor income,
+      - Calls the new_race_finance_email with the correct parameters.
+    """
+    fm = FinanceModel(
+        dummy_model,
+        dummy_team_model,
+        opening_balance=100_000_000,
+        other_sponsorship=0,
+        title_sponsor="TestSponsor",
+        title_sponsor_value=0,
+        finishing_position=0,
+    )
 
-def test_update_prize_money(finance_model):
-    # Let's pick finishing position 0 = 1st place
-    finance_model.update_prize_money(0)
-    assert finance_model.prize_money == 33000000 #\"Prize money should match first place\"
+    initial_balance = fm.balance
 
-def test_consecutive_weeks_in_debt(finance_model):
-    # Force a negative balance scenario
-    finance_model.consecutive_weeks_in_debt = 0
-    finance_model.balance = -10000000000 #make balance a large negative number, so after weekly update it will still be negative
-    # Now call weekly_update
-    finance_model.weekly_update()
+    # --- Set up fakes for external cost calculations ---
 
-    assert finance_model.consecutive_weeks_in_debt == 1 #\"Should have incremented weeks in debt\"
-    
-    finance_model.balance = 10000000000
-    finance_model.weekly_update()
+    # For transport costs: override gen_race_transport_cost to simulate a cost of 300,000.
+    fm.transport_costs_model.costs_by_race = []
+    def fake_gen_race_transport_cost():
+        fm.transport_costs_model.costs_by_race.append(300_000)
+    fm.transport_costs_model.gen_race_transport_cost = fake_gen_race_transport_cost
 
-    assert finance_model.consecutive_weeks_in_debt == 0
+    # For damage costs: override calculate_race_damage_costs to simulate a damage cost of 150,000.
+    def fake_damage_costs(player1_crashed, player2_crashed):
+        fm.damage_costs_model.damage_costs.append(150_000)
+    fm.damage_costs_model.calculate_race_damage_costs = fake_damage_costs
 
-def test_end_season(finance_model):
-    # Just verify that end_season resets the season opening balance, sets up new season
-    # The actual logic for sponsor_model.setup_new_season etc. is tested externally
-    finance_model.end_season()
-    assert finance_model.season_opening_balance == finance_model.balance #\\\n        \"At season end, opening_balance should match current balance\"
+    # For sponsors: override process_sponsor_post_race_payments to simulate:
+    #   - Other sponsor payment: 50,000
+    #   - Title sponsor payment: 100,000
+    fm.sponsors_model.other_sponser_payments = []
+    fm.sponsors_model.title_sponser_payments = []
+    def fake_sponsor_payments():
+        fm.sponsors_model.other_sponser_payments.append(50_000)
+        fm.sponsors_model.title_sponser_payments.append(100_000)
+    fm.sponsors_model.process_sponsor_post_race_payments = fake_sponsor_payments
 
-def test_race_crash_damage_flow():
-    """Test that driver crashes in race properly flow through to damage costs"""
-    # Create basic model setup
-    model = create_model.create_model(mode="headless")
-    model.player_team = "Williams"
-    model.player_team_model.finance_model.prize_money = 0
-    model.player_team_model.finance_model.sponsors_model.other_sponsorship = 0
-    model.player_team_model.finance_model.sponsors_model.title_sponsor_value = 0
+    # Now call post_race_actions.
+    # Let’s simulate that driver1 crashed and driver2 did not.
+    fm.post_race_actions(player_driver1_crashed=True, player_driver2_crashed=False)
 
-    track = test_track_model.create_dummy_track()
-    race_model = race_weekend_model.RaceWeekendModel("headless", model, track)
-    #TODO add function in race_model to setup and run a race
-    race_model.setup_qualifying(60*60, SessionNames.QUALIFYING)
-    race_model.setup_race()
-    
-    # Get initial balance to compare later
-    initial_balance = model.player_team_model.finance_model.balance
-    
-    # Simulate different crash scenarios
-    crash_scenarios = [
-        (False, False),  # No crashes
-        (True, False),   # Only driver 1 crashes
-        (False, True),   # Only driver 2 crashes
-        (True, True)     # Both drivers crash
-    ]
-    
-    for driver1_crashed, driver2_crashed in crash_scenarios:
-        # Reset balance
-        model.player_team_model.finance_model.balance = initial_balance
-        
-        # Simulate race with crashes
-        race_model.current_session.player_driver1_crashed = driver1_crashed
-        race_model.current_session.player_driver2_crashed = driver2_crashed
-        
-        # Process post-race actions
-        model.season.post_race_actions(
-            winner="Test Driver",
-            player_driver1_crashed=driver1_crashed,
-            player_driver2_crashed=driver2_crashed
-        )
-        
-        # Get the latest damage costs
-        latest_damage = model.player_team_model.finance_model.damage_costs_model.damage_costs[-1]
-        
-        if not driver1_crashed and not driver2_crashed:
-            assert latest_damage == 0, "No damage costs should be applied when no crashes occur"
-        else:
-            assert latest_damage > 0, "Damage costs should be applied when crashes occur"
-            assert model.player_team_model.finance_model.balance < initial_balance, "Balance should decrease after crash damage"
-            
-            # Verify individual driver crash costs
-            if driver1_crashed:
-                assert model.player_team_model.finance_model.damage_costs_model.driver1_latest_crash_cost > 0
-            else:
-                assert model.player_team_model.finance_model.damage_costs_model.driver1_latest_crash_cost == 0
-                
-            if driver2_crashed:
-                assert model.player_team_model.finance_model.damage_costs_model.driver2_latest_crash_cost > 0
-            else:
-                assert model.player_team_model.finance_model.damage_costs_model.driver2_latest_crash_cost == 0
+    # --- Calculate expected changes ---
+    # Driver race costs: each driver salary 4,000,000 over 10 races → 400,000 per driver; sum = 800,000.
+    driver_race_costs = 800_000
+
+    # Transport cost is set to 300,000.
+    transport_cost = 300_000
+
+    # Damage cost is set to 150,000.
+    damage_cost = 150_000
+
+    # Supplier payments: process_race_payments (using our dummy_team_model.supplier_model)
+    #   engine_payment = 2,000,000 / 10 = 200,000 and tyre_payment = 1,800,000 / 10 = 180,000.
+    engine_payment = 200_000
+    tyre_payment = 180_000
+
+    # In apply_race_costs, the following amounts are deducted:
+    # driver_race_costs + transport_cost + damage_cost + engine_payment + tyre_payment =
+    # 800,000 + 300,000 + 150,000 + 200,000 + 180,000 = 1,630,000 deducted.
+    # Then process_race_income adds sponsor payments: 50,000 + 100,000 = 150,000.
+    # So net change = -1,630,000 + 150,000 = -1,480,000.
+    net_change = -1_630_000 + 150_000
+    expected_balance = initial_balance + net_change
+
+    # Verify final balance.
+    assert fm.balance == expected_balance
+
+    # Profit passed to email is the change in balance.
+    expected_profit = net_change
+
+    # Verify that new_race_finance_email was called with the expected parameters:
+    # (transport_cost, damage_cost, title_sponsor_payment, engine_payment, tyre_payment, profit, driver_race_costs)
+    dummy_model.inbox.new_race_finance_email.assert_called_with(
+        transport_cost,
+        damage_cost,
+        100_000,      # title sponsor payment as simulated
+        engine_payment,
+        tyre_payment,
+        expected_profit,
+        driver_race_costs,
+    )

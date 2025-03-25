@@ -15,6 +15,7 @@ class TestLapTimeManager:
         participant.driver = Mock()
         participant.driver.speed = 80
         participant.driver.consistency = 75
+        participant.driver.qualifying = 2
         
         # Set up car model
         participant.car_model = Mock()
@@ -36,6 +37,12 @@ class TestLapTimeManager:
         participant.team_model.engine_supplier_model = Mock()
         participant.team_model.engine_supplier_model.power = 60  # Engine power rating 60/100
         
+        # setup tyre supplier
+        participant.team_model.tyre_supplier_model = Mock()
+        participant.tyre_compound = Mock()
+        participant.tyre_compound.wear = 50
+        participant.tyre_compound.grip = 60
+
         # Set up status
         participant.status = ParticipantStatus.RUNNING
         participant.pitstop_times = []
@@ -74,8 +81,11 @@ class TestLapTimeManager:
         track_power_sensitivity = mock_participant.track_model.power  # 7
         power_effect = (2000 * track_power_sensitivity / 10) * (50 - engine_power) / 100
         # (2000 * 7 / 10) * (50 - 60) / 100 = 1400 * (-10) / 100 = -140
+
+         # Calculate tyre grip effect
+        tyre_grip_effect = int(2000 * (100 - mock_participant.tyre_compound.grip) / 100)  # (100 - 60) * 20 = 800
         
-        expected_base_laptime = base + driver_effect + car_effect + power_effect
+        expected_base_laptime = base + driver_effect + car_effect + power_effect + tyre_grip_effect
         
         assert abs(laptime_manager.base_laptime - expected_base_laptime) < 10  # Allow for small rounding differences
     

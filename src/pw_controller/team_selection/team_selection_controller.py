@@ -42,6 +42,7 @@ class TeamSelectionController:
 			"commercial_manager_rating": team_model.commercial_manager_model.average_skill,
 			"engine_supplier": team_model.engine_supplier_model.name,
 			"engine_supplier_overall_rating": team_model.engine_supplier_model.overall_rating,
+			"tyre_supplier": team_model.supplier_model.tyre_supplier,
 
 			"title_sponsor": get_team_title_sponsor(team_model),
 			"title_sponsor_value": get_team_title_sponsor_value(team_model),
@@ -68,6 +69,7 @@ class TeamData(TypedDict):
 	commercial_manager_rating: int
 	engine_supplier: str
 	engine_supplier_overall_rating: int
+	tyre_supplier: str
 
 	title_sponsor: str
 	title_sponsor_value: int

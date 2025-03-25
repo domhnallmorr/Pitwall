@@ -21,14 +21,14 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 ### Finance
 
-- [ ] Add cost for engines (depened on works, supplier, customer deal)
+- [x] Add cost for engines (depened on works, supplier, customer deal)
 - [ ] Add cost for tyres (depened on works, supplier, customer deal)
 - [ ] Testing costs
 
 ### Car
 
-- [ ] Add engine model, engine suppliers to be static, performance changes year by year
-- [ ] Add tyre model, tyre suppliers to be static, performance changes year by year
+- [x] Add engine model, engine suppliers to be static
+- [x] Add tyre model, tyre suppliers to be static
 
 ### Sponsors
 
@@ -40,7 +40,7 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 ### Drivers
 
-- [ ] Add qualifying attribute
+- [x] Add qualifying attribute
 
 ### Contract Negotiations
 
@@ -57,8 +57,8 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 ## On Track
 
-- [ ] Tracks should have a engine power attribute
-- [ ] Implement tyre grip/wear from tyre model
+- [x] Tracks should have a engine power attribute
+- [x] Implement tyre grip/wear from tyre model
 - [ ] Add commentary to Grand Prix model. Commentary to be displayed in Results window
 - [ ] Add lap 1, turn 1 incidents, limited to spins for now
 

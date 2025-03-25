@@ -16,6 +16,9 @@ from race_weekend_model.on_track_constants import (
 	LAP_TIME_VARIATION_BASE,
 	LAP_TIME_VARIATION,
 	POWER_SENSITIVITY,
+	QUALIFYING_EXCEPTIONAL_CHANCE_FACTOR,
+	QUALIFYING_EXCEPTIONAL_BOOST_MAX,
+	TYRE_GRIP_BOOST,
 )
 
 if TYPE_CHECKING:
@@ -66,6 +69,14 @@ class LapTimeManager:
 		'''
 		self.base_laptime += (MAX_SPEED - self.car_model.speed) * CAR_SPEED_FACTOR
 
+		# add tyre grip effect
+		'''
+		tyre with 0 grip adds 2s to laptime
+		tyre with 100 grip adds 0s to laptime
+		'''
+		tyre_grip_effect = int(TYRE_GRIP_BOOST * (100 - self.participant.tyre_compound.grip) / 100)
+		self.base_laptime += tyre_grip_effect
+
 	def calculate_engine_power_effect(self) -> int:
 		"""Calculate time loss/gain due to engine power and track sensitivity"""
 		# Get engine power (0-100 scale) from engine supplier
@@ -107,8 +118,16 @@ class LapTimeManager:
 	def calculate_qualfying_laptime(self) -> None:
 		'''
 		Basic method for calculating a laptime in qualfying
+
+		Calculate a laptime in qualifying that takes into account
+		the driver's qualifying attribute (1-5)
 		'''
+		# Get qualifying-specific randomness that accounts for the driver's qualifying skill
+		random_time_loss = self.randomiser.random_qualifying_laptime_loss()
+	
 		self.calculate_laptime(0) # zero for no dirty air effect
+		self.laptime += random_time_loss
+
 		self.complete_lap()
 
 	def calculate_first_lap_laptime(self, idx: int) -> None:
@@ -140,3 +159,39 @@ class LapManagerRandomiser:
 	
 	def random_laptime_loss(self) -> float:
 		return random.uniform(0, self.participant.laptime_manager.laptime_variation)
+
+	def random_qualifying_laptime_loss(self) -> float:
+		'''
+		Calculate random time loss for qualifying, taking into account
+		the driver's qualifying attribute (1-5)
+		
+		Higher qualifying attribute leads to:
+		1. Less random time loss
+		2. Chance for exceptional laps that exceed normal performance
+		'''
+		# Get the driver's qualifying attribute
+		qualifying_skill = self.participant.driver.qualifying
+		
+		# Calculate the qualifying performance factor (0.2 to 1.0)
+		qualifying_factor = qualifying_skill / 5.0
+		
+		# Get the base random variation
+		base_random_variation = self.random_laptime_loss()
+		
+		# Apply qualifying skill to reduce randomness
+		# A qualifying skill of 5 reduces random time loss by up to 80%
+		# A qualifying skill of 1 reduces random time loss by only up to 20% 
+		random_reduction = base_random_variation * qualifying_factor
+		adjusted_random_variation = base_random_variation - random_reduction
+		
+		# Chance for exceptional qualifying lap
+		# Higher qualifying attribute increases chance (5% to 25%)
+		exceptional_chance = qualifying_factor * QUALIFYING_EXCEPTIONAL_CHANCE_FACTOR
+		
+		if random.random() < exceptional_chance:
+			# Exceptional lap - potential to exceed normal performance
+			# Up to quarter a second boost (400ms)
+			exceptional_boost = random.uniform(0, QUALIFYING_EXCEPTIONAL_BOOST_MAX)
+			adjusted_random_variation -= exceptional_boost
+			
+		return adjusted_random_variation

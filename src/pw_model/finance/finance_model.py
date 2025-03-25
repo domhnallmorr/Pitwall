@@ -37,7 +37,8 @@ def calculate_prize_money(finishing_position: int) -> int:
 
 class FinanceModel:
 	def __init__(self, model: Model, team_model: TeamModel, opening_balance: int, other_sponsorship: int,
-			  title_sponsor: str, title_sponsor_value: int):
+			  title_sponsor: str, title_sponsor_value: int,
+			  finishing_position: int):
 		
 		self.model = model
 		self.team_model = team_model
@@ -45,7 +46,7 @@ class FinanceModel:
 
 		self.staff_yearly_cost = 28_000
 
-		self.prize_money = 13_000_000
+		self.prize_money = calculate_prize_money(finishing_position)
 
 		# self.car_cost = 7_000_000 # generic value to cover car production and development costs
 
@@ -98,8 +99,18 @@ class FinanceModel:
 		return int(self.total_staff_costs_per_year + self.drivers_salary + self.team_model.technical_director_model.contract.salary
 			 + self.team_model.commercial_manager_model.contract.salary
 			 + self.transport_costs_model.estimated_season_costs + self.damage_costs_model.damage_costs_this_season
-			 + self.car_development_costs_model.costs_this_season + self.team_model.supplier_model.engine_supplier_cost)
+			 + self.car_development_costs_model.costs_this_season + self.team_model.supplier_model.engine_supplier_cost
+			 + self.team_model.supplier_model.tyre_supplier_cost)
 	
+	@property
+	def driver_race_costs(self) -> int:
+		driver_race_costs = 0
+
+		for driver_model in [self.team_model.driver1_model, self.team_model.driver2_model]:
+			driver_race_costs += (driver_model.contract.salary) / self.model.game_data.get_number_of_races()
+		
+		return int(driver_race_costs)
+
 	def weekly_update(self) -> None:
 		
 		# add prize money
@@ -109,8 +120,8 @@ class FinanceModel:
 		self.balance -= int((self.staff_yearly_cost / 52) * self.team_model.number_of_staff)
 
 		# Drivers cost
-		self.balance -= int(self.team_model.driver1_model.contract.salary / 52)
-		self.balance -= int(self.team_model.driver2_model.contract.salary / 52)
+		# self.balance -= int(self.team_model.driver1_model.contract.salary / 52)
+		# self.balance -= int(self.team_model.driver2_model.contract.salary / 52)
 
 		# manager costs
 		self.balance -= int(self.team_model.technical_director_model.contract.salary / 52)
@@ -130,12 +141,16 @@ class FinanceModel:
 		start_balance = self.balance
 		transport_cost, damage_cost = self.apply_race_costs(player_driver1_crashed, player_driver2_crashed)
 		title_sponsor_payment = self.process_race_income()
+
+		# payments below are applied to balance in apply_race_costs
 		engine_payment = self.team_model.supplier_model.engine_payments[-1]
+		tyre_payment = self.team_model.supplier_model.tyre_payments[-1]
 
 		profit = self.balance - start_balance
 		# self.race_profits.append(profit)
 
-		self.model.inbox.new_race_finance_email(transport_cost, damage_cost, title_sponsor_payment, engine_payment, profit)
+		self.model.inbox.new_race_finance_email(transport_cost, damage_cost, title_sponsor_payment, engine_payment,
+										  tyre_payment, profit, self.driver_race_costs)
 		
 	def process_race_income(self) -> int:
 		self.sponsors_model.process_sponsor_post_race_payments()
@@ -149,6 +164,9 @@ class FinanceModel:
 		return title_sponsor_payment
 	
 	def apply_race_costs(self, player_driver1_crashed: bool, player_driver2_crashed: bool) -> tuple[int, int]:
+		# Driver Costs
+		self.balance -= self.driver_race_costs
+
 		# Transport
 		self.transport_costs_model.gen_race_transport_cost()
 		transport_cost = int(self.transport_costs_model.costs_by_race[-1])
@@ -163,6 +181,9 @@ class FinanceModel:
 		self.team_model.supplier_model.process_race_payments()
 		engine_cost = int(self.team_model.supplier_model.engine_payments[-1])
 		self.balance -= engine_cost
+
+		tyre_cost = int(self.team_model.supplier_model.tyre_payments[-1])
+		self.balance -= tyre_cost
 
 		return transport_cost, damage_cost
 
