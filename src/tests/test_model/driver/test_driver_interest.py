@@ -1,12 +1,17 @@
-from pw_model.driver_negotiation.driver_interest import determine_driver_interest, DriverInterest
+from pw_model.driver_negotiation.driver_interest import determine_driver_interest, DriverInterest, DriverRejectionReason
 from tests import create_model
 
-def test_driver_interest_return_value():
+def test_driver_reject_poor_team():
     """Test that determine_driver_interest returns valid enum values"""
     model = create_model.create_model(mode="headless")
-    result = determine_driver_interest(model, "Michael Schumacher")
-    assert isinstance(result, DriverInterest)
-    assert result in [DriverInterest.VERY_INTERESTED, DriverInterest.NOT_INTERESTED]
+    model.player_team = "Minardi"
+    driver_interest, rejection_reason = determine_driver_interest(model, "Michael Schumacher")
+
+    assert isinstance(driver_interest, DriverInterest)
+    assert isinstance(rejection_reason, DriverRejectionReason)
+    assert driver_interest == DriverInterest.NOT_INTERESTED
+    assert rejection_reason == DriverRejectionReason.TEAM_RATING
+
 
 def test_driver_interest_distribution():
     """Test that both outcomes occur with roughly even distribution"""
@@ -16,9 +21,12 @@ def test_driver_interest_distribution():
     iterations = 1000
     
     for _ in range(iterations):
-        result = determine_driver_interest(model, "Michael Schumacher")
-        results.append(result)
+        driver_interest, rejection_reason = determine_driver_interest(model, "Eddie Irvine")
+        results.append(driver_interest)
     
+    assert driver_interest in [DriverInterest.VERY_INTERESTED, DriverInterest.NOT_INTERESTED]
+    assert rejection_reason in [DriverRejectionReason.NONE, DriverRejectionReason.TEAM_RATING]
+
     very_interested_count = results.count(DriverInterest.VERY_INTERESTED)
     not_interested_count = results.count(DriverInterest.NOT_INTERESTED)
     

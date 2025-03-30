@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 import flet as ft
 
 from pw_model.pw_model_enums import StaffRoles
+from pw_model.driver_negotiation.driver_interest import DriverRejectionReason
 
 if TYPE_CHECKING:
 	from pw_view.view import View
@@ -29,8 +30,11 @@ class RejectionDialog(ft.AlertDialog):
 			self.on_dismiss()
 		self.update()
 
-	def update_text_widget(self, name: str) -> None:
-		self.text_widget.value = f"{name} has declined your offer."
+	def update_text_widget(self, name: str, reason: DriverRejectionReason) -> None:
+		if reason == DriverRejectionReason.NONE:
+			self.text_widget.value = f"{name} has declined your offer. No reason was provided."
+		else:
+			self.text_widget.value = f"{name} has declined your offer.\nReason: {reason.value}."
 
 class AcceptDialog(ft.AlertDialog):
 	def __init__(self, view: View):

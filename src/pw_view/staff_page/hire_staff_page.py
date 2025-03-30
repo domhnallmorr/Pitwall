@@ -3,6 +3,7 @@ from typing import Optional, TYPE_CHECKING
 import flet as ft
 
 from pw_model.pw_model_enums import StaffRoles
+from pw_model.driver_negotiation.driver_interest import DriverRejectionReason
 from pw_view.staff_page.staff_dialogs import RejectionDialog, AcceptDialog
 from pw_view.custom_widgets import custom_container
 
@@ -183,8 +184,8 @@ class HireStaffPage(ft.Column):
 		self.accept_dialog.open = True
 		self.view.main_app.update()
 
-	def show_rejection_dialog(self, name: str) -> None:
-		self.rejection_dialog.update_text_widget(name)
+	def show_rejection_dialog(self, name: str, reason: DriverRejectionReason) -> None:
+		self.rejection_dialog.update_text_widget(name, reason)
 
 		if self.rejection_dialog in self.view.main_app.overlay:
 			self.view.main_app.overlay.remove(self.rejection_dialog)

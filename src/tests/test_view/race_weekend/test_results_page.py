@@ -35,26 +35,6 @@ def test_initialization(results_window):
     assert isinstance(results_window.controls, list)
     assert len(results_window.controls) > 0
 
-def test_setup_buttons_row(results_window):
-    results_window.setup_buttons_row()
-    assert results_window.buttons_row is not None
-    assert len(results_window.buttons_row.controls) == 2
-
-def test_reset_tab_buttons(results_window):
-    results_window.setup_buttons_row()
-    results_window.reset_tab_buttons()
-    assert results_window.classification_btn.style is None
-    assert results_window.pitstops_btn.style is None
-
-def test_update_buttons_row_for_race(results_window):
-    results_window.setup_buttons_row()
-    results_window.update_buttons_row(timed_session=False)
-    assert len(results_window.buttons_row.controls) == 4
-
-def test_update_buttons_row_for_timed_session(results_window):
-    results_window.setup_buttons_row()
-    results_window.update_buttons_row(timed_session=True)
-    assert len(results_window.buttons_row.controls) == 1
 
 def gen_dummy_data():
     sample_data = {
@@ -63,6 +43,7 @@ def gen_dummy_data():
         "Team": ["Team A", "Team B"],
         "Fastest Lap": [90000, 91000],
         "Gap to Leader": [0, 1000],
+        "Gap Ahead": [1200, 1800],
         "Lap": [60, 60],
         "Status": ["Running", "Running"],
         "Lapped Status": [None, None],
@@ -87,11 +68,14 @@ def test_ms_to_min_sec(results_window):
 def test_display_classification(results_window):
     standings_df, driver_flags = gen_dummy_data()
     data: RaceSessionData = {
-			"current_session": SessionNames.QUALIFYING,
-			"standings_df": standings_df,
-			"driver_flags": driver_flags
-		}
+        "current_session": SessionNames.QUALIFYING,
+        "standings_df": standings_df,
+        "driver_flags": driver_flags
+    }
     results_window.update_page(data)
-    results_window.display_classification()
-    assert results_window.classification_btn.style == results_window.view.clicked_button_style
+    # Instead of testing display_classification(), verify that the classification tab is set up correctly
+    assert results_window.classification_tab.content.content == results_window.results_table.list_view
+    # Verify that for qualifying session, only classification tab is shown
+    assert len(results_window.tabs.tabs) == 1
+    assert results_window.tabs.tabs[0] == results_window.classification_tab
 

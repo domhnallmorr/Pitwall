@@ -5,6 +5,7 @@ from typing import Optional, TYPE_CHECKING
 import flet as ft
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 from flet.matplotlib_chart import MatplotlibChart
 
 from race_weekend_model.race_model_enums import SessionNames
@@ -23,102 +24,74 @@ class ResultsWindow(ft.View):
 	def __init__(self, view: View):
 		self.view = view
 
-		self.setup_buttons_row()
 		self.setup_lap_chart()
 		self.setup_laptimes_plot()
-
+		
 		self.header_text = ft.Text("Results", theme_style=self.view.page_header_style)
+		
+		# Setup tabs first since we'll need them in update_page
+		self.setup_tabs()
 		
 		super().__init__(controls=[self.header_text])
 
-	def setup_buttons_row(self) -> None:
-		self.classification_btn = ft.TextButton("Classification", on_click=self.display_classification)
-		self.pitstops_btn = ft.TextButton("Pitstops", on_click=self.display_pitstops)
-		self.lap_chart_btn = ft.TextButton("Lap Chart", on_click=self.display_lap_chart)
-		self.lap_times_btn = ft.TextButton("Lap Times", on_click=self.display_lap_times_chart)
-
-		continue_btn = custom_buttons.gen_continue_btn(self.view, on_click_func=self.continue_to_race_weekend)
-
-		self.buttons_row = ft.Row(
-			controls=[
-				self.classification_btn,
-				self.pitstops_btn,
-			],
-			expand=False,
-			tight=True
+	def setup_tabs(self) -> None:
+		self.classification_tab = ft.Tab(
+			text="Classification",
+			icon=ft.Icons.TABLE_CHART,
+			content=ft.Container(
+				expand=False,
+				alignment=ft.alignment.top_center
+			)
 		)
-
-		self.buttons_container = custom_container.CustomContainer(self.view, self.buttons_row, expand=False)
-
-		continue_row = ft.Row(
-			controls=[
-				continue_btn,
-			],
-			expand=False,
-			tight=True
-		)
-
-		self.continue_container = custom_container.CustomContainer(self.view, continue_row, expand=False)
-
-	def reset_tab_buttons(self) -> None:
-		# When a button is clicked to view a different tab, reset all buttons style
-		self.classification_btn.style = None
-		self.pitstops_btn.style = None
-		self.lap_chart_btn.style = None
-		self.lap_times_btn.style = None
-
-	def update_buttons_row(self, timed_session: bool) -> None:
-		# update the buttons row depending on if the results are for the race or one of the timed sessions
-		# e.g. pit stops tab not relevant to timed sessions
-
-		if timed_session is False: # grand prix
-			self.buttons_row.controls = [self.classification_btn, self.pitstops_btn, self.lap_chart_btn, self.lap_times_btn]
-		else:
-			self.buttons_row.controls = [self.classification_btn]
-
-		self.view.main_app.update()
-
-	def update_page(self, data: RaceSessionData) -> None:
-		current_session = data["current_session"]
-		standings_df = data["standings_df"]
-		driver_flags = data["driver_flags"]
 		
-		# update the buttons row
-		timed_session = True
-		if current_session == SessionNames.RACE:
-			timed_session = False
-
-			# update pitstop table (race only)
-			self.setup_pitstops_table(data["pit_stop_summary"], driver_flags)
-			self.update_lap_chart(data["lap_chart_data"])
-			self.update_laptimes_plot(data["lap_times_summary"])
-
-		self.update_buttons_row(timed_session)
-		self.setup_classification_table(standings_df, current_session, driver_flags)
-
-		self.content_column = ft.Column(
-			controls=[self.buttons_container, self.results_table.list_view, self.continue_container],
-			expand=True,
-			spacing=20
+		self.pitstops_tab = ft.Tab(
+			text="Pitstops",
+			icon=ft.Icons.LOCAL_GAS_STATION,
+			content=ft.Container(
+				expand=False,
+				alignment=ft.alignment.top_center
+			)
 		)
 
-		self.background_stack = ft.Stack(
-			[
-				self.view.results_background_image,
-				self.content_column,
+		self.lap_chart_tab = ft.Tab(
+			text="Lap Chart",
+			icon=ft.Icons.STACKED_LINE_CHART,
+			content=ft.Container(
+				expand=False,
+				alignment=ft.alignment.top_center
+			)
+		)
+
+		self.lap_times_tab = ft.Tab(
+			text="Lap Times",
+			icon=ft.Icons.TIMER,
+			content=ft.Container(
+				expand=False,
+				alignment=ft.alignment.top_center
+			)
+		)
+
+		self.commentary_tab = ft.Tab(
+			text="Commentary",
+			icon=ft.Icons.MIC,
+			content=ft.Container(
+				expand=False,
+				alignment=ft.alignment.top_center
+			)
+		)
+
+		self.tabs = ft.Tabs(
+			selected_index=0,
+			animation_duration=300,
+			tabs=[
+				self.classification_tab,
+				self.pitstops_tab,
+				self.lap_chart_tab,
+				self.lap_times_tab,
+				self.commentary_tab
 			],
-			expand=True,
+			expand=True
 		)
-
-		contents = [
-			self.header_text,
-			self.background_stack,
-		]
-
-		self.controls = contents
-
-		self.display_classification()
-		self.view.main_app.update()
 
 	def setup_classification_table(self, standings_df: pd.DataFrame, current_session: Enum, driver_flags: list[str]) -> None:
 		# Create a new column for formatted lap times
@@ -130,22 +103,30 @@ class ResultsWindow(ft.View):
 			standings_df.loc[:, "Gap"] = standings_df["Gap to Leader"].apply(lambda x: self.ms_to_min_sec(x, interval=True))
 
 		elif current_session == SessionNames.RACE:
-			cols = ["Position", "Driver", "Team", "Formatted Lap", "Gap to Leader", "Pit", "Grid"]
+			cols = ["Position", "Driver", "Team", "Formatted Lap", "Gap to Leader", "Gap Ahead", "Pit", "Grid"]
 			
-			# cleanup Gap to Leader column
+			# clean up Gap to Leader/ahead column
 			data = []
+			data_ahead = [] # for Gap Ahead column
+			
 			for idx, row in standings_df.iterrows():
 				if idx == 0:
 					data.append(f"{row['Lap']} Laps")
+					data_ahead.append("-")
 				else:
 					if row["Status"] == ParticipantStatus.RETIRED:
 						data.append(f"Retired Lap {row['Lap']} ({row['Retirement Reason'].value})")
+						data_ahead.append("-")
 					elif row["Lapped Status"] is None:
 						data.append(self.ms_to_min_sec(row["Gap to Leader"], interval=True))
 					else:
 						data.append(row["Lapped Status"])
 
+					if row["Status"] != ParticipantStatus.RETIRED:
+						data_ahead.append(self.ms_to_min_sec(row["Gap Ahead"], interval=True))
+					
 			standings_df["Gap to Leader"] = data
+			standings_df["Gap Ahead"] = data_ahead
 
 		# Use the new formatted column instead of overwriting the original
 		standings_df = standings_df[cols]		
@@ -236,33 +217,77 @@ class ResultsWindow(ft.View):
 
 		self.lap_times_container = custom_container.CustomContainer(self.view, column, expand=True)
 
-	def display_classification(self, e: Optional[ft.ControlEvent]=None) -> None:
-		self.reset_tab_buttons()
-		self.classification_btn.style = self.view.clicked_button_style
+	def setup_commentary_table(self) -> None:
+		self.commentary_table = CustomDataTable(self.view, ["Lap", "Message"])
+		# Initially empty data
+		self.commentary_table.update_table_data([], flag_col_idx=None, flags=None)
 
-		self.content_column.controls=[self.buttons_container, self.results_table.list_view, self.continue_container]
+	def update_page(self, data: RaceSessionData) -> None:
+		current_session = data["current_session"]
+		standings_df = data["standings_df"]
+		driver_flags = data["driver_flags"]
+		
+		# Update tabs visibility based on session type
+		timed_session = current_session != SessionNames.RACE
+		if timed_session:
+			self.tabs.tabs = [self.classification_tab]
+		else:
+			self.tabs.tabs = [
+				self.classification_tab,
+				self.pitstops_tab,
+				self.lap_chart_tab,
+				self.lap_times_tab,
+				self.commentary_tab
+			]
+			
+			# Update race-specific tabs
+			self.setup_pitstops_table(data["pit_stop_summary"], driver_flags)
+			self.update_lap_chart(data["lap_chart_data"])
+			self.update_laptimes_plot(data["lap_times_summary"])
+			self.setup_commentary_table()  # Add this line
+			self.commentary_table.update_table_data(data["commentary"].values.tolist()) 
+			
+			self.pitstops_tab.content.content = self.pitstops_table.list_view
+			self.lap_chart_tab.content.content = self.lap_chart_container
+			self.lap_times_tab.content.content = self.lap_times_container
+			self.commentary_tab.content.content = self.commentary_table.list_view  # Add this line
+
+		# Update classification tab
+		self.setup_classification_table(standings_df, current_session, driver_flags)
+		self.classification_tab.content.content = self.results_table.list_view
+
+		continue_btn = custom_buttons.gen_continue_btn(
+			self.view, 
+			on_click_func=self.continue_to_race_weekend
+		)
+		
+		self.continue_container = custom_container.CustomContainer(
+			self.view, 
+			continue_btn, 
+			expand=False
+		)
+
+		self.content_column = ft.Column(
+			controls=[self.tabs, self.continue_container],
+			expand=True,
+			spacing=20
+		)
+
+		self.background_stack = ft.Stack(
+			[
+				self.view.results_background_image,
+				self.content_column,
+			],
+			expand=True,
+		)
+
+		contents = [
+			self.header_text,
+			self.background_stack,
+		]
+
+		self.controls = contents
 		self.view.main_app.update()
-
-	def display_pitstops(self, e: ft.ControlEvent) -> None:
-		self.reset_tab_buttons()
-		self.pitstops_btn.style = self.view.clicked_button_style
-
-		self.content_column.controls=[self.buttons_container, self.pitstops_table.list_view, self.continue_container]
-		self.view.main_app.update()
-
-	def display_lap_chart(self, e: ft.ControlEvent) -> None:
-		self.reset_tab_buttons()
-		self.lap_chart_btn.style = self.view.clicked_button_style
-
-		self.content_column.controls=[self.buttons_container, self.lap_chart_container, self.continue_container]
-		self.view.main_app.update()		
-
-	def display_lap_times_chart(self, e: ft.ControlEvent) -> None:
-		self.reset_tab_buttons()
-		self.lap_times_btn.style = self.view.clicked_button_style
-
-		self.content_column.controls=[self.buttons_container, self.lap_times_container, self.continue_container]
-		self.view.main_app.update()	
 
 	def continue_to_race_weekend(self, e: ft.ControlEvent) -> None:
 		self.view.main_app.views.clear()
@@ -271,19 +296,19 @@ class ResultsWindow(ft.View):
 		self.view.main_app.update()
 
 	def ms_to_min_sec(self, ms: Optional[int], interval: bool=False) -> str:
-		if ms is None:  # Check if the value is None
+		if pd.isna(ms):  # This will catch both None and np.nan
 			return "-" 
+		
+		minutes = ms // 60000
+		seconds = (ms % 60000) / 1000
+		
+		if interval is False:
+			return f"{int(minutes)}:{seconds:06.3f}"
 		else:
-			minutes = ms // 60000
-			seconds = (ms % 60000) / 1000
-			
-			if interval is False:
-				return f"{int(minutes)}:{seconds:06.3f}"
+			if ms < 60_000: # less than 1 min
+				return f"+{seconds:06.3f}"
 			else:
-				if ms < 60_000: # less than 1 min
-					return f"+{seconds:06.3f}"
-				else:
-					return f"+{int(minutes)}:{seconds:06.3f}"
+				return f"+{int(minutes)}:{seconds:06.3f}"
 				
 	def update_lap_times_plot(self, e: ft.ControlEvent) -> None:
 		driver1 = self.driver1_dropdown.value
@@ -292,16 +317,35 @@ class ResultsWindow(ft.View):
 		# clear plot
 		self.laptimes_ax.cla()
 
+		# Track min/max laptimes excluding pit stops
+		all_laptimes = []
+
 		if driver1 is not None:
 			lap_times = self.lap_times[driver1]
 			lap_numbers = [i + 1 for i in range(len(lap_times))]
 			self.laptimes_ax.plot(lap_numbers, lap_times, label=driver1)
+			# Filter out pit stop laps (typically >20s slower than regular laps)
+			regular_laps = [t for t in lap_times if t < min(lap_times) * 1.15]
+			all_laptimes.extend(regular_laps)
 
 		if driver2 is not None:
 			lap_times = self.lap_times[driver2]
 			lap_numbers = [i + 1 for i in range(len(lap_times))]
 			self.laptimes_ax.plot(lap_numbers, lap_times, label=driver2)
+			regular_laps = [t for t in lap_times if t < min(lap_times) * 1.15]
+			all_laptimes.extend(regular_laps)
+
+		if all_laptimes:
+			# Set y-axis limits with some padding
+			min_time = min(all_laptimes)
+			max_time = max(all_laptimes)
+			padding = (max_time - min_time) * 0.1  # 10% padding
+			self.laptimes_ax.set_ylim(min_time - padding, max_time + padding)
 
 		self.laptimes_ax.grid()
 		self.laptimes_ax.legend()
 		self.view.main_app.update()
+
+
+
+

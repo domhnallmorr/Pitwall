@@ -18,6 +18,7 @@ class RaceSessionData(TypedDict):
 	lap_chart_data: list | None
 	pit_stop_summary: list | None
 	lap_times_summary: list | None
+	commentary: pd.DataFrame | None
 
 class RaceController:
 	def __init__(self, controller: Controller):
@@ -58,6 +59,7 @@ class RaceController:
 			data["lap_chart_data"] = self.race_model.current_session.lap_chart_data
 			data["pit_stop_summary"] = self.race_model.current_session.pit_stop_summary
 			data["lap_times_summary"] = self.race_model.current_session.lap_times_summary
+			data["commentary"] = self.race_model.current_session.commentary_model.commentary_df.copy(deep=True)
 
 		# SHOW THE RESULTS
 		self.view.results_window.update_page(data)

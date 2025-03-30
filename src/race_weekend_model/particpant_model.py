@@ -6,7 +6,7 @@ from pw_model.track.track_model import TrackModel
 from pw_model.team.team_model import TeamModel
 from race_weekend_model.pit_strategy import PitStrategy
 from race_weekend_model.laptime_manager import LapTimeManager
-from race_weekend_model.race_model_enums import ParticipantStatus, RetirementReasons
+from race_weekend_model.race_model_enums import ParticipantStatus, RetirementReasons, OvertakingStatus
 from race_weekend_model.on_track_constants import (
 	DIRTY_AIR_THRESHOLD,
 	DIRTY_AIR_EFFECT,
@@ -32,6 +32,7 @@ class ParticpantModel:
 		self.pit_strategy = PitStrategy(self.track_model.number_of_laps)
 		
 		self.calculate_if_retires()
+		self.overtaking_status = OvertakingStatus.NONE
 
 	def __repr__(self) -> str:
 		return f"<RaceEngineParticpantModel {self.driver.name}>"
@@ -82,7 +83,7 @@ class ParticpantModel:
 		# self.laptime = None
 
 		# self.next_update_time = None # for updating practice session
-
+		self.overtaking_status = OvertakingStatus.NONE
 
 	def calculate_laptime(self, gap_ahead: int) -> None:
 		# reset status if we just made a pitstop

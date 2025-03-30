@@ -22,68 +22,74 @@ class TitleScreen(ft.View):
 		super().__init__(controls=controls, padding=0)
 
 	def setup_page(self, run_directory: str) -> None:
-		# Create a resizable image widget for the background
 		image_path = fr"{self.view.run_directory}\pw_view\assets\title_screen.jpg"
-		
+
 		self.background_image = ft.Image(
-			src=os.path.abspath(image_path),  # Use absolute path for the local image
-			fit=ft.ImageFit.COVER  # Ensure it covers the entire area
+			src=os.path.abspath(image_path),
+			fit=ft.ImageFit.COVER
 		)
 
-		# Create the buttons for "New Career", "Load", and "Quit"
-		new_career_button = ft.ElevatedButton("New Career", on_click=self.new_career_click, width=200)
+		# Button style: translucent, outlined, subtle glow, hover animation
+		button_style = ft.ButtonStyle(
+			bgcolor=ft.Colors.with_opacity(0.05, ft.Colors.WHITE),
+			shape=ft.RoundedRectangleBorder(radius=10),
+			side=ft.BorderSide(1, ft.Colors.WHITE),
+			color=ft.Colors.WHITE,
+			overlay_color=ft.Colors.with_opacity(0.15, ft.Colors.WHITE),
+			padding=ft.Padding(12, 16, 12, 16),
+			animation_duration=300,
+		)
 
-		if os.path.isfile(f"{run_directory}\\save_game.db"):
-			disabled = False
-		else:
-			disabled = True
-			
-		load_button = ft.ElevatedButton("Load", on_click=self.load_game_click, width=200, disabled=disabled)
-		quit_button = ft.ElevatedButton("Quit", on_click=self.quit_game_click, width=200)
+		new_career_button = ft.ElevatedButton("New Career", on_click=self.new_career_click, width=220, style=button_style)
 
-		# Create a container for the buttons with some spacing and a light shadow
-		button_container = ft.Column(
+		load_button = ft.ElevatedButton(
+			"Load",
+			on_click=self.load_game_click,
+			width=220,
+			disabled=not os.path.isfile(f"{run_directory}\\save_game.db"),
+			style=button_style
+		)
+
+		quit_button = ft.ElevatedButton("Quit", on_click=self.quit_game_click, width=220, style=button_style)
+
+		def glow_button(button: ft.ElevatedButton) -> ft.Container:
+			return ft.Container(
+				content=button,
+				shadow=ft.BoxShadow(
+					spread_radius=0,
+					blur_radius=8,
+					color=ft.Colors.with_opacity(0.2, ft.Colors.WHITE),
+					blur_style=ft.ShadowBlurStyle.NORMAL
+				)
+			)
+
+		button_container = ft.Row(
 			[
-				new_career_button,
-				load_button,
-				quit_button
+				glow_button(new_career_button),
+				glow_button(load_button),
+				glow_button(quit_button),
 			],
-			spacing=20,  # Increased space between buttons for better separation
+			spacing=20,
 			alignment=ft.MainAxisAlignment.CENTER,
-			horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+			# horizontal_alignment=ft.CrossAxisAlignment.CENTER,
 		)
 
-		# Create a stack with the background image and buttons
+		# Shift content downward to avoid covering the title
 		self.background_stack = ft.Stack(
 			[
-				# Add the resizable background image
 				self.background_image,
-				# Add the buttons on top of the image
 				ft.Container(
-					content=ft.Column(
-						[
-							ft.Text(
-								"Pitwall",
-								size=80,  # Increased size for the title
-								color=ft.Colors.WHITE,
-								weight=ft.FontWeight.BOLD,
-								bgcolor=ft.Colors.BLACK54,  # Add a semi-transparent background to the text
-							),
-							button_container,
-						],
-						alignment=ft.MainAxisAlignment.CENTER,
-						horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-						spacing=40  # Added spacing between the title and buttons
-					),
-					expand=True,  # This makes the container fill the entire window
-					alignment=ft.Alignment(-0.75, -1.0),  # Center the content
+					content=button_container,
+					expand=True,
+					alignment=ft.Alignment(-1.0, 0.80),  # Lowered from center to let PITWALL breathe
 				),
 			],
-			expand=True,  # Make sure the stack expands to fill the window
+			expand=True,
 		)
 
 		self.view.main_app.on_resized = self.resize_image
 		self.resize_image(None)
+
 
 	def new_career_click(self, e: ft.ControlEvent) -> None:
 		e.control.disabled = True

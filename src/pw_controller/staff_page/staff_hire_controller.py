@@ -42,13 +42,13 @@ class StaffHireController:
 		self.controller.view.main_app.update()
 
 	def make_driver_offer(self, driver: str, role: StaffRoles):
-		driver_interest = determine_driver_interest(self.model, driver)
+		driver_interest, driver_rejection_reason = determine_driver_interest(self.model, driver)
 
 		# add offer to dataframe of previous offers
 		self.model.driver_offers.add_offer(driver)
 
 		if driver_interest in [DriverInterest.NOT_INTERESTED]:
-			self.controller.view.hire_staff_page.show_rejection_dialog(driver)
+			self.controller.view.hire_staff_page.show_rejection_dialog(driver, driver_rejection_reason)
 		elif driver_interest in [DriverInterest.VERY_INTERESTED]:
 			self.controller.view.hire_staff_page.show_accept_dialog(driver, role)
 

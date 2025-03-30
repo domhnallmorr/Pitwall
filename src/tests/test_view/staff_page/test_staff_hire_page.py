@@ -5,6 +5,7 @@ from pw_view.staff_page.hire_staff_page import HireStaffPage
 # Try importing StaffRoles; if not available, create a dummy version.
 
 from pw_model.pw_model_enums import StaffRoles
+from pw_model.driver_negotiation.driver_interest import DriverRejectionReason
 
 
 # Dummy classes to simulate the view and controller structure
@@ -195,12 +196,12 @@ def test_show_rejection_dialog():
         def __init__(self):
             super().__init__()
             self.updated = False
-        def update_text_widget(self, name):
+        def update_text_widget(self, name, reason):
             self.updated = True
             
     dummy_rejection_dialog = DummyRejectionDialog()
     page.rejection_dialog = dummy_rejection_dialog
-    page.show_rejection_dialog("Hank")
+    page.show_rejection_dialog("Hank", DriverRejectionReason.NONE)
     
     assert dummy_rejection_dialog.updated is True
     assert dummy_rejection_dialog.open is True

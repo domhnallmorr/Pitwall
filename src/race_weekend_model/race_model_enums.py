@@ -24,3 +24,8 @@ class ParticipantStatus(Enum):
 class RetirementReasons(Enum):
     MECHANICAL = "Mechanical"
     CRASH = "Crash"
+
+class OvertakingStatus(Enum):
+    NONE = "None"
+    ATTACKING = "Attacking"
+    HOLD_BACK = "Hold Back" # if car in front is attempting overtake, then car behind is holds back

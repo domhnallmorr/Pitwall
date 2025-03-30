@@ -44,7 +44,7 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 ### Contract Negotiations
 
-- [ ] Top drivers refuse to sign for poorly ranked player team
+- [x] Top drivers refuse to sign for poorly ranked player team
 - [ ] Add salary negotiation
 		
 ### Other
@@ -59,7 +59,7 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 - [x] Tracks should have a engine power attribute
 - [x] Implement tyre grip/wear from tyre model
-- [ ] Add commentary to Grand Prix model. Commentary to be displayed in Results window
+- [x] Add commentary to Grand Prix model. Commentary to be displayed in Results window
 - [ ] Add lap 1, turn 1 incidents, limited to spins for now
 
 
