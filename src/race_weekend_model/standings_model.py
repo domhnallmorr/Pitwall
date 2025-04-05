@@ -52,6 +52,10 @@ class StandingsModel:
 
 		return fastest_lap_driver
 	
+	@property
+	def current_order(self) -> list[str]:
+		return self.dataframe["Driver"].values.tolist()
+
 	def update(self) -> None:
 		self.update_all_participants()
 		self.update_order()

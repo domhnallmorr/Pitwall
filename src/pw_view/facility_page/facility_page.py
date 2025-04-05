@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 import flet as ft
 
 from pw_view.custom_widgets import custom_container
+from pw_view.facility_page.upgrade_facility_page import UpgradeFacilitiesDialog
 
 if TYPE_CHECKING:
 	from pw_view.view import View
@@ -99,4 +100,10 @@ class FacilityPage(ft.Column):
 
 	def enable_upgrade_button(self) -> None:
 		self.update_button.disabled = False
+		self.view.main_app.update()
+
+	def open_upgrade_dialog(self, current_state: int) -> None:
+		upgrade_dialog = UpgradeFacilitiesDialog(self.view.main_app, self.view, current_state)
+		self.view.main_app.overlay.append(upgrade_dialog)
+		upgrade_dialog.open = True
 		self.view.main_app.update()

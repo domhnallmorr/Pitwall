@@ -1,7 +1,7 @@
 import pandas as pd
 
 from race_weekend_model.commentary.overtake_commentary import gen_overtake_message
-from race_weekend_model.commentary.turn1_commentary import gen_leading_after_turn1_message
+from race_weekend_model.commentary.turn1_commentary import gen_leading_after_turn1_message, gen_turn1_spin_message
 
 class CommentaryModel:
 	def __init__(self) -> None:
@@ -16,4 +16,8 @@ class CommentaryModel:
 
 	def gen_leading_after_turn1_message(self, driver: str) -> None:
 		msg = gen_leading_after_turn1_message(driver)
+		self.add_message(1, msg)
+	
+	def gen_turn1_spin_message(self, driver: str) -> None:
+		msg = gen_turn1_spin_message(driver)
 		self.add_message(1, msg)

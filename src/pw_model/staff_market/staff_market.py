@@ -170,13 +170,14 @@ class StaffMarket:
 			team_model.update_managers(row[StaffRoles.TECHNICAL_DIRECTOR.value], tech_director_contract,
 							  row[StaffRoles.COMMERCIAL_MANAGER.value], commercial_manager_contract)
 
-	def complete_hiring(self, person_hired: str, team_name: str, role: StaffRoles) -> None:
+	def complete_hiring(self, person_hired: str, team_name: str, role: StaffRoles, salary: int=None) -> None:
 		assert role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2, StaffRoles.TECHNICAL_DIRECTOR, StaffRoles.COMMERCIAL_MANAGER]
 		team_model = self.model.get_team_model(team_name)
 
 		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team_name, role.value] = person_hired
 		if team_name == self.model.player_team:
-			salary = contract_functions.determine_final_salary(self.model, person_hired, role)
+			if salary is None:
+				salary = contract_functions.determine_final_salary(self.model, person_hired, role)
 			contract_length = random.randint(2, 5)
 			self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team_name, self.model.season.calendar.current_week, role.value, person_hired, salary, contract_length]
 		

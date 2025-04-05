@@ -30,6 +30,9 @@ class StaffDetailsContainer:
 		self.contract_length_text = ft.Text("Contract Length: X Year(s)")
 		self.contract_status_text = ft.Text("Contract Status: Status")
 
+		if self.role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
+			self.starts_text = ft.Text("Starts: 0")
+
 	def setup_rating_widgets(self) -> None:
 		text_width = 110
 		self.ability_widget = RatingWidget("Ability", text_width=text_width)
@@ -55,6 +58,7 @@ class StaffDetailsContainer:
 
 		if self.role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
 			controls.append(self.country_text)
+			controls.append(self.starts_text)
 		
 		controls.append(ft.Divider())
 
@@ -100,6 +104,7 @@ class StaffDetailsContainer:
 
 		if self.role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
 			self.country_text.value = f"Country: {data.country}"
+			self.starts_text.value = f"Starts: {data.starts}"
 			self.ability_widget.update_row(data.speed)
 			self.speed_widget.update_row(data.speed)
 			self.qualifying_widget.update_row(data.qualifying)

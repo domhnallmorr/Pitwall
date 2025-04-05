@@ -18,14 +18,14 @@ def test_salary_ranges():
 	oatley_model = model.get_technical_director_model("Neil Oatley")
 	gallagher_model = model.get_commercial_manager_model("Mark Gallagher")
 
-	model.staff_market.complete_hiring("Marc Gene", "Williams", StaffRoles.DRIVER1)
-	model.staff_market.complete_hiring("Jorg Muller", "Williams", StaffRoles.DRIVER2)
+	model.staff_market.complete_hiring("Marc Gene", "Williams", StaffRoles.DRIVER1, 3_200_000)
+	model.staff_market.complete_hiring("Jorg Muller", "Williams", StaffRoles.DRIVER2, 700_000)
 	model.staff_market.complete_hiring("Neil Oatley", "Williams", StaffRoles.TECHNICAL_DIRECTOR)
 	model.staff_market.complete_hiring("Mark Gallagher", "Williams", StaffRoles.COMMERCIAL_MANAGER)
 	model.end_season()
 
-	assert gene_model.contract.salary >= 20_000_000 and gene_model.contract.salary <= 26_000_000
-	assert muller_model.contract.salary >= 500_000 and muller_model.contract.salary <= 900_000
+	assert gene_model.contract.salary == 3_200_000
+	assert muller_model.contract.salary == 700_000
 	assert oatley_model.contract.salary >= 700_000 and oatley_model.contract.salary <= 1_200_000
 	assert gallagher_model.contract.salary >= 180_000 and gallagher_model.contract.salary <= 220_000
 

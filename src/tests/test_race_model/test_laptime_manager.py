@@ -208,14 +208,14 @@ class TestLapTimeManager:
             
             # Calculate first lap time with position index 3
             position_index = 3
-            laptime_manager.calculate_first_lap_laptime(position_index)
+            laptime_manager.calculate_first_lap_laptime(position_index, 31_000)
             
             # Expected components:
             # - track_model.base_laptime = 90000
             # - LAP1_TIME_LOSS = 6000
             # - position effect = position_index * LAP1_TIME_LOSS_PER_POSITION = 3 * 1000 = 3000
             # - random_time_loss = 500
-            expected_laptime = 90000 + 6000 + 3000 + 500
+            expected_laptime = 90000 + 3000 + 500 + 31_000  # Add turn1_time to the expected laptime
             
             assert laptime_manager.laptime == expected_laptime
     

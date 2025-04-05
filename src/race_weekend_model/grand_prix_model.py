@@ -6,6 +6,7 @@ from race_weekend_model.race_model_enums import SessionNames, SessionStatus, Ses
 
 from pw_model.pw_base_model import Model
 from race_weekend_model.commentary.commentary_model import CommentaryModel
+from race_weekend_model.grand_prix.post_race_actions import post_race_actions
 from race_weekend_model.particpant_model import ParticpantModel
 from race_weekend_model.session_model import SessionModel
 from race_weekend_model import race_start_calculations
@@ -58,13 +59,14 @@ class GrandPrixModel(session_model.SessionModel):
 		self.commentary_model.gen_leading_after_turn1_message(order_after_turn1[0][1].name)
 
 		# redefine particpants based on turn1 order
+		turn1_times = [o[0] for o in order_after_turn1]
 		self.participants = [o[1] for o in order_after_turn1]
 
 		'''
 		just spread field out after turn1
 		'''
 		for idx, p in enumerate(self.participants):
-			p.laptime_manager.calculate_first_lap_laptime(idx)
+			p.laptime_manager.calculate_first_lap_laptime(idx, turn1_times[idx])
 			p.complete_lap()
 
 		self.standings_model.update()
@@ -116,13 +118,7 @@ class GrandPrixModel(session_model.SessionModel):
 					# print(laptime_ahead)
 					if idx > 0 and laptime_ahead is not None: # laptime_ahead being None indicates car in front has retired
 						delta = participant.laptime_manager.laptime - laptime_ahead
-							# self.log_event(f"{participant.name} Pitting In")
-						
-						# Log potential overtaking situation
-						print(f"Lap {self.current_lap} - {driver} vs {participant_ahead.name}:")
-						print(f"  Delta: {delta}")
-						print(f"  Gap ahead: {gap_ahead}")
-						print(f"  Overtaking delta required: {self.race_weekend_model.track_model.overtaking_delta}")
+							# self.log_event(f"{participant.name} Pitting In")				
 						
 						self.set_overtake_status(participant, participant_ahead, delta, gap_ahead)
 
@@ -134,18 +130,14 @@ class GrandPrixModel(session_model.SessionModel):
 								
 						# *********
 						if participant.overtaking_status == OvertakingStatus.ATTACKING:
-							print(f"  Status check passed")
 							overtake_chance = random.randint(0, 100)
-							print(f"  Overtake roll: {overtake_chance}/25")
 							
 							if overtake_chance < 25:  # overtake successful
-								print(f"  OVERTAKE SUCCESSFUL: {participant.name} passes {participant_ahead.name}")
 								self.number_of_overtakes += 1
 								
 								# Add time loss for executing the overtake
 								overtake_penalty = random.randint(700, 1_500)
 								participant.laptime_manager.laptime += overtake_penalty
-								print(f"  Added {overtake_penalty}ms penalty for executing pass")
 
 								# Recalculate delta with new penalty
 								delta = participant.laptime_manager.laptime - laptime_ahead
@@ -154,18 +146,17 @@ class GrandPrixModel(session_model.SessionModel):
 								orig_gap = gap_ahead + delta
 								revised_laptime = participant_ahead.laptime_manager.laptime + orig_gap + random.randint(700, 1_500)
 								participant_ahead.laptime_manager.recalculate_laptime_when_passed(revised_laptime)
-								print(f"  Adjusted laptimes to reflect battle")
 								
 								if self.mode != SessionMode.SIMULATE:
 									self.commentary_to_process.append(commentary.gen_overtake_message(participant.name, participant_ahead.name))
 								
 								self.commentary_model.gen_overtake_message(self.current_lap, participant.name, participant_ahead.name)
 							else:
-								print(f"  Overtake attempt failed")
+
 								# Adjust laptime to maintain position behind after failed overtake
 								revised_laptime = laptime_ahead + 200  # maintain 50ms gap
 								participant.laptime_manager.recalculate_laptime_when_passed(revised_laptime)
-								print(f"  Adjusted laptime after failed overtake: {participant.name} stays behind")
+
 
 						elif participant.overtaking_status == OvertakingStatus.NONE:
 							# Check if driver would end up ahead without proper overtake
@@ -173,7 +164,7 @@ class GrandPrixModel(session_model.SessionModel):
 								# Adjust laptime to maintain small gap behind
 								revised_laptime = laptime_ahead + 200  # maintain 50ms gap
 								participant.laptime_manager.recalculate_laptime_when_passed(revised_laptime)
-								print(f"  Prevented illegal position change: adjusted {participant.name}'s laptime")
+								
 					
 					laptime_ahead = participant.laptime_manager.laptime
 					participant_ahead = participant
@@ -214,21 +205,7 @@ class GrandPrixModel(session_model.SessionModel):
 		self.player_driver2_crashed = self.race_weekend_model.player_driver2_participant.crashed 
 
 		# update driver stats
-		for idx, row in self.standings_model.dataframe.iterrows():
-			driver = row["Driver"]
-			participant = self.race_weekend_model.get_particpant_model_by_name(driver)
-
-			participant.driver.season_stats.starts_this_season += 1
-
-			if idx == 0: # update wins
-				participant.driver.season_stats.wins_this_season += 1
-				participant.driver.team_model.season_stats.wins_this_season += 1
-			if idx in [0, 1, 2]: # podiums
-				participant.driver.season_stats.podiums_this_season += 1
-				participant.driver.team_model.season_stats.podiums_this_season += 1
-			if row["Status"] == ParticipantStatus.RETIRED:
-				participant.driver.season_stats.dnfs_this_season += 1
-				participant.driver.team_model.season_stats.dnfs_this_season += 1
+		post_race_actions(self)
 
 		self.race_weekend_model.model.season.standings_manager.update_standings(self.standings_model.dataframe.copy(deep=True))
 		

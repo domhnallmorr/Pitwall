@@ -96,7 +96,6 @@ class View:
 		self.finance_page = finance_page.FinancePage(self)
 		self.car_page = car_page.CarPage(self)
 		self.facility_page = facility_page.FacilityPage(self)
-		self.upgrade_facility_page = upgrade_facility_page.UpgradeFacilitiesPage(self)
 		self.track_page = TrackPage(self)
 
 		self.results_window = results_window.ResultsWindow(self)

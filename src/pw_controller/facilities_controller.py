@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from pw_model.staff_market import staff_market
+from pw_view.view_enums import ViewPageEnums
 
 if TYPE_CHECKING:
 	from pw_controller.pw_controller import Controller
@@ -21,9 +22,7 @@ class FacilitiesController:
 	
 	def clicked_update_facilities(self) -> None:
 		current_facility_state = self.model.player_team_model.facilities_model.factory_rating
-		self.view.upgrade_facility_page.update_current_state(current_facility_state)
-		
-		self.controller.view.main_window.change_page("upgrade_facility")
+		self.view.facility_page.open_upgrade_dialog(current_facility_state)
 
 	def update_facilties(self, percentage: int, cost: int) -> None:
 		self.model.player_team_model.facilities_model.update_facilties(percentage)
@@ -35,4 +34,4 @@ class FacilitiesController:
 
 		self.model.inbox.generate_player_facility_update_email()
 		self.controller.page_update_controller.update_email_page()
-		self.controller.view.main_window.change_page("facility")
+		self.controller.view.main_window.change_page(ViewPageEnums.EMAIL)

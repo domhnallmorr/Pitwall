@@ -59,6 +59,11 @@ def load_drivers(
 	qualifying_idx = column_names.index("Qualifying")
 	contract_length_idx = column_names.index("ContractLength")
 	salary_idx = column_names.index("Salary")
+	pay_driver_idx = column_names.index("PayDriver")
+	budget_idx = column_names.index("Budget")
+
+	# stats
+	starts_idx = column_names.index("Starts")
 
 	cursor = conn.cursor()
 	cursor.execute(f"SELECT * FROM {table_name}")
@@ -73,8 +78,14 @@ def load_drivers(
 		qualifying = row[qualifying_idx]
 		contract_length = row[contract_length_idx]
 		salary = row[salary_idx]
+		pay_driver = bool(int(row[pay_driver_idx]))
+		budget = row[budget_idx]
 
-		driver = driver_model.DriverModel(model, name, age, country, speed, consistency, qualifying, contract_length, salary)
+		# stats
+		starts = row[starts_idx]
+
+		driver = driver_model.DriverModel(model, name, age, country, speed, consistency, qualifying, contract_length, salary,
+									starts, pay_driver, budget)
 		
 		if "RetiringAge" in column_names:
 			retiring_age_idx = column_names.index("RetiringAge")

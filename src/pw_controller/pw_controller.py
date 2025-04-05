@@ -118,6 +118,7 @@ class Controller:
 		self.model.save_career()
 
 		self.page_update_controller.update_standings_page()
+		self.page_update_controller.update_staff_page()
 		self.return_to_main_window()
 
 	def check_game_over(self) -> None:

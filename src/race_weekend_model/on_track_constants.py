@@ -17,6 +17,8 @@ PIT_STOP_LOSS_RANGE = (3_800, 6_000) # in ms, random time taken to perform pitst
 LAP1_TIME_LOSS = 6_000 # in ms, how much longer lap 1 takes compared to a normal lap
 LAP1_TIME_LOSS_PER_POSITION = 1_000 # in ms, how much longer lap 1 takes, per position down the field
 
+TURN1_INCIDENT_CHANCE = 30 # % chance of an incident at turn 1
+
 MAX_SPEED = 100 # the speed scale for car and driver is between 0 and 100, 100 defined here as the max value
 
 POWER_SENSITIVITY = 2_000 # 

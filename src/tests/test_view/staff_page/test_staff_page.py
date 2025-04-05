@@ -24,8 +24,10 @@ def test_update_page(staff_page):
     """Test the update_page method with mock data."""
     mock_data = StaffPageData(
         drivers=[
-            DriverData(name="Driver 1", age=25, salary=100000, contract_length=2, retiring=False, speed=90, consistency=80, qualifying=5, country="USA"),
-            DriverData(name="Driver 2", age=30, salary=120000, contract_length=1, retiring=True, speed=85, consistency=75, qualifying=2, country="UK"),
+            DriverData(name="Driver 1", age=25, salary=100000, contract_length=2, retiring=False, speed=90,
+                       consistency=80, qualifying=5, country="USA", starts=10),
+            DriverData(name="Driver 2", age=30, salary=120000, contract_length=1, retiring=True, speed=85,
+                       consistency=75, qualifying=2, country="UK", starts=15),
         ],
         technical_director=SeniorStaffData(name="Tech Director", age=50, salary=200000, contract_length=3, skill=95, retiring=True),
         commercial_manager=SeniorStaffData(name="Comm Manager", age=45, salary=150000, contract_length=1, skill=88, retiring=False),
@@ -45,6 +47,7 @@ def test_update_page(staff_page):
     assert staff_page.driver1_container.name_text.value == "Name: Driver 1"
     assert staff_page.driver1_container.age_text.value == "Age: 25 Years"
     assert staff_page.driver1_container.country_text.value == "Country: USA"
+    assert staff_page.driver1_container.starts_text.value == "Starts: 10"
     assert staff_page.driver1_container.salary_text.value == "Salary: $100,000"
     assert staff_page.driver1_container.contract_length_text.value == "Contract Length: 2 Year(s)"
     assert staff_page.driver1_container.contract_status_text.value == "Contract Status: Contracted"
@@ -53,6 +56,7 @@ def test_update_page(staff_page):
     assert staff_page.driver2_container.name_text.value == "Name: Driver 2"
     assert staff_page.driver2_container.age_text.value == "Age: 30 Years"
     assert staff_page.driver2_container.country_text.value == "Country: UK"
+    assert staff_page.driver2_container.starts_text.value == "Starts: 15"
     assert staff_page.driver2_container.salary_text.value == "Salary: $120,000"
     assert staff_page.driver2_container.contract_length_text.value == "Contract Length: 1 Year(s)"
     assert staff_page.driver2_container.contract_status_text.value == "Contract Status: Retiring"

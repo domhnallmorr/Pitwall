@@ -22,6 +22,7 @@ class DriverData:
     contract_length: int
     salary: int
     retiring: bool
+    starts: int
 
 @dataclass
 class SeniorStaffData:
@@ -58,6 +59,7 @@ def get_staff_page_data(model: Model) -> StaffPageData:
 				contract_length=team_model.driver1_model.contract.contract_length,
 				salary=team_model.driver1_model.contract.salary,
 				retiring=team_model.driver1_model.retiring,
+				starts=team_model.driver1_model.career_stats.starts,
 			),
 			DriverData(
 				name=team_model.driver2_model.name,
@@ -69,6 +71,7 @@ def get_staff_page_data(model: Model) -> StaffPageData:
 				contract_length=team_model.driver2_model.contract.contract_length,
 				salary=team_model.driver2_model.contract.salary,
 				retiring=team_model.driver2_model.retiring,
+				starts=team_model.driver2_model.career_stats.starts,
 			),
 		],
 		commercial_manager=SeniorStaffData(

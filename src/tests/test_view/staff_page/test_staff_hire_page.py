@@ -36,6 +36,9 @@ class DummyStaffHireController:
         self.offers.append((name, role))
     def complete_hire(self, name, role):
         self.completions.append((name, role))
+    def open_driver_offer_dialog(self, name, role):
+        # Add the new method to handle driver offer dialog
+        self.make_driver_offer(name, role)  # For test purposes, we'll just make the offer directly
 
 class DummyController:
     def __init__(self):
@@ -67,7 +70,8 @@ def test_update_free_agent_list():
     free_agents = ["Alice", "Bob"]
     role = StaffRoles.DRIVER1
     previously_approached = ["Bob"]
-    page.update_free_agent_list(free_agents, role, previously_approached)
+    pay_drivers = []  # Add empty list for pay_drivers parameter
+    page.update_free_agent_list(free_agents, role, previously_approached, pay_drivers)
     
     # Verify that the title and current role are updated
     assert page.title_text.value == f"Hire: Driver 1"
@@ -105,7 +109,8 @@ def test_approach_staff_for_driver():
     free_agents = ["Dave"]
     role = StaffRoles.DRIVER1
     previously_approached = []
-    page.update_free_agent_list(free_agents, role, previously_approached)
+    pay_drivers = []  # Add empty list for pay_drivers parameter
+    page.update_free_agent_list(free_agents, role, previously_approached, pay_drivers)
     
     e = DummyEvent("Dave")
     # Ensure the offer button is enabled before the call
@@ -130,7 +135,9 @@ def test_approach_staff_for_non_driver():
     free_agents = ["Eve"]
     # Use a non-driver role (e.g., MANAGER)
     non_driver_role = StaffRoles.COMMERCIAL_MANAGER
-    page.update_free_agent_list(free_agents, non_driver_role, [])
+    previously_approached = []  # Add this parameter
+    pay_drivers = []  # Add pay_drivers parameter
+    page.update_free_agent_list(free_agents, non_driver_role, previously_approached, pay_drivers)
     
     e = DummyEvent("Eve")
     page.approach_staff(e)
@@ -147,7 +154,9 @@ def test_handle_close_yes():
     page = HireStaffPage(view)
     free_agents = ["Frank"]
     non_driver_role = StaffRoles.TECHNICAL_DIRECTOR
-    page.update_free_agent_list(free_agents, non_driver_role, [])
+    previously_approached = []  # Add this parameter
+    pay_drivers = []  # Add pay_drivers parameter
+    page.update_free_agent_list(free_agents, non_driver_role, previously_approached, pay_drivers)
     
     # Trigger the approach to create a dialog
     e_approach = DummyEvent("Frank")
@@ -176,12 +185,12 @@ def test_show_accept_dialog():
         def __init__(self, view):
             super().__init__()
             self.updated = False
-        def update_text_widget(self, name, role):
+        def update_text_widget(self, name, role, salary):  # Add salary parameter
             self.updated = True
             
     dummy_accept_dialog = DummyAcceptDialog(view)
     page.accept_dialog = dummy_accept_dialog
-    page.show_accept_dialog("George", StaffRoles.DRIVER1)
+    page.show_accept_dialog("George", StaffRoles.DRIVER1, 1_000_000)  # Add salary value
     
     assert dummy_accept_dialog.updated is True
     assert dummy_accept_dialog.open is True

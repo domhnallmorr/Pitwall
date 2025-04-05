@@ -130,13 +130,13 @@ class LapTimeManager:
 
 		self.complete_lap()
 
-	def calculate_first_lap_laptime(self, idx: int) -> None:
+	def calculate_first_lap_laptime(self, idx: int, turn1_time: float) -> None:
 		'''
 		calculate lap time for first lap based on position after turn 1
 		idx is the position (zero indexed) of the participant after turn 1
 		'''
 		random_time_loss = self.randomiser.random_lap1_time_loss()
-		self.laptime = self.track_model.base_laptime + LAP1_TIME_LOSS + (idx * LAP1_TIME_LOSS_PER_POSITION) + random_time_loss
+		self.laptime = self.track_model.base_laptime + turn1_time + (idx * LAP1_TIME_LOSS_PER_POSITION) + random_time_loss
 
 	def recalculate_laptime_when_passed(self, revised_laptime: int) -> None:
 		'''

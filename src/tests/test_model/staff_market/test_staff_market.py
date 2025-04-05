@@ -51,12 +51,14 @@ def test_top3_drivers_logic():
 
 		schumacher_model = model.get_driver_model("Michael Schumacher")
 		hakkinen_model = model.get_driver_model("Mika Hakkinen")
-		villeneuve_model = model.get_driver_model("Jacques Villeneuve")
+		hill_model = model.get_driver_model("Damon Hill")
 		fisichella_model = model.get_driver_model("Giancarlo Fisichella")
 
+		hill_model.retiring = False
+		
 		schumacher_model.contract.contract_length = 1
 		hakkinen_model.contract.contract_length = 1
-		villeneuve_model.contract.contract_length = 1
+		hill_model.contract.contract_length = 1
 		fisichella_model.contract.contract_length = 1
 
 		model.staff_market.setup_dataframes()
@@ -69,10 +71,10 @@ def test_top3_drivers_logic():
 		for team in ["Ferrari", "Williams", "McLaren", "Benetton"]:
 			team_model = model.get_team_model(team)
 			top_4_teams_driver1.append(team_model.driver1)
-
+		
 		assert "Michael Schumacher" in top_4_teams_driver1
 		assert "Mika Hakkinen" in top_4_teams_driver1
-		assert "Jacques Villeneuve" in top_4_teams_driver1
+		assert "Damon Hill" in top_4_teams_driver1
 
 def test_top_10_drivers_logic():
 	'''

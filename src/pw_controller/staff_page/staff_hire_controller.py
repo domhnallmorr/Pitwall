@@ -33,27 +33,44 @@ class StaffHireController:
 		if role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
 			free_agents = driver_transfers.get_free_agents(self.model, for_player_team=True)
 			previously_approached = self.model.driver_offers.drivers_who_have_been_approached()
+			pay_drivers = [driver for driver in free_agents if self.model.get_driver_model(driver).pay_driver is True]
 		else:
 			free_agents = manager_transfers.get_free_agents(self.model, role, for_player_team=True)
 			previously_approached = []
+			pay_drivers = []
 
-		self.controller.view.hire_staff_page.update_free_agent_list(free_agents, role, previously_approached)
+		self.controller.view.hire_staff_page.update_free_agent_list(free_agents, role, previously_approached, pay_drivers)
 		self.controller.view.main_window.change_page("hire_staff")
 		self.controller.view.main_app.update()
 
-	def make_driver_offer(self, driver: str, role: StaffRoles):
-		driver_interest, driver_rejection_reason = determine_driver_interest(self.model, driver)
+	def open_driver_offer_dialog(self, driver_name: str, role: StaffRoles) -> None:
+		# Here you can get the driver's current salary or any other relevant info
+		# current_salary = self.model.get_driver_model(driver_name).salary
+
+		if self.model.get_driver_model(driver_name).pay_driver is True:
+			current_salary = self.model.get_driver_model(driver_name).budget
+			pay_driver = True
+		else:
+			current_salary = self.model.game_data.driver_salary(driver_name)
+			pay_driver = False
+
+		self.controller.view.hire_staff_page.open_driver_offer_dialog(driver_name, current_salary, pay_driver)
+
+	def make_driver_offer(self, driver: str, role: StaffRoles, salary: int) -> None:
+		driver_interest, driver_rejection_reason = determine_driver_interest(self.model, driver, salary)
 
 		# add offer to dataframe of previous offers
 		self.model.driver_offers.add_offer(driver)
 
 		if driver_interest in [DriverInterest.NOT_INTERESTED]:
 			self.controller.view.hire_staff_page.show_rejection_dialog(driver, driver_rejection_reason)
-		elif driver_interest in [DriverInterest.VERY_INTERESTED]:
-			self.controller.view.hire_staff_page.show_accept_dialog(driver, role)
+		elif driver_interest in [DriverInterest.ACCEPTED]:
+			if self.model.get_driver_model(driver).pay_driver is True:
+				salary = -1 * salary # negative salary means driver pays team
+			self.controller.view.hire_staff_page.show_accept_dialog(driver, role, salary)
 
-	def complete_hire(self, name_hired: str, role: Enum) -> None:	
-		self.model.staff_market.complete_hiring(name_hired, self.model.player_team, role)
+	def complete_hire(self, name_hired: str, role: Enum, salary: int=None) -> None:	
+		self.model.staff_market.complete_hiring(name_hired, self.model.player_team, role, salary)
 		self.controller.page_update_controller.update_grid_page()
 		self.controller.page_update_controller.update_email_page()
 		self.controller.page_update_controller.update_staff_page()

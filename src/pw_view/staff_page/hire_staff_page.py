@@ -4,7 +4,7 @@ import flet as ft
 
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.driver_negotiation.driver_interest import DriverRejectionReason
-from pw_view.staff_page.staff_dialogs import RejectionDialog, AcceptDialog
+from pw_view.staff_page.staff_dialogs import RejectionDialog, AcceptDialog, DriverOfferDialog
 from pw_view.custom_widgets import custom_container
 
 if TYPE_CHECKING:
@@ -24,7 +24,8 @@ class HireStaffPage(ft.Column):
 
 		super().__init__(expand=1)
 
-	def update_free_agent_list(self, free_agents: list[str], role: StaffRoles, previously_approached: list[str]) -> None:
+	def update_free_agent_list(self, free_agents: list[str], role: StaffRoles,
+							previously_approached: list[str], pay_drivers: list[str]) -> None:
 		title = role.value.title().replace("1", " 1").replace("2", " 2")
 		self.title_text.value = f"Hire: {title}"
 		self.current_role = role
@@ -32,6 +33,7 @@ class HireStaffPage(ft.Column):
 		rows = []
 		self.name_text_buttons: list[ft.TextButton] = []
 
+		# Add rows for each free agent
 		for name in free_agents:
 			disabled = False
 			if name in previously_approached:
@@ -39,19 +41,29 @@ class HireStaffPage(ft.Column):
 
 			self.name_text_buttons.append(ft.TextButton(name, data=name, on_click=self.update_staff, disabled=disabled))
 
+			cells = [ft.DataCell(self.name_text_buttons[-1])]
+
+			# Add pay driver column
+			if role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
+				if name in pay_drivers:
+					cells.append(ft.DataCell(ft.Text("Yes")))
+				else:
+					cells.append(ft.DataCell(ft.Text("")))
+
 			row = ft.DataRow(
-				cells = [
-						ft.DataCell(self.name_text_buttons[-1])
-				]
+				cells = cells
 			)
 			
 			rows.append(row)
 
 		columns=[
-            ft.DataColumn(label=ft.Text("Name")),
+			ft.DataColumn(label=ft.Text("Name")),
 		]
 
-		self.free_agent_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30, width=300)
+		if role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
+			columns.append(ft.DataColumn(label=ft.Text("Pay Driver")))
+
+		self.free_agent_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30, width=400)
 		
 		# Make table scrollable
 
@@ -144,10 +156,9 @@ class HireStaffPage(ft.Column):
 		name = e.control.data
 
 		if self.current_role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
-			self.view.controller.staff_hire_controller.make_driver_offer(name, self.current_role)
+			self.view.controller.staff_hire_controller.open_driver_offer_dialog(name, self.current_role)
 			self.offer_btn.disabled = True
 			self.disable_name_text_button(name)
-			self.view.main_app.update()
 		else:
 			self.dlg_modal = ft.AlertDialog(
 				modal=True,
@@ -161,11 +172,16 @@ class HireStaffPage(ft.Column):
 				data=name
 			)
 
-			# self.view.main_app.open(dlg_modal)
 			self.view.main_app.overlay.append(self.dlg_modal)
 			self.dlg_modal.open = True
 			self.view.main_app.update()
-		
+
+	def open_driver_offer_dialog(self, driver_name: str, current_salary: int, pay_driver: bool) -> None:
+		offer_dialog = DriverOfferDialog(self.view.main_app, self.view, driver_name, current_salary, pay_driver)
+		self.view.main_app.overlay.append(offer_dialog)
+		offer_dialog.open = True
+		self.view.main_app.update()
+
 	def handle_close(self, e: ft.ControlEvent) -> None:
 		name = self.dlg_modal.data
 		self.view.main_app.close(self.dlg_modal)
@@ -174,8 +190,8 @@ class HireStaffPage(ft.Column):
 		if action.lower() == "yes":
 			self.view.controller.staff_hire_controller.complete_hire(name, self.current_role)
 
-	def show_accept_dialog(self, name: str, role: StaffRoles) -> None:
-		self.accept_dialog.update_text_widget(name, role)
+	def show_accept_dialog(self, name: str, role: StaffRoles, salary: int) -> None:
+		self.accept_dialog.update_text_widget(name, role, salary)
 
 		if self.accept_dialog in self.view.main_app.overlay:
 			self.view.main_app.overlay.remove(self.accept_dialog)

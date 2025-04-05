@@ -4,6 +4,7 @@ from typing import TypedDict, TYPE_CHECKING
 
 from pw_model.season import season_stats
 from pw_model.driver import driver_contract
+from pw_model.driver.driver_career_stats import DriverCareerStats
 from pw_model.team import team_model
 
 if TYPE_CHECKING:
@@ -30,7 +31,10 @@ class DriverModel:
 			  consistency : int,
 			  qualifying : int,
 			  contract_length : int,
-			  salary: int):
+			  salary : int,
+			  starts : int,
+			  pay_driver : bool,
+			  budget : int):
 		
 		self.model = model
 		self.name = name
@@ -39,6 +43,9 @@ class DriverModel:
 		self.speed = speed
 		self.consistency = consistency
 		self.qualifying = qualifying
+		
+		self.pay_driver = pay_driver
+		self.budget = budget
 
 		self.retiring = False
 		self.retired = False
@@ -48,6 +55,8 @@ class DriverModel:
 		self.contract = driver_contract.DriverContract(contract_length=contract_length, salary=salary)
 
 		self.retiring_age = decide_when_retiring(self.age)
+
+		self.career_stats = DriverCareerStats(starts=starts)
 
 		self.setup_season_stats()
 
@@ -64,7 +73,8 @@ class DriverModel:
 	
 	@property
 	def overall_rating(self) -> int:
-		return self.speed
+		rating = (self.speed + self.consistency + (self.qualifying * 20)) / 3
+		return int(rating)
 
 	@property
 	def details(self) -> DriverDetails:
