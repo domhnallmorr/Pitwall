@@ -187,6 +187,16 @@ class FinanceModel:
 
 		return transport_cost, damage_cost
 
+	def apply_testing_costs(self, distance_km: int) -> None:
+		# Transport
+		self.transport_costs_model.gen_test_transport_cost()
+		transport_cost = int(self.transport_costs_model.costs_by_test[-1])
+		millage_cost = int(distance_km * 1_200)
+
+		total_cost = transport_cost + millage_cost
+		
+		self.balance -= total_cost
+		
 	def update_balance_history(self) -> None:
 		self.balance_history.append(self.balance)
 		self.balance_history_dates.append(datetime(self.model.year, 1, 1) + timedelta(weeks=self.model.season.calendar.current_week - 1))

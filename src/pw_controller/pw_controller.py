@@ -10,6 +10,7 @@ from pw_view import view
 from pw_controller import race_controller, page_update_controller
 from pw_controller.email_page.email_controller import EmailController
 from pw_controller.team_selection.team_selection_controller import TeamSelectionController
+from pw_controller.testing.testing_controller import TestingController
 from pw_controller.track_page.track_page_controller import TrackPageController
 from pw_controller.game_modes import GameModes
 
@@ -26,6 +27,7 @@ class Controller:
 		self.facilities_controller = facilities_controller.FacilitiesController(self)
 		self.email_controller = EmailController(self)
 		self.team_selection_controller = TeamSelectionController(self)
+		self.testing_controller = TestingController(self)
 		self.track_page_controller = TrackPageController(self)
 		
 		self.model = pw_base_model.Model(roster, run_directory)
@@ -54,15 +56,15 @@ class Controller:
 		#TODO not redefining the race controller here will result in errors in post race actions
 		self.race_controller = race_controller.RaceController(self)
 
-		self.refresh_ui()
+		self.page_update_controller.refresh_ui()
 		self.page_update_controller.update_main_window()
 		self.view.return_to_main_window(mode="load")
 
 	# TODO check if can remove this, seems redundant now
-	def refresh_ui(self) -> None:
-		self.page_update_controller.update_main_window()
+	# def refresh_ui(self) -> None:
+	# 	self.page_update_controller.update_main_window()
 
-		self.page_update_controller.refresh_ui()
+	# 	self.page_update_controller.refresh_ui()
 		
 	def advance(self) -> None:
 		self.model.advance()
@@ -120,6 +122,7 @@ class Controller:
 		self.page_update_controller.update_standings_page()
 		self.page_update_controller.update_staff_page()
 		self.return_to_main_window()
+		self.page_update_controller.update_main_window()
 
 	def check_game_over(self) -> None:
 		game_over = False

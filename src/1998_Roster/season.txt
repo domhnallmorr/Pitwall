@@ -17,3 +17,14 @@ Autodromo Nazionale di Monza, 37
 Nurburgring, 39
 Suzuka Circuit, 44
 Calendar>
+Testing<
+Circuit de Barcelona-Catalunya, 5
+Circuit de Barcelona-Catalunya, 7
+Circuit de Barcelona-Catalunya, 16
+Silverstone Circuit, 20
+Circuit de Nevers Magny-Cours, 25
+Circuit de Barcelona-Catalunya, 29
+Silverstone Circuit, 34
+Circuit de Barcelona-Catalunya, 38
+Circuit de Barcelona-Catalunya, 41
+Testing>

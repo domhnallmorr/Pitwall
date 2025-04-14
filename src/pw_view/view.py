@@ -17,8 +17,9 @@ from pw_view.car_page import car_page
 from pw_view.facility_page import facility_page, upgrade_facility_page
 from pw_view.track_page.track_page import TrackPage
 from pw_view.custom_widgets.dialogs import ConfirmDialog
+from pw_view.testing.test_dialog import TestDialog
 
-from pw_view.view_enums import ViewPageEnums
+from pw_view.view_enums import ViewPageEnums, AdvanceModeEnums
 
 if TYPE_CHECKING:
 	from pw_controller.pw_controller import Controller
@@ -126,7 +127,7 @@ class View:
 		self.main_app.views.append(self.main_window)
 
 		if mode == "post_race": # avoid updating the adance button when loading a career
-			self.main_window.nav_sidebar.update_advance_button("advance")
+			self.main_window.nav_sidebar.update_advance_button(AdvanceModeEnums.ADVANCE)
 
 		self.main_app.update()
 
@@ -166,3 +167,21 @@ class View:
 			self.confirm_dialog.on_result = on_result
 		self.confirm_dialog.update_text_widget(message)
 		self.main_app.open(self.confirm_dialog)
+
+	def show_warning(self, title: str, message: str) -> None:
+		warning_dialog = ft.AlertDialog(
+			modal=True,
+			title=ft.Text(title),
+			content=ft.Text(message),
+			actions=[
+				ft.TextButton("OK", on_click=lambda e: self.main_app.close(warning_dialog))
+			],
+			actions_alignment=ft.MainAxisAlignment.END,
+		)
+		self.main_app.open(warning_dialog)
+
+	def show_test_dialog(self) -> None:
+		test_dialog = TestDialog(self)
+		self.main_app.overlay.append(test_dialog)
+		test_dialog.open = True
+		self.main_app.update()

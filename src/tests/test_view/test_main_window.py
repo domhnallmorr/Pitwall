@@ -5,6 +5,7 @@ from unittest.mock import patch
 import flet as ft
 from pw_view.main_window import MainWindow
 from pw_view.view_enums import ViewPageEnums
+from pw_model.pw_model_enums import CalendarState
 
 @pytest.fixture
 def mock_view():
@@ -47,10 +48,17 @@ def test_change_page(main_window, mock_view):
 def test_update_window(main_window, mock_view):
     """Test the update_window method."""
     with patch.object(main_window.week_text, "update") as mock_update:
-        main_window.update_window("Test Team", "Week 2 - 1999", True)
+        main_window.update_window("Test Team", "Week 2 - 1999", CalendarState.RACE_WEEK)
         assert main_window.team_text.value == "Test Team"
-        assert main_window.week_text.value == "Week 2 - 1999"
+        assert main_window.week_text.value == "Week 2 - 1999 (Race Week)"
         mock_update.assert_called_once()
+
+        # Test different calendar states
+        main_window.update_window("Test Team", "Week 3 - 1999", CalendarState.PRE_SEASON_TESTING)
+        assert main_window.week_text.value == "Week 3 - 1999 (Pre-Season Testing)"
+
+        main_window.update_window("Test Team", "Week 4 - 1999", CalendarState.POST_SEASON)
+        assert main_window.week_text.value == "Week 4 - 1999 (Post Season)"
 
 
 def test_update_email_button(main_window):

@@ -20,3 +20,6 @@ class GameData:
 	def driver_salary(self, driver_name: str) -> int:
 		driver_model = self.model.get_driver_model(driver_name)
 		return int(driver_model.contract.salary)
+	
+	def current_track_country(self) -> str:
+		return self.model.season.calendar.current_track_model.country

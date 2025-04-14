@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from pw_model.staff_market import staff_market
 from pw_model.staff_market import driver_transfers, manager_transfers
-from pw_model.pw_model_enums import StaffRoles
+from pw_model.pw_model_enums import StaffRoles, CalendarState
 from pw_model.driver_negotiation.driver_interest import determine_driver_interest, DriverInterest
 from pw_view.view_enums import ViewPageEnums
 
@@ -44,9 +44,14 @@ class StaffHireController:
 		self.controller.view.main_app.update()
 
 	def open_driver_offer_dialog(self, driver_name: str, role: StaffRoles) -> None:
-		# Here you can get the driver's current salary or any other relevant info
-		# current_salary = self.model.get_driver_model(driver_name).salary
+		if self.model.season.calendar.state in [CalendarState.PRE_SEASON, CalendarState.PRE_SEASON_TESTING]:
+			self.controller.view.show_warning(
+				"Cannot Approach Driver.",
+				"Drivers are not willing to enter negotiations before the season begins."
+			)
+			return
 
+		# Existing logic for opening driver offer dialog
 		if self.model.get_driver_model(driver_name).pay_driver is True:
 			current_salary = self.model.get_driver_model(driver_name).budget
 			pay_driver = True

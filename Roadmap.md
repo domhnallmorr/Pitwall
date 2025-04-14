@@ -14,7 +14,7 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 ## UI Improvements
 
 - [ ] Improve driver negotiation page
-- [ ] Turn improve facility page into a modal
+- [x] Turn improve facility page into a modal
 
 
 ## Off Track Features

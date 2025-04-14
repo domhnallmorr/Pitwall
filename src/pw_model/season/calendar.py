@@ -7,33 +7,48 @@ if TYPE_CHECKING:
 	from pw_model.season.season_model import SeasonModel
 	from pw_model.track.track_model import TrackModel
 
+from pw_model.pw_model_enums import CalendarState
+
 class Calendar:
 	def __init__(self, season: SeasonModel, dataframe: pd.DataFrame):
 		'''
-		Expected dataframe columns: ["Week", "Track", "Country", "Location", "Winner"]
+		Expected dataframe columns: ["Week", "Track", "Country", "Location", "Winner", "SessionType"]
 		'''
 		self.model = season.model
 		self.season = season
 		self.dataframe = dataframe
+		self.state = CalendarState.PRE_SEASON
 
 	@property
 	def number_of_races(self) -> int:
-		return int(self.dataframe.shape[0])
+		return int(len(self.race_weeks))
 	
 	@property
 	def race_weeks(self) -> list[int]:
-		return [int(w) for w in self.dataframe["Week"].values.tolist()]
+		race_rows = self.dataframe[self.dataframe["SessionType"] == "Race"]
+		return [int(w) for w in race_rows["Week"].values.tolist()]
+
+	@property
+	def testing_weeks(self) -> list[int]:
+		testing_rows = self.dataframe[self.dataframe["SessionType"] == "Testing"]
+		return [int(w) for w in testing_rows["Week"].values.tolist()]
+
+	@property
+	def in_testing_week(self) -> bool:
+		return self.current_week in self.testing_weeks
+
+	@property
+	def session_type(self) -> str:
+		if self.in_race_week:
+			return "Race"
+		elif self.in_testing_week:
+			return "Testing"
+		return "None"
 
 	@property
 	def in_race_week(self) -> bool:
-		is_race_week = False
+		return self.current_week in self.race_weeks
 		
-		if self.current_week in self.race_weeks:
-			if self.get_week_of_next_race() == self.current_week:
-				is_race_week = True
-				
-		return is_race_week
-	
 	@property
 	def current_track_model(self) -> TrackModel:
 		current_track = None
@@ -75,6 +90,7 @@ class Calendar:
 		self.current_week = 1
 		self.next_race_idx: Union[None, int] = 0
 		self.clear_winner_column()
+		self.state = CalendarState.PRE_SEASON
 
 	def clear_winner_column(self) -> None:
 		self.dataframe["Winner"] = None
@@ -84,6 +100,28 @@ class Calendar:
 	
 	def advance_one_week(self) -> None:
 		self.current_week += 1
+
+		# Reset state after testing/race
+		if self.state in [CalendarState.POST_TEST, CalendarState.POST_RACE]:
+			if self.current_week <= self.race_weeks[0]:
+				self.state = CalendarState.PRE_SEASON
+			else:
+				self.state = CalendarState.IN_SEASON
+
+		# Check if we are in a testing week
+		if self.current_week in self.testing_weeks:
+			if self.state == CalendarState.PRE_SEASON:
+				self.state = CalendarState.PRE_SEASON_TESTING
+			else:
+				self.state = CalendarState.IN_SEASON_TESTING
+
+		# Check if we are in a race week
+		if self.current_week in self.race_weeks:
+			self.state = CalendarState.RACE_WEEK
+
+		# Check for post season
+		if self.current_week > self.race_weeks[-1]:
+			self.state = CalendarState.POST_SEASON
 
 	def update_next_race(self) -> None:
 		'''
@@ -98,3 +136,8 @@ class Calendar:
 	def post_race_actions(self, winner: str) -> None:
 		self.dataframe.at[self.next_race_idx, "Winner"] = winner
 		self.update_next_race()
+
+		self.state = CalendarState.POST_RACE
+
+	def post_test_actions(self) -> None:
+		self.state = CalendarState.POST_TEST

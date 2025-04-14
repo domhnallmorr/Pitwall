@@ -22,6 +22,7 @@ class TransportCostsModel:
 		self.estimate_season_transport_costs()
 		self.total_costs = 0
 		self.costs_by_race: list[int] = []
+		self.costs_by_test: list[int] = []
 
 	def estimate_season_transport_costs(self) -> None:
 		self.estimated_season_costs = 0
@@ -30,10 +31,18 @@ class TransportCostsModel:
 			self.estimated_season_costs += self.get_country_costs(country)
 	
 	def gen_race_transport_cost(self) -> None:
-		country = self.model.season.calendar.current_track_model.country
+		country = self.model.game_data.current_track_country()
 		cost = self.get_country_costs(country) + self.randomiser.gen_random_element_of_transport_cost()
 		self.total_costs += cost
 		self.costs_by_race.append(cost)
+
+	def gen_test_transport_cost(self) -> None:
+		country = self.model.game_data.current_track_country()
+		cost = self.get_country_costs(country) + self.randomiser.gen_random_element_of_transport_cost()
+		cost = int(cost * 0.4) # tests are 40% of races due to less personnel/equipment
+		
+		self.total_costs += cost
+		self.costs_by_test.append(cost)
 
 	def setup_country_costs(self) -> None:
 		self.country_costs = {

@@ -40,8 +40,8 @@ def load_roster(model: Model, roster: str) -> pd.DataFrame:
 	
 
 def load_drivers(
-    model: Model, 
-    conn: sqlite3.Connection
+	model: Model, 
+	conn: sqlite3.Connection
 ) -> Tuple[List[driver_model.DriverModel], List[List[Tuple[str, driver_model.DriverModel]]]]:
 	drivers = []
 	future_drivers = []
@@ -269,33 +269,53 @@ def load_senior_staff(model: Model, conn: sqlite3.Connection) -> Tuple[List[Comm
 # 	return driver
 
 def load_season(model: Model, season_file: str) -> pd.DataFrame:
-
 	with open(season_file) as f:
 		data = f.readlines()
 
 	# PROCESS CALENDAR
+	calendar_start_idx = None
+	calendar_end_idx = None
+	testing_start_idx = None
+	testing_end_idx = None
+
 	for idx, line in enumerate(data):
 		if line.lower().startswith("calendar<"):
-			start_idx = idx
+			calendar_start_idx = idx
 		elif line.lower().startswith("calendar>"):
-			end_idx = idx
+			calendar_end_idx = idx
+		elif line.lower().startswith("testing<"):
+			testing_start_idx = idx
+		elif line.lower().startswith("testing>"):
+			testing_end_idx = idx
 
-	assert end_idx - start_idx + 1 > 2
-
-	calendar_data = data[start_idx + 1: end_idx]
-	dataframe_data = []
-
-	columns = ["Week", "Track", "Country", "Location", "Winner"]
+	# Process race calendar
+	calendar_data = data[calendar_start_idx + 1: calendar_end_idx]
+	grand_prix_data = []
+	columns = ["Week", "Track", "Country", "Location", "Winner", "SessionType"]
 
 	for line in calendar_data:
 		race_data = line.rstrip().split(",")
 		week = int(race_data[1])
 		track = model.get_track_model(race_data[0].rstrip().lstrip())
+		grand_prix_data.append([week, track.name, track.country, track.location, None, "Race"])
 
-		dataframe_data.append([week, track.name, track.country, track.location, None])
+	# Process testing sessions
+	testing_data = []
+
+	if testing_start_idx and testing_end_idx:
+		testing_sessions = data[testing_start_idx + 1: testing_end_idx]
+		for line in testing_sessions:
+			test_data = line.rstrip().split(",")
+			week = int(test_data[1])
+			track = model.get_track_model(test_data[0].rstrip().lstrip())
+			testing_data.append([week, track.name, track.country, track.location, None, "Testing"])
+
+	# Combine race and testing data
+	all_data = grand_prix_data + testing_data
 	
-	calendar_dataframe = pd.DataFrame(columns=columns, data=dataframe_data)
-
+	# Sort by week number
+	all_data.sort(key=lambda x: x[0])
+	calendar_dataframe = pd.DataFrame(columns=columns, data=all_data)
 	return calendar_dataframe
 	
 def load_tracks(model: Model, track_files: list[str]) -> None:

@@ -12,6 +12,7 @@ class CarPageData:
 	car_speeds: list[tuple[str, int]]  # List of (team_name, car_speed) tuples
 	current_status: str
 	progress: float = 0.0  # Add progress field, defaulting to 0
+	testing_progress: int = 0  # Add testing progress field, defaulting to 0
 	# Add engine supplier data
 	engine_supplier_name: str = ""
 	engine_supplier_deal: str = ""
@@ -32,6 +33,7 @@ def get_car_page_data(model: Model) -> CarPageData:
 	car_speeds.sort(key=lambda x: x[1], reverse=True)  # sort, highest speed to lowest speed
 	
 	car_dev_model = model.player_team_model.car_development_model
+	testing_model = model.player_team_model.testing_model
 	engine_supplier_model = model.player_team_model.engine_supplier_model
 	engine_supplier_deal = model.player_team_model.supplier_model.engine_supplier_deal
 	tyre_supplier_model = model.player_team_model.tyre_supplier_model
@@ -53,6 +55,7 @@ def get_car_page_data(model: Model) -> CarPageData:
 		car_speeds=car_speeds,
 		current_status=car_dev_model.current_status.value,  # Changed from status to current_status
 		progress=progress,
+		testing_progress=testing_model.testing_progress,  # Changed from testing_progress to testing_progress
 		engine_supplier_name=engine_supplier_model.name,
 		engine_supplier_deal=engine_supplier_deal.value,
 		engine_power=engine_supplier_model.power,

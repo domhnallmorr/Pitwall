@@ -40,6 +40,16 @@ class TitleScreen(ft.View):
 			animation_duration=300,
 		)
 
+		disabled_style = ft.ButtonStyle(
+				bgcolor=ft.Colors.with_opacity(0.05, ft.Colors.WHITE),
+				shape=ft.RoundedRectangleBorder(radius=10),
+				side=ft.BorderSide(1, ft.Colors.WHITE),
+				color=ft.Colors.with_opacity(0.3, ft.Colors.WHITE),  # Faded text
+				overlay_color=ft.Colors.with_opacity(0.0, ft.Colors.WHITE),  # No hover overlay
+				padding=ft.Padding(12, 16, 12, 16),
+				animation_duration=300,
+			)
+
 		new_career_button = ft.ElevatedButton("New Career", on_click=self.new_career_click, width=220, style=button_style)
 
 		load_button = ft.ElevatedButton(
@@ -47,7 +57,7 @@ class TitleScreen(ft.View):
 			on_click=self.load_game_click,
 			width=220,
 			disabled=not os.path.isfile(f"{run_directory}\\save_game.db"),
-			style=button_style
+			style=button_style if os.path.isfile(f"{run_directory}\\save_game.db") else disabled_style
 		)
 
 		quit_button = ft.ElevatedButton("Quit", on_click=self.quit_game_click, width=220, style=button_style)

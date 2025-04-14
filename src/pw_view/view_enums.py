@@ -12,3 +12,8 @@ class ViewPageEnums(Enum):
 	STAFF = "staff"
 	STANDINGS = "standings"
 	TRACKPAGE = "track_page"
+
+class AdvanceModeEnums(Enum):
+	ADVANCE = "Advance"
+	GO_TO_RACE = "Go To Race"
+	GO_TO_TEST = "Go To Test"

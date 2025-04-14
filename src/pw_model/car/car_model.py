@@ -9,3 +9,5 @@ class CarModel:
 	def implement_car_development(self, speed_increase: int) -> None:
 		self.speed += speed_increase
 		
+	def implement_testing_progess(self, speed_increase: int) -> None:
+		self.speed += speed_increase

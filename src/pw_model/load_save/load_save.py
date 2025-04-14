@@ -4,11 +4,12 @@ from typing import Union, Optional, TYPE_CHECKING
 import pandas as pd
 
 from pw_model import load_roster
-from pw_model.pw_model_enums import StaffRoles
+from pw_model.pw_model_enums import StaffRoles, CalendarState
 from pw_model.load_save.drivers_load_save import save_drivers, load_drivers
 from pw_model.load_save.driver_offers_load_save import save_driver_offers, load_driver_offers
 from pw_model.load_save.email_load_save import save_email, load_email
 from pw_model.load_save.finance_load_save import save_finance_model, load_finance_model
+from pw_model.load_save.general_load_save import save_general, load_general
 from pw_model.load_save.sponsors_load_save import save_sponsor_model
 from pw_model.load_save.standings_load_save import save_standings, load_standings
 from pw_model.load_save.car_development_load_save import save_car_development, load_car_development
@@ -17,6 +18,7 @@ from pw_model.load_save.transport_costs_load_save import save_transport_costs_mo
 from pw_model.load_save.team_principal_load_save import save_team_principals
 from pw_model.load_save.tyres_load_save import save_tyre_suppliers, load_tyre_suppliers
 from pw_model.load_save.staff_market_load_save import save_grid_this_year, save_grid_next_year, save_new_contracts_df, load_grid_this_year, load_grid_next_year
+from pw_model.load_save.testing_load_save import save_testing_model, load_testing
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -48,9 +50,10 @@ def save_game(model: Model, mode: str="file") -> sqlite3.Connection:
 	save_tyre_suppliers(model, save_file)
 
 	if model.player_team_model is not None:
-		save_transport_costs_model(model.player_team_model.finance_model.transport_costs_model, save_file)
-		save_finance_model(model, save_file)
 		save_car_development(model, save_file)
+		save_finance_model(model, save_file)
+		save_testing_model(model, save_file)
+		save_transport_costs_model(model.player_team_model.finance_model.transport_costs_model, save_file)
 
 	save_file.commit()
 
@@ -58,32 +61,6 @@ def save_game(model: Model, mode: str="file") -> sqlite3.Connection:
 		save_file.close() # only close if we are saving to file, if in memory, keep the connection open
 
 	return save_file
-
-def save_general(model: Model, save_file: sqlite3.Connection) -> None:
-	cursor = save_file.cursor()
-
-	cursor.execute('''
-		CREATE TABLE IF NOT EXISTS "general" (
-		"Year"	INTEGER,		
-		"Week"	INTEGER,
-		"PlayerTeam"	TEXT,
-		"NextRaceIdx"	INTEGER
-		)'''
-				)				
-
-	cursor.execute("DELETE FROM general") # clear existing data
-
-	cursor.execute('''
-		INSERT INTO general (year, week, playerteam, nextraceidx) 
-		VALUES (?, ?, ?, ?)
-	''', (
-		model.year,
-		model.season.calendar.current_week, 
-		model.player_team, 
-		model.season.calendar.next_race_idx
-	))
-
-
 
 
 def save_drivers_stats(model: Model, save_file: sqlite3.Connection) -> None:
@@ -367,28 +344,7 @@ def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mod
 		load_transport_costs(conn, model.player_team_model.finance_model.transport_costs_model)
 		load_finance_model(model, conn)
 		load_car_development(conn, model)
-
-def load_general(conn: sqlite3.Connection, model: Model) -> None:
-	table_name = "general"
-	cursor = conn.execute(f'PRAGMA table_info({table_name})')
-
-	columns = cursor.fetchall()
-	column_names = [column[1] for column in columns]
-
-	year_idx = column_names.index("Year")
-	week_idx = column_names.index("Week")
-	player_team_idx = column_names.index("PlayerTeam")
-	next_race_idx = column_names.index("NextRaceIdx")
-
-	cursor = conn.cursor()
-	cursor.execute(f"SELECT * FROM {table_name}")
-
-	data = cursor.fetchall()[0]
-
-	model.season.calendar.current_week = data[week_idx]
-	model.year = data[year_idx]
-	model.player_team = data[player_team_idx]
-	model.season.calendar.next_race_idx = data[next_race_idx]
+		load_testing(conn, model)
 
 
 def load_drivers_stats(conn: sqlite3.Connection, model: Model) -> None:

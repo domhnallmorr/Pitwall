@@ -17,10 +17,12 @@ def mock_view():
 def f1_schedule_short():
     """Provide a shortened F1 schedule DataFrame."""
     return pd.DataFrame({
-        "Week": [10, 13, 15],
-        "Track": ["Albert Park", "Interlagos", "Autodromo Enzo e Dino Ferrari"],
-        "Country": ["Australia", "Brazil", "Italy"],
-        "Location": ["Melbourne", "Sao Paulo", "Imola"]
+        "Week": [10, 11, 13, 15],
+        "Track": ["Albert Park", "Barcelona", "Interlagos", "Autodromo Enzo e Dino Ferrari"],
+        "Country": ["Australia", "Spain", "Brazil", "Italy"],
+        "Location": ["Melbourne", "Barcelona", "Sao Paulo", "Imola"],
+        "Winner": [None, None, None, None],
+        "SessionType": ["Race", "Testing", "Race", "Race"]
     })
 
 def test_update_page_f1_schedule_short(mock_view, f1_schedule_short):
@@ -39,7 +41,7 @@ def test_update_page_f1_schedule_short(mock_view, f1_schedule_short):
     assert hasattr(calendar_page, "calendar_table")
     table = calendar_page.calendar_table.data_table
     assert isinstance(table, ft.DataTable)
-    assert len(table.columns) == f1_schedule_short.shape[1]
+    assert len(table.columns) == f1_schedule_short.shape[1] + 1 # +1 for the added "#" column
     assert len(table.rows) == len(f1_schedule_short)  # Rows match the data
 
     # Verify the column headers

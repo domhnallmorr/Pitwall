@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING
 import flet as ft
 
 from pw_view import sidebar
-from pw_view.view_enums import ViewPageEnums
+from pw_view.view_enums import ViewPageEnums, AdvanceModeEnums
+from pw_model.pw_model_enums import CalendarState
 
 if TYPE_CHECKING:
 	from pw_view.view import View
@@ -79,17 +80,19 @@ class MainWindow(ft.View):
 		self.controls = [self.header, self.content_row]
 		self.view.main_app.update()
 		
-	def update_window(self, team: str, date: str, in_race_week: bool) -> None:
-
+	def update_window(self, team: str, date: str, state: CalendarState) -> None:
 		self.team_text.value = team
-
-		self.week_text.value = date
+		
+		# Format would be like "Week 1 - 1998 (PRE_SEASON)"
+		self.week_text.value = f"{date} ({state.value.title()})"
 		self.week_text.update()
 
-		if in_race_week is True:
-			self.nav_sidebar.update_advance_button("go_to_race")
+		if state == CalendarState.RACE_WEEK:
+			self.nav_sidebar.update_advance_button(AdvanceModeEnums.GO_TO_RACE)
+		elif state in [CalendarState.IN_SEASON_TESTING, CalendarState.PRE_SEASON_TESTING]:
+			self.nav_sidebar.update_advance_button(AdvanceModeEnums.GO_TO_TEST)
 		else:
-			self.nav_sidebar.update_advance_button("advance")
+			self.nav_sidebar.update_advance_button(AdvanceModeEnums.ADVANCE)
 		
 		self.view.main_app.update()
 		

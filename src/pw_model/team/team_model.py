@@ -14,6 +14,7 @@ from pw_model.pw_model_enums import StaffRoles
 from pw_model.team.suppliers_model import SupplierModel
 from pw_model.car_development.car_development_model import CarDevelopmentModel
 from pw_model.engine.engine_supplier_model import EngineSupplierModel
+from pw_model.testing.testing_model import TestingModel
 from pw_model.tyre.tyre_supplier_model import TyreSupplierModel
 
 if TYPE_CHECKING:
@@ -52,6 +53,7 @@ class TeamModel:
 		self.driver2 = driver2
 		self.car_model = car_model
 		self.car_development_model = CarDevelopmentModel(self.model, self)
+		self.testing_model = TestingModel(self.model)
 
 		self.number_of_staff = number_of_staff
 		self.facilities_model = FacilityModel(self, facilities)

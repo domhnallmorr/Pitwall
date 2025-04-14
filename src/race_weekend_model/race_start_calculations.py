@@ -32,7 +32,6 @@ def calculate_run_to_turn1(race_weekend_model: RaceWeekendModel) -> order_after_
 
 	apply_turn1_incidents(race_weekend_model, order_after_turn1)
 	order_after_turn1 = sorted(order_after_turn1, key=lambda x: x[0], reverse=False)
-	print(order_after_turn1)
 	
 	'''
 	example of order_after_turn1

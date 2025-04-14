@@ -57,6 +57,10 @@ class CarDevelopmentTab(ft.Column): # type: ignore
 		self.medium_row = ft.Row(controls=[self.medium_update_text, self.medium_update_time_text, self.medium_cost_text, self.medium_develop_btn], spacing=spacing)
 		self.minor_row = ft.Row(controls=[self.minor_update_text, self.minor_update_time_text, self.minor_cost_text, self.minor_develop_btn], spacing=spacing)
 
+		# Add new testing progress widget
+		self.testing_progress = RatingWidget("Testing Progress:", min_value=0, max_value=100, text_width=140, number_of_stars=10)
+		self.testing_header = ft.Text("Testing Progress", weight=ft.FontWeight.BOLD, size=self.view.SUBHEADER_FONT_SIZE)
+
 	def setup_container(self) -> None:
 		self.container = CustomContainer(
 			self.view, 
@@ -73,7 +77,10 @@ class CarDevelopmentTab(ft.Column): # type: ignore
 			self.available_updates_header,
 			self.major_row,
 			self.medium_row,
-			self.minor_row
+			self.minor_row,
+			ft.Divider(),
+			self.testing_header,
+			self.testing_progress
 		]
 
 		return ft.Column(
@@ -99,5 +106,8 @@ class CarDevelopmentTab(ft.Column): # type: ignore
 		self.major_develop_btn.disabled = disabled
 		self.medium_develop_btn.disabled = disabled
 		self.minor_develop_btn.disabled = disabled
+
+		# Update testing progress
+		self.testing_progress.update_row(data.testing_progress)
 
 		self.view.main_app.update()

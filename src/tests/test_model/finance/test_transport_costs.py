@@ -15,9 +15,18 @@ class MockModel:
             self.calendar.current_track_model = MagicMock()
             self.calendar.current_track_model.country = "Australia"
 
+    class MockGameData:
+        def __init__(self):
+            self._current_track_country = "Australia"
+            
+        def current_track_country(self):
+            return self._current_track_country
+        
     def __init__(self):
         self.season = self.MockSeason()
+        self.game_data = self.MockGameData()        
         self.inbox = MagicMock()
+        
 
 @pytest.fixture
 def transport_costs_model():
@@ -59,15 +68,15 @@ def test_gen_race_transport_cost_with_multiple_races_and_mock_randomiser(transpo
 
         # First race (Australia)
         transport_costs_model.gen_race_transport_cost()
-        country1 = transport_costs_model.model.season.calendar.current_track_model.country
+        country1 = transport_costs_model.model.game_data.current_track_country()
         expected_cost1 = transport_costs_model.get_country_costs(country1) + 50_000
         assert transport_costs_model.total_costs == expected_cost1
         assert transport_costs_model.costs_by_race == [expected_cost1]
 
         # Set up second race (Spain)
-        transport_costs_model.model.season.calendar.current_track_model.country = "Spain"
+        transport_costs_model.model.game_data._current_track_country = "Spain"  # Update the game_data country
         transport_costs_model.gen_race_transport_cost()
-        country2 = transport_costs_model.model.season.calendar.current_track_model.country
+        country2 = transport_costs_model.model.game_data.current_track_country()
         expected_cost2 = transport_costs_model.get_country_costs(country2) + 50_000
         assert transport_costs_model.total_costs == expected_cost1 + expected_cost2
         assert transport_costs_model.costs_by_race == [expected_cost1, expected_cost2]
@@ -87,3 +96,21 @@ def test_estimate_season_transport_costs_with_mock_randomiser(transport_costs_mo
             transport_costs_model.get_country_costs("Japan")
         )
         assert transport_costs_model.estimated_season_costs == expected_costs
+
+def test_gen_test_transport_cost_with_mock_randomiser(transport_costs_model):
+    # Mock the randomizer to return a specific value
+    with patch.object(transport_costs_model.randomiser, 'gen_random_element_of_transport_cost', return_value=50_000):
+        transport_costs_model.setup_new_season()
+
+        # Generate test transport cost
+        transport_costs_model.gen_test_transport_cost()
+        
+        # Calculate expected cost
+        country = transport_costs_model.model.game_data.current_track_country()
+        expected_base_cost = transport_costs_model.get_country_costs(country) + 50_000
+        expected_cost = int(expected_base_cost * 0.4)  # tests are 40% of race costs
+        
+        # Verify the cost was calculated and stored correctly
+        assert transport_costs_model.total_costs == expected_cost
+        assert len(transport_costs_model.costs_by_test) == 1
+        assert transport_costs_model.costs_by_test[0] == expected_cost

@@ -1,12 +1,15 @@
 
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from enum import Enum
+
 import flet as ft
 
-from pw_view.view_enums import ViewPageEnums
+from pw_view.view_enums import ViewPageEnums, AdvanceModeEnums
 
 if TYPE_CHECKING:
 	from pw_view.view import View
+
 
 class Sidebar(ft.Column): # type: ignore
 	def __init__(self, view: View):
@@ -73,15 +76,20 @@ class Sidebar(ft.Column): # type: ignore
 	def go_to_race_weekend(self, e: ft.ControlEvent) -> None:
 		self.view.controller.go_to_race_weekend()
 
-	def update_advance_button(self, mode: str) -> None:
-		assert mode in ["advance", "go_to_race"]
+	def go_to_test(self, e: ft.ControlEvent) -> None:
+		self.view.controller.testing_controller.go_to_test()
 
-		if mode == "go_to_race":
-			self.advance_btn.text = "Go To Race"
+	def update_advance_button(self, mode: AdvanceModeEnums) -> None:
+		self.advance_btn.text = mode.value
+
+		if mode == AdvanceModeEnums.GO_TO_RACE:
 			self.advance_btn.on_click = self.go_to_race_weekend
 
-		if mode == "advance":
-			self.advance_btn.text = "Advance"
+		elif mode == AdvanceModeEnums.ADVANCE:
 			self.advance_btn.on_click = self.advance
 
+		elif mode == AdvanceModeEnums.GO_TO_TEST:
+			self.advance_btn.on_click = self.go_to_test
+		else:
+			raise ValueError(f"Unexpected advance mode: {mode}")
 		self.view.main_app.update()

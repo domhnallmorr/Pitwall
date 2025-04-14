@@ -10,6 +10,7 @@ from pw_model.senior_staff.technical_director import TechnicalDirector
 from pw_model.team.team_model import TeamModel
 from pw_model.email import email_generation
 from pw_model.email import car_development_emails
+from pw_model.email import testing_emails
 from pw_model.pw_model_enums import StaffRoles
 
 if TYPE_CHECKING:
@@ -130,6 +131,16 @@ class Inbox:
 	def generate_ai_development_completed_email(self, development_type: str, team: str) -> None:
 		msg = car_development_emails.ai_development_completed_email(development_type, team)
 		title = f"{team} {development_type.capitalize()} Upgrade!"
+		self.add_email(msg, title)
+
+	def generate_testing_progress_email(self) -> None:
+		msg = testing_emails.generate_testing_progress_email(self)
+		title = f"Testing Update"
+		self.add_email(msg, title)
+	
+	def generate_testing_completed_email(self, distance_km: int) -> None:
+		msg = testing_emails.generate_testing_completed_email(self, distance_km)
+		title = f"Testing Update"
 		self.add_email(msg, title)
 
 	def generate_dataframe(self) -> pd.DataFrame:
