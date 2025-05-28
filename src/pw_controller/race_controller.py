@@ -51,7 +51,7 @@ class RaceController:
 		data: RaceSessionData = {
 			"current_session": session,
 			"standings_df": standings_df,
-			"driver_flags": [self.controller.model.get_driver_model(d).country for d in standings_df["Driver"].values]
+			"driver_flags": [self.controller.model.entity_manager.get_driver_model(d).country for d in standings_df["Driver"].values]
 		}
 
 		# Add race specific data

@@ -20,3 +20,6 @@ class CalendarState(Enum):
 	IN_SEASON = "in-season"
 	POST_SEASON = "post season"
 
+class SponsorTypes(Enum):
+	NONE = "none"
+	TITLE = "title sponsor"

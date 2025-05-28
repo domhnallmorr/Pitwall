@@ -79,18 +79,8 @@ class SeasonModel:
 	def advance_one_week(self) -> None:
 		self.calendar.advance_one_week()
 
-		if self.calendar.current_week == 53:
+		if self.calendar.current_week == self.model.FINAL_WEEK + 1:
 			self.model.end_season()
-
-	# def update_next_race(self) -> None:
-	# 	'''
-	# 	This gets called in the grand_prix model, in post race actions
-	# 	'''
-	# 	if self.next_race_idx is not None:
-	# 		self.next_race_idx += 1
-
-	# 		if self.next_race_idx > self.model.calendar.shape[0] - 1:
-	# 			self.next_race_idx = None
 
 	def post_race_actions(self, winner: str, player_driver1_crashed: bool, player_driver2_crashed: bool) -> None:
 		# was working on this last

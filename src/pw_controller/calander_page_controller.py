@@ -22,7 +22,7 @@ class CalendarPageController:
 
 		calendar_row = self.model.calendar.iloc[idx]
 
-		track_model = self.model.get_track_model(calendar_row["Track"])
+		track_model = self.model.entity_manager.get_track_model(calendar_row["Track"])
 		
 		data = {
 			"title": track_model.title,

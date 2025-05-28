@@ -46,15 +46,15 @@ def determine_commercial_manager_salary_range(tech_director_rating: int) -> list
 def determine_final_salary(model: Model, person_hired: str, role: StaffRoles) -> int:
 
 	if role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
-		driver_model = model.get_driver_model(person_hired)
+		driver_model = model.entity_manager.get_driver_model(person_hired)
 		salary_range = determine_driver_salary_range(driver_model.overall_rating)
 	
 	elif role == StaffRoles.TECHNICAL_DIRECTOR:
-		tech_director_model = model.get_technical_director_model(person_hired)
+		tech_director_model = model.entity_manager.get_technical_director_model(person_hired)
 		salary_range = determine_technical_director_salary_range(tech_director_model.average_skill)
 
 	elif role == StaffRoles.COMMERCIAL_MANAGER:
-		commercial_manager_model = model.get_commercial_manager_model(person_hired)
+		commercial_manager_model = model.entity_manager.get_commercial_manager_model(person_hired)
 		salary_range = determine_commercial_manager_salary_range(commercial_manager_model.average_skill)
 
 	return random.randint(salary_range[0], salary_range[1])

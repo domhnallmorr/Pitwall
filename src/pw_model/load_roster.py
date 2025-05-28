@@ -13,10 +13,10 @@ from pw_model.track import track_model
 from pw_model.senior_staff.commercial_manager import CommercialManager
 from pw_model.senior_staff.technical_director import TechnicalDirector
 from pw_model.senior_staff.team_principal import TeamPrincipalModel
-from pw_model.load_save.sponsors_load_save import load_sponsors
-from pw_model.load_save.sponsors_load_save import load_sponsors
+from pw_model.load_save.team_sponsors_load_save import load_team_sponsors
 from pw_model.load_save.engine_suppliers_load_save import load_engine_suppliers
 from pw_model.load_save.tyres_load_save import load_tyre_suppliers
+from pw_model.load_save.sponsors_load_save import load_sponsors
 from pw_model.team.suppliers_model import SupplierDeals
 
 if TYPE_CHECKING:
@@ -33,8 +33,10 @@ def load_roster(model: Model, roster: str) -> pd.DataFrame:
 	model.drivers, model.future_drivers = load_drivers(model, conn)
 	model.commercial_managers, model.technical_directors, model.team_principals, model.future_managers = load_senior_staff(model, conn)
 	model.teams = load_teams(model, conn)
+	load_team_descriptions(conn, model)
 	model.engine_suppliers = load_engine_suppliers(model, conn)
 	model.tyre_suppliers = load_tyre_suppliers(model, conn)
+	model.sponsors, model.future_sponsors = load_sponsors(conn)
 
 	return calendar_dataframe
 	
@@ -108,7 +110,7 @@ def load_drivers(
 	return drivers, future_drivers
 
 def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamModel]:
-	sponsors_df = load_sponsors(conn)
+	sponsors_df = load_team_sponsors(conn)
 
 	teams = []
 
@@ -168,18 +170,14 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 
 			starting_balance = row[balance_idx]
 			title_sponsor = str(sponsors_df.loc[sponsors_df["Team"] == name, "TitleSponsor"].iloc[0])
-			title_sponsor_value = int(sponsors_df.loc[sponsors_df["Team"] == name, "TitleSponsorValue"].iloc[0])
 			other_sponsorship = int(sponsors_df.loc[sponsors_df["Team"] == name, "OtherSponsorsValue"].iloc[0])
-
-			if title_sponsor_value is not None:
-				title_sponsor_value = int(title_sponsor_value)
 
 			commercial_manager = row[commercial_manager_idx]
 			technical_director = row[technical_director_idx]
 
 			car = car_model.CarModel(car_speed)
 			team = team_model.TeamModel(model, name, country, team_principal, driver1, driver2, car, number_of_staff, facilities,
-							   starting_balance, other_sponsorship, title_sponsor, title_sponsor_value,
+							   starting_balance, other_sponsorship, title_sponsor,
 							   commercial_manager, technical_director,
 							   engine_supplier, engine_supplier_deal, engine_supplier_cost,
 							   tyre_supplier, tyre_supplier_deal, tyre_supplier_cost,
@@ -192,6 +190,26 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 			teams.append(team)
 
 	return teams
+
+def load_team_descriptions(conn: sqlite3.Connection, model: Model) -> dict[str, str]:
+
+	table = "TeamSelectionText"
+	cursor = conn.execute(f'PRAGMA table_info({table})')
+	columns = cursor.fetchall()
+	column_names = [column[1] for column in columns]
+
+	name_idx = column_names.index("Team")
+	description_idx = column_names.index("Description")
+
+	cursor = conn.cursor()
+	cursor.execute(f"SELECT * FROM {table}")
+
+	for row in cursor.fetchall():
+		team = model.entity_manager.get_team_model(row[name_idx])
+		if team is None:
+			continue
+		team.team_description = row[description_idx]
+
 
 def load_senior_staff(model: Model, conn: sqlite3.Connection) -> Tuple[List[CommercialManager], List[TechnicalDirector], List[TeamPrincipalModel], List[Union[CommercialManager, TechnicalDirector, TeamPrincipalModel]]]:
 	technical_directors = []
@@ -296,7 +314,7 @@ def load_season(model: Model, season_file: str) -> pd.DataFrame:
 	for line in calendar_data:
 		race_data = line.rstrip().split(",")
 		week = int(race_data[1])
-		track = model.get_track_model(race_data[0].rstrip().lstrip())
+		track = model.entity_manager.get_track_model(race_data[0].rstrip().lstrip())
 		grand_prix_data.append([week, track.name, track.country, track.location, None, "Race"])
 
 	# Process testing sessions
@@ -307,7 +325,7 @@ def load_season(model: Model, season_file: str) -> pd.DataFrame:
 		for line in testing_sessions:
 			test_data = line.rstrip().split(",")
 			week = int(test_data[1])
-			track = model.get_track_model(test_data[0].rstrip().lstrip())
+			track = model.entity_manager.get_track_model(test_data[0].rstrip().lstrip())
 			testing_data.append([week, track.name, track.country, track.location, None, "Testing"])
 
 	# Combine race and testing data

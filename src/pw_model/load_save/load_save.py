@@ -10,15 +10,18 @@ from pw_model.load_save.driver_offers_load_save import save_driver_offers, load_
 from pw_model.load_save.email_load_save import save_email, load_email
 from pw_model.load_save.finance_load_save import save_finance_model, load_finance_model
 from pw_model.load_save.general_load_save import save_general, load_general
-from pw_model.load_save.sponsors_load_save import save_sponsor_model
+from pw_model.load_save.team_sponsors_load_save import save_team_sponsors
+from pw_model.load_save.sponsors_load_save import load_sponsors, save_sponsors
 from pw_model.load_save.standings_load_save import save_standings, load_standings
 from pw_model.load_save.car_development_load_save import save_car_development, load_car_development
 from pw_model.load_save.calendar_load_save import save_calendar, load_calendar
 from pw_model.load_save.transport_costs_load_save import save_transport_costs_model, load_transport_costs
 from pw_model.load_save.team_principal_load_save import save_team_principals
+from pw_model.load_save.technical_directors_load_save import save_technical_directors
 from pw_model.load_save.tyres_load_save import save_tyre_suppliers, load_tyre_suppliers
 from pw_model.load_save.staff_market_load_save import save_grid_this_year, save_grid_next_year, save_new_contracts_df, load_grid_this_year, load_grid_next_year
 from pw_model.load_save.testing_load_save import save_testing_model, load_testing
+from pw_model.load_save.sponsor_market_load_save import save_sponsors_this_year, save_sponsors_next_year, save_sponsor_new_contracts_df, load_sponsors_this_year, load_sponsors_next_year
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -44,10 +47,14 @@ def save_game(model: Model, mode: str="file") -> sqlite3.Connection:
 	save_standings(model, save_file)
 	save_email(model, save_file)
 	save_calendar(model, save_file)
-	save_sponsor_model(model, save_file)
+	save_team_sponsors(model, save_file)
 	save_driver_offers(model, save_file)
 	save_team_principals(model, save_file)
 	save_tyre_suppliers(model, save_file)
+	save_sponsors(model, save_file)
+	save_sponsors_this_year(model, save_file)
+	save_sponsors_next_year(model, save_file)
+	save_sponsor_new_contracts_df(model, save_file)
 
 	if model.player_team_model is not None:
 		save_car_development(model, save_file)
@@ -157,53 +164,7 @@ def save_commercial_managers(model: Model, save_file: sqlite3.Connection) -> Non
 					commercial_manager.retired,
 				))
 
-def save_technical_directors(model : Model, save_file: sqlite3.Connection) -> None:
-	cursor = save_file.cursor()
 
-	cursor.execute('''
-	CREATE TABLE IF NOT EXISTS "technical_directors" (
-	"Year"	TEXT,
-	"Name"	TEXT,
-	"Age"	INTEGER,
-	"Skill"	INTEGER,
-	"Salary"	INTEGER,
-	"ContractLength"	INTEGER,
-	"RetiringAge"	INTEGER,
-	"Retiring"	INTEGER,
-	"Retired"	INTEGER
-			)'''
-				)
-	
-	cursor.execute("DELETE FROM technical_directors") # clear existing data
-
-	for idx, list_type in enumerate([model.technical_directors, model.future_managers]):
-		for technical_director in list_type:
-			process = False
-			if idx == 0:
-				year = "default"
-				process = True
-			elif idx == 1:
-				if technical_director[1].role == StaffRoles.TECHNICAL_DIRECTOR:
-					year = technical_director[0]
-					technical_director = technical_director[1]
-					process = True
-
-			if process is True:
-				
-				cursor.execute('''
-					INSERT INTO technical_directors (year, name, age, skill, salary, contractlength, retiringage, retiring, retired) 
-					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-				''', (
-					year,
-					technical_director.name, 
-					technical_director.age,
-					technical_director.skill,
-					technical_director.contract.salary,
-					technical_director.contract.contract_length,
-					technical_director.retiring_age,
-					technical_director.retiring,
-					technical_director.retired,
-				))
 
 def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 
@@ -339,6 +300,7 @@ def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mod
 	load_calendar(conn, model)
 	load_driver_offers(conn, model)
 	load_tyre_suppliers(model, conn)
+	load_sponsors(conn)
 
 	if model.player_team_model is not None:
 		load_transport_costs(conn, model.player_team_model.finance_model.transport_costs_model)
@@ -359,7 +321,7 @@ def load_drivers_stats(conn: sqlite3.Connection, model: Model) -> None:
 		podiums_this_season = row["PodiumsThisSeason"]
 		dnfs_this_season = row["DNFsThisSeason"]
 
-		driver_model = model.get_driver_model(name)
+		driver_model = model.entity_manager.get_driver_model(name)
 		driver_model.season_stats.starts_this_season = starts_this_season
 		driver_model.season_stats.points_this_season = points_this_season
 		driver_model.season_stats.poles_this_season = poles_this_season
@@ -392,7 +354,7 @@ def load_teams_stats(conn: sqlite3.Connection, model: Model) -> None:
 		best_result_this_season = row["BestResultThisSeason"]
 		rnd_best_result_scored = row["BestResultRndThisSeason"]
 
-		team_model = model.get_team_model(name)
+		team_model = model.entity_manager.get_team_model(name)
 		team_model.season_stats.points_this_season = points_this_season
 		team_model.season_stats.poles_this_season = poles_this_season
 		team_model.season_stats.wins_this_season = wins_this_season

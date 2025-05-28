@@ -10,6 +10,7 @@ from pw_model.senior_staff.technical_director import TechnicalDirector
 from pw_model.team.team_model import TeamModel
 from pw_model.email import email_generation
 from pw_model.email import car_development_emails
+from pw_model.email import sponsor_emails
 from pw_model.email import testing_emails
 from pw_model.pw_model_enums import StaffRoles
 
@@ -110,6 +111,11 @@ class Inbox:
 	def new_manager_hired_email(self, team: str, manager: str, role: str) -> None:
 		msg = email_generation.manager_hiring_email(team, manager, role)
 		title = f"{team} hire {manager}"
+		self.add_email(msg, title)
+
+	def new_sponsor_signed_email(self, sponsor: str, team: str, role: str) -> None:
+		msg = sponsor_emails.gen_new_sponsor_signed_email(sponsor, team, role)
+		title = f"{team} Sign {sponsor}"
 		self.add_email(msg, title)
 
 	def new_race_finance_email(self, transport_cost: int, damage_cost: int, title_sponsor_payment: int,

@@ -9,6 +9,7 @@ from pw_model.driver.driver_model import DriverModel
 from pw_model.driver_negotiation.driver_offers import DriverOffers
 from pw_model.email import email_model
 from pw_model.season import season_model
+from pw_model.sponsor_market.sponsor_market import SponsorMarket
 from pw_model.staff_market import staff_market
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.staff_market import manager_transfers
@@ -21,6 +22,8 @@ from pw_model.senior_staff.commercial_manager import CommercialManager
 from pw_model.senior_staff.technical_director import TechnicalDirector
 from pw_model.senior_staff.team_principal import TeamPrincipalModel
 from pw_model.engine.engine_supplier_model import EngineSupplierModel
+from pw_model.entity_manager import EntityManager
+from pw_model.sponsors.sponsor_model import SponsorModel
 from pw_model.tyre.tyre_supplier_model import TyreSupplierModel
 
 class Model:
@@ -47,15 +50,21 @@ class Model:
 		self.team_principals: List[TeamPrincipalModel] = []
 		self.engine_suppliers: List[EngineSupplierModel] = []
 		self.tyre_suppliers: List[TyreSupplierModel] = []
+		self.sponsors: List[SponsorModel] = []
+		self.future_sponsors: List[tuple[str, SponsorModel]] = []
+
+		self.entity_manager = EntityManager(self)	
 
 		if roster is not None:
 			calendar_dataframe = load_roster.load_roster(self, roster)
 		
 		self.player_team = self.teams[0].name # set player team initally to first team in roster. This is so the view can setup all the pages on startup
 		self.year = 1998
+		self.FINAL_WEEK = 52
 		self.season = season_model.SeasonModel(self, calendar_dataframe)
 
 		self.staff_market = staff_market.StaffMarket(self)
+		self.sponsor_market = SponsorMarket(self)
 		self.driver_offers = DriverOffers(self)
 
 		self.end_season(increase_year=False, start_career=True)
@@ -64,6 +73,7 @@ class Model:
 			self.player_team = None
 			# this is called in start_career method, when player is  (mode=normal)
 			self.staff_market.compute_transfers()
+			self.sponsor_market.compute_transfers()
 
 		for team in self.teams:
 			# call any functions that need the model fully initialised
@@ -71,7 +81,7 @@ class Model:
 
 	@property
 	def player_team_model(self) -> TeamModel:
-		return self.get_team_model(self.player_team)
+		return self.entity_manager.get_team_model(self.player_team)
 	
 	def load_career(self) -> None:
 		load_save.load(self)
@@ -79,87 +89,18 @@ class Model:
 	def save_career(self) -> None:
 		load_save.save_game(self)
 
-	def get_driver_model(self, driver_name: str) -> DriverModel:
-		driver_model = None
-
-		for d in self.drivers:
-			if d.name == driver_name:
-				driver_model = d
-				break
-			
-		return driver_model
-	
-	def get_team_model(self, team_name: str) -> TeamModel:
-		team_model = None
-
-		for t in self.teams:
-			if t.name == team_name:
-				team_model = t
-				break
-			
-		return team_model
-	
-	def get_commercial_manager_model(self, name: str) -> CommercialManager:
-		commercial_manager_model = None
-
-		for c in self.commercial_managers:
-			if c.name == name:
-				commercial_manager_model = c
-				break
-			
-		return commercial_manager_model
-
-	def get_technical_director_model(self, name: str) -> TechnicalDirector:
-		technical_director_mdoel = None
-
-		for t in self.technical_directors:
-			if t.name == name:
-				technical_director_mdoel = t
-				break
-			
-		return technical_director_mdoel
-	
-	def get_track_model(self, track_name: str) -> TrackModel:
-		track_model = None
-
-		for track in self.tracks:
-			if track.name == track_name:
-				track_model = track
-
-		assert track_model is not None, f"Failed to Find Track {track_name}"
-
-		return track_model
-	
-	def get_engine_supplier_model(self, name: str) -> EngineSupplierModel:
-		engine_supplier_model = None
-
-		for e in self.engine_suppliers:
-			if e.name == name:
-				engine_supplier_model = e
-				break
-			
-		return engine_supplier_model
-
-	def get_tyre_supplier_model(self, name: str) -> TyreSupplierModel:
-		tyre_supplier_model = None
-
-		for t in self.tyre_suppliers:
-			if t.name == name:
-				tyre_supplier_model = t
-				break
-			
-		return tyre_supplier_model
 
 	def advance(self) -> None:
 		self.inbox.reset_number_new_emails()
-		
-		if self.season.calendar.current_week == 51:
+		print(self.season.calendar.current_week)
+		if self.season.calendar.current_week == self.FINAL_WEEK - 1:
+			print("herexxxxxxxx")
 			self.staff_market.ensure_player_has_staff_for_next_season()
 			
 		self.season.advance_one_week()
 
 		if self.player_team is not None:
-			self.get_team_model(self.player_team).advance()
+			self.entity_manager.get_team_model(self.player_team).advance()
 
 		# advance functions for AI teams
 		for team in self.teams:
@@ -167,6 +108,7 @@ class Model:
 				team.car_development_model.advance()
 
 		self.staff_market.announce_signings()
+		self.sponsor_market.announce_signings()
 
 		if self.auto_save is True:
 			self.save_career()
@@ -193,52 +135,27 @@ class Model:
 
 		for technical_director in self.technical_directors:
 			technical_director.end_season(increase_age=increase_year)
-		# # TODO move the below into a start new season method
-		# for team in self.teams:
-		# 	team.check_drivers_for_next_year()
+
+		for sponsor in self.sponsors:
+			sponsor.end_season(increase_year=increase_year)
 
 		if increase_year is True:
 			self.year += 1
 			self.staff_market.update_team_drivers()
+			self.sponsor_market.update_team_sponsors()
 			logging.critical(f"Start Season {self.year}")
-			self.add_new_drivers()
-			self.add_new_managers()
+			self.entity_manager.setup_new_season() # add new drivers and managers
 			self.driver_offers.setup_new_season()
 
 		self.staff_market.setup_dataframes()
+		self.sponsor_market.setup_dataframes()
 
 		self.season.setup_new_season_variables()
 
 		if start_career is False:
 			self.staff_market.compute_transfers() # driver transfers at start of career are handled in the start_career method (once player_team is defined)
+			self.sponsor_market.compute_transfers() # driver transfers at start of career are handled in the start_career method (once player_team is defined)
 
-	def add_new_drivers(self) -> None:
-		new_drivers = [d for d in self.future_drivers if int(d[0]) == self.year]
-
-		for new_driver in new_drivers:
-			self.drivers.append(new_driver[1])
-
-			self.future_drivers.remove(new_driver)
-
-		# Check we don't have duplicate drivers
-		drivers_names = [driver.name for driver in self.drivers]
-		assert len(drivers_names) == len(set(drivers_names))
-	
-	def add_new_managers(self) -> None:
-		new_managers = [m for m in self.future_managers if int(m[0]) == self.year]
-		
-		'''
-		example of new_managers list
-		[['1999', <pw_model.senior_staff.technical_director.TechnicalDirector object at 0x00000150339AA8A0>]]
-		'''
-
-		for new_manager in new_managers:
-			if new_manager[1].role == StaffRoles.COMMERCIAL_MANAGER:
-				self.commercial_managers.append(new_manager[1])
-			elif new_manager[1].role == StaffRoles.TECHNICAL_DIRECTOR:
-				self.technical_directors.append(new_manager[1])
-
-			self.future_managers.remove(new_manager)
 
 	def start_career(self, player_team: str) -> None:
 		self.player_team = player_team
@@ -247,6 +164,7 @@ class Model:
 			self.player_team_model.finance_model.update_prize_money(self.season.standings_manager.player_team_position)
 
 		self.staff_market.compute_transfers()
+		self.sponsor_market.compute_transfers() # driver transfers at start of career are handled in the start_career method (once player_team is defined)
 
 	#TODO Move this to a different file, possibly a stand alone file in the teams folder
 	def gen_team_average_stats(self) -> dict[str, int]:
@@ -258,20 +176,11 @@ class Model:
 			"staff": int(statistics.fmean([t.number_of_staff for t in self.teams])),
 			"max_staff": max([t.number_of_staff for t in self.teams]),
 			"facilities": int(statistics.fmean([t.facilities_model.factory_rating for t in self.teams])),
-			"max_sponsorship": max([t.finance_model.sponsors_model.total_sponsor_income for t in self.teams]),
-			"sponsorship": int(statistics.fmean([t.finance_model.sponsors_model.total_sponsor_income for t in self.teams])),
+			"max_sponsorship": max([t.finance_model.sponsorship_model.total_sponsor_income for t in self.teams]),
+			"sponsorship": int(statistics.fmean([t.finance_model.sponsorship_model.total_sponsor_income for t in self.teams])),
 		}
 
 		return team_average_stats
 
-	def get_team_principal_model(self, team_principal_name: str) -> Union[TeamPrincipalModel, None]:
-		team_principal_model = None
 
-		for tp in self.team_principals:
-			if tp.name == team_principal_name:
-				team_principal_model = tp
-				break
-
-		assert team_principal_model is not None, f"Team Principal {team_principal_name} not found"
-		return team_principal_model
 

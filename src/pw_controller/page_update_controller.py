@@ -49,8 +49,8 @@ class PageUpdateController:
 		drivers_standings_df = self.model.season.standings_manager.drivers_standings_df.copy(deep=True)
 		constructors_standings_df = self.model.season.standings_manager.constructors_standings_df.copy(deep=True)
 
-		drivers_flags = [self.model.get_driver_model(d).country for d in drivers_standings_df["Driver"].values]
-		team_flags = [self.model.get_team_model(t).country for t in constructors_standings_df["Team"].values]
+		drivers_flags = [self.model.entity_manager.get_driver_model(d).country for d in drivers_standings_df["Driver"].values]
+		team_flags = [self.model.entity_manager.get_team_model(t).country for t in constructors_standings_df["Team"].values]
 		self.view.standings_page.update_standings(drivers_standings_df, constructors_standings_df, drivers_flags, team_flags)
 
 	def update_email_page(self) -> None:
@@ -60,10 +60,10 @@ class PageUpdateController:
 	def update_finance_page(self) -> None:
 		data: finance_data.FinanceData = {
 			"profit": copy.deepcopy(self.model.player_team_model.finance_model.season_profit),
-			"title_sponsor": copy.deepcopy(self.model.player_team_model.finance_model.sponsors_model.title_sponsor),
+			"title_sponsor": copy.deepcopy(self.model.player_team_model.finance_model.sponsorship_model.title_sponsor),
 
-			"title_sponsor_value": copy.deepcopy(self.model.player_team_model.finance_model.sponsors_model.title_sponsor_value),
-			"other_sponsorship": copy.deepcopy(self.model.player_team_model.finance_model.sponsors_model.other_sponsorship),
+			"title_sponsor_value": copy.deepcopy(self.model.player_team_model.finance_model.sponsorship_model.title_sponsor_value),
+			"other_sponsorship": copy.deepcopy(self.model.player_team_model.finance_model.sponsorship_model.other_sponsorship),
 			"prize_money": copy.deepcopy(self.model.player_team_model.finance_model.prize_money),
 			"drivers_payments": copy.deepcopy(self.model.player_team_model.finance_model.drivers_payments),
 			"total_income": copy.deepcopy(self.model.player_team_model.finance_model.total_income),
@@ -81,6 +81,7 @@ class PageUpdateController:
 			
 			"balance_history": copy.deepcopy(self.model.player_team_model.finance_model.balance_history),
 			"balance_history_dates": copy.deepcopy(self.model.player_team_model.finance_model.balance_history_dates),
+			"summary_df": self.model.player_team_model.finance_model.sponsorship_model.summary_df,
 		}
 
 		self.view.finance_page.update_page(data)
@@ -89,9 +90,16 @@ class PageUpdateController:
 		year = self.model.year
 		grid_this_year_df = self.model.staff_market.grid_this_year_df.copy(deep=True)
 		grid_next_year_announced_df = self.model.staff_market.grid_next_year_announced_df.copy(deep=True)
+		sponsors_this_year_df = self.model.sponsor_market.sponsors_this_year_df.copy(deep=True)
+		sponsors_next_year_df = self.model.sponsor_market.sponsors_next_year_df.copy(deep=True)
 
-		self.view.grid_page.update_page(year, grid_this_year_df, grid_next_year_announced_df)
-		# Removed the change_display call since tab management is now handled by Flet
+		self.view.grid_page.update_page(
+			year,
+			grid_this_year_df,
+			grid_next_year_announced_df,
+			sponsors_this_year_df,
+			sponsors_next_year_df
+		)
 
 	def update_home_page(self) -> None:
 		data: HomePageData = {
@@ -115,7 +123,7 @@ class PageUpdateController:
 			"player_managers": self.model.player_team_model.average_manager_skill,
 			"player_staff": self.model.player_team_model.number_of_staff,
 			"player_facilities": self.model.player_team_model.facilities_model.factory_rating,
-			"player_sponsorship": self.model.player_team_model.finance_model.sponsors_model.total_sponsor_income,
+			"player_sponsorship": self.model.player_team_model.finance_model.sponsorship_model.total_sponsor_income,
 		}
 		self.view.home_page.update_page(data)
 
@@ -129,7 +137,7 @@ class PageUpdateController:
 		self.view.car_page.update_page(data)
 
 	def update_main_window(self) -> None:
-		player_team_model = self.model.get_team_model(self.model.player_team)
+		player_team_model = self.model.entity_manager.get_team_model(self.model.player_team)
 		team = f"{self.model.player_team} - ${player_team_model.finance_model.balance:,}"
 		date = f"Week {self.model.season.calendar.current_week} - {self.model.year}"
 		state = self.model.season.calendar.state

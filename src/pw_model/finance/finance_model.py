@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Deque
 from typing import TYPE_CHECKING, Union
 
-from pw_model.finance.sponsors_model import SponsorModel
+from pw_model.finance.sponsorship_model import SponsorshipModel
 from pw_model.finance.transport_costs import TransportCostsModel
 from pw_model.finance.damage_costs import DamageCosts
 from pw_model.finance.car_development_costs import CarDevelopmentCosts
@@ -37,7 +37,7 @@ def calculate_prize_money(finishing_position: int) -> int:
 
 class FinanceModel:
 	def __init__(self, model: Model, team_model: TeamModel, opening_balance: int, other_sponsorship: int,
-			  title_sponsor: str, title_sponsor_value: int,
+			  title_sponsor: str,
 			  finishing_position: int):
 		
 		self.model = model
@@ -54,7 +54,7 @@ class FinanceModel:
 		self.balance_history_dates: Deque[datetime] = collections.deque(maxlen=130)
 
 		self.consecutive_weeks_in_debt = 0
-		self.sponsors_model = SponsorModel(model, self.team_model, other_sponsorship, title_sponsor, title_sponsor_value)
+		self.sponsorship_model = SponsorshipModel(model, self.team_model, other_sponsorship, title_sponsor)
 		self.transport_costs_model = TransportCostsModel(self.model)
 		self.damage_costs_model = DamageCosts()
 		self.car_development_costs_model = CarDevelopmentCosts()
@@ -91,7 +91,7 @@ class FinanceModel:
 
 	@property
 	def total_income(self) -> int:
-		return int(self.prize_money + self.sponsors_model.total_sponsor_income + self.drivers_payments)
+		return int(self.prize_money + self.sponsorship_model.total_sponsor_income + self.drivers_payments)
 	
 	@property
 	def total_expenditure(self) -> int:
@@ -153,12 +153,12 @@ class FinanceModel:
 										  tyre_payment, profit, self.driver_race_costs)
 		
 	def process_race_income(self) -> int:
-		self.sponsors_model.process_sponsor_post_race_payments()
+		self.sponsorship_model.process_sponsor_post_race_payments()
 		
-		other_sponsors_payments = self.sponsors_model.other_sponser_payments[-1]
+		other_sponsors_payments = self.sponsorship_model.other_sponser_payments[-1]
 		self.balance += other_sponsors_payments
 
-		title_sponsor_payment = int(self.sponsors_model.title_sponser_payments[-1])
+		title_sponsor_payment = int(self.sponsorship_model.title_sponser_payments[-1])
 		self.balance += title_sponsor_payment
 
 		return title_sponsor_payment
@@ -211,7 +211,7 @@ class FinanceModel:
 
 	def end_season(self) -> None:
 		self.season_opening_balance = self.balance
-		self.sponsors_model.setup_new_season()
+		self.sponsorship_model.setup_new_season()
 		self.transport_costs_model.setup_new_season()
 		self.car_development_costs_model.setup_new_season()
 

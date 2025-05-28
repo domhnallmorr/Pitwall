@@ -11,10 +11,10 @@ def get_facilities_rating(team_model: TeamModel) -> int:
 
 # FINANCIAL DATA
 def get_team_title_sponsor(team_model: TeamModel) -> str:
-	return str(team_model.finance_model.sponsors_model.title_sponsor)
+	return str(team_model.finance_model.sponsorship_model.title_sponsor)
 
 def get_team_title_sponsor_value(team_model: TeamModel) -> int:
-	return int(team_model.finance_model.sponsors_model.title_sponsor_value)
+	return int(team_model.finance_model.sponsorship_model.title_sponsor_value)
 
 def get_team_income(team_model: TeamModel) -> int:
 	return int(team_model.finance_model.total_income)

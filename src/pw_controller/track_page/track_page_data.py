@@ -16,7 +16,7 @@ class TrackData:
 
 
 def get_track_page_data(model: Model, track: str) -> TrackData:
-	track_model: TrackModel = model.get_track_model(track)
+	track_model: TrackModel = model.entity_manager.get_track_model(track)
 
 	return TrackData(
 		name = track_model.name,

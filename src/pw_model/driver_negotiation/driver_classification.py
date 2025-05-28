@@ -8,7 +8,7 @@ from pw_model.driver_negotiation.driver_negotiation_enums import DriverCategory
 
 
 def classify_driver(driver: str, model: Model) -> DriverCategory:
-	driver_model = model.get_driver_model(driver)
+	driver_model = model.entity_manager.get_driver_model(driver)
 	rating = driver_model.overall_rating
 	starts = driver_model.career_stats.starts
 

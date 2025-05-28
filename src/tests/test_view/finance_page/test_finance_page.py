@@ -1,78 +1,77 @@
 import pytest
-from unittest.mock import Mock
-from flet import Text, Row, Column, Stack
+import flet as ft
 from pw_view.finance_page.finance_page import FinancePage
 
-class MockView:
+# Dummy tab class to intercept calls
+class DummyTab:
+    def __init__(self, view):
+        self.view = view
+        self.updated_with = None
+
+    def update_tab(self, data):
+        self.updated_with = data
+
+# Dummy main_app with an update spy
+class DummyMainApp:
     def __init__(self):
-        self.background_image = Mock()
-        self.page_header_style = Mock()
-        self.dark_grey = "#23232A"
+        self.update_calls = 0
 
-@pytest.fixture
-def finance_page():
-    # Mock the view and create an instance of FinancePage
-    view = MockView()
-    return FinancePage(view)
+    def update(self):
+        self.update_calls += 1
 
-def test_initialization(finance_page):
-    # Test if the page initializes correctly with the required widgets
-    assert isinstance(finance_page, Column)
-    assert len(finance_page.controls) == 2
-    assert isinstance(finance_page.controls[0], Text)  # "Finance" header
-    assert isinstance(finance_page.controls[1], Stack)  # Background stack
+# Dummy view to pass into FinancePage
+class DummyView:
+    def __init__(self):
+        self.background_image = object()
+        self.page_header_style = "dummy_style"
+        self.main_app = DummyMainApp()
 
-def test_setup_widgets(finance_page):
-    # Check if widgets are set up correctly
-    assert isinstance(finance_page.sponsor_income_text, Text)
-    assert finance_page.sponsor_income_text.value == "Sponsorship: $1"
+@pytest.fixture(autouse=True)
+def patch_tabs(monkeypatch):
+    import pw_view.finance_page.finance_page as finance_page_mod
+    monkeypatch.setattr(finance_page_mod, 'OverviewTab', DummyTab)
+    monkeypatch.setattr(finance_page_mod, 'SponsorsTab', DummyTab)
 
-    assert isinstance(finance_page.total_income_text, Text)
-    assert finance_page.total_income_text.value == "Total: $1"
 
-    assert isinstance(finance_page.total_expenditure_text, Text)
-    assert finance_page.total_expenditure_text.value == "Total: $1"
+def test_tabs_initialization():
+    view = DummyView()
+    page = FinancePage(view)
 
-def test_update_page(finance_page):
-    # Test updating the page with mocked FinanceData
-    mock_data = {
-        "total_sponsorship": 500000,
-        "prize_money": 250000,
-        "drivers_payments": 100000,
-        "total_income": 850000,
-        "total_staff_costs_per_year": 300000,
-        "drivers_salary": 200000,
-        "technical_director_salary": 150000,
-        "commercial_manager_salary": 120000,
-        "race_costs": 50000,
-        "damage_costs": 80000,
-        "total_expenditure": 700000,
-        "balance_history_dates": ["2023-01-01", "2023-02-01"],
-        "balance_history": [500000, 850000],
-        "profit": 430_002,
-        "title_sponsor": "Some Sponsor",
-        "title_sponsor_value": 20_000_000,
-        "other_sponsorship": 12_000_050,
-        "car_development_costs": 100_000,
-        "engine_supplier_cost": 124_000,
-        "tyre_supplier_cost": 424_000
-    }
+    assert isinstance(page.tabs, ft.Tabs)
+    tabs_list = page.tabs.tabs
+    assert len(tabs_list) == 2
 
-    finance_page.update_page(mock_data)
+    overview_tab, sponsors_tab = tabs_list
+    assert overview_tab.text == "Overview"
+    assert overview_tab.icon == ft.Icons.BUSINESS
+    assert isinstance(overview_tab.content.content, DummyTab)
 
-    assert finance_page.prize_money_income_text.value == "Prize Money: $250,000"
-    assert finance_page.total_income_text.value == "Total: $850,000"
-    assert finance_page.total_expenditure_text.value == "Total: $700,000 (To Date)"
-    assert finance_page.profit_text.value == "Profit/Loss This Season: $430,002"
-    assert finance_page.title_sponsor_text.value == "Title Sponsor: Some Sponsor"
-    assert finance_page.title_sponsor_value_text.value == "Title Sponsorship: $20,000,000"
-    assert finance_page.sponsor_income_text.value == "Other Sponsorship: $12,000,050"
-    assert finance_page.car_development_costs_text.value == "Car Development Costs: $100,000 (To Date)"
-    assert finance_page.engine_supplier_cost_text.value == "Engine Supplier: $124,000"
-    assert finance_page.tyre_supplier_cost_text.value == "Tyre Supplier: $424,000"        # Simulate chart update (no direct visual assertions, but ensure no errors)
-    finance_page.update_history_chart(mock_data)
+    assert sponsors_tab.text == "Sponsors"
+    assert sponsors_tab.icon == ft.Icons.CASES
+    assert isinstance(sponsors_tab.content.content, DummyTab)
 
-def test_balance_formatter(finance_page):
-    # Test the custom balance formatter
-    assert finance_page.balance_formatter(900000, 0) == "$900K"
-    assert finance_page.balance_formatter(1500000, 0) == "$1M"
+def test_background_stack_and_controls():
+    view = DummyView()
+    page = FinancePage(view)
+
+    # Verify background stack composition
+    assert page.background_stack.controls[0] == view.background_image
+    assert page.background_stack.controls[1] == page.tabs
+
+    # Verify top-level controls in the Column
+    text_control = page.controls[0]
+    assert isinstance(text_control, ft.Text)
+    assert text_control.value == "Finance"
+    assert text_control.theme_style == view.page_header_style
+    assert page.controls[1] == page.background_stack
+
+def test_update_page_calls_update_tab_and_main_app_update():
+    view = DummyView()
+    page = FinancePage(view)
+    dummy_data = {}  # TypedDict content not used by DummyTab
+
+    page.update_page(dummy_data)
+
+    assert page.overview_tab.updated_with == dummy_data
+    assert page.sponsors_tab.updated_with == dummy_data
+    assert view.main_app.update_calls == 1

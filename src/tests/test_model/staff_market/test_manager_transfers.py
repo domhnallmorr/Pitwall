@@ -29,7 +29,7 @@ def test_get_top_technical_directors():
 	assert top_technical_directors == ["John Barnard"]
 
 	# Make newey available and check he get's picked up
-	newey_model = model.get_technical_director_model("Adrian Newey")
+	newey_model = model.entity_manager.get_technical_director_model("Adrian Newey")
 	newey_model.contract.contract_length = 1
 	newey_model.retiring = False
 	model.staff_market.setup_dataframes()
@@ -64,7 +64,7 @@ def test_manager_transfer_at_season_end():
 
 		for idx, row in computed_transfers.iterrows():
 			team = row["team"]
-			team_model = model.get_team_model(team)
+			team_model = model.entity_manager.get_team_model(team)
 
 			assert team_model.technical_director == row[StaffRoles.TECHNICAL_DIRECTOR.value]
 			assert team_model.commercial_manager == row[StaffRoles.COMMERCIAL_MANAGER.value]
@@ -74,10 +74,10 @@ def test_player_hire_commercial_manager():
 	Test when the player signs a commercial manager, that manger is not signed by any other team
 	'''
 	model = create_model.create_model(mode="headless", auto_save=False)
-	model.player_team = "Benetton"
+	model.player_team = "Benedetti"
 
 	for i in range(50):
-		model.staff_market.complete_hiring("Les Olsen", "Benetton", StaffRoles.COMMERCIAL_MANAGER)
+		model.staff_market.complete_hiring("Les Olsen", "Benedetti", StaffRoles.COMMERCIAL_MANAGER)
 
 		assert model.staff_market.grid_next_year_df[StaffRoles.COMMERCIAL_MANAGER.value].values.tolist().count("Les Olsen") == 1
 

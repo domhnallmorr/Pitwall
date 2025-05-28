@@ -33,7 +33,7 @@ class StaffHireController:
 		if role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
 			free_agents = driver_transfers.get_free_agents(self.model, for_player_team=True)
 			previously_approached = self.model.driver_offers.drivers_who_have_been_approached()
-			pay_drivers = [driver for driver in free_agents if self.model.get_driver_model(driver).pay_driver is True]
+			pay_drivers = [driver for driver in free_agents if self.model.entity_manager.get_driver_model(driver).pay_driver is True]
 		else:
 			free_agents = manager_transfers.get_free_agents(self.model, role, for_player_team=True)
 			previously_approached = []
@@ -52,8 +52,8 @@ class StaffHireController:
 			return
 
 		# Existing logic for opening driver offer dialog
-		if self.model.get_driver_model(driver_name).pay_driver is True:
-			current_salary = self.model.get_driver_model(driver_name).budget
+		if self.model.entity_manager.get_driver_model(driver_name).pay_driver is True:
+			current_salary = self.model.entity_manager.get_driver_model(driver_name).budget
 			pay_driver = True
 		else:
 			current_salary = self.model.game_data.driver_salary(driver_name)
@@ -70,7 +70,7 @@ class StaffHireController:
 		if driver_interest in [DriverInterest.NOT_INTERESTED]:
 			self.controller.view.hire_staff_page.show_rejection_dialog(driver, driver_rejection_reason)
 		elif driver_interest in [DriverInterest.ACCEPTED]:
-			if self.model.get_driver_model(driver).pay_driver is True:
+			if self.model.entity_manager.get_driver_model(driver).pay_driver is True:
 				salary = -1 * salary # negative salary means driver pays team
 			self.controller.view.hire_staff_page.show_accept_dialog(driver, role, salary)
 
@@ -86,11 +86,11 @@ class StaffHireController:
 		returns typeddict with personal details of the staff member
 		'''
 		if role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
-			return copy.deepcopy(self.controller.model.get_driver_model(name).details)
+			return copy.deepcopy(self.controller.model.entity_manager.get_driver_model(name).details)
 		elif role == StaffRoles.TECHNICAL_DIRECTOR:
-			return copy.deepcopy(self.controller.model.get_technical_director_model(name).details)
+			return copy.deepcopy(self.controller.model.entity_manager.get_technical_director_model(name).details)
 		elif role == StaffRoles.COMMERCIAL_MANAGER:
-			return copy.deepcopy(self.controller.model.get_commercial_manager_model(name).details)
+			return copy.deepcopy(self.controller.model.entity_manager.get_commercial_manager_model(name).details)
 	
 	def hire_workforce(self) -> None:
 		current_workforce = self.controller.model.player_team_model.number_of_staff

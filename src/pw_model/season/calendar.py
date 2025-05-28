@@ -58,7 +58,7 @@ class Calendar:
 		'''
 		for idx, row in self.dataframe.iterrows():
 			if row["Week"] >= self.current_week:
-				current_track = self.model.get_track_model(row["Track"])
+				current_track = self.model.entity_manager.get_track_model(row["Track"])
 				assert current_track is not None, f"Failed to find track {row['Track']}"
 				break
 
@@ -70,7 +70,7 @@ class Calendar:
 			return "Post Season"
 		else:
 			track_name = self.dataframe.iloc[self.next_race_idx]["Track"]
-			return str(self.model.get_track_model(track_name).title)
+			return str(self.model.entity_manager.get_track_model(track_name).title)
 
 	@property
 	def next_race_week(self) -> str:

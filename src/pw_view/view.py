@@ -58,6 +58,7 @@ class View:
 
 		self.flags_small_path = fr"{self.run_directory}\pw_view\assets\flags_small"
 		self.track_maps_path = fr"{self.run_directory}\pw_view\assets\track_maps"
+		self.team_logos_path = fr"{self.run_directory}\pw_view\assets\team_logos"
 
 		self.setup_background_images()
 		self.setup_pages()

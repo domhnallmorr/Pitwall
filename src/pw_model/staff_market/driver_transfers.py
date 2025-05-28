@@ -59,7 +59,7 @@ def handle_top_3_drivers(model: Model) -> None:
 	[['Michael Schumacher', 98], ['Mika Hakkinen', 87], ['Jacques Villeneuve', 84], ['Damon Hill', 78], .......
 	'''
 
-	drivers_by_rating = [driver for driver in model.season.drivers_by_rating if model.get_driver_model(driver[0]).age > 25]
+	drivers_by_rating = [driver for driver in model.season.drivers_by_rating if model.entity_manager.get_driver_model(driver[0]).age > 25]
 	
 	drivers_by_rating = [d[0] for d in drivers_by_rating[:3]] # d[0] is drivers name
 	teams_by_rating = [t[0] for t in model.season.teams_by_rating[:4]] # t[0] is teams name
@@ -131,6 +131,6 @@ def team_hire_driver(model: Model, team: str, driver_idx: str, free_agents: List
 	logging.debug(f"{team} hiring {driver_idx}")
 	logging.debug(f"Free Agents: {free_agents}")
 	
-	team_model = model.get_team_model(team)
+	team_model = model.entity_manager.get_team_model(team)
 	driver_hired = team_model.hire_driver(driver_idx, free_agents)
 	model.staff_market.handle_team_hiring_someone(team, driver_idx, driver_hired)

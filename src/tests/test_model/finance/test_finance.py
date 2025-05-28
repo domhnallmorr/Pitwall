@@ -84,7 +84,6 @@ def test_weekly_update(dummy_model, dummy_team_model):
         opening_balance=100_000_000,
         other_sponsorship=0,
         title_sponsor="TestSponsor",
-        title_sponsor_value=0,
         finishing_position=0,
     )
 
@@ -129,7 +128,6 @@ def test_post_race_actions(dummy_model, dummy_team_model):
         opening_balance=100_000_000,
         other_sponsorship=0,
         title_sponsor="TestSponsor",
-        title_sponsor_value=0,
         finishing_position=0,
     )
 
@@ -151,12 +149,12 @@ def test_post_race_actions(dummy_model, dummy_team_model):
     # For sponsors: override process_sponsor_post_race_payments to simulate:
     #   - Other sponsor payment: 50,000
     #   - Title sponsor payment: 100,000
-    fm.sponsors_model.other_sponser_payments = []
-    fm.sponsors_model.title_sponser_payments = []
+    fm.sponsorship_model.other_sponser_payments = []
+    fm.sponsorship_model.title_sponser_payments = []
     def fake_sponsor_payments():
-        fm.sponsors_model.other_sponser_payments.append(50_000)
-        fm.sponsors_model.title_sponser_payments.append(100_000)
-    fm.sponsors_model.process_sponsor_post_race_payments = fake_sponsor_payments
+        fm.sponsorship_model.other_sponser_payments.append(50_000)
+        fm.sponsorship_model.title_sponser_payments.append(100_000)
+    fm.sponsorship_model.process_sponsor_post_race_payments = fake_sponsor_payments
 
     # Now call post_race_actions.
     # Let’s simulate that driver1 crashed and driver2 did not.

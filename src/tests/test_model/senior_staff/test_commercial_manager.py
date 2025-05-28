@@ -6,15 +6,15 @@ def test_sponsorship_update():
 
 	model = create_model.create_model(mode="headless")
 
-	for idx, team in enumerate(["Ferrari", "Prost", "Minardi"]):
-		team_model = model.get_team_model(team)
+	for idx, team in enumerate(["Ferano", "Pascal", "Marchetti"]):
+		team_model = model.entity_manager.get_team_model(team)
 
 		sponsorship_values = []
 		indices = []
 		for i in range(150):
 			team_model.end_season(increase_year=True)
 			model.player_team = team
-			sponsorship_values.append(team_model.finance_model.sponsors_model.other_sponsorship)
+			sponsorship_values.append(team_model.finance_model.sponsorship_model.other_sponsorship)
 			indices.append(i)
 
 		assert max(sponsorship_values) <= 20_000_000
@@ -29,7 +29,7 @@ def test_sponsorship_update():
 def test_end_season():
 	model = create_model.create_model(mode="headless")
 
-	team_model = model.get_team_model("Ferrari")
+	team_model = model.entity_manager.get_team_model("Ferano")
 
 	commercial_manager_age = team_model.commercial_manager_model.age
 

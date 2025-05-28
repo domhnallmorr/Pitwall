@@ -22,7 +22,7 @@ def test_new_driver_creation():
 	model.end_season()
 
 	# Button gets added at the start of 1999, so check that he is now in the game
-	assert model.get_driver_model("Jenson Button") is not None
+	assert model.entity_manager.get_driver_model("Jenson Button") is not None
 
 	# Check Button has been removed from future drivers
 	for driver in model.future_drivers:

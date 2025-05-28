@@ -28,6 +28,8 @@ new_contracts_df is a dataframe that contains new contract information for any n
 class StaffMarket:
 	def __init__(self, model: Model):
 		self.model = model
+
+		self.FINAL_WEEK_ANNOUNCE = min(40, model.FINAL_WEEK - 1)
 		
 	def setup_dataframes(self) -> None:
 		columns = ["Team", "WeekToAnnounce", "DriverIdx", "Driver", "Salary", "ContractLength"]
@@ -133,16 +135,17 @@ class StaffMarket:
 		assert role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2, StaffRoles.TECHNICAL_DIRECTOR]
 		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team, role.value] = person_hired
 		
-		week_to_announce = max(random.randint(4, 40), self.model.season.calendar.current_week + 1) # ensure the week is not in the past
+		week_to_announce = max(random.randint(4, self.FINAL_WEEK_ANNOUNCE), self.model.season.calendar.current_week + 1) # ensure the week is not in the past
 		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team, week_to_announce, role.value, person_hired, 4_000_000, random.randint(2, 5)]
 
 
 	def update_team_drivers(self) -> None:
+		print(self.grid_next_year_df)
 		assert None not in self.grid_next_year_df.values
 
 		for idx, row in self.grid_next_year_df.iterrows():
 			team_name = row["team"]
-			team_model = self.model.get_team_model(team_name)
+			team_model = self.model.entity_manager.get_team_model(team_name)
 
 			# Get new contract details
 			if row[StaffRoles.DRIVER1.value] in self.new_contracts_df["Driver"].values:
@@ -172,7 +175,7 @@ class StaffMarket:
 
 	def complete_hiring(self, person_hired: str, team_name: str, role: StaffRoles, salary: int=None) -> None:
 		assert role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2, StaffRoles.TECHNICAL_DIRECTOR, StaffRoles.COMMERCIAL_MANAGER]
-		team_model = self.model.get_team_model(team_name)
+		team_model = self.model.entity_manager.get_team_model(team_name)
 
 		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team_name, role.value] = person_hired
 		if team_name == self.model.player_team:
@@ -185,7 +188,7 @@ class StaffMarket:
 		self.grid_next_year_announced_df.loc[self.grid_next_year_df["team"] == team_name, role.value] = person_hired
 
 		if role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
-			self.model.inbox.generate_driver_hiring_email(team_model, self.model.get_driver_model(person_hired))
+			self.model.inbox.generate_driver_hiring_email(team_model, self.model.entity_manager.get_driver_model(person_hired))
 		elif role in [StaffRoles.TECHNICAL_DIRECTOR, StaffRoles.COMMERCIAL_MANAGER]:
 			self.model.inbox.new_manager_hired_email(team_name, person_hired, role.value)
 

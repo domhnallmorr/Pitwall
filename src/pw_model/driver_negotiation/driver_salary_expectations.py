@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 def determine_driver_salary_expectation(model: Model, driver: str) -> int:
 	# Get driver's overall rating
-	driver_model = model.get_driver_model(driver)
+	driver_model = model.entity_manager.get_driver_model(driver)
 	driver_classification = classify_driver(driver, model)
 	current_salary = driver_model.contract.salary
 	age = driver_model.age

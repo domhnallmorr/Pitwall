@@ -29,7 +29,7 @@ class TeamSelectionController:
 		self.team_selected(team)
 
 	def team_selected(self, team: str) -> None:
-		team_model = self.model.get_team_model(team)
+		team_model = self.model.entity_manager.get_team_model(team)
 
 		data : TeamData = {
 			"name": team,
@@ -53,7 +53,9 @@ class TeamSelectionController:
 			"driver1": team_model.driver1,
 			"driver1_rating": team_model.driver1_model.overall_rating,
 			"driver2": team_model.driver2,
-			"driver2_rating": team_model.driver2_model.overall_rating
+			"driver2_rating": team_model.driver2_model.overall_rating,
+
+			"description": team_model.team_description,
 		}
 
 		self.controller.view.team_selection_screen.teams_details_container.update(data)
@@ -81,3 +83,5 @@ class TeamData(TypedDict):
 	driver1_rating: int
 	driver2: str
 	driver2_rating: int
+
+	description: str

@@ -43,7 +43,7 @@ class StaffPageData:
     
 def get_staff_page_data(model: Model) -> StaffPageData:
 	staff_market = model.staff_market
-	team_model = model.get_team_model(model.player_team)
+	team_model = model.entity_manager.get_team_model(model.player_team)
 	staff_values = [[team.name, team.number_of_staff] for team in model.teams]
 	staff_values.sort(key=lambda x: x[1], reverse=True) # sort, highest to lowest
      

@@ -32,7 +32,9 @@ def test_classify_driver(rating, starts, expected_category):
 
     # Mock Model that returns our mock DriverModel
     mock_model = MagicMock()
-    mock_model.get_driver_model.return_value = mock_driver_model
+    mock_entity_manager = MagicMock()
+    mock_entity_manager.get_driver_model.return_value = mock_driver_model
+    mock_model.entity_manager = mock_entity_manager
 
     # Call the function under test
     category = classify_driver("mock_driver_name", mock_model)

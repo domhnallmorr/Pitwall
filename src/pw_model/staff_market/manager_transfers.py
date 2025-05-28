@@ -84,7 +84,7 @@ def handle_top_5_technical_directors(model: Model) -> None:
 				break
 	
 def team_hire_technical_director(model: Model, team: str, free_agents: List[str]) -> None:
-	team_model = model.get_team_model(team)
+	team_model = model.entity_manager.get_team_model(team)
 	td_hired = random.choice(free_agents)
 	week_to_announce = max(random.randint(4, 40), model.season.calendar.current_week + 1) 
 	model.staff_market.technical_director_hired(team, td_hired, week_to_announce)
@@ -103,7 +103,7 @@ def determine_commercial_manager_transfers(model: Model) -> None:
 			team_hire_commercial_manager(model, team, free_agents)
 
 def team_hire_commercial_manager(model: Model, team: str, free_agents: List[str]) -> None:
-	team_model = model.get_team_model(team)
+	team_model = model.entity_manager.get_team_model(team)
 	cm_hired = random.choice(free_agents)
 	week_to_announce = max(random.randint(4, 40), model.season.calendar.current_week + 1) 
 	model.staff_market.commercial_manager_hired(team, cm_hired, week_to_announce)

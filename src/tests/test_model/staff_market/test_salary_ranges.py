@@ -4,28 +4,33 @@ from tests import create_model
 
 
 def test_salary_ranges():
-	''' 
-	Test that salaries are within expected ranges when player hired someone
-	'''
+    ''' 
+    Test that salaries are within expected ranges when player hired someone
+    '''
 
-	model = create_model.create_model(auto_save=False)
-	model.player_team == "Williams"
+    model = create_model.create_model(auto_save=False)
+    model.player_team = "Warrick"
 
-	muller_model = model.get_driver_model("Jorg Muller")
-	gene_model = model.get_driver_model("Marc Gene")
-	gene_model.speed = 99
+    muller_model = model.entity_manager.get_driver_model("Jorg Muller")
+    gene_model = model.entity_manager.get_driver_model("Marc Gene")
+    gene_model.speed = 99
 
-	oatley_model = model.get_technical_director_model("Neil Oatley")
-	gallagher_model = model.get_commercial_manager_model("Mark Gallagher")
+    oatley_model = model.entity_manager.get_technical_director_model("Neil Oatley")
+    gallagher_model = model.entity_manager.get_commercial_manager_model("Mark Gallagher")
 
-	model.staff_market.complete_hiring("Marc Gene", "Williams", StaffRoles.DRIVER1, 3_200_000)
-	model.staff_market.complete_hiring("Jorg Muller", "Williams", StaffRoles.DRIVER2, 700_000)
-	model.staff_market.complete_hiring("Neil Oatley", "Williams", StaffRoles.TECHNICAL_DIRECTOR)
-	model.staff_market.complete_hiring("Mark Gallagher", "Williams", StaffRoles.COMMERCIAL_MANAGER)
-	model.end_season()
+    model.staff_market.complete_hiring("Marc Gene", "Warrick", StaffRoles.DRIVER1, 3_200_000)
+    model.staff_market.complete_hiring("Jorg Muller", "Warrick", StaffRoles.DRIVER2, 700_000)
+    model.staff_market.complete_hiring("Neil Oatley", "Warrick", StaffRoles.TECHNICAL_DIRECTOR)
+    model.staff_market.complete_hiring("Mark Gallagher", "Warrick", StaffRoles.COMMERCIAL_MANAGER)
+    
+    # Setup sponsor market before end_season
+    model.sponsor_market.setup_dataframes()
+    model.sponsor_market.compute_transfers()
+    
+    model.end_season()
 
-	assert gene_model.contract.salary == 3_200_000
-	assert muller_model.contract.salary == 700_000
-	assert oatley_model.contract.salary >= 700_000 and oatley_model.contract.salary <= 1_200_000
-	assert gallagher_model.contract.salary >= 180_000 and gallagher_model.contract.salary <= 220_000
+    assert gene_model.contract.salary == 3_200_000
+    assert muller_model.contract.salary == 700_000
+    assert oatley_model.contract.salary >= 700_000 and oatley_model.contract.salary <= 1_200_000
+    assert gallagher_model.contract.salary >= 180_000 and gallagher_model.contract.salary <= 220_000
 

@@ -11,10 +11,12 @@ def mock_model():
     Return a minimal mock of the base Model that can return a mocked TrackModel.
     """
     model = MagicMock()
+    entity_manager = MagicMock()
+    model.entity_manager = entity_manager
     # Mocked track that gets returned by model.get_track_model(...)
     mock_track = MagicMock()
     mock_track.title = "Mock Track Title"
-    model.get_track_model.return_value = mock_track
+    model.entity_manager.get_track_model.return_value = mock_track
     return model
 
 @pytest.fixture
@@ -100,7 +102,7 @@ def test_current_track_model(calendar_obj, mock_model):
     # The track for that row is "Melbourne".
     current_track = calendar_obj.current_track_model
     # Make sure get_track_model was called with "Melbourne"
-    mock_model.get_track_model.assert_called_once_with("Melbourne")
+    mock_model.entity_manager.get_track_model.assert_called_once_with("Melbourne")
     # And we return the mocked track with title "Mock Track Title"
     assert current_track.title == "Mock Track Title"
 

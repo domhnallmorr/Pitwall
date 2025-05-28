@@ -54,7 +54,7 @@ class StandingsManager:
 		# update points
 		for idx, points in enumerate(self._points_system):
 			driver_name = result_df.iloc[idx]["Driver"]
-			driver_model = self.model.get_driver_model(driver_name)
+			driver_model = self.model.entity_manager.get_driver_model(driver_name)
 
 			mask = self.drivers_standings_df["Driver"] == driver_name
 			
@@ -68,7 +68,7 @@ class StandingsManager:
 		# Update teams best result
 		for idx, row in result_df.iterrows():
 			position = row["Position"]
-			team_model = self.model.get_team_model(row["Team"])
+			team_model = self.model.entity_manager.get_team_model(row["Team"])
 
 			if team_model.season_stats.best_result_this_season == 0: # zero is default value at start of season
 				team_model.season_stats.best_result_this_season = position
@@ -80,7 +80,7 @@ class StandingsManager:
 		# update driver stats
 		for idx, row in self.drivers_standings_df.iterrows():
 			driver_name = row["Driver"]
-			driver_model = self.model.get_driver_model(driver_name)
+			driver_model = self.model.entity_manager.get_driver_model(driver_name)
 			mask = self.drivers_standings_df["Driver"] == driver_name
 
 			self.drivers_standings_df.loc[mask, "Wins"] = driver_model.season_stats.wins_this_season
@@ -92,7 +92,7 @@ class StandingsManager:
 		# update constructors standings
 		for idx, row in self.constructors_standings_df.iterrows():
 			team_name = row["Team"]
-			team_model = self.model.get_team_model(team_name)
+			team_model = self.model.entity_manager.get_team_model(team_name)
 			mask = self.constructors_standings_df["Team"] == team_name		
 
 			self.constructors_standings_df.loc[mask, "Points"] = team_model.season_stats.points_this_season

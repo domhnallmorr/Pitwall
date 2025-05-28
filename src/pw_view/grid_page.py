@@ -58,21 +58,117 @@ class GridPage(ft.Column):
             expand=True
         )
 
-    def update_page(self, year: int, grid_this_year_df: pd.DataFrame, grid_next_year_announced_df: pd.DataFrame) -> None:
+    def update_page(self, year: int, grid_this_year_df: pd.DataFrame, grid_next_year_announced_df: pd.DataFrame,
+                    sponsors_this_year_df: pd.DataFrame, sponsors_next_year_df: pd.DataFrame) -> None:
         # Update tab labels
         self.current_year_tab.text = str(year)
         self.next_year_tab.text = str(year + 1)
 
+        # Create filter buttons
+        button_width = 150
+        self.staff_button_container = ft.Container(
+            content=ft.TextButton(
+                text="Staff",
+                style=ft.ButtonStyle(color=ft.Colors.WHITE),
+                on_click=lambda _: self.show_staff_grid(),
+                width=button_width
+            ),
+            border=ft.border.all(2, ft.Colors.PRIMARY),  # Initial active state
+            data="active"
+        )
+
+        self.sponsor_button_container = ft.Container(
+            content=ft.TextButton(
+                text="Sponsors",
+                style=ft.ButtonStyle(color=ft.Colors.WHITE70),
+                on_click=lambda _: self.show_sponsor_grid(),
+                width=button_width
+            ),
+            border=None,
+            data="inactive"
+        )
+
+        self.filter_buttons = ft.Row(
+            controls=[
+                self.staff_button_container,
+                self.sponsor_button_container,
+            ],
+            alignment=ft.MainAxisAlignment.START
+        )
+
+        # Store the data
+        self.grid_this_year_df = grid_this_year_df
+        self.grid_next_year_announced_df = grid_next_year_announced_df
+        self.sponsors_this_year_df = sponsors_this_year_df
+        self.sponsors_next_year_df = sponsors_next_year_df
+
+        # Show staff grid by default
+        self.show_staff_grid()
+
+    def show_staff_grid(self) -> None:
+        # Update button styles
+        self.staff_button_container.border = ft.border.all(2, ft.Colors.PRIMARY)
+        self.staff_button_container.content.style.color = ft.Colors.WHITE
+        self.staff_button_container.data = "active"
+        
+        self.sponsor_button_container.border = None
+        self.sponsor_button_container.content.style.color = ft.Colors.WHITE70
+        self.sponsor_button_container.data = "inactive"
+
         # THIS YEAR
-        self.grid_this_year_table = CustomDataTable(self.view, grid_this_year_df.columns.tolist())
-        self.grid_this_year_table.update_table_data(grid_this_year_df.values.tolist())
-        self.current_year_tab.content.content = self.grid_this_year_table.list_view
-
+        self.grid_this_year_table = CustomDataTable(self.view, self.grid_this_year_df.columns.tolist())
+        self.grid_this_year_table.update_table_data(self.grid_this_year_df.values.tolist())
+        
         # NEXT YEAR
-        self.grid_next_year_table = CustomDataTable(self.view, grid_next_year_announced_df.columns.tolist())
-        self.grid_next_year_table.update_table_data(grid_next_year_announced_df.values.tolist())
-        self.next_year_tab.content.content = self.grid_next_year_table.list_view
+        self.grid_next_year_table = CustomDataTable(self.view, self.grid_next_year_announced_df.columns.tolist())
+        self.grid_next_year_table.update_table_data(self.grid_next_year_announced_df.values.tolist())
 
-        # Reset to current year view
-        self.tabs.selected_index = 0
+        self.update_tab_content()
+
+    def show_sponsor_grid(self) -> None:
+        # Update button styles
+        self.sponsor_button_container.border = ft.border.all(2, ft.Colors.PRIMARY)
+        self.sponsor_button_container.content.style.color = ft.Colors.WHITE
+        self.sponsor_button_container.data = "active"
+        
+        self.staff_button_container.border = None
+        self.staff_button_container.content.style.color = ft.Colors.WHITE70
+        self.staff_button_container.data = "inactive"
+
+        # THIS YEAR
+        self.grid_this_year_table = CustomDataTable(self.view, self.sponsors_this_year_df.columns.tolist())
+        self.grid_this_year_table.update_table_data(self.sponsors_this_year_df.values.tolist())
+        
+        # NEXT YEAR
+        self.grid_next_year_table = CustomDataTable(self.view, self.sponsors_next_year_df.columns.tolist())
+        self.grid_next_year_table.update_table_data(self.sponsors_next_year_df.values.tolist())
+
+        self.update_tab_content()
+
+    def update_tab_content(self) -> None:
+        content_column = ft.Column(
+            controls=[
+                ft.Container(
+                    content=self.filter_buttons,
+                    padding=ft.padding.only(left=20, top=20, bottom=10)  # Added top and bottom padding
+                ),
+                self.grid_this_year_table.list_view
+            ],
+            expand=True
+        )
+
+        next_year_content_column = ft.Column(
+            controls=[
+                ft.Container(
+                    content=self.filter_buttons,
+                    padding=ft.padding.only(left=20, top=20, bottom=10)  # Added top and bottom padding
+                ),
+                self.grid_next_year_table.list_view
+            ],
+            expand=True
+        )
+
+        self.current_year_tab.content.content = content_column
+        self.next_year_tab.content.content = next_year_content_column
+        
         self.view.main_app.update()

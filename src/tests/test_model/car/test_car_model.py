@@ -11,8 +11,8 @@ def test_update_car_speed():
 
 	model = create_model.create_model()
 
-	ferrari_model = model.get_team_model("Ferrari")
-	minardi_model = model.get_team_model("Minardi")
+	ferrari_model = model.entity_manager.get_team_model("Ferano")
+	minardi_model = model.entity_manager.get_team_model("Marchetti")
 
 	for i in range(100): # run 100 tests
 		ferrari_model.update_car_speed()

@@ -9,16 +9,16 @@ def test_driver_retirement_team_end_season():
 	'''
 
 	model = create_model.create_model(mode="headless")
-	team_model = model.get_team_model("Ferrari")
+	team_model = model.entity_manager.get_team_model("Ferano")
 
 	# RETIRE BRAWN
-	brawn_model = model.get_technical_director_model("Ross Brawn")
+	brawn_model = model.entity_manager.get_technical_director_model("Ross Brawn")
 	brawn_model.contract.contract_length = 1
 	brawn_model.retiring = True
 	
 	# reset the staff market to account for Brawn retiring
 	model.staff_market.setup_dataframes()
-	assert "Ferrari" in model.staff_market.compile_teams_requiring_manager(StaffRoles.TECHNICAL_DIRECTOR)
+	assert "Ferano" in model.staff_market.compile_teams_requiring_manager(StaffRoles.TECHNICAL_DIRECTOR)
 
 	model.staff_market.compute_transfers()
 	model.end_season()

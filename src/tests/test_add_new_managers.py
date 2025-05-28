@@ -9,9 +9,9 @@ def test_add_new_managers():
 	model.year = 1999
 
 	orig_number_tech_directors = len(model.technical_directors)
-	model.add_new_managers()
+	model.entity_manager.add_new_managers()
 
-	assert model.get_technical_director_model("Willy Rampf") is not None
+	assert model.entity_manager.get_technical_director_model("Willy Rampf") is not None
 	assert len(model.technical_directors) == orig_number_tech_directors + 1 
 
 	save_file = save_game(model, mode="memory")
@@ -19,6 +19,6 @@ def test_add_new_managers():
 	load(model, save_file, mode="memory")
 	model.year = 2000
 
-	model.add_new_managers()
-	# assert model.get_technical_director_model("Henri Durand") is not None
+	model.entity_manager.add_new_managers()
+	# assert model.entity_manager.get_technical_director_model("Henri Durand") is not None
 	assert len(model.technical_directors) == orig_number_tech_directors + 3

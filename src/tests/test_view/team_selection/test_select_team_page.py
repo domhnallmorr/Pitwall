@@ -29,6 +29,7 @@ class DummyView:
 											  bgcolor={ft.ControlState.DEFAULT: ft.Colors.LIGHT_GREEN, ft.ControlState.DISABLED: ft.Colors.GREY},
 											  alignment=ft.alignment.center_left,)
 
+        self.team_logos_path = "path/to/team/logos"
 
 # Helper classes to simulate an event (flet.ControlEvent)
 class DummyControl:

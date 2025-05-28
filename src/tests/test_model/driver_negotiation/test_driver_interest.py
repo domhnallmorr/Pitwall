@@ -87,11 +87,14 @@ def test_determine_driver_interest(
     # 3) Mock the main model
     ####
     mock_model = MagicMock()
+    mock_entity_manager = MagicMock()
+    mock_entity_manager.get_driver_model.return_value = mock_driver_model
+    mock_model.entity_manager = mock_entity_manager
     mock_model.season = mock_season
     # The player's team is "PlayerTeam" in our data above
     mock_model.player_team = "PlayerTeam"
     # Return our mocked driver_model for the given driver_name
-    mock_model.get_driver_model.return_value = mock_driver_model
+
 
     ####
     # 4) Call function under test

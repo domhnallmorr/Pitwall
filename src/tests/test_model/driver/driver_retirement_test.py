@@ -12,17 +12,17 @@ def test_driver_retirement_team_end_season():
 
 	model = create_model.create_model(mode="headless")
 
-	team_model = model.get_team_model("Ferrari")
+	team_model = model.entity_manager.get_team_model("Ferano")
 
 	# RETIRE SCHUMACHER and IRVINE
-	schumacher_model = model.get_driver_model("Michael Schumacher")
+	schumacher_model = model.entity_manager.get_driver_model("Michael Schumacher")
 	schumacher_model.retiring = True
 
-	irvine_model = model.get_driver_model("Eddie Irvine")
+	irvine_model = model.entity_manager.get_driver_model("Eddie Irvine")
 	irvine_model.retiring = True
 
-	driver_transfers.team_hire_driver(model, "Ferrari", StaffRoles.DRIVER1, ["Jos Verstappen"])
-	driver_transfers.team_hire_driver(model, "Ferrari", StaffRoles.DRIVER2, ["Marc Gene"])
+	driver_transfers.team_hire_driver(model, "Ferano", StaffRoles.DRIVER1, ["Jos Verstappen"])
+	driver_transfers.team_hire_driver(model, "Ferano", StaffRoles.DRIVER2, ["Marc Gene"])
 
 	# Make sure hired drivers no longer available for hire
 	assert "Jos Verstappen" not in driver_transfers.get_free_agents(model)
@@ -52,17 +52,17 @@ def test_driver_retirements_over_several_seasons():
 		model = create_model.create_model(mode="headless", auto_save=False)
 		for year in range(10):
 			if year == 0:
-				model.get_driver_model("Damon Hill").retiring = True
+				model.entity_manager.get_driver_model("Damon Hill").retiring = True
 			if year == 1:
-				model.get_driver_model("Esteban Tuero").retiring = True
+				model.entity_manager.get_driver_model("Esteban Tuero").retiring = True
 			if year == 2:
-				model.get_driver_model("Alexander Wurz").retiring = True
+				model.entity_manager.get_driver_model("Alexander Wurz").retiring = True
 			if year == 3:
-				model.get_driver_model("Jacques Villeneuve").retiring = True
+				model.entity_manager.get_driver_model("Jacques Villeneuve").retiring = True
 			if year == 4:
-				model.get_driver_model("Giancarlo Fisichella").retiring = True
+				model.entity_manager.get_driver_model("Giancarlo Fisichella").retiring = True
 			if year == 5:
-				model.get_driver_model("Tora Takagi").retiring = True
+				model.entity_manager.get_driver_model("Tora Takagi").retiring = True
 
 
 			model.staff_market.ensure_player_has_staff_for_next_season()

@@ -37,7 +37,9 @@ def test_determine_driver_salary_expectation(rating, starts, age, current_salary
 
     # Mock the main model
     mock_model = MagicMock()
-    mock_model.get_driver_model.return_value = mock_driver_model
+    mock_entity_manager = MagicMock()
+    mock_entity_manager.get_driver_model.return_value = mock_driver_model
+    mock_model.entity_manager = mock_entity_manager
 
     # Call the function under test
     actual_salary = determine_driver_salary_expectation(mock_model, "mock_driver")

@@ -52,7 +52,7 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 - [ ] Flesh out team principals in roster
 - [ ] Team principals retire
 - [ ] AI change team principals
-- [ ] Add test sesssions, player chooses testing to be done, car performance can improve
+- [x] Add test sesssions, player chooses testing to be done, car performance can improve
 
 
 ## On Track

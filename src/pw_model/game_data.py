@@ -18,7 +18,7 @@ class GameData:
 		return int(self.model.season.calendar.current_week)
 	
 	def driver_salary(self, driver_name: str) -> int:
-		driver_model = self.model.get_driver_model(driver_name)
+		driver_model = self.model.entity_manager.get_driver_model(driver_name)
 		return int(driver_model.contract.salary)
 	
 	def current_track_country(self) -> str:

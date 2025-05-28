@@ -9,7 +9,6 @@ from pw_model.finance import finance_model
 
 from pw_model.senior_staff import commercial_manager, technical_director, team_principal
 from pw_model.team.facilities_model import FacilityModel
-from pw_model.finance.sponsors_model import SponsorModel
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.team.suppliers_model import SupplierModel
 from pw_model.car_development.car_development_model import CarDevelopmentModel
@@ -33,7 +32,6 @@ class TeamModel:
 			  starting_balance : int,
 			  other_sponsorship : int,
 			  title_sponsor : str,
-			  title_sponsor_value : int,
 			  commercial_manager : str,
 			  technical_director : str,
 			  engine_supplier : str,
@@ -58,7 +56,8 @@ class TeamModel:
 		self.number_of_staff = number_of_staff
 		self.facilities_model = FacilityModel(self, facilities)
 				
-		self.finance_model = finance_model.FinanceModel(model, self, starting_balance, other_sponsorship, title_sponsor, title_sponsor_value, finishing_position)
+		self.finance_model = finance_model.FinanceModel(model, self, starting_balance, other_sponsorship,
+												  title_sponsor, finishing_position)
 
 		self.commercial_manager = commercial_manager
 		self.technical_director = technical_director
@@ -66,6 +65,7 @@ class TeamModel:
 									  tyre_supplier, tyre_supplier_deal, tyre_supplier_cost)
 
 		self.setup_season_stats()
+		self.team_description = "" # for team selection page
 
 	def __repr__(self) -> str:
 		return f"TeamModel <{self.name}>"
@@ -90,31 +90,31 @@ class TeamModel:
 	
 	@property
 	def driver1_model(self) -> driver_model.DriverModel:
-		return self.model.get_driver_model(self.driver1)
+		return self.model.entity_manager.get_driver_model(self.driver1)
 
 	@property
 	def driver2_model(self) -> driver_model.DriverModel:
-		return self.model.get_driver_model(self.driver2)
+		return self.model.entity_manager.get_driver_model(self.driver2)
 	
 	@property
 	def commercial_manager_model(self) -> commercial_manager.CommercialManager:
-		return self.model.get_commercial_manager_model(self.commercial_manager)
+		return self.model.entity_manager.get_commercial_manager_model(self.commercial_manager)
 
 	@property
 	def technical_director_model(self) -> technical_director.TechnicalDirector:
-		return self.model.get_technical_director_model(self.technical_director)
+		return self.model.entity_manager.get_technical_director_model(self.technical_director)
 
 	@property
 	def team_principal_model(self) -> team_principal.TeamPrincipalModel:
-		return self.model.get_team_principal_model(self.team_principal)
+		return self.model.entity_manager.get_team_principal_model(self.team_principal)
 	
 	@property
 	def engine_supplier_model(self) -> EngineSupplierModel:
-		return self.model.get_engine_supplier_model(self.supplier_model.engine_supplier)
+		return self.model.entity_manager.get_engine_supplier_model(self.supplier_model.engine_supplier)
 
 	@property
 	def tyre_supplier_model(self) -> TyreSupplierModel:
-		return self.model.get_tyre_supplier_model(self.supplier_model.tyre_supplier)
+		return self.model.entity_manager.get_tyre_supplier_model(self.supplier_model.tyre_supplier)
 
 	#TODO make a property in driver model to calculate average skill
 	@property

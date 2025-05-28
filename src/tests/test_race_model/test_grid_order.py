@@ -11,7 +11,7 @@ def test_grid_order():
 	model = create_model.create_model(mode="headless")
 	
 	# Make Jorg Muller the 2nd Ferrari driver, will do check to ensure he is in the participants and Irvine is not
-	ferrari_model = model.get_team_model("Ferrari")
+	ferrari_model = model.entity_manager.get_team_model("Ferano")
 	ferrari_model.driver2 = "Jorg Muller"
 
 	track = test_track_model.create_dummy_track()

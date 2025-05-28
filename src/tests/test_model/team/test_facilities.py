@@ -8,7 +8,7 @@ def test_opponent_facility_update():
 	Check if factory rating drops below 10, that factory is updated
 	'''
 	model = create_model.create_model()
-	ferrari_model = model.get_team_model("Ferrari")
+	ferrari_model = model.entity_manager.get_team_model("Ferano")
 
 	for i in range(100):
 		ferrari_model.facilities_model.factory_rating = 9
@@ -20,8 +20,8 @@ def test_opponent_facility_update():
 	Check that factory rating is always between 1 and 100
 	'''
 	model = create_model.create_model()
-	ferrari_model = model.get_team_model("Ferrari")
-	minardi_model = model.get_team_model("Minardi")
+	ferrari_model = model.entity_manager.get_team_model("Ferano")
+	minardi_model = model.entity_manager.get_team_model("Marchetti")
 
 	for i in range(200):
 		ferrari_model.end_season(increase_year=True)
@@ -33,7 +33,7 @@ def test_opponent_facility_update():
 def test_update_player_facilities():
 	model = create_model.create_model()
 
-	model.player_team = "Minardi"
+	model.player_team = "Marchetti"
 
 	'''
 	Make sure player's facilities never go below 1 and never increase (without user input)

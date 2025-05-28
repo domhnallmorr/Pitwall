@@ -67,7 +67,36 @@ class TeamSelectionDetailsContainer:
 			]
 		)
 
-		self.container = CustomContainer(self.view, column)
+		# image column
+		self.team_logo = ft.Image(
+			src=fr"{self.view.team_logos_path}\ferano.png",
+			width=200,
+			height=200,
+			fit=ft.ImageFit.CONTAIN
+		)
+		
+		self.team_description = ft.Text("Team Description: Some Text", no_wrap=False, expand=True,)
+
+		image_column = ft.Column(
+			controls=[
+				self.team_logo, ft.Divider(), self.team_description, 
+			],
+			expand=True,
+			tight=True,
+		)
+
+		row = ft.Row(
+			controls=[
+				column,
+				image_column
+			],
+			expand=False,
+			tight=True,
+			alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+			spacing=20
+		)
+
+		self.container = CustomContainer(self.view, row)
 	
 	def update(self, data: TeamData) -> None:
 		self.name_text.value = f"Team Name: {data["name"]}"
@@ -94,4 +123,8 @@ class TeamSelectionDetailsContainer:
 		self.driver1_rating_widget.update_row(data["driver1_rating"])
 		self.driver2_rating_widget.update_text(f"Driver 2: {data["driver2"]}")
 		self.driver2_rating_widget.update_row(data["driver2_rating"])
+
+		self.image_path = fr"{self.view.team_logos_path}\{data['name'].lower()}.png"
+		self.team_logo.src = self.image_path
+		self.team_description.value = f"Team Description:\n{data['description']}"
 		self.view.main_app.update()

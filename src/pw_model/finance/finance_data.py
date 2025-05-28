@@ -3,6 +3,8 @@ Typed dict that gets passed to the view to update UI
 '''
 from typing import TypedDict, List, Union
 
+import pandas as pd
+
 class FinanceData(TypedDict):
     profit: int
     title_sponsor: str
@@ -22,3 +24,4 @@ class FinanceData(TypedDict):
     total_expenditure: int
     balance_history: List[Union[int, float]]
     balance_history_dates: List[Union[int, float]]
+    summary_df: pd.DataFrame

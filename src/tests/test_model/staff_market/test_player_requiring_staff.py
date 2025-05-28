@@ -11,17 +11,17 @@ def test_player_requring_staff():
 
 	for i in range(100):
 		model = create_model.create_model(auto_save=False)
-		model.start_career("Jordan")
+		model.start_career("Joyce")
 
 		assert model.staff_market.player_requiring_technical_director is True
 		assert model.staff_market.player_requiring_driver2 is True # Ralf Schumachers contract runs out in 1998
 
 	for i in range(100):
 		model = create_model.create_model(auto_save=False)
-		model.start_career("Williams")
+		model.start_career("Warrick")
 		assert model.staff_market.player_requiring_driver1 is True
 
 	for i in range(100):
 		model = create_model.create_model(auto_save=False)
-		model.start_career("Minardi")
+		model.start_career("Marchetti")
 		assert model.staff_market.player_requiring_commercial_manager is True
