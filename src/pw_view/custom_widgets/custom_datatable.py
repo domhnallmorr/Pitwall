@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 	from pw_view.view import View
 
 class CustomDataTable:
-	def __init__(self, view: View, column_names: list[str]):
+	def __init__(self, view: View, column_names: list[str], row_height: int=30):
 		self.view = view
 		self.column_names = column_names
 
@@ -20,8 +20,8 @@ class CustomDataTable:
 
 		self.data_table = ft.DataTable(
                         columns=columns,
-						data_row_max_height=30,
-						data_row_min_height=30,
+						data_row_max_height=row_height,
+						data_row_min_height=row_height,
 						heading_row_color=ft.Colors.PRIMARY
                                                 )
 		
@@ -30,7 +30,8 @@ class CustomDataTable:
 		self.list_view.controls.append(self.container)
 
 
-	def update_table_data(self, data: list[list[str]], flag_col_idx: Optional[int]=None, flags: Optional[list[str]]=None) -> None:
+	def update_table_data(self, data: list[list[str]], flag_col_idx: Optional[int]=None, flags: Optional[list[str]]=None,
+					   team_logo_col_idx: Optional[int]=None, team_logos: Optional[list[str]]=None) -> None:
 		rows = []
 
 		for row_idx, row in enumerate(data):
@@ -43,6 +44,8 @@ class CustomDataTable:
 			for col_idx, cell_text in enumerate(row):
 				if col_idx == flag_col_idx and flags is not None:
 					cells.append(self.gen_flag_cell(cell_text, flags[row_idx]))
+				elif col_idx == team_logo_col_idx and team_logos is not None:
+					cells.append(self.gen_team_logo_cell(cell_text, team_logos[row_idx]))
 				else:
 					cells.append(ft.DataCell(ft.Text(cell_text)))
 
@@ -59,7 +62,7 @@ class CustomDataTable:
                             ft.Image(
                                 src=flag_path,
                                 width=30,
-                                height=30,
+                                height=20,
                                 fit=ft.ImageFit.CONTAIN
                             ),
                             ft.Text(text)
@@ -69,6 +72,25 @@ class CustomDataTable:
 		
 		return cell
 
+	def gen_team_logo_cell(self, text: str, name: str) -> ft.DataCell:
+		logo_path = fr"{self.view.team_logos_path}\{name.lower()}.png"
+
+		cell = ft.DataCell(
+                    ft.Row(
+                        controls=[
+                            ft.Image(
+                                src=logo_path,
+                                width=30,
+                                height=30,
+                                fit=ft.ImageFit.CONTAIN
+                            ),
+                            ft.Text(text)
+                        ],
+						)
+					)
+		
+		return cell
+	
 	def assign_on_tap_callback(self, column_index: int, callback: Callable[[Any], Any]) -> None:
 		"""Assigns an `on_tap` event to all cells in a specific column."""
 		for row in self.data_table.rows:

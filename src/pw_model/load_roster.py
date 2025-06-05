@@ -17,6 +17,7 @@ from pw_model.load_save.team_sponsors_load_save import load_team_sponsors
 from pw_model.load_save.engine_suppliers_load_save import load_engine_suppliers
 from pw_model.load_save.tyres_load_save import load_tyre_suppliers
 from pw_model.load_save.sponsors_load_save import load_sponsors
+from pw_model.load_save.team_colors_load_save import load_team_colors
 from pw_model.team.suppliers_model import SupplierDeals
 
 if TYPE_CHECKING:
@@ -37,6 +38,7 @@ def load_roster(model: Model, roster: str) -> pd.DataFrame:
 	model.engine_suppliers = load_engine_suppliers(model, conn)
 	model.tyre_suppliers = load_tyre_suppliers(model, conn)
 	model.sponsors, model.future_sponsors = load_sponsors(conn)
+	load_team_colors(model, conn)
 
 	return calendar_dataframe
 	

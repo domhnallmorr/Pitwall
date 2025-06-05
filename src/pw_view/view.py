@@ -18,6 +18,7 @@ from pw_view.facility_page import facility_page, upgrade_facility_page
 from pw_view.track_page.track_page import TrackPage
 from pw_view.custom_widgets.dialogs import ConfirmDialog
 from pw_view.testing.test_dialog import TestDialog
+from pw_view.car_profile.car_profile_manager import CarProfileManager
 
 from pw_view.view_enums import ViewPageEnums, AdvanceModeEnums
 
@@ -59,6 +60,8 @@ class View:
 		self.flags_small_path = fr"{self.run_directory}\pw_view\assets\flags_small"
 		self.track_maps_path = fr"{self.run_directory}\pw_view\assets\track_maps"
 		self.team_logos_path = fr"{self.run_directory}\pw_view\assets\team_logos"
+		self.sponsor_logos_path = fr"{self.run_directory}\pw_view\assets\sponsor_logos"
+		self.sidepod_logos_path = fr"{self.run_directory}\pw_view\assets\sidepod_logos"
 
 		self.setup_background_images()
 		self.setup_pages()
@@ -66,7 +69,7 @@ class View:
 
 		self.main_app.views.append(self.main_window)
 		self.confirm_dialog = ConfirmDialog(self)
-		# self.view_page_enums: ViewPageEnums = ViewPageEnums()
+		self.car_profile_manager = CarProfileManager(self)
 
 	def setup_background_images(self) -> None:
 		image_path = fr"{self.run_directory}\pw_view\assets\background_image.jpg"

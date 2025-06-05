@@ -7,13 +7,13 @@ import pw_view.grid_page as gp_mod
 
 # Dummy CustomDataTable to capture initialization and updates
 class DummyCustomDataTable:
-    def __init__(self, view, column_names):
+    def __init__(self, view, column_names, row_height=30):
         self.view = view
         self.column_names = column_names
         self.update_calls = []
         self.list_view = f"list_{column_names}"
 
-    def update_table_data(self, data):
+    def update_table_data(self, data, flag_col_idx=None, flags=None, team_logo_col_idx=None, team_logos=None):
         self.update_calls.append(data)
 
 @pytest.fixture(autouse=True)
@@ -55,7 +55,7 @@ def test_update_page_and_show_staff_grid(dummy_view):
     page = gp_mod.GridPage(dummy_view)
 
     # Prepare sample dataframes
-    df_staff = pd.DataFrame([[1, 2]], columns=["A", "B"])
+    df_staff = pd.DataFrame([[1, 2]], columns=["team", "B"])
     df_next_announce = pd.DataFrame([[3, 4]], columns=["C", "D"])
     df_sponsors = pd.DataFrame([[5, 6]], columns=["E", "F"])
     df_sponsors_next = pd.DataFrame([[7, 8]], columns=["G", "H"])
@@ -73,7 +73,7 @@ def test_update_page_and_show_staff_grid(dummy_view):
 
     # Tables initialized and updated for staff view
     assert isinstance(page.grid_this_year_table, DummyCustomDataTable)
-    assert page.grid_this_year_table.column_names == ["A", "B"]
+    assert page.grid_this_year_table.column_names == ["team", "B"]
     assert page.grid_this_year_table.update_calls == [df_staff.values.tolist()]
 
     assert isinstance(page.grid_next_year_table, DummyCustomDataTable)
@@ -88,7 +88,7 @@ def test_show_sponsor_grid_switches_and_updates(dummy_view):
     page = gp_mod.GridPage(dummy_view)
 
     # Prepare sample dataframes
-    df_staff = pd.DataFrame([[1, 2]], columns=["A", "B"])
+    df_staff = pd.DataFrame([[1, 2]], columns=["team", "B"])
     df_next_announce = pd.DataFrame([[3, 4]], columns=["C", "D"])
     df_sponsors = pd.DataFrame([[5, 6]], columns=["E", "F"])
     df_sponsors_next = pd.DataFrame([[7, 8]], columns=["G", "H"])

@@ -15,6 +15,7 @@ from pw_model.car_development.car_development_model import CarDevelopmentModel
 from pw_model.engine.engine_supplier_model import EngineSupplierModel
 from pw_model.testing.testing_model import TestingModel
 from pw_model.tyre.tyre_supplier_model import TyreSupplierModel
+from pw_model.team.team_colors_manager import TeamColorsManager
 
 if TYPE_CHECKING:
 	from pw_model.driver import driver_model
@@ -63,6 +64,7 @@ class TeamModel:
 		self.technical_director = technical_director
 		self.supplier_model = SupplierModel(self.model, engine_supplier, engine_supplier_deal, engine_supplier_cost,
 									  tyre_supplier, tyre_supplier_deal, tyre_supplier_cost)
+		self.team_colors_manager = TeamColorsManager(self.model, self)
 
 		self.setup_season_stats()
 		self.team_description = "" # for team selection page

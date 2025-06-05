@@ -5,6 +5,8 @@ import flet as ft
 from pw_view.custom_widgets.custom_container import CustomContainer
 from pw_view.custom_widgets.rating_widget import RatingWidget
 
+from pw_view.car_profile.car_profile_manager import image_to_base64
+
 if TYPE_CHECKING:
 	from pw_view.view import View
 	from pw_controller.team_selection.team_selection_controller import TeamData
@@ -74,12 +76,30 @@ class TeamSelectionDetailsContainer:
 			height=200,
 			fit=ft.ImageFit.CONTAIN
 		)
+
+		self.side_profile = ft.Image(
+			src=None,
+			width=500,
+			height=200,
+			fit=ft.ImageFit.CONTAIN
+		)
+
+		image_row = ft.Row(
+			controls=[
+				self.team_logo,
+				self.side_profile
+			],
+			expand=False,
+			tight=True,
+			alignment=ft.MainAxisAlignment.CENTER,
+			spacing=200
+		)
 		
 		self.team_description = ft.Text("Team Description: Some Text", no_wrap=False, expand=True,)
 
 		image_column = ft.Column(
 			controls=[
-				self.team_logo, ft.Divider(), self.team_description, 
+				image_row, ft.Divider(), self.team_description, 
 			],
 			expand=True,
 			tight=True,
@@ -126,5 +146,6 @@ class TeamSelectionDetailsContainer:
 
 		self.image_path = fr"{self.view.team_logos_path}\{data['name'].lower()}.png"
 		self.team_logo.src = self.image_path
+		self.side_profile.src_base64 = self.view.car_profile_manager.get_team_car_profile_as_base64(data["name"])
 		self.team_description.value = f"Team Description:\n{data['description']}"
 		self.view.main_app.update()

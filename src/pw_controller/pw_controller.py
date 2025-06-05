@@ -13,6 +13,7 @@ from pw_controller.team_selection.team_selection_controller import TeamSelection
 from pw_controller.testing.testing_controller import TestingController
 from pw_controller.track_page.track_page_controller import TrackPageController
 from pw_controller.game_modes import GameModes
+from pw_controller.car_profile.car_profile_controller import CarProfileController
 
 class Controller:
 	def __init__(self, app: Page, run_directory: str, mode: str):
@@ -37,8 +38,10 @@ class Controller:
 		if self.mode in [GameModes.NORMAL]:
 			self.view = view.View(self, team_names, run_directory)
 			self.page_update_controller.update_staff_page()
+			self.car_profile_controller = CarProfileController(self)
 		else:
 			self.view = None # running headless
+			self.car_profile_controller = None
 
 		self.setup_new_season()
 		

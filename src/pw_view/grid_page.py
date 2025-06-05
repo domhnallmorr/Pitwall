@@ -101,6 +101,7 @@ class GridPage(ft.Column):
         self.grid_next_year_announced_df = grid_next_year_announced_df
         self.sponsors_this_year_df = sponsors_this_year_df
         self.sponsors_next_year_df = sponsors_next_year_df
+        self.team_names = self.grid_this_year_df["team"].values.tolist()
 
         # Show staff grid by default
         self.show_staff_grid()
@@ -116,11 +117,12 @@ class GridPage(ft.Column):
         self.sponsor_button_container.data = "inactive"
 
         # THIS YEAR
-        self.grid_this_year_table = CustomDataTable(self.view, self.grid_this_year_df.columns.tolist())
-        self.grid_this_year_table.update_table_data(self.grid_this_year_df.values.tolist())
+        self.grid_this_year_table = CustomDataTable(self.view, self.grid_this_year_df.columns.tolist(), row_height=60)
+        self.grid_this_year_table.update_table_data(self.grid_this_year_df.values.tolist(),
+                                                    team_logo_col_idx=0, team_logos=self.team_names)
         
         # NEXT YEAR
-        self.grid_next_year_table = CustomDataTable(self.view, self.grid_next_year_announced_df.columns.tolist())
+        self.grid_next_year_table = CustomDataTable(self.view, self.grid_next_year_announced_df.columns.tolist(), row_height=60)
         self.grid_next_year_table.update_table_data(self.grid_next_year_announced_df.values.tolist())
 
         self.update_tab_content()
@@ -136,11 +138,11 @@ class GridPage(ft.Column):
         self.staff_button_container.data = "inactive"
 
         # THIS YEAR
-        self.grid_this_year_table = CustomDataTable(self.view, self.sponsors_this_year_df.columns.tolist())
+        self.grid_this_year_table = CustomDataTable(self.view, self.sponsors_this_year_df.columns.tolist(), row_height=60)
         self.grid_this_year_table.update_table_data(self.sponsors_this_year_df.values.tolist())
         
         # NEXT YEAR
-        self.grid_next_year_table = CustomDataTable(self.view, self.sponsors_next_year_df.columns.tolist())
+        self.grid_next_year_table = CustomDataTable(self.view, self.sponsors_next_year_df.columns.tolist(), row_height=60)
         self.grid_next_year_table.update_table_data(self.sponsors_next_year_df.values.tolist())
 
         self.update_tab_content()
