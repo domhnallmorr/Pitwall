@@ -25,6 +25,11 @@ class EntityManager:
 	def __init__(self, model: Model):
 		self._model = model # Keep a reference to the main model
 
+	@property
+	def no_of_active_team_principals(self) -> int:
+		# active team principals are those who are not retiring or retired
+		return len([tp for tp in self._model.team_principals if tp.retiring is False and tp.retired is False])
+
 	def setup_new_season(self) -> None:
 		self.add_new_drivers()
 		self.add_new_managers()
@@ -147,6 +152,9 @@ class EntityManager:
 				self._model.commercial_managers.append(new_manager[1])
 			elif new_manager[1].role == StaffRoles.TECHNICAL_DIRECTOR:
 				self._model.technical_directors.append(new_manager[1])
+			elif new_manager[1].role == StaffRoles.TEAM_PRINCIPAL:
+				print("Adding new team principal")
+				self._model.team_principals.append(new_manager[1])
 
 			self._model.future_managers.remove(new_manager)
 			logging.info(f"Added {new_manager[1].name} to managers")

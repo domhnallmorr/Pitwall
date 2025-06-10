@@ -27,8 +27,7 @@ def save_team_principals(model: Model, save_file: sqlite3.Connection) -> None:
     cursor.execute("DELETE FROM team_principals")  # Clear existing data
 
     # Save current team principals
-    for team in model.teams:
-        if team.team_principal_model is not None:
+    for team_principal_model in model.team_principals:
             cursor.execute('''
                 INSERT INTO team_principals (
                     Year, Name, Age, Skill, Salary, ContractLength, 
@@ -36,14 +35,14 @@ def save_team_principals(model: Model, save_file: sqlite3.Connection) -> None:
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 "default",
-                team.team_principal_model.name,
-                team.team_principal_model.age,
-                team.team_principal_model.skill,
-                team.team_principal_model.contract.salary,
-                team.team_principal_model.contract.contract_length,
-                team.team_principal_model.retiring_age,
-                team.team_principal_model.retiring,
-                team.team_principal_model.retired
+                team_principal_model.name,
+                team_principal_model.age,
+                team_principal_model.skill,
+                team_principal_model.contract.salary,
+                team_principal_model.contract.contract_length,
+                team_principal_model.retiring_age,
+                team_principal_model.retiring,
+                team_principal_model.retired
             ))
 
     # Save future team principals

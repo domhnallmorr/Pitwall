@@ -50,7 +50,7 @@ def test_save_and_load_sponsors(mock_model, db_connection):
     assert sponsors_df.iloc[0]["TitleSponsorValue"] == 500000
     assert sponsors_df.iloc[0]["OtherSponsorsValue"] == 200000
 
-def test_load_sponsors_from_roster(db_connection):
+def test_load_sponsors_from_roster(db_connection, mock_model):
     """Test loading sponsors from roster with correct contract assignments."""
     # Create test data for sponsors
     sponsors_data = [
@@ -97,15 +97,15 @@ def test_load_sponsors_from_roster(db_connection):
                                (sponsor_name, 'default', 70))
 
     # Load sponsors using the function
-    sponsors, future_sponsors = load_sponsors(db_connection)
+    load_sponsors(db_connection, mock_model)
 
     # Verify the loaded sponsors
-    assert len(sponsors) == 2  # Should have 2 sponsors (Shell and West)
-    assert len(future_sponsors) == 0  # No future sponsors in this test
+    assert len(mock_model.sponsors) == 2  # Should have 2 sponsors (Shell and West)
+    assert len(mock_model.future_sponsors) == 0  # No future sponsors in this test
 
     # Check specific sponsor details
-    shell_sponsor = next(s for s in sponsors if s.name == "Shell")
-    west_sponsor = next(s for s in sponsors if s.name == "West")
+    shell_sponsor = next(s for s in mock_model.sponsors if s.name == "Shell")
+    west_sponsor = next(s for s in mock_model.sponsors if s.name == "West")
 
     # Verify Shell sponsor details
     assert shell_sponsor.name == "Shell"

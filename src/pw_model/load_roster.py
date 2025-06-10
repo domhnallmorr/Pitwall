@@ -37,7 +37,7 @@ def load_roster(model: Model, roster: str) -> pd.DataFrame:
 	load_team_descriptions(conn, model)
 	model.engine_suppliers = load_engine_suppliers(model, conn)
 	model.tyre_suppliers = load_tyre_suppliers(model, conn)
-	model.sponsors, model.future_sponsors = load_sponsors(conn)
+	load_sponsors(conn, model)
 	load_team_colors(model, conn)
 
 	return calendar_dataframe

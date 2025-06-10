@@ -3,6 +3,7 @@
 A set of functions for determine transfer of managers between teams
 '''
 from __future__ import annotations
+import logging
 import random
 from typing import TYPE_CHECKING, List
 
@@ -20,6 +21,8 @@ def get_free_agents(model: Model, role: StaffRoles, for_player_team: bool=False)
 		managers = model.technical_directors
 	elif role == StaffRoles.COMMERCIAL_MANAGER:
 		managers = model.commercial_managers
+	elif role == StaffRoles.TEAM_PRINCIPAL:
+		managers = model.team_principals
 
 	for manager in managers:
 		if manager.retired is False:
@@ -107,3 +110,22 @@ def team_hire_commercial_manager(model: Model, team: str, free_agents: List[str]
 	cm_hired = random.choice(free_agents)
 	week_to_announce = max(random.randint(4, 40), model.season.calendar.current_week + 1) 
 	model.staff_market.commercial_manager_hired(team, cm_hired, week_to_announce)
+
+
+def determine_team_principal_transfers(model: Model) -> None:
+	staff_market = model.staff_market
+	teams_requiring_team_principal = staff_market.compile_teams_requiring_manager(StaffRoles.TEAM_PRINCIPAL)
+
+	for team in teams_requiring_team_principal:
+		if team != model.player_team:
+			free_agents = get_free_agents(model, StaffRoles.TEAM_PRINCIPAL)
+			logging.debug(f"{team} hiring {StaffRoles.TEAM_PRINCIPAL.value}")
+			logging.debug(f"Free Agents: {free_agents}")
+			assert len(free_agents) > 0, "No more free agents available"
+			team_hire_team_principal(model, team, free_agents)
+
+def team_hire_team_principal(model: Model, team: str, free_agents: List[str]) -> None:
+	team_model = model.entity_manager.get_team_model(team)
+	tp_hired = random.choice(free_agents)
+	week_to_announce = max(random.randint(4, 40), model.season.calendar.current_week + 1)
+	model.staff_market.team_principal_hired(team, tp_hired, week_to_announce)

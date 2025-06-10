@@ -91,14 +91,14 @@ class PageUpdateController:
 		grid_this_year_df = self.model.staff_market.grid_this_year_df.copy(deep=True)
 		grid_next_year_announced_df = self.model.staff_market.grid_next_year_announced_df.copy(deep=True)
 		sponsors_this_year_df = self.model.sponsor_market.sponsors_this_year_df.copy(deep=True)
-		sponsors_next_year_df = self.model.sponsor_market.sponsors_next_year_df.copy(deep=True)
+		sponsors_next_year_announced_df = self.model.sponsor_market.sponsors_next_year_announced_df.copy(deep=True)
 
 		self.view.grid_page.update_page(
 			year,
 			grid_this_year_df,
 			grid_next_year_announced_df,
 			sponsors_this_year_df,
-			sponsors_next_year_df
+			sponsors_next_year_announced_df
 		)
 
 	def update_home_page(self) -> None:

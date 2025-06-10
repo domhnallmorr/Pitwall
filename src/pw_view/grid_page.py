@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import flet as ft
 import pandas as pd
+from pw_model.pw_model_enums import SponsorTypes
 from pw_view.custom_widgets import custom_container
 from pw_view.custom_widgets.custom_datatable import CustomDataTable
 
@@ -59,7 +60,7 @@ class GridPage(ft.Column):
         )
 
     def update_page(self, year: int, grid_this_year_df: pd.DataFrame, grid_next_year_announced_df: pd.DataFrame,
-                    sponsors_this_year_df: pd.DataFrame, sponsors_next_year_df: pd.DataFrame) -> None:
+                    sponsors_this_year_df: pd.DataFrame, sponsors_next_year_announced_df: pd.DataFrame) -> None:
         # Update tab labels
         self.current_year_tab.text = str(year)
         self.next_year_tab.text = str(year + 1)
@@ -100,7 +101,7 @@ class GridPage(ft.Column):
         self.grid_this_year_df = grid_this_year_df
         self.grid_next_year_announced_df = grid_next_year_announced_df
         self.sponsors_this_year_df = sponsors_this_year_df
-        self.sponsors_next_year_df = sponsors_next_year_df
+        self.sponsors_next_year_announced_df = sponsors_next_year_announced_df
         self.team_names = self.grid_this_year_df["team"].values.tolist()
 
         # Show staff grid by default
@@ -123,7 +124,8 @@ class GridPage(ft.Column):
         
         # NEXT YEAR
         self.grid_next_year_table = CustomDataTable(self.view, self.grid_next_year_announced_df.columns.tolist(), row_height=60)
-        self.grid_next_year_table.update_table_data(self.grid_next_year_announced_df.values.tolist())
+        self.grid_next_year_table.update_table_data(self.grid_next_year_announced_df.values.tolist(),
+                                                    team_logo_col_idx=0, team_logos=self.team_names)
 
         self.update_tab_content()
 
@@ -139,11 +141,15 @@ class GridPage(ft.Column):
 
         # THIS YEAR
         self.grid_this_year_table = CustomDataTable(self.view, self.sponsors_this_year_df.columns.tolist(), row_height=60)
-        self.grid_this_year_table.update_table_data(self.sponsors_this_year_df.values.tolist())
+        self.grid_this_year_table.update_table_data(self.sponsors_this_year_df.values.tolist(),
+                                                    team_logo_col_idx=0, team_logos=self.team_names,
+                                                    sponsor_logo_col_idx=1, sponsor_logos=self.sponsors_this_year_df[SponsorTypes.TITLE.value].values.tolist())
         
         # NEXT YEAR
-        self.grid_next_year_table = CustomDataTable(self.view, self.sponsors_next_year_df.columns.tolist(), row_height=60)
-        self.grid_next_year_table.update_table_data(self.sponsors_next_year_df.values.tolist())
+        self.grid_next_year_table = CustomDataTable(self.view, self.sponsors_next_year_announced_df.columns.tolist(), row_height=60)
+        self.grid_next_year_table.update_table_data(self.sponsors_next_year_announced_df.values.tolist(),
+                                                    team_logo_col_idx=0, team_logos=self.team_names,
+                                                    sponsor_logo_col_idx=1, sponsor_logos=self.sponsors_next_year_announced_df[SponsorTypes.TITLE.value].values.tolist())
 
         self.update_tab_content()
 

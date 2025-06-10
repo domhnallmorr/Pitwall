@@ -41,10 +41,11 @@ class StaffMarket:
 		next_year_data = [] # grid for next year
 
 		for team in self.model.teams:
-			this_year_data.append([team.name, team.team_principal])
-			next_year_data.append([team.name, team.team_principal])
+			this_year_data.append([team.name])
+			next_year_data.append([team.name])
 
-			for staff_model in [team.driver1_model, team.driver2_model, team.technical_director_model, team.commercial_manager_model]:
+			for staff_model in [team.team_principal_model, team.driver1_model, team.driver2_model,
+					   team.technical_director_model, team.commercial_manager_model,]:
 				this_year_data[-1].append(staff_model.name)
 
 				if staff_model.retiring is True or staff_model.contract.contract_length < 2:
@@ -56,7 +57,13 @@ class StaffMarket:
 
 		self.grid_next_year_df = pd.DataFrame(columns=columns, data=next_year_data)
 		self.grid_next_year_announced_df = self.grid_next_year_df.copy(deep=True)
-			
+		
+		# SET PLAYER AS TEAM PRINCIPAL
+		if self.model.player_team is not None:
+			self.grid_this_year_df.loc[self.grid_this_year_df["team"] == self.model.player_team, StaffRoles.TEAM_PRINCIPAL.value] = "The Player"
+			self.grid_next_year_df.loc[self.grid_next_year_df["team"] == self.model.player_team, StaffRoles.TEAM_PRINCIPAL.value] = "The Player"
+			self.grid_next_year_announced_df.loc[self.grid_next_year_announced_df["team"] == self.model.player_team, StaffRoles.TEAM_PRINCIPAL.value] = "The Player"
+
 		'''
 		        team               driver1                driver2
 		0   Williams    Jacques Villeneuve  Heinz-Harald Frentzen
@@ -118,13 +125,18 @@ class StaffMarket:
 
 	#TODO can merge this with compile drivers method to create 1 single method
 	def compile_teams_requiring_manager(self, role: Enum) -> list[str]:
-		assert role in [StaffRoles.TECHNICAL_DIRECTOR, StaffRoles.COMMERCIAL_MANAGER], f"Unsupported manager role {role}"
+		assert role in [StaffRoles.TECHNICAL_DIRECTOR, StaffRoles.COMMERCIAL_MANAGER, StaffRoles.TEAM_PRINCIPAL], f"Unsupported manager role {role}"
 
 		teams = []
 
 		for idx, row in self.grid_next_year_df.iterrows():
 			if row[role.value] is None:
 				teams.append(row["team"])
+
+		# handle player team team principal, as the player is the team principal
+		if role == StaffRoles.TEAM_PRINCIPAL:
+			if self.model.player_team in teams:
+				teams.remove(self.model.player_team)
 		
 		return teams
 
@@ -140,7 +152,6 @@ class StaffMarket:
 
 
 	def update_team_drivers(self) -> None:
-		print(self.grid_next_year_df)
 		assert None not in self.grid_next_year_df.values
 
 		for idx, row in self.grid_next_year_df.iterrows():
@@ -169,12 +180,19 @@ class StaffMarket:
 			else:
 				commercial_manager_contract = None
 
+			# Team Principal
+			if row[StaffRoles.TEAM_PRINCIPAL.value] in self.new_contracts_df["Driver"].values:
+				team_principal_contract = self.new_contracts_df.loc[self.new_contracts_df["Driver"] == row[StaffRoles.TEAM_PRINCIPAL.value]].to_dict(orient="records")[0]
+			else:
+				team_principal_contract = None
+
 			team_model.update_drivers(row[StaffRoles.DRIVER1.value], row[StaffRoles.DRIVER2.value], driver1_contract, driver2_contract)
 			team_model.update_managers(row[StaffRoles.TECHNICAL_DIRECTOR.value], tech_director_contract,
-							  row[StaffRoles.COMMERCIAL_MANAGER.value], commercial_manager_contract)
+							  row[StaffRoles.COMMERCIAL_MANAGER.value], commercial_manager_contract, row[StaffRoles.TEAM_PRINCIPAL.value], team_principal_contract)
 
 	def complete_hiring(self, person_hired: str, team_name: str, role: StaffRoles, salary: int=None) -> None:
-		assert role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2, StaffRoles.TECHNICAL_DIRECTOR, StaffRoles.COMMERCIAL_MANAGER]
+		assert role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2, StaffRoles.TECHNICAL_DIRECTOR, StaffRoles.COMMERCIAL_MANAGER,
+				  StaffRoles.TEAM_PRINCIPAL], f"Unsupported role {role}"
 		team_model = self.model.entity_manager.get_team_model(team_name)
 
 		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team_name, role.value] = person_hired
@@ -189,7 +207,7 @@ class StaffMarket:
 
 		if role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
 			self.model.inbox.generate_driver_hiring_email(team_model, self.model.entity_manager.get_driver_model(person_hired))
-		elif role in [StaffRoles.TECHNICAL_DIRECTOR, StaffRoles.COMMERCIAL_MANAGER]:
+		elif role in [StaffRoles.TECHNICAL_DIRECTOR, StaffRoles.COMMERCIAL_MANAGER, StaffRoles.TEAM_PRINCIPAL]:
 			self.model.inbox.new_manager_hired_email(team_name, person_hired, role.value)
 
 		if team_name == self.model.player_team: # if the player signs a driver, we must recopute AI signings
@@ -242,7 +260,12 @@ class StaffMarket:
 		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team, StaffRoles.COMMERCIAL_MANAGER.value] = commercial_manager
 		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team, week_to_announce, StaffRoles.COMMERCIAL_MANAGER.value, commercial_manager, 4_000_000, random.randint(2, 5)]
 
+	def team_principal_hired(self, team: str, team_principal: str, week_to_announce: int) -> None:
+		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team, StaffRoles.TEAM_PRINCIPAL.value] = team_principal
+		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team, week_to_announce, StaffRoles.TEAM_PRINCIPAL.value, team_principal, 4_000_000, random.randint(2, 5)]
+
 	def compute_transfers(self) -> None:
 		driver_transfers.determine_driver_transfers(self.model)
 		manager_transfers.determine_technical_director_transfers(self.model)
 		manager_transfers.determine_commercial_manager_transfers(self.model)
+		manager_transfers.determine_team_principal_transfers(self.model)

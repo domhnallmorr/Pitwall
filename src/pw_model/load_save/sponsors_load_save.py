@@ -1,6 +1,7 @@
 from __future__ import annotations
 import sqlite3
 from typing import TYPE_CHECKING
+import logging
 
 import pandas as pd
 
@@ -40,7 +41,7 @@ def save_sponsors(model: Model, save_file: sqlite3.Connection) -> None:
 				sponsor.wealth
 			))
 
-def load_sponsors(conn: sqlite3.Connection) -> tuple[list[SponsorModel], list[tuple[str, SponsorModel]]]:
+def load_sponsors(conn: sqlite3.Connection, model: Model) -> tuple[list[SponsorModel], list[tuple[str, SponsorModel]]]:
 	sponsors : list[SponsorModel] = []
 	future_sponsors : list[tuple[str, SponsorModel]] = []
 
@@ -89,8 +90,11 @@ def load_sponsors(conn: sqlite3.Connection) -> tuple[list[SponsorModel], list[tu
 
 		if year == "default":
 			sponsors.append(sponsor)
+			logging.debug(f"Added {sponsor.name} to sponsors")
 		else:
 			future_sponsors.append((year, sponsor))
+			logging.debug(f"Added {sponsor.name} to future sponsors for {year}")
 
-	return sponsors, future_sponsors
+	model.sponsors = sponsors
+	model.future_sponsors = future_sponsors
 

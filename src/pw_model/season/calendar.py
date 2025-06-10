@@ -85,6 +85,7 @@ class Calendar:
 	def countries(self) -> list[str]:
 		return [str(c) for c in self.dataframe["Country"].values.tolist()]
 	
+
 	def setup_new_season(self) -> None:
 		# Note should be called in the season constructor
 		self.current_week = 1
@@ -134,10 +135,17 @@ class Calendar:
 				self.next_race_idx = None
 	
 	def post_race_actions(self, winner: str) -> None:
-		self.dataframe.at[self.next_race_idx, "Winner"] = winner
+		idx = self.dataframe[self.dataframe["Week"] == self.current_week].index
+		if not idx.empty:
+			self.dataframe.at[idx[0], "Winner"] = winner
+		# self.dataframe.at[self.next_race_idx, "Winner"] = winner
 		self.update_next_race()
 
 		self.state = CalendarState.POST_RACE
 
 	def post_test_actions(self) -> None:
+		idx = self.dataframe[self.dataframe["Week"] == self.current_week].index
+		if not idx.empty:
+			self.dataframe.at[idx[0], "Winner"] = "-"
+			
 		self.state = CalendarState.POST_TEST

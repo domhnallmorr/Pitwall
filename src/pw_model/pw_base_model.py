@@ -26,6 +26,8 @@ from pw_model.entity_manager import EntityManager
 from pw_model.sponsors.sponsor_model import SponsorModel
 from pw_model.tyre.tyre_supplier_model import TyreSupplierModel
 
+from pw_model.player.player_model import PlayerModel
+
 class Model:
 	def __init__(self, roster: str, run_directory: str, mode: str="normal", auto_save: bool=True):
 		
@@ -34,6 +36,7 @@ class Model:
 		# logging.basicConfig(filename=f"{run_directory}\\log.txt", filemode="w", level=logging.DEBUG)
 		logging.basicConfig(level=logging.DEBUG)
 
+		self.player_model = PlayerModel(self)
 		self.run_directory = run_directory
 		self.auto_save = auto_save
 
@@ -46,7 +49,7 @@ class Model:
 		self.drivers: List[DriverModel] = []
 		self.commercial_managers: List[CommercialManager] = []
 		self.technical_directors: List[TechnicalDirector] = []
-		self.future_managers: List[Union[CommercialManager, TechnicalDirector]] = []
+		self.future_managers: List[Union[CommercialManager, TechnicalDirector, TeamPrincipalModel]] = []
 		self.team_principals: List[TeamPrincipalModel] = []
 		self.engine_suppliers: List[EngineSupplierModel] = []
 		self.tyre_suppliers: List[TyreSupplierModel] = []
@@ -68,16 +71,18 @@ class Model:
 		self.driver_offers = DriverOffers(self)
 
 		self.end_season(increase_year=False, start_career=True)
-
+		
 		if mode == "headless":
 			self.player_team = None
 			# this is called in start_career method, when player is  (mode=normal)
+			self.staff_market.setup_dataframes() # 
 			self.staff_market.compute_transfers()
 			self.sponsor_market.compute_transfers()
 
 		for team in self.teams:
 			# call any functions that need the model fully initialised
 			team.car_development_model.setup_new_season()
+		assert self.entity_manager.get_team_principal_model("Craig Pollock") is not None
 
 	@property
 	def player_team_model(self) -> TeamModel:
@@ -92,9 +97,8 @@ class Model:
 
 	def advance(self) -> None:
 		self.inbox.reset_number_new_emails()
-		print(self.season.calendar.current_week)
+
 		if self.season.calendar.current_week == self.FINAL_WEEK - 1:
-			print("herexxxxxxxx")
 			self.staff_market.ensure_player_has_staff_for_next_season()
 			
 		self.season.advance_one_week()
@@ -136,6 +140,9 @@ class Model:
 		for technical_director in self.technical_directors:
 			technical_director.end_season(increase_age=increase_year)
 
+		for team_principal in self.team_principals:
+			team_principal.end_season(increase_age=increase_year)
+
 		for sponsor in self.sponsors:
 			sponsor.end_season(increase_year=increase_year)
 
@@ -163,6 +170,7 @@ class Model:
 		if player_team is not None:
 			self.player_team_model.finance_model.update_prize_money(self.season.standings_manager.player_team_position)
 
+		self.staff_market.setup_dataframes() # to set player as team principal for relevant team
 		self.staff_market.compute_transfers()
 		self.sponsor_market.compute_transfers() # driver transfers at start of career are handled in the start_career method (once player_team is defined)
 

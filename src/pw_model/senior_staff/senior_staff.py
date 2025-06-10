@@ -1,8 +1,10 @@
 from __future__ import annotations
+import logging
 import random
 from typing import TypedDict, TYPE_CHECKING
 
 from pw_model.senior_staff import staff_contract
+from pw_model.pw_model_enums import StaffRoles
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -57,6 +59,7 @@ class SeniorStaff:
 		if self.retired is False:
 			if self.retiring is True:
 				self.retired = True
+				logging.debug(f"{self.name} retiring")
 
 			else:
 				if increase_age is True:
@@ -68,5 +71,19 @@ class SeniorStaff:
 			
 		
 	def handle_start_of_retiring_season(self) -> None:
-		self.retiring = True
-		self.model.inbox.generate_driver_retirement_email(self)
+		logging.debug(f"{self.name} starting retiring season")
+		# check we won't run out of active managers
+		delay_retirement = False
+
+		if self.role == StaffRoles.TEAM_PRINCIPAL:
+			if self.model.entity_manager.no_of_active_team_principals == len(self.model.teams):
+				delay_retirement = True
+				self.delay_retirement()
+		
+		if delay_retirement is False:
+			self.retiring = True
+			self.model.inbox.generate_driver_retirement_email(self)
+
+	def delay_retirement(self) -> None:
+		logging.debug(f"{self.name} delaying retirement")
+		self.retiring_age += 1

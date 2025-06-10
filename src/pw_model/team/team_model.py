@@ -2,7 +2,7 @@ from __future__ import annotations
 import copy
 import logging
 import random
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Dict, Any, Union
 
 from pw_model.season import season_stats
 from pw_model.finance import finance_model
@@ -16,6 +16,7 @@ from pw_model.engine.engine_supplier_model import EngineSupplierModel
 from pw_model.testing.testing_model import TestingModel
 from pw_model.tyre.tyre_supplier_model import TyreSupplierModel
 from pw_model.team.team_colors_manager import TeamColorsManager
+from pw_model.player import player_model
 
 if TYPE_CHECKING:
 	from pw_model.driver import driver_model
@@ -107,8 +108,11 @@ class TeamModel:
 		return self.model.entity_manager.get_technical_director_model(self.technical_director)
 
 	@property
-	def team_principal_model(self) -> team_principal.TeamPrincipalModel:
-		return self.model.entity_manager.get_team_principal_model(self.team_principal)
+	def team_principal_model(self) -> Union[team_principal.TeamPrincipalModel, player_model.PlayerModel]:
+		if self.is_player_team is True:
+			return self.model.player_model
+		else:
+			return self.model.entity_manager.get_team_principal_model(self.team_principal)
 	
 	@property
 	def engine_supplier_model(self) -> EngineSupplierModel:
@@ -193,9 +197,10 @@ class TeamModel:
 			self.driver2_model.contract.salary = driver2_contract["Salary"]
 
 	def update_managers(self, technical_director: str, technical_director_contract: Dict[str, Any],
-					 commercial_manager: str, commercial_manager_contract: Dict[str, Any]) -> None:
+					 commercial_manager: str, commercial_manager_contract: Dict[str, Any], team_principal: str, team_principal_contract: Dict[str, Any]) -> None:
 		self.technical_director = technical_director
 		self.commercial_manager = commercial_manager
+		self.team_principal = team_principal
 
 		#TODO need to improve means of updating contract
 		if technical_director_contract is not None:
@@ -205,6 +210,10 @@ class TeamModel:
 		if commercial_manager_contract is not None:
 			self.commercial_manager_model.contract.contract_length = commercial_manager_contract["ContractLength"]
 			self.commercial_manager_model.contract.salary = commercial_manager_contract["Salary"]
+
+		if team_principal_contract is not None:
+			self.team_principal_model.contract.contract_length = team_principal_contract["ContractLength"]
+			self.team_principal_model.contract.salary = team_principal_contract["Salary"]
 
 	def update_car_speed(self) -> None:
 		'''

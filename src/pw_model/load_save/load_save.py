@@ -21,7 +21,7 @@ from pw_model.load_save.technical_directors_load_save import save_technical_dire
 from pw_model.load_save.tyres_load_save import save_tyre_suppliers, load_tyre_suppliers
 from pw_model.load_save.staff_market_load_save import save_grid_this_year, save_grid_next_year, save_new_contracts_df, load_grid_this_year, load_grid_next_year
 from pw_model.load_save.testing_load_save import save_testing_model, load_testing
-from pw_model.load_save.sponsor_market_load_save import save_sponsors_this_year, save_sponsors_next_year, save_sponsor_new_contracts_df, load_sponsors_this_year, load_sponsors_next_year
+from pw_model.load_save.sponsor_market_load_save import save_sponsors_this_year, save_sponsors_next_year, save_sponsor_new_contracts_df, load_sponsors_market
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -288,6 +288,7 @@ def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mod
 		conn = save_file # db provided in memory
 
 	load_drivers(conn, model)
+	load_sponsors(conn, model)
 	load_drivers_stats(conn, model)
 	load_senior_staff(conn, model)
 	load_teams(conn, model)
@@ -300,7 +301,7 @@ def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mod
 	load_calendar(conn, model)
 	load_driver_offers(conn, model)
 	load_tyre_suppliers(model, conn)
-	load_sponsors(conn)
+	load_sponsors_market(conn, model)
 
 	if model.player_team_model is not None:
 		load_transport_costs(conn, model.player_team_model.finance_model.transport_costs_model)

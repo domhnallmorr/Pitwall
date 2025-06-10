@@ -22,3 +22,5 @@ def test_add_new_managers():
 	model.entity_manager.add_new_managers()
 	# assert model.entity_manager.get_technical_director_model("Henri Durand") is not None
 	assert len(model.technical_directors) == orig_number_tech_directors + 3
+
+	assert model.entity_manager.get_team_principal_model("Paul Stoddart") is not None

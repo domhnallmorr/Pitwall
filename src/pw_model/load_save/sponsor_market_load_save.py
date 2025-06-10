@@ -17,10 +17,9 @@ def save_sponsors_next_year(model: Model, save_file: sqlite3.Connection) -> None
 def save_sponsor_new_contracts_df(model: Model, save_file: sqlite3.Connection) -> None:
 	model.sponsor_market.new_contracts_df.to_sql("NewSponsorContracts_df", save_file, if_exists="replace", index=False)
 
-def load_sponsors_this_year(conn: sqlite3.Connection, model: Model) -> None:
+def load_sponsors_market(conn: sqlite3.Connection, model: Model) -> None:
 	model.sponsor_market.sponsors_this_year_df = pd.read_sql('SELECT * FROM SponsorsThisYear_df', conn)
 
-def load_sponsors_next_year(conn: sqlite3.Connection, model: Model) -> None:
 	model.sponsor_market.sponsors_next_year_df = pd.read_sql('SELECT * FROM SponsorsNextYear_df', conn)
 	model.sponsor_market.sponsors_next_year_announced_df = pd.read_sql('SELECT * FROM SponsorsNextYearAnnounced_df', conn)
 	model.sponsor_market.new_contracts_df = pd.read_sql('SELECT * FROM NewSponsorContracts_df', conn)

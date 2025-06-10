@@ -216,6 +216,7 @@ def test_post_race_actions_updates_winner(calendar_obj):
     assert calendar_obj.state == CalendarState.POST_RACE
 
     # If we do it again:
+    calendar_obj.current_week = 2
     calendar_obj.post_race_actions("Another Winner")
     # row=1 now gets the winner
     assert calendar_obj.dataframe.at[1, "Winner"] == "Another Winner"

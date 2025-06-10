@@ -1,115 +1,130 @@
 import pytest
-import flet as ft
 import pandas as pd
-import types
+import flet as ft
 
-import pw_view.grid_page as gp_mod
-
-# Dummy CustomDataTable to capture initialization and updates
-class DummyCustomDataTable:
-    def __init__(self, view, column_names, row_height=30):
-        self.view = view
-        self.column_names = column_names
-        self.update_calls = []
-        self.list_view = f"list_{column_names}"
-
-    def update_table_data(self, data, flag_col_idx=None, flags=None, team_logo_col_idx=None, team_logos=None):
-        self.update_calls.append(data)
-
-@pytest.fixture(autouse=True)
-def patch_custom_datatable(monkeypatch):
-    monkeypatch.setattr(gp_mod, 'CustomDataTable', DummyCustomDataTable)
+from pw_view.grid_page import GridPage               # :contentReference[oaicite:1]{index=1}
+from pw_model.pw_model_enums import SponsorTypes     # :contentReference[oaicite:2]{index=2}
 
 @pytest.fixture
 def dummy_view():
+    """A minimal stand-in for the real View, supplying only what GridPage and CustomDataTable need."""
     class DummyMainApp:
         def __init__(self):
-            self.update_calls = 0
+            self.updated = False
         def update(self):
-            self.update_calls += 1
-    return types.SimpleNamespace(
-        background_image="bg_image",
-        page_header_style="header_style",
-        main_app=DummyMainApp()
+            self.updated = True
+
+    view = type("V", (), {})()
+    view.background_image    = ft.Text("BG")                    # used in GridPage.__init__
+    view.page_header_style  = ft.TextThemeStyle.DISPLAY_SMALL  # used for header Text
+    view.main_app           = DummyMainApp()                   # .update() gets called in update_tab_content
+    view.dark_grey          = "#000000"                        # for CustomContainer & HeaderContainer
+    view.team_logos_path    = "/fake/team_logos"               # for gen_team_logo_cell
+    view.sponsor_logos_path = "/fake/sponsor_logos"            # for gen_sponsor_logo_cell
+    view.flags_small_path   = "/fake/flags"                    # for gen_flag_cell (unused here)
+    return view
+
+def make_staff_df():
+    """One-row staff grid with all five roles filled."""
+    cols = [
+        "team",
+        "team_principal",
+        "driver1",
+        "driver2",
+        "technical_director",
+        "commercial_manager"
+    ]
+    data = [["Team A", "TP A", "D1 A", "D2 A", "TD A", "CM A"]]
+    return pd.DataFrame(data, columns=cols)
+
+def make_sponsor_df(this_year_name="Sponsor X", next_year_name=None):
+    """One-row sponsor grid. Column name must match SponsorTypes.TITLE.value."""
+    col = ["Team", SponsorTypes.TITLE.value]
+    data = [["Team A", this_year_name]]
+    df = pd.DataFrame(data, columns=col)
+    # Announced next-year is a deep copy with possibly a None
+    df_next = pd.DataFrame([[ "Team A", next_year_name ]], columns=col)
+    return df, df_next
+
+def test_update_page_initial_staff_grid(dummy_view):
+    page = GridPage(dummy_view)
+
+    staff_now   = make_staff_df()
+    staff_next  = make_staff_df()
+    sponsors_now, sponsors_next = make_sponsor_df(this_year_name="X", next_year_name="Y")
+
+    # Call update_page for year=2025
+    page.update_page(
+        year=2025,
+        grid_this_year_df=staff_now,
+        grid_next_year_announced_df=staff_next,
+        sponsors_this_year_df=sponsors_now,
+        sponsors_next_year_announced_df=sponsors_next
     )
 
-
-def test_init_sets_up_tabs_and_controls(dummy_view):
-    page = gp_mod.GridPage(dummy_view)
-
-    # Initial tab labels and types
-    assert isinstance(page.current_year_tab, ft.Tab)
-    assert page.current_year_tab.text == "1998"
-    assert isinstance(page.next_year_tab, ft.Tab)
-    assert page.next_year_tab.text == "1999"
-    assert isinstance(page.tabs, ft.Tabs)
-
-    # Column root controls
-    assert isinstance(page.controls[0], ft.Text)
-    assert page.controls[0].value == "Grid"
-    assert page.controls[1] is page.background_stack
-    assert page.background_stack.expand is True
-
-
-def test_update_page_and_show_staff_grid(dummy_view):
-    page = gp_mod.GridPage(dummy_view)
-
-    # Prepare sample dataframes
-    df_staff = pd.DataFrame([[1, 2]], columns=["team", "B"])
-    df_next_announce = pd.DataFrame([[3, 4]], columns=["C", "D"])
-    df_sponsors = pd.DataFrame([[5, 6]], columns=["E", "F"])
-    df_sponsors_next = pd.DataFrame([[7, 8]], columns=["G", "H"])
-
-    # Call update_page
-    page.update_page(2025, df_staff, df_next_announce, df_sponsors, df_sponsors_next)
-
-    # Tabs should be relabeled
+    # Tabs relabeled correctly
     assert page.current_year_tab.text == "2025"
-    assert page.next_year_tab.text == "2026"
+    assert page.next_year_tab.text    == "2026"
 
-    # Staff filter active by default
-    assert page.staff_button_container.data == "active"
+    # By default, staff grid is active:
+    assert page.staff_button_container.data   == "active"
     assert page.sponsor_button_container.data == "inactive"
 
-    # Tables initialized and updated for staff view
-    assert isinstance(page.grid_this_year_table, DummyCustomDataTable)
-    assert page.grid_this_year_table.column_names == ["team", "B"]
-    assert page.grid_this_year_table.update_calls == [df_staff.values.tolist()]
+    # The tables themselves should exist
+    assert hasattr(page, "grid_this_year_table")
+    assert hasattr(page, "grid_next_year_table")
 
-    assert isinstance(page.grid_next_year_table, DummyCustomDataTable)
-    assert page.grid_next_year_table.column_names == ["C", "D"]
-    assert page.grid_next_year_table.update_calls == [df_next_announce.values.tolist()]
+    # And update_tab_content() should have called main_app.update()
+    assert dummy_view.main_app.updated is True
 
-    # main_app.update() called once
-    assert dummy_view.main_app.update_calls == 1
+def test_show_sponsor_grid_switches_and_renders(dummy_view):
+    page = GridPage(dummy_view)
 
+    # Prepare data: staff grids (not used here), and sponsors for this and next year
+    staff_now  = make_staff_df()
+    staff_next = make_staff_df()
+    sponsors_now, sponsors_next = make_sponsor_df(this_year_name="TitleCo", next_year_name=None)
 
-def test_show_sponsor_grid_switches_and_updates(dummy_view):
-    page = gp_mod.GridPage(dummy_view)
+    page.update_page(
+        year=2025,
+        grid_this_year_df=staff_now,
+        grid_next_year_announced_df=staff_next,
+        sponsors_this_year_df=sponsors_now,
+        sponsors_next_year_announced_df=sponsors_next
+    )
+    # Reset the flag so we can catch the next update()
+    dummy_view.main_app.updated = False
 
-    # Prepare sample dataframes
-    df_staff = pd.DataFrame([[1, 2]], columns=["team", "B"])
-    df_next_announce = pd.DataFrame([[3, 4]], columns=["C", "D"])
-    df_sponsors = pd.DataFrame([[5, 6]], columns=["E", "F"])
-    df_sponsors_next = pd.DataFrame([[7, 8]], columns=["G", "H"])
-
-    # Initialize page and reset update count
-    page.update_page(2025, df_staff, df_next_announce, df_sponsors, df_sponsors_next)
-    dummy_view.main_app.update_calls = 0
-
-    # Switch to sponsor view
+    # Switch to sponsors
     page.show_sponsor_grid()
 
-    # Sponsor filter should be active
+    # Button states flipped
     assert page.sponsor_button_container.data == "active"
-    assert page.staff_button_container.data == "inactive"
+    assert page.staff_button_container.data   == "inactive"
 
-    # Tables updated for sponsors view
-    assert page.grid_this_year_table.column_names == ["E", "F"]
-    assert page.grid_this_year_table.update_calls[-1] == df_sponsors.values.tolist()
+    # update_tab_content() invoked again
+    assert dummy_view.main_app.updated is True
 
-    assert page.grid_next_year_table.column_names == ["G", "H"]
-    assert page.grid_next_year_table.update_calls[-1] == df_sponsors_next.values.tolist()
+    # Inspect the first row of the "this year" sponsor table:
+    rows = page.grid_this_year_table.data_table.rows
+    assert len(rows) == 1
+    cells = rows[0].cells
 
-    # main_app.update() called again
-    assert dummy_view.main_app.update_calls == 1
+    # The second cell should be a DataCell whose content is a Row including an Image (the sponsor logo)
+    cell_content = cells[1].content  # sponsor_logo_col_idx == 1
+    assert isinstance(cell_content, ft.Row)
+    assert any(isinstance(ctrl, ft.Image) for ctrl in cell_content.controls)
+
+def test_tab_content_controls(dummy_view):
+    """Ensure update_tab_content wires the filter buttons and ListView into each tab."""
+    page = GridPage(dummy_view)
+    staff_now, staff_next = make_staff_df(), make_staff_df()
+    sponsors_now, sponsors_next = make_sponsor_df("X", "Y")
+    page.update_page(2025, staff_now, staff_next, sponsors_now, sponsors_next)
+
+    # Grab the content of the current-year tab
+    column = page.current_year_tab.content.content
+    # First control: the filter-buttons Container
+    assert column.controls[0].content is page.filter_buttons
+    # Second control: the ListView of the staff-table
+    assert column.controls[1] is page.grid_this_year_table.list_view

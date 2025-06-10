@@ -87,7 +87,7 @@ class SponsorMarket:
 
 	def update_team_sponsors(self) -> None:
 		assert None not in self.sponsors_next_year_df.values
-		
+		print(self.sponsors_next_year_df)
 		for idx, row in self.sponsors_next_year_df.iterrows():
 			team_name = row["Team"]
 			sponsor_name = row[SponsorTypes.TITLE.value]
@@ -97,6 +97,7 @@ class SponsorMarket:
 
 				team_model.finance_model.sponsorship_model.title_sponsor = row[SponsorTypes.TITLE.value]
 				contract = self.new_contracts_df.loc[self.new_contracts_df["Sponsor"] == row[SponsorTypes.TITLE.value]].to_dict(orient="records")[0]
-
+				print(team_model.name)
+			
 				team_model.finance_model.sponsorship_model.title_sponsor_model.contract.total_payment = contract["Payment"]
 				team_model.finance_model.sponsorship_model.title_sponsor_model.contract.contract_length = contract["ContractLength"]
