@@ -28,6 +28,13 @@ from pw_model.driver_negotiation.driver_negotiation_enums import DriverCategory
         #   age=35 => +0% => expects exactly current_salary => offered < current => not interested
         ("Fernando Alonso", False, False, 90, 50, 35, 20_000_000, 18_000_000,
          DriverInterest.NOT_INTERESTED, DriverRejectionReason.SALARY_OFFER),
+
+        # 5) Test driver not currently paid
+        ("Max Verstappen", False, False, 90, 50, 22, 0, 1_000_000,
+         DriverInterest.NOT_INTERESTED, DriverRejectionReason.SALARY_OFFER),
+
+        ("Max Verstappen", False, False, 90, 50, 22, 0, 1_200_000,
+         DriverInterest.ACCEPTED, DriverRejectionReason.NONE),
     ],
 )
 def test_determine_driver_interest(

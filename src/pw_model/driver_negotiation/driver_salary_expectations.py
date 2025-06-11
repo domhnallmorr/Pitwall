@@ -14,6 +14,10 @@ def determine_driver_salary_expectation(model: Model, driver: str) -> int:
 	current_salary = driver_model.contract.salary
 	age = driver_model.age
 
+	if current_salary == 0:
+		# if driver has no current salary, set it to a reasonable starting salary
+		current_salary = 1_000_000
+
 	if age < 25:
 		salary_increase = 1.1 # younger drivers expect some salary increase
 	elif age < 32:

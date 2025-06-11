@@ -25,6 +25,9 @@ from pw_model.driver_negotiation.driver_salary_expectations import determine_dri
         # (anything else) => classification cap = 1,600,000
         (40, 5, 24, 1_500_000, 1_600_000),     # 1.5M * 1.1 = 1.65M => capped at 1.6M
         (40, 5, 35, 1_000_000, 1_000_000),     # 1M * 1.0 = 1M < 1.6M => no cap
+
+        # Driver not currently paid
+        (50, 16, 24, 0, 1_100_000),            # no current salary => set to 1.1M
     ],
 )
 def test_determine_driver_salary_expectation(rating, starts, age, current_salary, expected_salary):
