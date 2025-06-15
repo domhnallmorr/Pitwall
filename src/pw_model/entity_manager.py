@@ -128,9 +128,10 @@ class EntityManager:
 		return tyre_supplier_model
 
 	def add_new_drivers(self) -> None:
-		new_drivers = [d for d in self._model.future_drivers if int(d[0]) == self._model.year]
+		new_drivers: list[tuple[str, DriverModel]] = [d for d in self._model.future_drivers if int(d[0]) == self._model.year]
 
 		for new_driver in new_drivers:
+			new_driver[1].setup_season_stats()
 			self._model.drivers.append(new_driver[1])
 			self._model.future_drivers.remove(new_driver)
 			logging.info(f"Added {new_driver[1].name} to drivers")

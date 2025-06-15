@@ -31,8 +31,8 @@ def test_get_driver_models():
 	model = create_model.create_model()
 	team_model = model.entity_manager.get_team_model("Warrick")
 
-	assert team_model.driver1_model.name == "Jacques Villeneuve"
-	assert team_model.driver2_model.name == "Heinz-Harald Frentzen"
+	assert team_model.driver1_model.name == "John Newhouse"
+	assert team_model.driver2_model.name == "Henrik Friedrich"
 
 def test_workplace_update():
 	# test the update to workforce over 20 seasons

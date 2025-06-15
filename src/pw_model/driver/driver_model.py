@@ -1,10 +1,10 @@
 from __future__ import annotations
 import random
-from typing import TypedDict, TYPE_CHECKING
+from typing import TypedDict, TYPE_CHECKING, Optional
 
-from pw_model.season import season_stats
 from pw_model.driver import driver_contract
 from pw_model.driver.driver_career_stats import DriverCareerStats
+from pw_model.driver import driver_season_stats
 from pw_model.team import team_model
 
 if TYPE_CHECKING:
@@ -34,7 +34,9 @@ class DriverModel:
 			  salary : int,
 			  starts : int,
 			  pay_driver : bool,
-			  budget : int):
+			  budget : int,
+			  championships : int = 0,
+			  wins : int = 0):
 		
 		self.model = model
 		self.name = name
@@ -56,9 +58,9 @@ class DriverModel:
 
 		self.retiring_age = decide_when_retiring(self.age)
 
-		self.career_stats = DriverCareerStats(starts=starts)
+		self.career_stats = DriverCareerStats(starts=starts, championships=championships, wins=wins)
 
-		self.setup_season_stats()
+		# self.setup_season_stats()
 
 	@property
 	def team_model(self) -> team_model.TeamModel:
@@ -77,6 +79,10 @@ class DriverModel:
 		return int(rating)
 
 	@property
+	def current_standings_position(self) -> Optional[int]: #0 indexed, None if driver is not in race
+		return int(self.model.season.standings_manager.driver_position(self.name)) if self.model.season.standings_manager.driver_position(self.name) is not None else None
+	
+	@property
 	def details(self) -> DriverDetails:
 		return {
 			"name": self.name,
@@ -89,6 +95,7 @@ class DriverModel:
 	def end_season(self, increase_age: bool=True) -> None:
 		if increase_age is True: # this method is run when driver is initialised, don't increase age or contract in that case
 			self.age += 1
+			self.career_stats.update_after_season(self.current_standings_position)
 
 		if self.retired is False:
 			if self.retiring is True:
@@ -110,5 +117,5 @@ class DriverModel:
 		self.model.inbox.generate_driver_retirement_email(self)
 
 	def setup_season_stats(self) -> None:
-		self.season_stats = season_stats.SeasonStats()
+		self.season_stats = driver_season_stats.DriverSeasonStats(self.model, self)
 

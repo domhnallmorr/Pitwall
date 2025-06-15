@@ -28,12 +28,24 @@ class MainWindow(ft.View):
 		super().__init__(controls=[self.header, self.content_row])
 
 	def setup_header_bar(self) -> None:
+		self.header_team_logo = ft.Image(
+			src=fr"{self.view.team_logos_path}\warrick.png",
+			width=50,
+			height=50,
+			# fit=ft.ImageFit.CONTAIN
+		)
 		self.team_text = ft.Text("Williams - $1,000,000", theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM)
 		self.week_text = ft.Text("Week 1 - 1998", theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM)
 
+		name_logo_row = ft.Row(
+			controls=[self.header_team_logo, self.team_text],
+			alignment=ft.MainAxisAlignment.START,
+			vertical_alignment=ft.CrossAxisAlignment.CENTER
+		)
+
 		self.header = ft.Row(
 			controls=[
-				self.team_text,
+				name_logo_row,				# Team name and logo row
 				self.week_text
 			],
 			alignment=ft.MainAxisAlignment.SPACE_BETWEEN,  # Space between the items
@@ -69,6 +81,8 @@ class MainWindow(ft.View):
 			contents.append(self.view.upgrade_facility_page)
 		elif page_name == ViewPageEnums.TRACKPAGE:
 			contents.append(self.view.track_page)
+		elif page_name == ViewPageEnums.DRIVER:
+			contents.append(self.view.driver_page)
 
 		self.content_row = ft.Row(
 			contents,
@@ -80,7 +94,8 @@ class MainWindow(ft.View):
 		self.controls = [self.header, self.content_row]
 		self.view.main_app.update()
 		
-	def update_window(self, team: str, date: str, state: CalendarState) -> None:
+	def update_window(self, team_name: str, team: str, date: str, state: CalendarState) -> None:
+		self.header_team_logo.src = fr"{self.view.team_logos_path}\{team_name.lower()}.png"
 		self.team_text.value = team
 		
 		# Format would be like "Week 1 - 1998 (PRE_SEASON)"

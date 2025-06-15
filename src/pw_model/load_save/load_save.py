@@ -1,12 +1,16 @@
 from __future__ import annotations
 import sqlite3
 from typing import Union, Optional, TYPE_CHECKING
+from io import StringIO
+
 import pandas as pd
+import numpy as np
 
 from pw_model import load_roster
 from pw_model.pw_model_enums import StaffRoles, CalendarState
 from pw_model.load_save.drivers_load_save import save_drivers, load_drivers
 from pw_model.load_save.driver_offers_load_save import save_driver_offers, load_driver_offers
+from pw_model.load_save.driver_season_stats_load_save import save_drivers_season_stats, load_drivers_season_stats
 from pw_model.load_save.email_load_save import save_email, load_email
 from pw_model.load_save.finance_load_save import save_finance_model, load_finance_model
 from pw_model.load_save.general_load_save import save_general, load_general
@@ -36,7 +40,7 @@ def save_game(model: Model, mode: str="file") -> sqlite3.Connection:
 	
 	save_general(model, save_file)
 	save_drivers(model, save_file)
-	save_drivers_stats(model, save_file)
+	save_drivers_season_stats(model, save_file)
 	save_commercial_managers(model, save_file)
 	save_technical_directors(model, save_file)
 	save_teams(model, save_file)
@@ -69,52 +73,6 @@ def save_game(model: Model, mode: str="file") -> sqlite3.Connection:
 
 	return save_file
 
-
-def save_drivers_stats(model: Model, save_file: sqlite3.Connection) -> None:
-
-	cursor = save_file.cursor()
-
-	cursor.execute('''
-		CREATE TABLE IF NOT EXISTS "drivers_stats" (
-		"Name"	TEXT,
-		"StartsThisSeason"	INTEGER,
-		"PointsThisSeason"	INTEGER,
-		"PolesThisSeason"	INTEGER,
-		"WinsThisSeason"	INTEGER,
-		"PodiumsThisSeason"	INTEGER,
-		"DNFsThisSeason"	INTEGER,
-		"BestResultThisSeason"	INTEGER,
-		"BestResultRndThisSeason"	INTEGER
-		)'''
-				)
-	
-	cursor.execute("DELETE FROM drivers_stats") # clear existing data
-
-	for driver in model.drivers:
-		name = driver.name
-		starts_this_season = driver.season_stats.starts_this_season
-		points_this_season = driver.season_stats.points_this_season
-		poles_this_season = driver.season_stats.poles_this_season
-		wins_this_season = driver.season_stats.wins_this_season
-		podiums_this_season = driver.season_stats.podiums_this_season
-		dnfs_this_season = driver.season_stats.dnfs_this_season
-		best_result_this_season = driver.season_stats.best_result_this_season
-		rnd_best_result_scored = driver.season_stats.rnd_best_result_scored
-
-		cursor.execute('''
-				INSERT INTO drivers_stats (name, startsthisseason, pointsthisseason, polesthisseason, winsthisseason, podiumsthisseason, dnfsthisseason, bestresultthisseason, bestresultrndthisseason)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-		''', (
-			name,
-			starts_this_season,
-			points_this_season,
-			poles_this_season,
-			wins_this_season,
-			podiums_this_season,
-			dnfs_this_season,
-			best_result_this_season,
-			rnd_best_result_scored,
-		))
 
 def save_commercial_managers(model: Model, save_file: sqlite3.Connection) -> None:
 	cursor = save_file.cursor()
@@ -289,7 +247,7 @@ def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mod
 
 	load_drivers(conn, model)
 	load_sponsors(conn, model)
-	load_drivers_stats(conn, model)
+	load_drivers_season_stats(conn, model)
 	load_senior_staff(conn, model)
 	load_teams(conn, model)
 	load_teams_stats(conn, model)
@@ -309,26 +267,6 @@ def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mod
 		load_car_development(conn, model)
 		load_testing(conn, model)
 
-
-def load_drivers_stats(conn: sqlite3.Connection, model: Model) -> None:
-	stats_df = pd.read_sql('SELECT * FROM drivers_stats', conn)
-
-	for idx, row in stats_df.iterrows():
-		name = row["Name"]
-		starts_this_season = row["StartsThisSeason"]
-		points_this_season = row["PointsThisSeason"]
-		poles_this_season = row["PolesThisSeason"]
-		wins_this_season = row["WinsThisSeason"]
-		podiums_this_season = row["PodiumsThisSeason"]
-		dnfs_this_season = row["DNFsThisSeason"]
-
-		driver_model = model.entity_manager.get_driver_model(name)
-		driver_model.season_stats.starts_this_season = starts_this_season
-		driver_model.season_stats.points_this_season = points_this_season
-		driver_model.season_stats.poles_this_season = poles_this_season
-		driver_model.season_stats.wins_this_season = wins_this_season
-		driver_model.season_stats.podiums_this_season = podiums_this_season
-		driver_model.season_stats.dnfs_this_season = dnfs_this_season
 
 
 def load_senior_staff(conn: sqlite3.Connection, model: Model) -> None:

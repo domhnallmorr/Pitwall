@@ -117,3 +117,11 @@ class StandingsManager:
 		index = self.constructors_standings_df[self.constructors_standings_df["Team"] == team].index.values[0]
 		
 		return int(index)
+	
+	def driver_position(self, driver: str) -> int: #0 indexed
+		if driver not in self.drivers_standings_df["Driver"].values:
+			return None
+
+		index = self.drivers_standings_df[self.drivers_standings_df["Driver"] == driver].index.values[0]
+		
+		return int(index)

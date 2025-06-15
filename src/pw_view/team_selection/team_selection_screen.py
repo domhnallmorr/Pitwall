@@ -11,15 +11,28 @@ if TYPE_CHECKING:
 	from pw_view.view import View
 
 class TeamSelectionScreen(ft.View): # type: ignore
-    def __init__(self, view: View, team_names: list[str]):
+    def __init__(self, view: View, team_names: list[str], team_countries: list[str]):
         self.view = view
         self.team_names = team_names
+        self.team_countries = team_countries # used for race weekend screen
         self.selected_team = team_names[0]
         
-        # Create team buttons
-        self.team_buttons = [
-            # ft.ElevatedButton(name, data=name, on_click=self.update_team_details, width=200)
-            ft.ListTile(title=ft.Text(name, color=view.dark_grey, weight="bold"),
+        # Create flags
+        flags = []
+        for country in team_countries:
+            flag_img = ft.Image(
+                src=f"{self.view.flags_small_path}/{country.lower()}.png",
+                width=40,
+                height=40,
+                fit=ft.ImageFit.CONTAIN,
+                )
+            flags.append(flag_img)
+
+        
+        self.team_buttons = [            
+            ft.ListTile(
+                        leading=flags[team_names.index(name)],
+                        title=ft.Text(name, color=view.dark_grey, weight="bold"),
                         data=name, on_click=self.update_team_details, bgcolor=ft.Colors.GREY)
             for name in team_names
         ]

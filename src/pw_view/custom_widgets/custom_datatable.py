@@ -50,7 +50,7 @@ class CustomDataTable:
 				elif col_idx == sponsor_logo_col_idx and sponsor_logos is not None:
 					cells.append(self.gen_sponsor_logo_cell(cell_text, sponsor_logos[row_idx]))
 				else:
-					cells.append(ft.DataCell(ft.Text(cell_text)))
+					cells.append(ft.DataCell(ft.Text(cell_text), data=cell_text))
 
 			rows.append(ft.DataRow(cells=cells, color=bg_color))
 

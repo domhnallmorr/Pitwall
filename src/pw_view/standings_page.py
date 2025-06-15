@@ -66,6 +66,7 @@ class StandingsPage(ft.Column):
 		# DRIVERS
 		self.drivers_table = CustomDataTable(self.view, drivers_standings_df.columns.tolist())
 		self.drivers_table.update_table_data(drivers_standings_df.values.tolist(), flag_col_idx=0, flags=drivers_flags)
+		self.drivers_table.assign_on_tap_callback(0, self.driver_column_clicked)
 		self.drivers_tab.content.content = self.drivers_table.list_view
 
 		# CONSTRUCTORS
@@ -80,3 +81,20 @@ class StandingsPage(ft.Column):
 		# Reset to drivers view
 		self.tabs.selected_index = 0
 		self.view.main_app.update()
+
+	def _extract_text(self, control: ft.Control) -> str:
+			if hasattr(control, "value"):
+					return control.value
+			if hasattr(control, "content"):
+					return self._extract_text(control.content)
+			if hasattr(control, "controls"):
+					for child in control.controls:
+							text = self._extract_text(child)
+							if text:
+									return text
+			return ""
+
+	def driver_column_clicked(self, e: ft.ControlEvent) -> None:
+			driver_clicked = self._extract_text(e.control)
+			if driver_clicked:
+					self.view.controller.driver_page_controller.go_to_driver_page(driver_clicked)

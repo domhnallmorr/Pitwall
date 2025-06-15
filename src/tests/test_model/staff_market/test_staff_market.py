@@ -49,10 +49,10 @@ def test_top3_drivers_logic():
 	for i in range(50):
 		model = create_model.create_model(mode="headless", auto_save=False)
 
-		schumacher_model = model.entity_manager.get_driver_model("Michael Schumacher")
-		hakkinen_model = model.entity_manager.get_driver_model("Mika Hakkinen")
-		hill_model = model.entity_manager.get_driver_model("Damon Hill")
-		fisichella_model = model.entity_manager.get_driver_model("Giancarlo Fisichella")
+		schumacher_model = model.entity_manager.get_driver_model("Marco Schneider")
+		hakkinen_model = model.entity_manager.get_driver_model("Mikko Hanninen")
+		hill_model = model.entity_manager.get_driver_model("Donovan Upland")
+		fisichella_model = model.entity_manager.get_driver_model("Fabrizio Giorgetti")
 
 		hill_model.retiring = False
 		
@@ -72,9 +72,9 @@ def test_top3_drivers_logic():
 			team_model = model.entity_manager.get_team_model(team)
 			top_4_teams_driver1.append(team_model.driver1)
 		
-		assert "Michael Schumacher" in top_4_teams_driver1
-		assert "Mika Hakkinen" in top_4_teams_driver1
-		assert "Damon Hill" in top_4_teams_driver1
+		assert "Marco Schneider" in top_4_teams_driver1
+		assert "Mikko Hanninen" in top_4_teams_driver1
+		assert "Donovan Upland" in top_4_teams_driver1
 
 def test_top_10_drivers_logic():
 	'''

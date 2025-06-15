@@ -27,6 +27,8 @@ def save_drivers(model: Model, save_file: sqlite3.Connection) -> None:
 		"Retired"	INTEGER,
 		"Salary"	INTEGER,
 		"Starts"	INTEGER,
+		"Championships"	INTEGER,
+		"Wins"	INTEGER,
 		"PayDriver"	INTEGER,
 		"Budget"	INTEGER
 		)'''
@@ -47,11 +49,13 @@ def save_drivers(model: Model, save_file: sqlite3.Connection) -> None:
 				INSERT INTO drivers (year, name, age, country,
 				  speed, consistency, qualifying, contractlength,
 				  retiringage, retiring, retired, salary,
-				  starts, paydriver, budget) 
+				  starts, championships, wins,
+				  paydriver, budget) 
 				VALUES (?, ?, ?, ?,
 				  ?, ?, ?, ?,
 				  ?, ?, ?, ?,
-				  ?, ?, ?)
+				  ?, ?, ?,
+				  ?, ?)
 				  
 			''', (
 				year,
@@ -67,6 +71,8 @@ def save_drivers(model: Model, save_file: sqlite3.Connection) -> None:
 				driver.retired,
 				driver.contract.salary,
 				driver.career_stats.starts,
+				driver.career_stats.championships,
+				driver.career_stats.wins, # add wins to save file
 				int(driver.pay_driver), # convert bool to int for sqlite3 compatibility
 				driver.budget,
 			))

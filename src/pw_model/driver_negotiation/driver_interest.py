@@ -2,7 +2,7 @@
 Function(s) to determine a driver's interest in joining the player's team
 '''
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from enum import Enum
 import random
 
@@ -40,7 +40,7 @@ def determine_driver_interest(model: Model, driver: str, salary_offered: int) ->
 		return DriverInterest.ACCEPTED, DriverRejectionReason.NONE
 		
 
-def determine_interest_in_team(model: Model, driver: str, team: str) -> DriverInterest:
+def determine_interest_in_team(model: Model, driver: str, team: str) -> tuple[DriverInterest | None, DriverRejectionReason | None]:
 	# Get current top 5 drivers
 	current_drivers_by_rating = model.season.drivers_by_rating  # [['Michael Schumacher', 98], ['Mika Hakkinen', 87], ...]
 	top_5_drivers = [driver[0] for driver in current_drivers_by_rating[:5]]

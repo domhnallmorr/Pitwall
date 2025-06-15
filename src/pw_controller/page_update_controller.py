@@ -138,11 +138,12 @@ class PageUpdateController:
 
 	def update_main_window(self) -> None:
 		player_team_model = self.model.entity_manager.get_team_model(self.model.player_team)
+		team_name = player_team_model.name
 		team = f"{self.model.player_team} - ${player_team_model.finance_model.balance:,}"
 		date = f"Week {self.model.season.calendar.current_week} - {self.model.year}"
 		state = self.model.season.calendar.state
 
-		self.view.main_window.update_window(team, date, state)
+		self.view.main_window.update_window(team_name, team, date, state)
 
 	def update_facilities_page(self, new_season: bool=False) -> None:
 		'''

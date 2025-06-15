@@ -12,6 +12,7 @@ from pw_controller.email_page.email_controller import EmailController
 from pw_controller.team_selection.team_selection_controller import TeamSelectionController
 from pw_controller.testing.testing_controller import TestingController
 from pw_controller.track_page.track_page_controller import TrackPageController
+from pw_controller.driver_page.driver_page_controller import DriverPageController
 from pw_controller.game_modes import GameModes
 from pw_controller.car_profile.car_profile_controller import CarProfileController
 
@@ -30,13 +31,15 @@ class Controller:
 		self.team_selection_controller = TeamSelectionController(self)
 		self.testing_controller = TestingController(self)
 		self.track_page_controller = TrackPageController(self)
+		self.driver_page_controller = DriverPageController(self)
 		
 		self.model = pw_base_model.Model(roster, run_directory)
 
 		team_names = [t.name for t in self.model.teams]
+		team_countries = [t.country for t in self.model.teams]
 
 		if self.mode in [GameModes.NORMAL]:
-			self.view = view.View(self, team_names, run_directory)
+			self.view = view.View(self, team_names, team_countries, run_directory)
 			self.page_update_controller.update_staff_page()
 			self.car_profile_controller = CarProfileController(self)
 		else:

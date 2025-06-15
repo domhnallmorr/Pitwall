@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import flet as ft
 
-from pw_view.grid_page import GridPage               # :contentReference[oaicite:1]{index=1}
+from pw_view.grid_page.grid_page import GridPage               # :contentReference[oaicite:1]{index=1}
 from pw_model.pw_model_enums import SponsorTypes     # :contentReference[oaicite:2]{index=2}
 
 @pytest.fixture

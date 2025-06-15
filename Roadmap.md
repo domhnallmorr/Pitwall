@@ -14,7 +14,7 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 - [ ] Logos for all sponsors/suppliers
 - [ ] Driver profile images
 - [ ] Senior staff profile images
-- [ ] Driver page with stats and biography
+- [x] Driver page with stats and biography
 - [ ] Improve home page
 - [ ] Improved email page
 - [ ] Include car side profile in home page
@@ -29,6 +29,7 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 
 - [ ] Convert all names to fake names
 - [ ] Add driver stats to database and track over time
+- [ ] proper handling for pay drivers salary
 
 
 V2 Outstanding Features

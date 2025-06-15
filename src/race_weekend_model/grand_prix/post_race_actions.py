@@ -19,9 +19,10 @@ def update_driver_stats(grand_prix_model: GrandPrixModel):
 		driver_model = participant.driver
 		
 		# career stats
-		driver_model.career_stats.update_after_race()
+		driver_model.career_stats.update_after_race(idx)
 
 		# season stats
+		driver_model.season_stats.update_post_race(idx)
 		participant.driver.season_stats.starts_this_season += 1
 		
 		if idx == 0: # update wins

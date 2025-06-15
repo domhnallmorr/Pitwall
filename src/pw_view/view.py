@@ -4,8 +4,9 @@ import os
 
 import flet as ft
 
-from pw_view import main_window, standings_page, grid_page
+from pw_view import main_window, standings_page
 from pw_view.email_page.email_page import EmailPage
+from pw_view.grid_page.grid_page import GridPage
 from pw_view.title_screen import title_screen
 from pw_view.team_selection.team_selection_screen import TeamSelectionScreen
 from pw_view.race_weekend import race_weekend_window, results_window
@@ -16,6 +17,8 @@ from pw_view.finance_page import finance_page
 from pw_view.car_page import car_page
 from pw_view.facility_page import facility_page, upgrade_facility_page
 from pw_view.track_page.track_page import TrackPage
+from pw_view.driver_page.driver_page import DriverPage
+
 from pw_view.custom_widgets.dialogs import ConfirmDialog
 from pw_view.testing.test_dialog import TestDialog
 from pw_view.car_profile.car_profile_manager import CarProfileManager
@@ -26,7 +29,7 @@ if TYPE_CHECKING:
 	from pw_controller.pw_controller import Controller
 
 class View:
-	def __init__(self, controller: Controller, team_names: list[str], run_directory: str):
+	def __init__(self, controller: Controller, team_names: list[str], team_countries: list[str], run_directory: str):
 		self.controller = controller
 		self.run_directory = run_directory
 
@@ -62,10 +65,11 @@ class View:
 		self.team_logos_path = fr"{self.run_directory}\pw_view\assets\team_logos"
 		self.sponsor_logos_path = fr"{self.run_directory}\pw_view\assets\sponsor_logos"
 		self.sidepod_logos_path = fr"{self.run_directory}\pw_view\assets\sidepod_logos"
+		self.driver_images_path = fr"{self.run_directory}\pw_view\assets\driver_images"
 
 		self.setup_background_images()
 		self.setup_pages()
-		self.setup_windows(team_names)
+		self.setup_windows(team_names, team_countries)
 
 		self.main_app.views.append(self.main_window)
 		self.confirm_dialog = ConfirmDialog(self)
@@ -97,18 +101,19 @@ class View:
 		self.calendar_page = calendar_page.CalendarPage(self)
 		self.staff_page = staff_page.StaffPage(self)
 		self.hire_staff_page = hire_staff_page.HireStaffPage(self)
-		self.grid_page = grid_page.GridPage(self)
+		self.grid_page = GridPage(self)
 		self.finance_page = finance_page.FinancePage(self)
 		self.car_page = car_page.CarPage(self)
 		self.facility_page = facility_page.FacilityPage(self)
 		self.track_page = TrackPage(self)
+		self.driver_page = DriverPage(self)
 
 		self.results_window = results_window.ResultsWindow(self)
 
-	def setup_windows(self, team_names: list[str]) -> None:
+	def setup_windows(self, team_names: list[str], team_countries: list[str]) -> None:
 		self.title_screen = title_screen.TitleScreen(self, self.run_directory)
 		self.main_window = main_window.MainWindow(self)
-		self.team_selection_screen = TeamSelectionScreen(self, team_names)
+		self.team_selection_screen = TeamSelectionScreen(self, team_names, team_countries)
 
 	def go_to_race_weekend(self, data: dict) -> None:
 
@@ -132,6 +137,7 @@ class View:
 
 		if mode == "post_race": # avoid updating the adance button when loading a career
 			self.main_window.nav_sidebar.update_advance_button(AdvanceModeEnums.ADVANCE)
+			self.main_window.change_page(ViewPageEnums.STANDINGS)
 
 		self.main_app.update()
 

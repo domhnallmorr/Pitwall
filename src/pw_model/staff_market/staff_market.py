@@ -7,6 +7,7 @@ import pandas as pd
 
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.staff_market import driver_transfers, manager_transfers, contract_functions
+from pw_model.driver_negotiation.driver_salary_expectations import determine_driver_salary_expectation
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -28,8 +29,9 @@ new_contracts_df is a dataframe that contains new contract information for any n
 class StaffMarket:
 	def __init__(self, model: Model):
 		self.model = model
-
+		
 		self.FINAL_WEEK_ANNOUNCE = min(40, model.FINAL_WEEK - 1)
+		self.FIRST_WEEK_ANNOUNCE = min(10, self.FINAL_WEEK_ANNOUNCE)
 		
 	def setup_dataframes(self) -> None:
 		columns = ["Team", "WeekToAnnounce", "DriverIdx", "Driver", "Salary", "ContractLength"]
@@ -147,8 +149,12 @@ class StaffMarket:
 		assert role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2, StaffRoles.TECHNICAL_DIRECTOR]
 		self.grid_next_year_df.loc[self.grid_next_year_df["team"] == team, role.value] = person_hired
 		
-		week_to_announce = max(random.randint(4, self.FINAL_WEEK_ANNOUNCE), self.model.season.calendar.current_week + 1) # ensure the week is not in the past
-		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team, week_to_announce, role.value, person_hired, 4_000_000, random.randint(2, 5)]
+		week_to_announce = max(random.randint(self.FIRST_WEEK_ANNOUNCE, self.FINAL_WEEK_ANNOUNCE), self.model.season.calendar.current_week + 1) # ensure the week is not in the past
+		if role not in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
+			salary = contract_functions.determine_final_salary(self.model, person_hired, role)
+		else:
+			salary = determine_driver_salary_expectation(self.model, person_hired)
+		self.new_contracts_df.loc[len(self.new_contracts_df.index)] = [team, week_to_announce, role.value, person_hired, salary, random.randint(2, 5)]
 
 
 	def update_team_drivers(self) -> None:

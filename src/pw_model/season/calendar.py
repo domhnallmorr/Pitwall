@@ -83,7 +83,8 @@ class Calendar:
 	
 	@property
 	def countries(self) -> list[str]:
-		return [str(c) for c in self.dataframe["Country"].values.tolist()]
+		races = self.dataframe[self.dataframe["SessionType"] == "Race"]
+		return [str(c) for c in races["Country"].values.tolist()]
 	
 
 	def setup_new_season(self) -> None:

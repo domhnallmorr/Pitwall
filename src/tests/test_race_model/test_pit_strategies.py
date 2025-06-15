@@ -12,7 +12,7 @@ def test_pit_strategy_setup():
 	track = test_track_model.create_dummy_track()
 	_race_model = race_weekend_model.RaceWeekendModel("headless", model, track)
 
-	schumacher_model = _race_model.get_particpant_model_by_name("Michael Schumacher")
+	schumacher_model = _race_model.get_particpant_model_by_name("Marco Schneider")
 
 	for i in range(100):
 		assert schumacher_model.pit_strategy.planned_stops in [1, 2, 3]
@@ -55,13 +55,13 @@ def test_starting_fuel():
 	# Run qualy to establish a grid order
 	_race_model.setup_qualifying(60*60, SessionNames.QUALIFYING)
 
-	schumacher_model = _race_model.get_particpant_model_by_name("Michael Schumacher")
+	schumacher_model = _race_model.get_particpant_model_by_name("Marco Schneider")
 	schumacher_model.pit_strategy.planned_stops = 1
 	schumacher_model.pit_strategy.pit1_lap = 10
 	schumacher_model.pit_strategypit2_lap = None
 	schumacher_model.pit_strategy.pit3_lap = None
 
-	irvine_model = _race_model.get_particpant_model_by_name("Eddie Irvine")
+	irvine_model = _race_model.get_particpant_model_by_name("Evan Irving")
 	irvine_model.pit_strategy.pit1_lap = 20
 
 	_race_model.setup_race()
@@ -78,7 +78,7 @@ def test_pitstops():
 
 	_race_model.setup_race()
 
-	schumacher_model = _race_model.get_particpant_model_by_name("Michael Schumacher")
+	schumacher_model = _race_model.get_particpant_model_by_name("Marco Schneider")
 	schumacher_model.retires = False # make sure he does not retire
 	
 	schumacher_model.pit_strategy.planned_stops = 3

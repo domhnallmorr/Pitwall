@@ -68,6 +68,8 @@ def load_drivers(
 
 	# stats
 	starts_idx = column_names.index("Starts")
+	championships_idx = column_names.index("Championships")
+	wins_idx = column_names.index("Wins")
 
 	cursor = conn.cursor()
 	cursor.execute(f"SELECT * FROM {table_name}")
@@ -87,9 +89,11 @@ def load_drivers(
 
 		# stats
 		starts = row[starts_idx]
+		championships = row[championships_idx]
+		wins = row[wins_idx]
 
 		driver = driver_model.DriverModel(model, name, age, country, speed, consistency, qualifying, contract_length, salary,
-									starts, pay_driver, budget)
+									starts, pay_driver, budget, championships, wins)
 		
 		if "RetiringAge" in column_names:
 			retiring_age_idx = column_names.index("RetiringAge")
@@ -193,7 +197,7 @@ def load_teams(model: Model, conn: sqlite3.Connection) -> list[team_model.TeamMo
 
 	return teams
 
-def load_team_descriptions(conn: sqlite3.Connection, model: Model) -> dict[str, str]:
+def load_team_descriptions(conn: sqlite3.Connection, model: Model) -> None:
 
 	table = "TeamSelectionText"
 	cursor = conn.execute(f'PRAGMA table_info({table})')
@@ -293,14 +297,14 @@ def load_season(model: Model, season_file: str) -> pd.DataFrame:
 		data = f.readlines()
 
 	# PROCESS CALENDAR
-	calendar_start_idx = None
-	calendar_end_idx = None
-	testing_start_idx = None
-	testing_end_idx = None
+	# calendar_start_idx = None
+	# calendar_end_idx = None
+	# testing_start_idx = None
+	# testing_end_idx = None
 
 	for idx, line in enumerate(data):
 		if line.lower().startswith("calendar<"):
-			calendar_start_idx = idx
+			calendar_start_idx: int = idx
 		elif line.lower().startswith("calendar>"):
 			calendar_end_idx = idx
 		elif line.lower().startswith("testing<"):

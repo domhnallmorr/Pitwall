@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 	from pw_model.email.email_model import Inbox
 
 
-def generate_testing_progress_email(inbox: Inbox) -> None:
+def generate_testing_progress_email(inbox: Inbox) -> str:
 	messages = [
 		"Testing progress has yielded car speed improvements.",
 		"Testing progress has resulted in car speed improvements.",
@@ -14,7 +14,7 @@ def generate_testing_progress_email(inbox: Inbox) -> None:
 	]
 	return random.choice(messages)
 
-def generate_testing_completed_email(inbox: Inbox, distance_km: int) -> None:
+def generate_testing_completed_email(inbox: Inbox, distance_km: int) -> str:
 	messages = [
 		f"Testing has been completed. We covered {distance_km} km.",
 		f"The testing has been completed. We covered {distance_km} km.",

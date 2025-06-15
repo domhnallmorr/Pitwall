@@ -18,7 +18,7 @@ def test_participants_creation():
 
 	assert len(_race_model.participants) == 22
 
-	assert _race_model.get_particpant_model_by_name("Eddie Irvine") is None
+	assert _race_model.get_particpant_model_by_name("Evan Irving") is None
 	assert _race_model.get_particpant_model_by_name("Jorg Muller") is not None
 
 	muller_model = _race_model.get_particpant_model_by_name("Jorg Muller")
@@ -26,10 +26,10 @@ def test_participants_creation():
 	assert muller_model.driver.speed == 48
 
 	# Do some spot checks on participants speed to ensure they've picked up the correct driver model
-	schumacher_model = _race_model.get_particpant_model_by_name("Michael Schumacher")
+	schumacher_model = _race_model.get_particpant_model_by_name("Marco Schneider")
 	assert schumacher_model.driver.speed == 98
 
-	diniz_model = _race_model.get_particpant_model_by_name("Pedro Diniz")
+	diniz_model = _race_model.get_particpant_model_by_name("Pablo Dinez")
 	assert diniz_model.driver.speed == 55
 
 def test_run_to_turn_1():

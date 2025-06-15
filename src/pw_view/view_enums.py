@@ -4,6 +4,7 @@ from enum import Enum
 class ViewPageEnums(Enum):
 	CALENDAR = "calendar"
 	CAR = "car"
+	DRIVER = "driver"
 	EMAIL = "email"
 	FACILITY = "facility"
 	FINANCE = "finance"

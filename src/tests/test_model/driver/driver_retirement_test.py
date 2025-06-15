@@ -15,10 +15,10 @@ def test_driver_retirement_team_end_season():
 	team_model = model.entity_manager.get_team_model("Ferano")
 
 	# RETIRE SCHUMACHER and IRVINE
-	schumacher_model = model.entity_manager.get_driver_model("Michael Schumacher")
+	schumacher_model = model.entity_manager.get_driver_model("Marco Schneider")
 	schumacher_model.retiring = True
 
-	irvine_model = model.entity_manager.get_driver_model("Eddie Irvine")
+	irvine_model = model.entity_manager.get_driver_model("Evan Irving")
 	irvine_model.retiring = True
 
 	driver_transfers.team_hire_driver(model, "Ferano", StaffRoles.DRIVER1, ["Jos Verstappen"])
@@ -52,17 +52,17 @@ def test_driver_retirements_over_several_seasons():
 		model = create_model.create_model(mode="headless", auto_save=False)
 		for year in range(10):
 			if year == 0:
-				model.entity_manager.get_driver_model("Damon Hill").retiring = True
+				model.entity_manager.get_driver_model("Donovan Upland").retiring = True
 			if year == 1:
-				model.entity_manager.get_driver_model("Esteban Tuero").retiring = True
+				model.entity_manager.get_driver_model("Eduardo Torres").retiring = True
 			if year == 2:
-				model.entity_manager.get_driver_model("Alexander Wurz").retiring = True
+				model.entity_manager.get_driver_model("Andreas Wurst").retiring = True
 			if year == 3:
-				model.entity_manager.get_driver_model("Jacques Villeneuve").retiring = True
+				model.entity_manager.get_driver_model("John Newhouse").retiring = True
 			if year == 4:
-				model.entity_manager.get_driver_model("Giancarlo Fisichella").retiring = True
+				model.entity_manager.get_driver_model("Fabrizio Giorgetti").retiring = True
 			if year == 5:
-				model.entity_manager.get_driver_model("Tora Takagi").retiring = True
+				model.entity_manager.get_driver_model("Toshiro Tanaka").retiring = True
 
 
 			model.staff_market.ensure_player_has_staff_for_next_season()

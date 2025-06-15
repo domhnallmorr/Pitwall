@@ -30,6 +30,8 @@ class DummyView:
 											  alignment=ft.alignment.center_left,)
 
         self.team_logos_path = "path/to/team/logos"
+        self.flags_small_path = "path/to/flags"
+
 
 # Helper classes to simulate an event (flet.ControlEvent)
 class DummyControl:
@@ -47,7 +49,8 @@ class DummyEvent:
 def test_team_selection_initial_state():
     dummy_view = DummyView()
     team_names = ["Team A", "Team B", "Team C"]
-    screen = TeamSelectionScreen(dummy_view, team_names)
+    team_countries = ["Country A", "Country B", "Country C"]
+    screen = TeamSelectionScreen(dummy_view, team_names, team_countries)
 
     # The default selected team should be the first one.
     assert screen.selected_team == "Team A"
@@ -62,7 +65,8 @@ def test_team_selection_initial_state():
 def test_update_team_details():
     dummy_view = DummyView()
     team_names = ["Team A", "Team B", "Team C"]
-    screen = TeamSelectionScreen(dummy_view, team_names)
+    team_countries = ["Country A", "Country B", "Country C"]
+    screen = TeamSelectionScreen(dummy_view, team_names, team_countries)
 
     # Simulate the user clicking on "Team B".
     event = DummyEvent("Team B")
@@ -84,7 +88,8 @@ def test_update_team_details():
 def test_start_career():
     dummy_view = DummyView()
     team_names = ["Team A", "Team B", "Team C"]
-    screen = TeamSelectionScreen(dummy_view, team_names)
+    team_countries = ["Country A", "Country B", "Country C"]    
+    screen = TeamSelectionScreen(dummy_view, team_names, team_countries)
 
     # For extra fun, simulate updating the selection to "Team C" before starting the career.
     update_event = DummyEvent("Team C")

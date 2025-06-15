@@ -48,16 +48,16 @@ def test_change_page(main_window, mock_view):
 def test_update_window(main_window, mock_view):
     """Test the update_window method."""
     with patch.object(main_window.week_text, "update") as mock_update:
-        main_window.update_window("Test Team", "Week 2 - 1999", CalendarState.RACE_WEEK)
+        main_window.update_window("Test Team","Test Team", "Week 2 - 1999", CalendarState.RACE_WEEK)
         assert main_window.team_text.value == "Test Team"
         assert main_window.week_text.value == "Week 2 - 1999 (Race Week)"
         mock_update.assert_called_once()
 
         # Test different calendar states
-        main_window.update_window("Test Team", "Week 3 - 1999", CalendarState.PRE_SEASON_TESTING)
+        main_window.update_window("Test Team", "Test Team", "Week 3 - 1999", CalendarState.PRE_SEASON_TESTING)
         assert main_window.week_text.value == "Week 3 - 1999 (Pre-Season Testing)"
 
-        main_window.update_window("Test Team", "Week 4 - 1999", CalendarState.POST_SEASON)
+        main_window.update_window("Test Team","Test Team", "Week 4 - 1999", CalendarState.POST_SEASON)
         assert main_window.week_text.value == "Week 4 - 1999 (Post Season)"
 
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 from typing import TYPE_CHECKING, Union
 import flet as ft
 
@@ -16,6 +17,7 @@ class StaffDetailsContainer:
 		self.role = role
 		self.SUBHEADER_FONT_SIZE = 18
 
+		self.setup_image_widget()
 		self.setup_text_widgets()
 		self.setup_rating_widgets()
 		self.setup_replace_button()
@@ -48,18 +50,41 @@ class StaffDetailsContainer:
 	def setup_header(self) -> HeaderContainer:
 		return HeaderContainer(self.view, self.role.value)
 	
+	def setup_image_widget(self) -> None:
+		image_path = os.path.abspath(fr"{self.view.driver_images_path}\driver_placeholder.png")
+		self.image = ft.Image(
+			src=image_path,
+			width=150,
+			height=150,
+			fit=ft.ImageFit.CONTAIN,
+	  )
+
 	def setup_column(self) -> ft.Column:
 		controls = [
-			self.setup_header(),
+			self.setup_header()
+		]
+
+		personal_details_controls = [
 			ft.Text("Personal Details", weight=ft.FontWeight.BOLD, size=self.SUBHEADER_FONT_SIZE,),
 			self.name_text,
 			self.age_text
 		]
-
 		if self.role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
-			controls.append(self.country_text)
-			controls.append(self.starts_text)
+			personal_details_controls.append(self.country_text)
+			personal_details_controls.append(self.starts_text)
 		
+		personal_details_row = ft.Row(
+			controls=[
+				ft.Column(controls=personal_details_controls, expand=False),
+				self.image
+			],
+			expand=False,
+			tight=True,
+			alignment=ft.MainAxisAlignment.CENTER,
+			spacing=100
+		)
+
+		controls.append(personal_details_row)
 		controls.append(ft.Divider())
 
 		# ------ CONTRACT ------
@@ -109,6 +134,8 @@ class StaffDetailsContainer:
 			self.speed_widget.update_row(data.speed)
 			self.qualifying_widget.update_row(data.qualifying)
 			self.consistency_widget.update_row(data.consistency)
+
+			self.image.src = fr"{self.view.driver_images_path}\{data.name.lower()}.png"
 
 		elif self.role in [StaffRoles.TECHNICAL_DIRECTOR, StaffRoles.COMMERCIAL_MANAGER]:
 			self.ability_widget.update_row(data.skill)
