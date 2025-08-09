@@ -21,11 +21,11 @@ def test_driver_retirement_team_end_season():
 	irvine_model = model.entity_manager.get_driver_model("Evan Irving")
 	irvine_model.retiring = True
 
-	driver_transfers.team_hire_driver(model, "Ferano", StaffRoles.DRIVER1, ["Jos Verstappen"])
+	driver_transfers.team_hire_driver(model, "Ferano", StaffRoles.DRIVER1, ["Jan van der Veen"])
 	driver_transfers.team_hire_driver(model, "Ferano", StaffRoles.DRIVER2, ["Marc Gene"])
 
 	# Make sure hired drivers no longer available for hire
-	assert "Jos Verstappen" not in driver_transfers.get_free_agents(model)
+	assert "Jan van der Veen" not in driver_transfers.get_free_agents(model)
 	assert "Marc Gene" not in driver_transfers.get_free_agents(model)
 
 	# complete all other driver transfers and end the season in the model
@@ -34,15 +34,15 @@ def test_driver_retirement_team_end_season():
 	model.end_season()
 
 	# ensure ferrari's drivers have refreshed
-	assert team_model.driver1 == "Jos Verstappen"
-	assert "Jos Verstappen" in model.season.standings_manager.drivers_standings_df["Driver"].values
+	assert team_model.driver1 == "Jan van der Veen"
+	assert "Jan van der Veen" in model.season.standings_manager.drivers_standings_df["Driver"].values
 
 	assert team_model.driver2 == "Marc Gene"
 	assert "Marc Gene" in model.season.standings_manager.drivers_standings_df["Driver"].values
 
 	# Ensure schumacher and irvine not in standings
-	assert "Michael Schumacher" not in model.season.standings_manager.drivers_standings_df["Driver"].values
-	assert "Eddie Irvine" not in model.season.standings_manager.drivers_standings_df["Driver"].values
+	assert "Marco Schneider" not in model.season.standings_manager.drivers_standings_df["Driver"].values
+	assert "Evan Irving" not in model.season.standings_manager.drivers_standings_df["Driver"].values
 
 def test_driver_retirements_over_several_seasons():
 	'''

@@ -37,6 +37,7 @@ class CarDevelopmentModel:
 		return self.team_model.is_player_team
 
 	def setup_new_season(self) -> None:
+		self.car_speed_history = []
 		self.planned_updates = []
 
 		if self.is_player_team is False:
@@ -68,6 +69,10 @@ class CarDevelopmentModel:
 
 			if self.time_left == 0:
 				self.complete_development()
+
+		# if in race week, update history
+		if self.model.season.calendar.in_race_week is True:
+			self.car_speed_history.append(self.car_model.speed)
 
 	def complete_development(self) -> None:
 		speed_increase = self.calculate_speed_increase()

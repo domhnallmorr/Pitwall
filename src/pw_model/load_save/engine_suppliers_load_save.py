@@ -7,6 +7,27 @@ from pw_model.engine.engine_supplier_model import EngineSupplierModel
 if TYPE_CHECKING:
     from pw_model.pw_base_model import Model
 
+def save_engine_suppliers(model: Model, save_file: sqlite3.Connection) -> None:
+    cursor = save_file.cursor()
+    cursor.execute('''
+            CREATE TABLE IF NOT EXISTS "EngineSuppliers" (
+            "Name" TEXT,
+            "Resources" INTEGER,
+            "Power" INTEGER
+            )'''
+        )
+    cursor.execute("DELETE FROM EngineSuppliers")  # Clear existing data
+
+    for supplier in model.engine_suppliers:
+        cursor.execute('''
+            INSERT INTO EngineSuppliers (Name, Resources, Power)
+            VALUES (?, ?, ?)
+        ''', (
+            supplier.name,
+            supplier.resources,
+            supplier.power
+        ))
+
 def load_engine_suppliers(model: Model, conn: sqlite3.Connection) -> list[EngineSupplierModel]:
     engine_suppliers = []
     

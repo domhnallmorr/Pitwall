@@ -9,7 +9,9 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class CarPageData:
 	"""Data structure for car page information"""
-	car_speeds: list[tuple[str, int]]  # List of (team_name, car_speed) tuples
+	car_speed_history: dict[str, list[int]]
+	team_colors: dict[str, str]
+	countries: list[str]
 	current_status: str
 	progress: float = 0.0  # Add progress field, defaulting to 0
 	testing_progress: int = 0  # Add testing progress field, defaulting to 0
@@ -26,11 +28,14 @@ class CarPageData:
 	tyre_grip: int = 0
 	tyre_wear: int = 0
 
+	# car speed history
+
+
 
 def get_car_page_data(model: Model) -> CarPageData:
 	"""Creates CarPageData from the model"""
-	car_speeds = [(team.name, team.car_model.speed) for team in model.teams]
-	car_speeds.sort(key=lambda x: x[1], reverse=True)  # sort, highest speed to lowest speed
+	# car_speeds = [(team.name, team.car_model.speed) for team in model.teams]
+	# car_speeds.sort(key=lambda x: x[1], reverse=True)  # sort, highest speed to lowest speed
 	
 	car_dev_model = model.player_team_model.car_development_model
 	testing_model = model.player_team_model.testing_model
@@ -51,8 +56,17 @@ def get_car_page_data(model: Model) -> CarPageData:
 		time_completed = total_time - car_dev_model.time_left
 		progress = (time_completed / total_time) * 100
 
+	# get car speed history
+	car_speed_history = {}
+	team_colors = {}
+	for team in model.teams:
+		car_speed_history[team.name] = team.car_development_model.car_speed_history
+		team_colors[team.name] = team.team_colors_manager.primary_colour
+
 	return CarPageData(
-		car_speeds=car_speeds,
+		car_speed_history=car_speed_history,
+		team_colors=team_colors,
+		countries=model.season.calendar.countries,
 		current_status=car_dev_model.current_status.value,  # Changed from status to current_status
 		progress=progress,
 		testing_progress=testing_model.testing_progress,  # Changed from testing_progress to testing_progress

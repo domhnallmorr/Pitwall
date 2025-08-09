@@ -1,90 +1,121 @@
+# tests/test_model/load_save/test_car_development_load_save.py
+
 import sqlite3
-import pytest
+from pw_model.car_development.car_development_model import (
+    CarDevelopmentEnums,
+    CarDevelopmentStatusEnums,
+)
+from pw_model.load_save.car_development_load_save import (
+    save_car_development,
+    load_car_development,
+)
 
-# Import the functions to test
-from pw_model.load_save.car_development_load_save import save_car_development, load_car_development
-from pw_model.car_development.car_development_model import CarDevelopmentEnums, CarDevelopmentStatusEnums, CarDevelopmentModel
+# --------- Minimal fakes that match what load/save expects ----------
 
-# Dummy objects to simulate required dependencies
-
-class DummyCarModel:
+class _FakeCarDev:
     def __init__(self):
-        self.speed = 0
+        self.current_status = CarDevelopmentStatusEnums.NOT_STARTED
+        self.time_left = 0
+        self.current_development_type = CarDevelopmentEnums.NONE
+        self.car_speed_history = []
+        self.planned_updates = []  # list[(int_week, CarDevelopmentEnums)]
 
-    def update_speed(self, new_speed: int) -> None:
-        self.speed = new_speed
 
-    def implement_car_development(self, speed_increase: int) -> None:
-        self.speed += speed_increase
-
-class DummyTeam:
-    def __init__(self, name: str, is_player_team: bool = False):
+class _FakeTeam:
+    def __init__(self, name: str):
         self.name = name
-        self.car_model = DummyCarModel()
-        # Create the car development model; we pass None for model since it’s not used here.
-        self.car_development_model = CarDevelopmentModel(model=None, team_model=self)
-        # For testing, initialize planned_updates explicitly.
-        self.car_development_model.planned_updates = []
-        self._is_player_team = is_player_team
+        self.car_development_model = _FakeCarDev()
 
-    @property
-    def is_player_team(self) -> bool:
-        return self._is_player_team
 
-class DummyModel:
-    def __init__(self):
-        # Create two teams: one player team and one AI team.
-        self.teams = [
-            DummyTeam("Team A", is_player_team=True),
-            DummyTeam("Team B")
-        ]
-        self.player_team = "Team A"
+class _FakeEntityManager:
+    def __init__(self, teams):
+        self._by_name = {t.name: t for t in teams}
+
+    def get_team_model(self, name: str):
+        return self._by_name[name]
+
+
+class _FakeModel:
+    """Matches just the attributes the loader/saver touch."""
+    def __init__(self, teams, player_team_name: str | None):
+        self.teams = teams
+        self.player_team = player_team_name
+        self.entity_manager = _FakeEntityManager(teams)
 
     @property
     def player_team_model(self):
-        for team in self.teams:
-            if team.name == self.player_team:
-                return team
-        return None
+        if self.player_team is None:
+            return None
+        return self.entity_manager.get_team_model(self.player_team)
 
-# The actual test function
+
+# ------------------------------- Tests --------------------------------
+
 def test_save_and_load_car_development():
-    # Use an in-memory SQLite database
+    # Arrange: two teams, TeamA is player
+    A = _FakeTeam("TeamA")
+    B = _FakeTeam("TeamB")
+
+    # Player fields + histories
+    A.car_development_model.current_status = CarDevelopmentStatusEnums.IN_PROGRESS
+    A.car_development_model.time_left = 7
+    A.car_development_model.current_development_type = CarDevelopmentEnums.MEDIUM
+    A.car_development_model.car_speed_history = [50, 52, 53]
+    A.car_development_model.planned_updates = [(5, CarDevelopmentEnums.MINOR), (10, CarDevelopmentEnums.MAJOR)]
+
+    # Non-player only history
+    B.car_development_model.car_speed_history = [48, 49]
+
+    model = _FakeModel([A, B], player_team_name="TeamA")
+
+    # Use in-memory SQLite
     conn = sqlite3.connect(":memory:")
-    
-    # Set up the dummy model with initial car development data
-    model = DummyModel()
-    
-    # Set player team car development data
-    player_cd = model.player_team_model.car_development_model
-    player_cd.current_status = CarDevelopmentStatusEnums.IN_PROGRESS
-    player_cd.time_left = 3
-    player_cd.current_development_type = CarDevelopmentEnums.MAJOR
-    
-    # Set planned updates for each team (player and AI)
-    model.teams[0].car_development_model.planned_updates = [(1, CarDevelopmentEnums.MINOR)]
-    model.teams[1].car_development_model.planned_updates = [(2, CarDevelopmentEnums.MEDIUM)]
-    
-    # Save the car development data to the database
+
+    # Act: save then blank in-memory state, then load
     save_car_development(model, conn)
-    
-    # Change the in-memory values so we can verify that load_car_development restores them
-    player_cd.current_status = CarDevelopmentStatusEnums.NOT_STARTED
-    player_cd.time_left = 0
-    player_cd.current_development_type = CarDevelopmentEnums.NONE
-    for team in model.teams:
-        team.car_development_model.planned_updates = []
-    
-    # Load the data from the database back into the model
+
+    # Blank everything to prove load repopulates
+    A.car_development_model.current_status = CarDevelopmentStatusEnums.NOT_STARTED
+    A.car_development_model.time_left = 0
+    A.car_development_model.current_development_type = CarDevelopmentEnums.NONE
+    A.car_development_model.car_speed_history = []
+    A.car_development_model.planned_updates = []
+    B.car_development_model.car_speed_history = []
+    B.car_development_model.planned_updates = []
+
     load_car_development(conn, model)
-    
-    # Check that the player team's car development values were restored
-    assert player_cd.current_status == CarDevelopmentStatusEnums.IN_PROGRESS
-    assert player_cd.time_left == 3
-    assert player_cd.current_development_type == CarDevelopmentEnums.MAJOR
-    
-    # Check that planned updates for each team were restored correctly
-    assert model.teams[0].car_development_model.planned_updates == [(1, CarDevelopmentEnums.MINOR)]
-    assert model.teams[1].car_development_model.planned_updates == [(2, CarDevelopmentEnums.MEDIUM)]
-    
-    conn.close()
+
+    # Assert: player-only fields restored as enums/ints
+    assert A.car_development_model.current_status is CarDevelopmentStatusEnums.IN_PROGRESS
+    assert A.car_development_model.time_left == 7
+    assert A.car_development_model.current_development_type is CarDevelopmentEnums.MEDIUM
+
+    # Histories restored for all teams
+    assert A.car_development_model.car_speed_history == [50, 52, 53]
+    assert B.car_development_model.car_speed_history == [48, 49]
+
+    # Planned updates restored (only player had them)
+    assert A.car_development_model.planned_updates == [(5, CarDevelopmentEnums.MINOR), (10, CarDevelopmentEnums.MAJOR)]
+    assert B.car_development_model.planned_updates == []
+
+
+def test_load_does_not_modify_non_player_status_type_time():
+    # Arrange
+    A = _FakeTeam("TeamA")
+    B = _FakeTeam("TeamB")
+    model = _FakeModel([A, B], player_team_name="TeamA")
+    conn = sqlite3.connect(":memory:")
+    save_car_development(model, conn)
+
+    # Give B some in-memory values that should remain untouched by loader
+    B.car_development_model.current_status = CarDevelopmentStatusEnums.COMPLETED
+    B.car_development_model.time_left = 99
+    B.car_development_model.current_development_type = CarDevelopmentEnums.MAJOR
+
+    # Act
+    load_car_development(conn, model)
+
+    # Assert: loader only updates player team for these fields
+    assert B.car_development_model.current_status is CarDevelopmentStatusEnums.COMPLETED
+    assert B.car_development_model.time_left == 99
+    assert B.car_development_model.current_development_type is CarDevelopmentEnums.MAJOR

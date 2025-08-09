@@ -26,6 +26,10 @@ from pw_model.load_save.tyres_load_save import save_tyre_suppliers, load_tyre_su
 from pw_model.load_save.staff_market_load_save import save_grid_this_year, save_grid_next_year, save_new_contracts_df, load_grid_this_year, load_grid_next_year
 from pw_model.load_save.testing_load_save import save_testing_model, load_testing
 from pw_model.load_save.sponsor_market_load_save import save_sponsors_this_year, save_sponsors_next_year, save_sponsor_new_contracts_df, load_sponsors_market
+from pw_model.load_save.team_descriptions_load_save import save_team_descriptions
+from pw_model.load_save.engine_suppliers_load_save import save_engine_suppliers
+from pw_model.load_save.team_colors_load_save import save_team_colors
+from pw_model.load_save.roster_loader import LoadModes
 
 if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
@@ -59,6 +63,9 @@ def save_game(model: Model, mode: str="file") -> sqlite3.Connection:
 	save_sponsors_this_year(model, save_file)
 	save_sponsors_next_year(model, save_file)
 	save_sponsor_new_contracts_df(model, save_file)
+	save_team_descriptions(model, save_file)
+	save_engine_suppliers(model, save_file)
+	save_team_colors(model, save_file)
 
 	if model.player_team_model is not None:
 		save_car_development(model, save_file)
@@ -235,30 +242,35 @@ def load(model: Model, save_file: Union[None, sqlite3.Connection, str]=None, mod
 	assert mode in ["file", "memory"]
 
 	if mode == "file":
+		load_mode = LoadModes.SAVE_GAME
 		if save_file is None:
 			conn = sqlite3.connect(f"{model.run_directory}\\save_game.db")
 		elif isinstance(save_file, str):
 			conn = sqlite3.connect(save_file)
 		else:
 			raise ValueError("Invalid type for 'save_file' when mode is 'file'")
-
-	elif isinstance(save_file, sqlite3.Connection):
-		conn = save_file # db provided in memory
-
-	load_drivers(conn, model)
-	load_sponsors(conn, model)
+	elif mode == "memory":
+		load_mode = LoadModes.MEMORY
+		if isinstance(save_file, sqlite3.Connection):
+			conn = save_file
+		else:
+			raise ValueError("Invalid type for 'save_file' when mode is 'memory'")
+	
+	model.load_roster(model.run_directory, load_mode=load_mode, conn=conn)
+	# load_drivers(conn, model)
+	# load_sponsors(conn)
 	load_drivers_season_stats(conn, model)
-	load_senior_staff(conn, model)
-	load_teams(conn, model)
+	# load_senior_staff(conn, model)
+	# load_teams(conn, model)
 	load_teams_stats(conn, model)
 	load_general(conn, model)
 	load_standings(conn, model)
 	load_grid_this_year(conn, model)
 	load_grid_next_year(conn, model)
 	load_email(conn, model)
-	load_calendar(conn, model)
+	# load_calendar(conn, model)
 	load_driver_offers(conn, model)
-	load_tyre_suppliers(model, conn)
+	# load_tyre_suppliers(model, conn)
 	load_sponsors_market(conn, model)
 
 	if model.player_team_model is not None:

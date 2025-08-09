@@ -1,9 +1,8 @@
 import logging
+import os
 import statistics
 from typing import List, Union
-
-
-from pw_model import load_roster
+import sqlite3
 
 from pw_model.driver.driver_model import DriverModel
 from pw_model.driver_negotiation.driver_offers import DriverOffers
@@ -16,6 +15,7 @@ from pw_model.staff_market import manager_transfers
 from pw_model.load_save import load_save 
 from pw_model.game_data import GameData
 from pw_model.track.track_model import TrackModel
+from pw_model.load_save.roster_loader import LoadModes, RosterLoader
 
 from pw_model.team.team_model import TeamModel
 from pw_model.senior_staff.commercial_manager import CommercialManager
@@ -59,12 +59,29 @@ class Model:
 		self.entity_manager = EntityManager(self)	
 
 		if roster is not None:
-			calendar_dataframe = load_roster.load_roster(self, roster)
+			roster_path = os.path.join(run_directory, roster)
+			self.load_roster(roster)
+			# roster_path = os.path.join(run_directory, roster)
+			# self.roster_loader = RosterLoader(self, roster_path, load_mode=LoadModes.ROSTER)
+			
+			# self.tracks = self.roster_loader.loaded_data.tracks
+			# self.calendar_dataframe = self.roster_loader.loaded_data.calendar_dataframe
+			# self.drivers = self.roster_loader.loaded_data.drivers
+			# self.future_drivers = self.roster_loader.loaded_data.future_drivers
+			# self.commercial_managers = self.roster_loader.loaded_data.commercial_managers
+			# self.technical_directors = self.roster_loader.loaded_data.technical_directors
+			# self.team_principals = self.roster_loader.loaded_data.team_principals
+			# self.future_managers = self.roster_loader.loaded_data.future_managers
+			# self.sponsors = self.roster_loader.loaded_data.sponsors
+			# self.future_sponsors = self.roster_loader.loaded_data.future_sponsors
+			# self.teams = self.roster_loader.loaded_data.teams
+			# self.engine_suppliers = self.roster_loader.loaded_data.engine_suppliers
+			# self.tyre_suppliers = self.roster_loader.loaded_data.tyre_suppliers
 		
 		self.player_team = self.teams[0].name # set player team initally to first team in roster. This is so the view can setup all the pages on startup
 		self.year = 1998
 		self.FINAL_WEEK = 52
-		self.season = season_model.SeasonModel(self, calendar_dataframe)
+		self.season = season_model.SeasonModel(self, self.roster_loader.loaded_data.calendar_dataframe)
 
 		self.staff_market = staff_market.StaffMarket(self)
 		self.sponsor_market = SponsorMarket(self)
@@ -94,6 +111,22 @@ class Model:
 	def save_career(self) -> None:
 		load_save.save_game(self)
 
+	def load_roster(self, roster_path: str, load_mode: LoadModes=LoadModes.ROSTER, conn: Union[None, sqlite3.Connection]=None) -> None:
+		self.roster_loader = RosterLoader(self, roster_path, load_mode=load_mode, conn=conn)
+		
+		self.tracks = self.roster_loader.loaded_data.tracks
+		self.calendar_dataframe = self.roster_loader.loaded_data.calendar_dataframe
+		self.drivers = self.roster_loader.loaded_data.drivers
+		self.future_drivers = self.roster_loader.loaded_data.future_drivers
+		self.commercial_managers = self.roster_loader.loaded_data.commercial_managers
+		self.technical_directors = self.roster_loader.loaded_data.technical_directors
+		self.team_principals = self.roster_loader.loaded_data.team_principals
+		self.future_managers = self.roster_loader.loaded_data.future_managers
+		self.sponsors = self.roster_loader.loaded_data.sponsors
+		self.future_sponsors = self.roster_loader.loaded_data.future_sponsors
+		self.teams = self.roster_loader.loaded_data.teams
+		self.engine_suppliers = self.roster_loader.loaded_data.engine_suppliers
+		self.tyre_suppliers = self.roster_loader.loaded_data.tyre_suppliers
 
 	def advance(self) -> None:
 		self.inbox.reset_number_new_emails()

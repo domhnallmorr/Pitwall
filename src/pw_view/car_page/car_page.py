@@ -43,7 +43,7 @@ class CarPage(ft.Column):
         self.car_comparison_container = custom_container.CustomContainer(
             self.view, 
             self.car_comparison_graph, 
-            expand=False
+            expand=True,      
         )
 
         self.tabs = ft.Tabs(
@@ -82,8 +82,8 @@ class CarPage(ft.Column):
                     icon=ft.Icons.SHOW_CHART,
                     content=ft.Container(
                         content=self.car_comparison_container,
-                        expand=False,
-                        alignment=ft.alignment.top_center
+                        expand=True,
+                        alignment=ft.alignment.top_center,
                     )
                 ),           
             ],
@@ -91,7 +91,7 @@ class CarPage(ft.Column):
         )
 
     def update_page(self, data: CarPageData) -> None:
-        self.car_comparison_graph.setup_rows(data.car_speeds)
+        self.car_comparison_graph.update_plot(data.car_speed_history, data.team_colors, data.countries)
         self.car_development_tab.update_tab(data)
         self.engine_tab.update_tab(data)
         self.tyre_tab.update_tab(data)

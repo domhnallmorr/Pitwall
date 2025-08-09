@@ -97,9 +97,12 @@ def test_load_sponsors_from_roster(db_connection, mock_model):
                                (sponsor_name, 'default', 70))
 
     # Load sponsors using the function
-    load_sponsors(db_connection, mock_model)
-
+    sponsors, future_sponsors = load_sponsors(db_connection)
+    mock_model.sponsors = sponsors
+    mock_model.future_sponsors = future_sponsors
+    
     # Verify the loaded sponsors
+    print(len(mock_model.sponsors))
     assert len(mock_model.sponsors) == 2  # Should have 2 sponsors (Shell and West)
     assert len(mock_model.future_sponsors) == 0  # No future sponsors in this test
 

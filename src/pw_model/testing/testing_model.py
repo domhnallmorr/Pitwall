@@ -6,6 +6,7 @@ if TYPE_CHECKING:
 	from pw_model.pw_base_model import Model
 
 class TestingModel:
+	__test__ = False  # Prevent pytest from treating this as a test class
 	def __init__(self, model: Model):
 		self.model = model
 		self.setup_new_season()
@@ -42,4 +43,5 @@ class TestingModel:
 			inbox.generate_testing_completed_email(distance_km)
 
 class TestingRandomiser:
+	__test__ = False  # Prevent pytest from treating this as a test class
 	pass

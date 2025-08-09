@@ -54,6 +54,7 @@ class DummyGameData:
 class DummyCalendar:
     def __init__(self, race_weeks):
         self.race_weeks = race_weeks
+        self.in_race_week = False
 
 class DummySeason:
     def __init__(self, race_weeks):

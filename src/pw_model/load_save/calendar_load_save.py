@@ -9,8 +9,8 @@ if TYPE_CHECKING:
 
 
 def save_calendar(model: Model, save_file: sqlite3.Connection) -> None:
-	model.season.calendar.dataframe.to_sql("calendar", save_file, if_exists="replace", index=False)
+	model.season.calendar.dataframe.to_sql("SeasonCalendar", save_file, if_exists="replace", index=False)
 
 
 def load_calendar(conn: sqlite3.Connection, model: Model) -> None:
-	model.season.calendar.dataframe = pd.read_sql('SELECT * FROM calendar', conn)
+	model.season.calendar.dataframe = pd.read_sql('SELECT * FROM SeasonCalendar', conn)

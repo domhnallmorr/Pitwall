@@ -41,7 +41,7 @@ def save_sponsors(model: Model, save_file: sqlite3.Connection) -> None:
 				sponsor.wealth
 			))
 
-def load_sponsors(conn: sqlite3.Connection, model: Model) -> tuple[list[SponsorModel], list[tuple[str, SponsorModel]]]:
+def load_sponsors(conn: sqlite3.Connection) -> tuple[list[SponsorModel], list[tuple[str, SponsorModel]]]:
 	sponsors : list[SponsorModel] = []
 	future_sponsors : list[tuple[str, SponsorModel]] = []
 
@@ -95,6 +95,4 @@ def load_sponsors(conn: sqlite3.Connection, model: Model) -> tuple[list[SponsorM
 			future_sponsors.append((year, sponsor))
 			logging.debug(f"Added {sponsor.name} to future sponsors for {year}")
 
-	model.sponsors = sponsors
-	model.future_sponsors = future_sponsors
-
+	return sponsors, future_sponsors

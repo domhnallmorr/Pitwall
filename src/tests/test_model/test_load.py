@@ -79,7 +79,7 @@ def test_retirement_age_senior_manager():
 	load(model, save_file, mode="memory") # load data
 
 	brawn_model = model.entity_manager.get_technical_director_model("Ross Brawn")
-
+	
 	assert brawn_model.retired is True
 	assert brawn_model.retiring_age == 45
 	assert brawn_model.retiring is True
