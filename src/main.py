@@ -30,7 +30,7 @@ def main(page: ft.Page):
 
 	page.window.maximized = True
 
-	version = "1.22.0"
+	version = "1.23.0"
 	page.title = f"Pitwall {version}"
 	
 	run_directory = os.path.dirname(os.path.join(os.path.abspath(__file__)))

@@ -11,7 +11,7 @@ def test_participants_creation():
 	
 	# Make Jorg Muller the 2nd Ferrari driver, will do check to ensure he is in the participants and Irvine is not
 	ferrari_model = model.entity_manager.get_team_model("Ferano")
-	ferrari_model.driver2 = "Jorg Muller"
+	ferrari_model.driver2 = "Jorn Maller"
 
 	track = test_track_model.create_dummy_track()
 	_race_model = race_weekend_model.RaceWeekendModel("headless", model, track)
@@ -19,9 +19,9 @@ def test_participants_creation():
 	assert len(_race_model.participants) == 22
 
 	assert _race_model.get_particpant_model_by_name("Evan Irving") is None
-	assert _race_model.get_particpant_model_by_name("Jorg Muller") is not None
+	assert _race_model.get_particpant_model_by_name("Jorn Maller") is not None
 
-	muller_model = _race_model.get_particpant_model_by_name("Jorg Muller")
+	muller_model = _race_model.get_particpant_model_by_name("Jorn Maller")
 	assert muller_model.driver.country == "Germany" # check the muller participant is picking up his model and not Irvine's
 	assert muller_model.driver.speed == 48
 

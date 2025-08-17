@@ -107,6 +107,8 @@ class Model:
 	
 	def load_career(self) -> None:
 		load_save.load(self)
+		# assign calendar dataframe from roster loader
+		self.season.calendar.dataframe = self.roster_loader.loaded_data.calendar_dataframe
 	
 	def save_career(self) -> None:
 		load_save.save_game(self)
@@ -127,9 +129,9 @@ class Model:
 		self.teams = self.roster_loader.loaded_data.teams
 		self.engine_suppliers = self.roster_loader.loaded_data.engine_suppliers
 		self.tyre_suppliers = self.roster_loader.loaded_data.tyre_suppliers
-
+		
 	def advance(self) -> None:
-		self.inbox.reset_number_new_emails()
+		self.inbox.advance()
 
 		if self.season.calendar.current_week == self.FINAL_WEEK - 1:
 			self.staff_market.ensure_player_has_staff_for_next_season()
@@ -143,6 +145,7 @@ class Model:
 		for team in self.teams:
 			if team.name != self.player_team:
 				team.car_development_model.advance()
+		self.inbox.generate_ai_development_completed_email()
 
 		self.staff_market.announce_signings()
 		self.sponsor_market.announce_signings()

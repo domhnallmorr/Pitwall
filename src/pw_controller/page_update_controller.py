@@ -51,7 +51,17 @@ class PageUpdateController:
 
 		drivers_flags = [self.model.entity_manager.get_driver_model(d).country for d in drivers_standings_df["Driver"].values]
 		team_flags = [self.model.entity_manager.get_team_model(t).country for t in constructors_standings_df["Team"].values]
-		self.view.standings_page.update_standings(drivers_standings_df, constructors_standings_df, drivers_flags, team_flags)
+
+		driver_results: list[list] = []
+		for driver_name in drivers_standings_df["Driver"]:
+			driver_model = self.model.entity_manager.get_driver_model(driver_name)
+			results = driver_model.season_stats.race_results_df.iloc[0].tolist()
+			driver_results.append([driver_name, *results])
+
+			race_countries = self.model.season.calendar.countries
+
+		self.view.standings_page.update_standings(drivers_standings_df, constructors_standings_df,
+											drivers_flags, team_flags, driver_results, race_countries)
 
 	def update_email_page(self) -> None:
 		emails = copy.deepcopy(self.model.inbox.emails)

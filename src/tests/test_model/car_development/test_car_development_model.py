@@ -20,8 +20,8 @@ class DummyInbox:
     def generate_car_development_completed_email(self, development_type, speed_increase):
         self.completed_emails.append((development_type, speed_increase))
     
-    def generate_ai_development_completed_email(self, development_type, team_name):
-        self.ai_completed_emails.append((development_type, team_name))
+    def add_ai_car_development_update(self, name, development_type):
+        self.ai_completed_emails.append((name, development_type))
 
 class DummyCarModel:
     def __init__(self):
@@ -156,8 +156,8 @@ def test_advance_ai_team():
     # complete_development should be called with a speed increase of 5 (for MAJOR).
     assert team_model.car_model.speed_updates == [5]
     
-    # Verify that an AI completed email was generated.
-    assert model.inbox.ai_completed_emails == [(CarDevelopmentEnums.MAJOR.value, team_model.name)]
+    # Verify that an AI update was added to the inbox.
+    assert model.inbox.ai_completed_emails == [(team_model.name, CarDevelopmentEnums.MAJOR.value)]
 
 def test_gen_ai_updates():
     # Test that for an AI team, gen_ai_updates populates planned_updates with valid and sorted race weeks.

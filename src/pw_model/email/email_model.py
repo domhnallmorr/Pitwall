@@ -35,7 +35,7 @@ class Inbox:
 		self.model = model
 		self.new_email_id = 0
 
-		self.reset_number_new_emails()
+		self.advance()
 		self.setup_email_list()
 
 		# Send welcome email with week=1 since season isn't initialized yet
@@ -46,8 +46,12 @@ class Inbox:
 		# Pass week=1 explicitly for the welcome email
 		self.add_email(msg, title, sender=sender, week=1)
 
-	def reset_number_new_emails(self) -> None:
+	def advance(self) -> None:
 		self.new_emails = 0
+		self.car_development_updates: list[list[str]] = []
+
+	def add_ai_car_development_update(self, team: str, development_type: str) -> None:
+		self.car_development_updates.append([team, development_type])
 
 	def add_email(self, msg: str, title: str, sender: str="", status: EmailStatusEnums=EmailStatusEnums.UNREAD, week: Optional[int]=None) -> None:
 		# Use provided week or get it from the model
@@ -134,9 +138,9 @@ class Inbox:
 		title = f"Development of {development_type} upgrade has been completed!"
 		self.add_email(msg, title)
 
-	def generate_ai_development_completed_email(self, development_type: str, team: str) -> None:
-		msg = car_development_emails.ai_development_completed_email(development_type, team)
-		title = f"{team} {development_type.capitalize()} Upgrade!"
+	def generate_ai_development_completed_email(self) -> None:
+		msg = car_development_emails.ai_development_completed_email(self.car_development_updates)
+		title = f"Car Developments Summary"
 		self.add_email(msg, title)
 
 	def generate_testing_progress_email(self) -> None:

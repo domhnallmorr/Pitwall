@@ -17,7 +17,7 @@ def get_track_model(track_models: list[TrackModel], track_name: str) -> TrackMod
 
 def load_season_calendar(conn: sqlite3.Connection, track_models: list[TrackModel]) -> pd.DataFrame:
 	raw_calendar_df = pd.read_sql(
-		"SELECT Track, Week, SessionType FROM SeasonCalendar", 
+		"SELECT Track, Week, Winner, SessionType FROM SeasonCalendar", 
 		conn
 	)
 	data = []
@@ -27,7 +27,8 @@ def load_season_calendar(conn: sqlite3.Connection, track_models: list[TrackModel
 		week = int(row["Week"])
 		event_type = row["SessionType"]
 		track = get_track_model(track_models, row["Track"])
-		data.append([week, track.name, track.country, track.location, None, event_type.capitalize()])
+		winner = row["Winner"]
+		data.append([week, track.name, track.country, track.location, winner, event_type.capitalize()])
 
 	# Sort by week number
 	data.sort(key=lambda x: x[0])

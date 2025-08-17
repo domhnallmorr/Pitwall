@@ -18,11 +18,11 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 - [ ] Improve home page
 - [ ] Improved email page
 - [ ] Include car side profile in home page
-- [ ] Car comparison page to track car progress over season for all teams
+- [x] Car comparison page to track car progress over season for all teams
 - [ ] Improved track maps and track page
 - [ ] Add track details to race weekend screen
 - [ ] Ability to view qualifying results in race weekend screen
-- [ ] Add a "Wikipedia" style table showing results for all races
+- [x] Add a "Wikipedia" style table showing results for all races
 
 
 ## Other

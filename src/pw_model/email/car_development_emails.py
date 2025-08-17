@@ -18,11 +18,12 @@ def car_development_completed_email(development_type: str, speed_increase: int) 
 
     return random.choice(messages)
 
-def ai_development_completed_email(development_type: str, team: str) -> str:
-    messages = [
-        f"{team} have announced the completion of their {development_type} upgrade.",
-        f"{team} have completed their {development_type} upgrade.",
-        f"{team} have successfully implemented their {development_type} upgrade.",
-    ]
+def ai_development_completed_email(car_development_updates: list[list[str]]) -> str:
+    if len(car_development_updates) == 0:
+        return "There are no car development updates to report."
+    else:
+        message = "See below for car development updates:\n\n"
+        for update in car_development_updates:
+            message += f"{update[0]} has completed a {update[1]} upgrade.\n"
     
-    return random.choice(messages)
+        return message

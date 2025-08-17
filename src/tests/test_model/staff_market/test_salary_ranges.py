@@ -11,7 +11,7 @@ def test_salary_ranges():
     model = create_model.create_model(auto_save=False)
     model.player_team = "Warrick"
 
-    muller_model = model.entity_manager.get_driver_model("Jorg Muller")
+    muller_model = model.entity_manager.get_driver_model("Jorn Maller")
     gene_model = model.entity_manager.get_driver_model("Marc Gene")
     gene_model.speed = 99
 
@@ -19,7 +19,7 @@ def test_salary_ranges():
     gallagher_model = model.entity_manager.get_commercial_manager_model("Mark Gallagher")
 
     model.staff_market.complete_hiring("Marc Gene", "Warrick", StaffRoles.DRIVER1, 3_200_000)
-    model.staff_market.complete_hiring("Jorg Muller", "Warrick", StaffRoles.DRIVER2, 700_000)
+    model.staff_market.complete_hiring("Jorn Maller", "Warrick", StaffRoles.DRIVER2, 700_000)
     model.staff_market.complete_hiring("Neil Oatley", "Warrick", StaffRoles.TECHNICAL_DIRECTOR)
     model.staff_market.complete_hiring("Mark Gallagher", "Warrick", StaffRoles.COMMERCIAL_MANAGER)
     

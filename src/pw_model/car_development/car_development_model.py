@@ -82,7 +82,7 @@ class CarDevelopmentModel:
 			self.current_status = CarDevelopmentStatusEnums.COMPLETED
 			self.model.inbox.generate_car_development_completed_email(self.current_development_type.value, speed_increase)
 		else:
-			self.model.inbox.generate_ai_development_completed_email(self.current_development_type.value, self.team_model.name)	
+			self.model.inbox.add_ai_car_development_update(self.team_model.name, self.current_development_type.value)	
 
 	def calculate_speed_increase(self) -> int:
 		if self.current_development_type == CarDevelopmentEnums.MINOR:
