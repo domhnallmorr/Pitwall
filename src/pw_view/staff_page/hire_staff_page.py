@@ -25,7 +25,7 @@ class HireStaffPage(ft.Column):
 		super().__init__(expand=1)
 
 	def update_free_agent_list(self, free_agents: list[str], role: StaffRoles,
-							previously_approached: list[str], pay_drivers: list[str]) -> None:
+							pay_drivers: list[str]) -> None:
 		title = role.value.title().replace("1", " 1").replace("2", " 2")
 		self.title_text.value = f"Hire: {title}"
 		self.current_role = role
@@ -36,8 +36,6 @@ class HireStaffPage(ft.Column):
 		# Add rows for each free agent
 		for name in free_agents:
 			disabled = False
-			if name in previously_approached:
-				disabled = True
 
 			self.name_text_buttons.append(ft.TextButton(name, data=name, on_click=self.update_staff, disabled=disabled))
 
@@ -149,7 +147,12 @@ class HireStaffPage(ft.Column):
 		self.age_text.value = f"Driver Age: {details['age']}"
 
 		self.offer_btn.data = name
-		self.offer_btn.disabled = False
+
+		if details["rejected_player_offer"] is True:
+			self.offer_btn.disabled = True
+		else:
+			self.offer_btn.disabled = False
+		
 		self.view.main_app.update()
 
 	def approach_staff(self, e: ft.ControlEvent) -> None:
@@ -157,8 +160,8 @@ class HireStaffPage(ft.Column):
 
 		if self.current_role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
 			self.view.controller.staff_hire_controller.open_driver_offer_dialog(name, self.current_role)
-			self.offer_btn.disabled = True
-			self.disable_name_text_button(name)
+			# self.offer_btn.disabled = True
+			# self.disable_name_text_button(name)
 		else:
 			self.dlg_modal = ft.AlertDialog(
 				modal=True,
@@ -191,6 +194,7 @@ class HireStaffPage(ft.Column):
 			self.view.controller.staff_hire_controller.complete_hire(name, self.current_role)
 
 	def show_accept_dialog(self, name: str, role: StaffRoles, salary: int) -> None:
+		self.disable_offer_button() #ensure player can't approach same driver twice
 		self.accept_dialog.update_text_widget(name, role, salary)
 
 		if self.accept_dialog in self.view.main_app.overlay:
@@ -201,6 +205,7 @@ class HireStaffPage(ft.Column):
 		self.view.main_app.update()
 
 	def show_rejection_dialog(self, name: str, reason: DriverRejectionReason) -> None:
+		self.disable_offer_button() #ensure player can't approach same driver twice
 		self.rejection_dialog.update_text_widget(name, reason)
 
 		if self.rejection_dialog in self.view.main_app.overlay:
@@ -215,4 +220,8 @@ class HireStaffPage(ft.Column):
 			if btn.data == name:
 				btn.disabled = True
 				break
+		self.view.main_app.update()
+
+	def disable_offer_button(self) -> None:
+		self.offer_btn.disabled = True
 		self.view.main_app.update()

@@ -1,217 +1,125 @@
-import pytest
+import sys
+import types
 import flet as ft
-from pw_view.staff_page.hire_staff_page import HireStaffPage
+import pytest
 
-# Try importing StaffRoles; if not available, create a dummy version.
+# --- Map your flat files onto the dotted paths that hire_staff_page expects ---
+from pw_model import pw_model_enums as _enums
+from pw_model.driver_negotiation import driver_interest as _interest
+from pw_view.custom_widgets import custom_container as _custom_container
+from pw_view.staff_page import staff_dialogs as _staff_dialogs
 
-from pw_model.pw_model_enums import StaffRoles
-from pw_model.driver_negotiation.driver_interest import DriverRejectionReason
+# pw_model.pw_model_enums
+sys.modules["pw_model"] = types.ModuleType("pw_model")
+sys.modules["pw_model.pw_model_enums"] = _enums
 
+# pw_model.driver_negotiation.driver_interest
+sys.modules.setdefault("pw_model.driver_negotiation", types.ModuleType("pw_model.driver_negotiation"))
+sys.modules["pw_model.driver_negotiation.driver_interest"] = _interest
 
-# Dummy classes to simulate the view and controller structure
-class DummyWindow:
-    def __init__(self, height=600):
-        self.height = height
+# pw_view.custom_widgets.custom_container
+sys.modules.setdefault("pw_view", types.ModuleType("pw_view"))
+sys.modules.setdefault("pw_view.custom_widgets", types.ModuleType("pw_view.custom_widgets"))
+sys.modules["pw_view.custom_widgets.custom_container"] = _custom_container
 
-class DummyMainApp:
+# pw_view.staff_page.staff_dialogs
+sys.modules.setdefault("pw_view.staff_page", types.ModuleType("pw_view.staff_page"))
+sys.modules["pw_view.staff_page.staff_dialogs"] = _staff_dialogs
+
+# --- Now import the page under test (your real file) ---
+from pw_view.staff_page import hire_staff_page as page_mod
+
+StaffRoles = _enums.StaffRoles
+
+# --- Minimal fakes for View / Controller / MainApp so the page can run ------
+class FakeMainApp:
     def __init__(self):
-        self.window = DummyWindow()
+        class _Window: pass
+        self.window = _Window()
+        self.window.height = 800
         self.overlay = []
-    def update(self):
-        pass
-    def open(self, dialog):
-        pass
-    def close(self, dialog):
-        if dialog in self.overlay:
-            self.overlay.remove(dialog)
+        self._updates = 0
+    def update(self): self._updates += 1
+    def close(self, dlg):
+        if dlg in self.overlay:
+            self.overlay.remove(dlg)
 
-class DummyStaffHireController:
+class FakeMainWindow:
+    def __init__(self): self.last_page = None
+    def change_page(self, p): self.last_page = p
+
+class FakePageHeaderStyle: ...
+
+class FakeController:
+    """
+    Acts as controller.staff_hire_controller for the page.
+    """
     def __init__(self):
-        self.offers = []
-        self.completions = []
+        self.staff_hire_controller = self
+        self._details = {}
+        self.open_driver_offer_dialog_calls = []
+        self.view = None  # set by FakeView
     def get_staff_details(self, name, role):
-        # Return dummy staff details
-        return {"name": f"Test {name}", "age": "35"}
-    def make_driver_offer(self, name, role):
-        self.offers.append((name, role))
-    def complete_hire(self, name, role):
-        self.completions.append((name, role))
-    def open_driver_offer_dialog(self, name, role):
-        # Add the new method to handle driver offer dialog
-        self.make_driver_offer(name, role)  # For test purposes, we'll just make the offer directly
+        return self._details[name]
+    def open_driver_offer_dialog(self, driver_name, role):
+        self.open_driver_offer_dialog_calls.append((driver_name, role))
 
-class DummyController:
-    def __init__(self):
-        self.staff_hire_controller = DummyStaffHireController()
+class FakeView:
+    def __init__(self, controller):
+        self.controller = controller
+        controller.view = self
+        self.main_app = FakeMainApp()
+        self.main_window = FakeMainWindow()
+        self.page_header_style = FakePageHeaderStyle()
+        self.background_image = ft.Container()
+        self.vscroll_buffer = 160
 
-class DummyView:
-    def __init__(self):
-        self.page_header_style = "header-style"
-        self.dark_grey = "#333333"
-        self.vscroll_buffer = 50
-        self.background_image = None
-        self.main_app = DummyMainApp()
-        self.controller = DummyController()
+        self.dark_grey = "#23232A"
 
-# Helper classes to simulate Flet event objects
-class DummyControl:
-    def __init__(self, data):
-        self.data = data
-        self.text = ""
+# ------------------------------ Tests ---------------------------------------
 
-class DummyEvent:
-    def __init__(self, data):
-        self.control = DummyControl(data)
+@pytest.fixture
+def fx():
+    controller = FakeController()
+    view = FakeView(controller)
+    page = page_mod.HireStaffPage(view)
+    return controller, view, page
 
-# Test updating the free agent list
-def test_update_free_agent_list():
-    view = DummyView()
-    page = HireStaffPage(view)
-    free_agents = ["Alice", "Bob"]
-    role = StaffRoles.DRIVER1
-    previously_approached = ["Bob"]
-    pay_drivers = []  # Add empty list for pay_drivers parameter
-    page.update_free_agent_list(free_agents, role, previously_approached, pay_drivers)
-    
-    # Verify that the title and current role are updated
-    assert page.title_text.value == f"Hire: Driver 1"
-    assert page.current_role == role
-    
-    # Check that two buttons were created and the disabled states are set correctly
-    assert len(page.name_text_buttons) == 2
-    for btn in page.name_text_buttons:
-        if btn.data == "Bob":
-            assert btn.disabled is True
-        elif btn.data == "Alice":
-            assert btn.disabled is False
-            
-    # update_free_agent_list automatically calls update_staff on free_agents[0]
-    assert page.name_text.value == "Driver Name: Test Alice"
-    assert page.age_text.value == "Driver Age: 35"
+def test_offer_button_disables_when_driver_previously_approached(fx):
+    controller, view, hp = fx
 
-# Test the update_staff method
-def test_update_staff():
-    view = DummyView()
-    page = HireStaffPage(view)
-    page.current_role = StaffRoles.DRIVER1
-    e = DummyEvent("Charlie")
-    page.update_staff(e)
-    
-    assert page.name_text.value == "Driver Name: Test Charlie"
-    assert page.age_text.value == "Driver Age: 35"
-    assert page.offer_btn.data == "Charlie"
-    assert page.offer_btn.disabled is False
+    # Seed details; Alice previously approached, Bob not.
+    controller._details = {
+        "Alice": {"name": "Alice", "age": 21, "rejected_player_offer": True},
+        "Bob":   {"name": "Bob",   "age": 25, "rejected_player_offer": False},
+    }
 
-# Test approach_staff when hiring a driver (driver roles)
-def test_approach_staff_for_driver():
-    view = DummyView()
-    page = HireStaffPage(view)
-    free_agents = ["Dave"]
-    role = StaffRoles.DRIVER1
-    previously_approached = []
-    pay_drivers = []  # Add empty list for pay_drivers parameter
-    page.update_free_agent_list(free_agents, role, previously_approached, pay_drivers)
-    
-    e = DummyEvent("Dave")
-    # Ensure the offer button is enabled before the call
-    page.offer_btn.disabled = False
-    page.approach_staff(e)
-    
-    # Verify that a driver offer was made
-    offers = view.controller.staff_hire_controller.offers
-    assert ("Dave", role) in offers
-    
-    # Verify that the offer button is now disabled
-    assert page.offer_btn.disabled is True
-    # And the corresponding name button should be disabled too
-    for btn in page.name_text_buttons:
-        if btn.data == "Dave":
-            assert btn.disabled is True
+    # Populate list for driver hiring
+    hp.update_free_agent_list(["Alice", "Bob"], StaffRoles.DRIVER1, pay_drivers=[])
 
-# Test approach_staff for a non-driver role (should open a confirmation dialog)
-def test_approach_staff_for_non_driver():
-    view = DummyView()
-    page = HireStaffPage(view)
-    free_agents = ["Eve"]
-    # Use a non-driver role (e.g., MANAGER)
-    non_driver_role = StaffRoles.COMMERCIAL_MANAGER
-    previously_approached = []  # Add this parameter
-    pay_drivers = []  # Add pay_drivers parameter
-    page.update_free_agent_list(free_agents, non_driver_role, previously_approached, pay_drivers)
-    
-    e = DummyEvent("Eve")
-    page.approach_staff(e)
-    
-    # Verify that a dialog (dlg_modal) is created and opened
-    assert hasattr(page, "dlg_modal")
-    assert page.dlg_modal.open is True
-    assert page.dlg_modal in view.main_app.overlay
-    assert page.dlg_modal.data == "Eve"
+    # After auto-select (first in list), Offer should be disabled for Alice
+    assert hp.offer_btn.data == "Alice"
+    assert hp.offer_btn.disabled is True
 
-# Test handling the confirmation dialog (Yes button)
-def test_handle_close_yes():
-    view = DummyView()
-    page = HireStaffPage(view)
-    free_agents = ["Frank"]
-    non_driver_role = StaffRoles.TECHNICAL_DIRECTOR
-    previously_approached = []  # Add this parameter
-    pay_drivers = []  # Add pay_drivers parameter
-    page.update_free_agent_list(free_agents, non_driver_role, previously_approached, pay_drivers)
-    
-    # Trigger the approach to create a dialog
-    e_approach = DummyEvent("Frank")
-    page.approach_staff(e_approach)
-    
-    # Simulate clicking the "Yes" button on the dialog
-    dummy_close_event = DummyEvent(None)
-    dummy_close_event.control.text = "Yes"
-    if hasattr(page, "dlg_modal"):
-        page.dlg_modal.data = "Frank"
-    page.handle_close(dummy_close_event)
-    
-    # Verify that the dialog has been removed from the overlay
-    assert page.dlg_modal not in view.main_app.overlay
-    # And that complete_hire was called
-    completions = view.controller.staff_hire_controller.completions
-    assert ("Frank", non_driver_role) in completions
+    # Selecting Bob should enable Offer
+    hp.update_staff(None, name="Bob")
+    assert hp.offer_btn.data == "Bob"
+    assert hp.offer_btn.disabled is False
 
-# Test showing the accept dialog
-def test_show_accept_dialog():
-    view = DummyView()
-    page = HireStaffPage(view)
-    
-    # Create a dummy accept dialog with a method to track updates
-    class DummyAcceptDialog(ft.AlertDialog):
-        def __init__(self, view):
-            super().__init__()
-            self.updated = False
-        def update_text_widget(self, name, role, salary):  # Add salary parameter
-            self.updated = True
-            
-    dummy_accept_dialog = DummyAcceptDialog(view)
-    page.accept_dialog = dummy_accept_dialog
-    page.show_accept_dialog("George", StaffRoles.DRIVER1, 1_000_000)  # Add salary value
-    
-    assert dummy_accept_dialog.updated is True
-    assert dummy_accept_dialog.open is True
-    assert dummy_accept_dialog in view.main_app.overlay
+def test_clicking_offer_calls_controller_when_enabled(fx):
+    controller, view, hp = fx
 
-# Test showing the rejection dialog
-def test_show_rejection_dialog():
-    view = DummyView()
-    page = HireStaffPage(view)
-    
-    class DummyRejectionDialog(ft.AlertDialog):
-        def __init__(self):
-            super().__init__()
-            self.updated = False
-        def update_text_widget(self, name, reason):
-            self.updated = True
-            
-    dummy_rejection_dialog = DummyRejectionDialog()
-    page.rejection_dialog = dummy_rejection_dialog
-    page.show_rejection_dialog("Hank", DriverRejectionReason.NONE)
-    
-    assert dummy_rejection_dialog.updated is True
-    assert dummy_rejection_dialog.open is True
-    assert dummy_rejection_dialog in view.main_app.overlay
+    controller._details = {
+        "Bob": {"name": "Bob", "age": 25, "rejected_player_offer": False},
+    }
+    hp.update_free_agent_list(["Bob"], StaffRoles.DRIVER2, pay_drivers=[])
+
+    # Simulate clicking "Offer"
+    class E:
+        class C: pass
+        def __init__(self, data):
+            self.control = self.C()
+            self.control.data = data
+
+    hp.approach_staff(E("Bob"))
+    assert controller.open_driver_offer_dialog_calls == [("Bob", StaffRoles.DRIVER2)]

@@ -32,14 +32,13 @@ class StaffHireController:
 
 		if role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
 			free_agents = driver_transfers.get_free_agents(self.model, for_player_team=True)
-			previously_approached = self.model.driver_offers.drivers_who_have_been_approached()
 			pay_drivers = [driver for driver in free_agents if self.model.entity_manager.get_driver_model(driver).pay_driver is True]
 		else:
 			free_agents = manager_transfers.get_free_agents(self.model, role, for_player_team=True)
 			previously_approached = []
 			pay_drivers = []
 
-		self.controller.view.hire_staff_page.update_free_agent_list(free_agents, role, previously_approached, pay_drivers)
+		self.controller.view.hire_staff_page.update_free_agent_list(free_agents, role, pay_drivers)
 		self.controller.view.main_window.change_page("hire_staff")
 		self.controller.view.main_app.update()
 

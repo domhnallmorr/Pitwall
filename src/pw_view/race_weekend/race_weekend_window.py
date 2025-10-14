@@ -19,6 +19,7 @@ class RaceWeekendWindow(ft.View):
 	def __init__(self, view: View, data: dict):
 		self.view = view
 		self.simulate_buttons: dict[SessionNames, ft.TextButton] = {}
+		self.view_results_buttons: dict[SessionNames, ft.TextButton] = {}
 		self.simulate_btns_clicked: list[SessionNames] = []
 
 		flag_path = fr"{self.view.flags_small_path}\{data['country']}.png"
@@ -77,9 +78,23 @@ class RaceWeekendWindow(ft.View):
 			controls=[ft.Text(session_type.value, theme_style=self.view.header2_style)]
 		)
 
-		self.simulate_buttons[session_type] = ft.TextButton("Simulate", on_click=self.simulate, disabled=True, data=session_type)
+		self.simulate_buttons[session_type] = ft.TextButton("Simulate", icon=ft.Icons.REFRESH, on_click=self.simulate, disabled=True, data=session_type)
+		row2_controls: list[ft.Control] = [self.simulate_buttons[session_type]]
+
+		if session_type in [SessionNames.QUALIFYING, SessionNames.RACE]:
+			view_results_btn = ft.TextButton(
+				"View Results",
+				icon=ft.Icons.TABLE_CHART,
+				on_click=self.show_session_results,
+				disabled=True,
+				data=session_type,
+			)
+			self.view_results_buttons[session_type] = view_results_btn
+			row2_controls.append(view_results_btn)
+
 		row2 = ft.Row(
-			controls=[self.simulate_buttons[session_type]]
+			controls=row2_controls,
+			spacing=20,
 		)
 
 		column = ft.Column(
@@ -115,11 +130,22 @@ class RaceWeekendWindow(ft.View):
 				self.continue_btn.disabled = False
 				
 			self.view.controller.race_controller.simulate_session(session_type)
-
+		
+		# Enable view results button
+		if session_type in self.view_results_buttons:
+			self.view_results_buttons[session_type].disabled = False
 
 	def return_to_main_window(self, e: ft.ControlEvent) -> None:
 		self.continue_btn.disabled = True
 		self.view.main_app.update()
 		
 		self.view.controller.post_race_actions()
+
+	def show_session_results(self, e: ft.ControlEvent) -> None:
+		session_type = e.control.data
+		
+		if session_type is None:
+			return
+
+		self.view.controller.race_controller.show_session_results(session_type)
 		

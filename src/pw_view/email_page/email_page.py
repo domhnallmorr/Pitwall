@@ -62,7 +62,7 @@ class EmailPage(ft.Column): # type: ignore
 		if self.selected_email is not None:
 			self.selected_email.tile_unselected()
 
-		self.email_content.update(email_tile.email.message, email_tile.email.subject, email_tile.email.week)
+		self.email_content.update(email_tile.email.message, email_tile.email.subject, email_tile.email.week, email_tile.email.email_type)
 
 		email_tile.tile_selected()
 		self.selected_email = email_tile

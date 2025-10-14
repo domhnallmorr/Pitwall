@@ -20,6 +20,7 @@ def decide_when_retiring(age: int) -> int:
 class DriverDetails(TypedDict):
 	name: str
 	age: int
+	rejected_player_offer: bool # has driver rejected a player offer this season
 
 class DriverModel:
 	def __init__(self,
@@ -83,10 +84,18 @@ class DriverModel:
 		return int(self.model.season.standings_manager.driver_position(self.name)) if self.model.season.standings_manager.driver_position(self.name) is not None else None
 	
 	@property
+	def rejected_player_offer(self) -> bool:
+		if self.name in self.model.driver_offers.drivers_who_have_been_approached():
+			return True
+		else:
+			return False
+	
+	@property
 	def details(self) -> DriverDetails:
 		return {
 			"name": self.name,
-			"age": self.age
+			"age": self.age,
+			"rejected_player_offer": self.rejected_player_offer
 		}
 	
 	def __repr__(self) -> str:

@@ -118,12 +118,25 @@ class ResultsWindow(ft.View):
 						data.append(f"Retired Lap {row['Lap']} ({row['Retirement Reason'].value})")
 						data_ahead.append("-")
 					elif row["Lapped Status"] is None:
-						data.append(self.ms_to_min_sec(row["Gap to Leader"], interval=True))
+						'''
+						Added this to catch cases where the gap is a string, rather than an int
+						This is for the show results button on the race weekend window
+						DF/column has already been string formatted, so just use the string value
+						See below for Gap Ahead, same applies
+						'''
+						#TODO better handling for formatted df
+						if type(row["Gap to Leader"]) is str:
+							data.append(row["Gap to Leader"])
+						else:
+							data.append(self.ms_to_min_sec(row["Gap to Leader"], interval=True))
 					else:
 						data.append(row["Lapped Status"])
 
 					if row["Status"] != ParticipantStatus.RETIRED:
-						data_ahead.append(self.ms_to_min_sec(row["Gap Ahead"], interval=True))
+						if type(row["Gap Ahead"]) is str:
+							data_ahead.append(row["Gap Ahead"])
+						else:
+							data_ahead.append(self.ms_to_min_sec(row["Gap Ahead"], interval=True))
 					
 			standings_df["Gap to Leader"] = data
 			standings_df["Gap Ahead"] = data_ahead
@@ -189,7 +202,7 @@ class ResultsWindow(ft.View):
 		self.driver1_dropdown = ft.Dropdown(
 			options=[ft.dropdown.Option(d) for d in self.drivers_list],
 			width=300,
-			max_menu_height=200,
+			menu_height=200,
 			hint_text="Choose Driver 1",
 			on_change=self.update_lap_times_plot,
 		)
@@ -197,7 +210,7 @@ class ResultsWindow(ft.View):
 		self.driver2_dropdown = ft.Dropdown(
 			options=[ft.dropdown.Option(d) for d in self.drivers_list],
 			width=300,
-			max_menu_height=200,
+			menu_height=200,
 			hint_text="Choose Driver 2",
 			on_change=self.update_lap_times_plot,
 		)

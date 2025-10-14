@@ -12,6 +12,7 @@ from pw_model.email import email_generation
 from pw_model.email import car_development_emails
 from pw_model.email import sponsor_emails
 from pw_model.email import testing_emails
+from pw_model.email.email_enums import EmailTypeEnums
 from pw_model.pw_model_enums import StaffRoles
 
 if TYPE_CHECKING:
@@ -22,13 +23,15 @@ class EmailStatusEnums(Enum):
 	UNREAD = "unread"
 
 class Email:
-	def __init__(self, subject: str, message: str, email_id: int, status: EmailStatusEnums, sender: str="", week: int=0):
+	def __init__(self, subject: str, message: str, email_id: int, status: EmailStatusEnums, sender: str="", week: int=0,
+			   email_type: EmailTypeEnums=EmailTypeEnums.OTHER):
 		self.subject = subject
 		self.message = message
 		self.status = status
 		self.sender = sender
 		self.email_id = email_id
 		self.week = week
+		self.email_type = email_type
 
 class Inbox:
 	def __init__(self, model: Model):
@@ -53,12 +56,13 @@ class Inbox:
 	def add_ai_car_development_update(self, team: str, development_type: str) -> None:
 		self.car_development_updates.append([team, development_type])
 
-	def add_email(self, msg: str, title: str, sender: str="", status: EmailStatusEnums=EmailStatusEnums.UNREAD, week: Optional[int]=None) -> None:
+	def add_email(self, msg: str, title: str, sender: str="", status: EmailStatusEnums=EmailStatusEnums.UNREAD, week: Optional[int]=None,
+			   email_type: EmailTypeEnums=EmailTypeEnums.OTHER) -> None:
 		# Use provided week or get it from the model
 		if week is None:
 			week = self.model.season.calendar.current_week
 			
-		email = Email(title, msg, self.new_email_id, status=status, sender=sender, week=week)
+		email = Email(title, msg, self.new_email_id, status=status, sender=sender, week=week, 		email_type=email_type)
 		self.emails.appendleft(email)
 		self.new_emails += 1
 		self.new_email_id += 1
@@ -136,12 +140,12 @@ class Inbox:
 	def generate_car_development_completed_email(self, development_type: str, speed_increase: int) -> None:
 		msg = car_development_emails.car_development_completed_email(development_type, speed_increase)
 		title = f"Development of {development_type} upgrade has been completed!"
-		self.add_email(msg, title)
+		self.add_email(msg, title, email_type=EmailTypeEnums.CAR_DEVELOPMENT)
 
 	def generate_ai_development_completed_email(self) -> None:
 		msg = car_development_emails.ai_development_completed_email(self.car_development_updates)
 		title = f"Car Developments Summary"
-		self.add_email(msg, title)
+		self.add_email(msg, title, email_type=EmailTypeEnums.CAR_DEVELOPMENT)
 
 	def generate_testing_progress_email(self) -> None:
 		msg = testing_emails.generate_testing_progress_email(self)
@@ -157,10 +161,10 @@ class Inbox:
 		data = []
 
 		for email in self.emails:
-			data.append([email.subject, email.message, email.sender, email.status.value, email.week])
+			data.append([email.subject, email.message, email.sender, email.status.value, email.week, email.email_type.value])
 
 		data.reverse()
-		return pd.DataFrame(columns=["Subject", "Message", "Sender", "Status", "Week"], data=data)
+		return pd.DataFrame(columns=["Subject", "Message", "Sender", "Status", "Week", "EmailType"], data=data)
 	
 	def load_dataframe(self, df: pd.DataFrame) -> None:
 		self.emails.clear()
@@ -172,7 +176,8 @@ class Inbox:
 			sender = row["Sender"]
 			status = row["Status"]
 			week = row["Week"]
-			self.add_email(message, subject, sender=sender, status=EmailStatusEnums(status))
+			email_type = row["EmailType"]
+			self.add_email(message, subject, sender=sender, status=EmailStatusEnums(status), email_type=EmailTypeEnums(email_type))
 			# Update the week manually since add_email uses current_week
 			self.emails[0].week = week
 

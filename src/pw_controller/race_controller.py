@@ -22,11 +22,12 @@ class RaceSessionData(TypedDict):
 
 class RaceController:
 	def __init__(self, controller: Controller):
-		self.controller = controller
-		self.view = controller.view
-		
-		if self.controller.model.season.calendar.current_track_model is not None: # None indicates the season is over, no more races this season
-			self.race_model = race_weekend_model.RaceWeekendModel("UI", self.controller.model, self.controller.model.season.calendar.current_track_model)
+				self.controller = controller
+				self.view = controller.view
+				self.session_results: dict[SessionNames, RaceSessionData] = {}
+
+				if self.controller.model.season.calendar.current_track_model is not None: # None indicates the season is over, no more races this season
+						self.race_model = race_weekend_model.RaceWeekendModel("UI", self.controller.model, self.controller.model.season.calendar.current_track_model)
 
 
 	def simulate_session(self, session: SessionNames) -> None:
@@ -56,12 +57,14 @@ class RaceController:
 
 		# Add race specific data
 		if session == SessionNames.RACE:
-			data["lap_chart_data"] = self.race_model.current_session.lap_chart_data
-			data["pit_stop_summary"] = self.race_model.current_session.pit_stop_summary
-			data["lap_times_summary"] = self.race_model.current_session.lap_times_summary
-			data["commentary"] = self.race_model.current_session.commentary_model.commentary_df.copy(deep=True)
+				data["lap_chart_data"] = self.race_model.current_session.lap_chart_data
+				data["pit_stop_summary"] = self.race_model.current_session.pit_stop_summary
+				data["lap_times_summary"] = self.race_model.current_session.lap_times_summary
+				data["commentary"] = self.race_model.current_session.commentary_model.commentary_df.copy(deep=True)
 
 		# SHOW THE RESULTS
+		#TODO store session results in model
+		self.session_results[session] = data
 		self.view.results_window.update_page(data)
 		self.view.show_simulated_session_results()
 
@@ -88,6 +91,15 @@ class RaceController:
 
 	def continue_from_lap_chart(self) -> None:
 		self.view.continue_from_lap_chart()
-	
+
 	def show_lap_chart(self) -> None:
 		self.view.show_lap_chart()
+
+	def show_session_results(self, session: SessionNames) -> None:
+		session_data = self.session_results.get(session)
+
+		if session_data is None:
+			return
+
+		self.view.results_window.update_page(session_data)
+		self.view.show_simulated_session_results()
