@@ -50,7 +50,7 @@ class DriverPage(ft.Column):
         self.contract_status_text = ft.Text("Contract Status: Contracted")
 
         text_width = 110
-        self.ability_widget = RatingWidget("Ability", text_width=text_width)
+        self.ability_widget = RatingWidget("Ability:", text_width=text_width)
         self.speed_widget = RatingWidget("Speed:", text_width=text_width)
         self.qualifying_widget = RatingWidget(
             "Qualifying:", min_value=1, max_value=5, text_width=text_width

@@ -4,12 +4,14 @@ import os
 
 import flet as ft
 from pw_view.custom_widgets import custom_container
+from pw_view.custom_widgets.custom_container import HeaderContainer
+from pw_view.custom_widgets.rating_widget import RatingWidget
 
 if TYPE_CHECKING:
 	from pw_view.view import View
 
 class CustomDataTable:
-	def __init__(self, view: View, column_names: list[str], row_height: int=30):
+	def __init__(self, view: View, column_names: list[str], row_height: int=30, header_text: Optional[str]=None):
 		self.view = view
 		self.column_names = column_names
 
@@ -25,14 +27,26 @@ class CustomDataTable:
 						heading_row_color=ft.Colors.PRIMARY
                                                 )
 		
-		self.container = custom_container.CustomContainer(self.view, self.data_table, expand=False)
+		if header_text is not None:
+			header = HeaderContainer(self.view, header_text)
+			column = ft.Column(
+				controls=[
+					header,
+					self.data_table
+				]
+			)
+			self.container = custom_container.CustomContainer(self.view, column, expand=False)
+		else:
+			self.container = custom_container.CustomContainer(self.view, self.data_table, expand=False)
 		self.list_view = ft.ListView(expand=True, spacing=10, padding=20, auto_scroll=False)
 		self.list_view.controls.append(self.container)
 
 
-	def update_table_data(self, data: list[list[str]], flag_col_idx: Optional[int]=None, flags: Optional[list[str]]=None,
+	def update_table_data(self, data: list[list[str]],
+					   flag_col_idx: Optional[int]=None, flags: Optional[list[str]]=None,
 					   team_logo_col_idx: Optional[int]=None, team_logos: Optional[list[str]]=None,
-					   sponsor_logo_col_idx: Optional[int]=None, sponsor_logos: Optional[list[str]]=None) -> None:
+					   sponsor_logo_col_idx: Optional[int]=None, sponsor_logos: Optional[list[str]]=None,
+					   rating_col_idx: Optional[int]=None, ratings: Optional[list[int]]=None) -> None:
 		rows = []
 
 		for row_idx, row in enumerate(data):
@@ -49,6 +63,8 @@ class CustomDataTable:
 					cells.append(self.gen_team_logo_cell(cell_text, team_logos[row_idx]))
 				elif col_idx == sponsor_logo_col_idx and sponsor_logos is not None:
 					cells.append(self.gen_sponsor_logo_cell(cell_text, sponsor_logos[row_idx]))
+				elif col_idx == rating_col_idx and ratings is not None:
+					cells.append(self.gen_rating_cell(ratings[row_idx]))
 				else:
 					cells.append(ft.DataCell(ft.Text(cell_text), data=cell_text))
 
@@ -116,6 +132,13 @@ class CustomDataTable:
 		
 		return cell
 
+	def gen_rating_cell(self, rating: int) -> ft.DataCell:
+		rating_widget = RatingWidget("", min_value=0, max_value=100, text_width=1, number_of_stars=5, include_text=False)
+		rating_widget.update_row(rating)
+
+		cell = ft.DataCell(rating_widget)
+		return cell
+	
 	def assign_on_tap_callback(self, column_index: int, callback: Callable[[Any], Any]) -> None:
 		"""Assigns an `on_tap` event to all cells in a specific column."""
 		for row in self.data_table.rows:

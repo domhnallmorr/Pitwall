@@ -17,8 +17,9 @@ def decide_when_retiring(age: int) -> int:
 	return retiring_age
 
 class StaffPersonDetails(TypedDict):
-    name: str
-    age: int
+	name: str
+	age: int
+	rejected_player_offer: bool
 
 class SeniorStaff:
 	def __init__(self,
@@ -48,7 +49,8 @@ class SeniorStaff:
 	def details(self) -> StaffPersonDetails:
 		return {
 			"name": self.name,
-			"age": self.age
+			"age": self.age,
+			"rejected_player_offer": False
 		}
 	
 	def end_season(self, increase_age: bool=True) -> None:

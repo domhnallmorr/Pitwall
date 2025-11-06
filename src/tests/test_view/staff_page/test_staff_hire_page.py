@@ -73,6 +73,7 @@ class FakeView:
         self.page_header_style = FakePageHeaderStyle()
         self.background_image = ft.Container()
         self.vscroll_buffer = 160
+        self.driver_images_path = "path/to/driver/images"
 
         self.dark_grey = "#23232A"
 
@@ -95,7 +96,7 @@ def test_offer_button_disables_when_driver_previously_approached(fx):
     }
 
     # Populate list for driver hiring
-    hp.update_free_agent_list(["Alice", "Bob"], StaffRoles.DRIVER1, pay_drivers=[])
+    hp.update_free_agent_list(["Alice", "Bob"], StaffRoles.DRIVER1, pay_drivers=[], ratings=[50, 50])
 
     # After auto-select (first in list), Offer should be disabled for Alice
     assert hp.offer_btn.data == "Alice"
@@ -112,7 +113,7 @@ def test_clicking_offer_calls_controller_when_enabled(fx):
     controller._details = {
         "Bob": {"name": "Bob", "age": 25, "rejected_player_offer": False},
     }
-    hp.update_free_agent_list(["Bob"], StaffRoles.DRIVER2, pay_drivers=[])
+    hp.update_free_agent_list(["Bob"], StaffRoles.DRIVER2, pay_drivers=[], ratings=[50])
 
     # Simulate clicking "Offer"
     class E:

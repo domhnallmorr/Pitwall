@@ -15,7 +15,7 @@ def save_drivers(model: Model, save_file: sqlite3.Connection) -> None:
 	cursor = save_file.cursor()
 
 	cursor.execute('''
-		CREATE TABLE IF NOT EXISTS "drivers" (
+		CREATE TABLE IF NOT EXISTS "Drivers" (
 		"Year"	TEXT,
 		"Name"	TEXT,
 		"Age"	INTEGER,
@@ -36,7 +36,7 @@ def save_drivers(model: Model, save_file: sqlite3.Connection) -> None:
 		)'''
 				)
 	
-	cursor.execute("DELETE FROM drivers") # clear existing data
+	cursor.execute("DELETE FROM Drivers") # clear existing data
 
 	for idx, driver_type in enumerate([model.drivers, model.future_drivers]):
 		for driver in driver_type:
@@ -48,7 +48,7 @@ def save_drivers(model: Model, save_file: sqlite3.Connection) -> None:
 
 
 			cursor.execute('''
-				INSERT INTO drivers (year, name, age, country,
+				INSERT INTO Drivers (year, name, age, country,
 				  speed, consistency, qualifying, contractlength,
 				  retiringage, retiring, retired, salary,
 				  starts, championships, wins,
@@ -83,7 +83,7 @@ def load_drivers(conn: sqlite3.Connection, model: Model) -> None:
 	drivers = []
 	future_drivers = []
 
-	table_name = "drivers"
+	table_name = "Drivers"
 	cursor = conn.execute(f'PRAGMA table_info({table_name})')
 	columns = cursor.fetchall()
 	column_names = [column[1] for column in columns]

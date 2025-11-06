@@ -1,4 +1,6 @@
 from __future__ import annotations
+from collections import deque
+from enum import Enum
 from typing import TYPE_CHECKING
 import flet as ft
 
@@ -9,10 +11,18 @@ from pw_model.pw_model_enums import CalendarState
 if TYPE_CHECKING:
 	from pw_view.view import View
 
+class NavModes(Enum):
+	NORMAL = "normal"
+	BACK = "back"
+
 class MainWindow(ft.View):
 	def __init__(self, view: View):
 		self.view = view
 
+		self.previous_pages = deque(maxlen=10)
+		self.current_page = ViewPageEnums.HOME
+
+		self.setup_nav_buttons()
 		self.setup_header_bar()
 		self.nav_sidebar = sidebar.Sidebar(self.view)
 
@@ -38,7 +48,7 @@ class MainWindow(ft.View):
 		self.week_text = ft.Text("Week 1 - 1998", theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM)
 
 		name_logo_row = ft.Row(
-			controls=[self.header_team_logo, self.team_text],
+			controls=[self.back_btn, self.header_team_logo, self.team_text],
 			alignment=ft.MainAxisAlignment.START,
 			vertical_alignment=ft.CrossAxisAlignment.CENTER
 		)
@@ -52,7 +62,10 @@ class MainWindow(ft.View):
 			vertical_alignment=ft.CrossAxisAlignment.CENTER  # Align items to the center vertically
 		)
 
-	def change_page(self, page_name: str) -> None:
+	def setup_nav_buttons(self) -> None:
+		self.back_btn = ft.TextButton(icon="arrow_back", on_click=self.go_back, disabled=True)
+
+	def change_page(self, page_name: str, nav_mode: NavModes=NavModes.NORMAL) -> None:
 		
 		contents = [self.nav_sidebar]
 
@@ -83,6 +96,9 @@ class MainWindow(ft.View):
 			contents.append(self.view.track_page)
 		elif page_name == ViewPageEnums.DRIVER:
 			contents.append(self.view.driver_page)
+
+		if nav_mode == NavModes.NORMAL:
+			self.update_page_history(page_name)
 
 		self.content_row = ft.Row(
 			contents,
@@ -116,3 +132,28 @@ class MainWindow(ft.View):
 			self.nav_sidebar.email_btn.text = f"Email ({number_of_emails})"
 		else:
 			self.nav_sidebar.email_btn.text = f"Email"
+
+	def go_back(self, e: ft.ControlEvent) -> None:
+		self.current_page = self.previous_pages.pop()
+
+		# Update the active button in the sidebar if the current page is in the sidebar buttons dictionary
+		if self.current_page in self.nav_sidebar.nav_buttons:
+			self.nav_sidebar.set_active_button(self.current_page)
+
+		self.change_page(self.current_page, NavModes.BACK) # don't update page history when going back
+
+		if len(self.previous_pages) == 0:
+			self.back_btn.disabled = True
+			self.view.main_app.update()
+
+
+	def update_page_history(self, page_name: str) -> None:
+		self.previous_pages.append(self.current_page)
+		self.current_page = page_name
+
+		self.back_btn.disabled = False
+
+	def reset_page_history(self) -> None:
+		self.previous_pages.clear()
+		self.current_page = ViewPageEnums.HOME
+		self.back_btn.disabled = True

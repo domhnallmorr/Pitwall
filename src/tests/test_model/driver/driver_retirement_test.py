@@ -22,7 +22,7 @@ def test_driver_retirement_team_end_season():
 	irvine_model.retiring = True
 
 	driver_transfers.team_hire_driver(model, "Ferano", StaffRoles.DRIVER1, ["Jan van der Veen"])
-	driver_transfers.team_hire_driver(model, "Ferano", StaffRoles.DRIVER2, ["Marc Gene"])
+	driver_transfers.team_hire_driver(model, "Ferano", StaffRoles.DRIVER2, ["Marco Genoa"])
 
 	# Make sure hired drivers no longer available for hire
 	assert "Jan van der Veen" not in driver_transfers.get_free_agents(model)
@@ -37,8 +37,8 @@ def test_driver_retirement_team_end_season():
 	assert team_model.driver1 == "Jan van der Veen"
 	assert "Jan van der Veen" in model.season.standings_manager.drivers_standings_df["Driver"].values
 
-	assert team_model.driver2 == "Marc Gene"
-	assert "Marc Gene" in model.season.standings_manager.drivers_standings_df["Driver"].values
+	assert team_model.driver2 == "Marco Genoa"
+	assert "Marco Genoa" in model.season.standings_manager.drivers_standings_df["Driver"].values
 
 	# Ensure schumacher and irvine not in standings
 	assert "Marco Schneider" not in model.season.standings_manager.drivers_standings_df["Driver"].values

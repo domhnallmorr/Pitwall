@@ -12,27 +12,25 @@ The bottom of this page includes a high level overview of additions for V2. Belo
 ### UI Improvements
 
 - [ ] Logos for all sponsors/suppliers
-- [ ] Driver profile images
-- [ ] Senior staff profile images
+- [x] Driver profile images for default drivers
 - [x] Driver page with stats and biography
 - [ ] Improve home page
 - [ ] Improved email page
 - [ ] Include car side profile in home page
 - [x] Car comparison page to track car progress over season for all teams
-- [ ] Improved track maps and track page
 - [ ] Add track details to race weekend screen
-- [ ] Ability to view qualifying results in race weekend screen
+- [x] Ability to view qualifying results in race weekend screen
 - [x] Add a "Wikipedia" style table showing results for all races
 
 
 ## Other
 
-- [ ] Convert all names to fake names
+- [x] Convert all default driver names to fake names
 - [ ] Add driver stats to database and track over time
 - [ ] proper handling for pay drivers salary
 
 
-V2 Outstanding Features
+## V2 Outstanding Features
 
 - Next years car development
 - Reliability of car
@@ -43,3 +41,4 @@ V2 Outstanding Features
 - Split workforce into commercial, mechanics, design
 - Timing screen to race weekend to view session
 - Sponsors "retire" from game
+- review of financal system and associated UI

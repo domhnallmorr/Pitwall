@@ -15,7 +15,7 @@ def save_technical_directors(model : Model, save_file: sqlite3.Connection) -> No
 	cursor = save_file.cursor()
 
 	cursor.execute('''
-	CREATE TABLE IF NOT EXISTS "technical_directors" (
+	CREATE TABLE IF NOT EXISTS "TechnicalDirectors" (
 	"Year"	TEXT,
 	"Name"	TEXT,
 	"Age"	INTEGER,
@@ -28,7 +28,7 @@ def save_technical_directors(model : Model, save_file: sqlite3.Connection) -> No
 			)'''
 				)
 	
-	cursor.execute("DELETE FROM technical_directors") # clear existing data
+	cursor.execute("DELETE FROM TechnicalDirectors") # clear existing data
 
 	for idx, list_type in enumerate([model.technical_directors, model.future_managers]):
 		for technical_director in list_type:
@@ -45,7 +45,7 @@ def save_technical_directors(model : Model, save_file: sqlite3.Connection) -> No
 			if process is True:
 				
 				cursor.execute('''
-					INSERT INTO technical_directors (year, name, age, skill, salary, contractlength, retiringage, retiring, retired) 
+					INSERT INTO TechnicalDirectors (year, name, age, skill, salary, contractlength, retiringage, retiring, retired) 
 					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 				''', (
 					year,

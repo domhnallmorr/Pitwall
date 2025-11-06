@@ -15,7 +15,7 @@ def load_senior_staff(conn: sqlite3.Connection, model: Model) -> tuple[List[Comm
 	future_managers = []
 	team_principals = []
 
-	for table_name in ["technical_directors", "commercial_managers", "team_principals"]:
+	for table_name in ["TechnicalDirectors", "CommercialManagers", "TeamPrincipals"]:
 		cursor = conn.execute(f'PRAGMA table_info({table_name})')
 		columns = cursor.fetchall()
 		column_names = [column[1] for column in columns]
@@ -41,11 +41,11 @@ def load_senior_staff(conn: sqlite3.Connection, model: Model) -> tuple[List[Comm
 			if "Salary" in column_names: # salary is not in team principals table:
 				salary = row[salary_idx]
 
-			if table_name == "technical_directors":
+			if table_name == "TechnicalDirectors":
 				manager = TechnicalDirector(model, name, age, skill, salary, contract_length)
-			elif table_name == "commercial_managers":
+			elif table_name == "CommercialManagers":
 				manager = CommercialManager(model, name, age, skill, salary, contract_length)
-			elif table_name == "team_principals":
+			elif table_name == "TeamPrincipals":
 				manager = TeamPrincipalModel(model, name, age, skill, contract_length)
 
 			if "RetiringAge" in column_names:
@@ -62,11 +62,11 @@ def load_senior_staff(conn: sqlite3.Connection, model: Model) -> tuple[List[Comm
 				manager.retired = retired
 
 			if row[0].lower() == "default":
-				if table_name == "technical_directors":
+				if table_name == "TechnicalDirectors":
 					technical_directors.append(manager)
-				elif table_name == "commercial_managers":
+				elif table_name == "CommercialManagers":
 					commercial_managers.append(manager)
-				elif table_name == "team_principals":
+				elif table_name == "TeamPrincipals":
 					team_principals.append(manager)
 			else:
 				future_managers.append([row[0], manager])

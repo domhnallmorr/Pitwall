@@ -12,7 +12,7 @@ def test_driver_retirement_team_end_season():
 	team_model = model.entity_manager.get_team_model("Ferano")
 
 	# RETIRE BRAWN
-	brawn_model = model.entity_manager.get_technical_director_model("Ross Brawn")
+	brawn_model = model.entity_manager.get_technical_director_model("Rob Brann")
 	brawn_model.contract.contract_length = 1
 	brawn_model.retiring = True
 
@@ -29,8 +29,8 @@ def test_driver_retirement_team_end_season():
 	model.staff_market.compute_transfers()
 	model.end_season()
 
-	assert "Ross Brawn" not in manager_transfers.get_free_agents(model, StaffRoles.TECHNICAL_DIRECTOR)
-	assert "Ross Brawn" not in model.staff_market.grid_this_year_df[StaffRoles.TECHNICAL_DIRECTOR.value].values
+	assert "Rob Brann" not in manager_transfers.get_free_agents(model, StaffRoles.TECHNICAL_DIRECTOR)
+	assert "Rob Brann" not in model.staff_market.grid_this_year_df[StaffRoles.TECHNICAL_DIRECTOR.value].values
 
 	assert "Ken Tyrrell" not in manager_transfers.get_free_agents(model, StaffRoles.TEAM_PRINCIPAL)
 	assert "Ken Tyrrell" not in model.staff_market.grid_this_year_df[StaffRoles.TEAM_PRINCIPAL.value].values

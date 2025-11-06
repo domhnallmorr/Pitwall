@@ -1,11 +1,15 @@
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
+import os
+
 import flet as ft
 
 from pw_model.pw_model_enums import StaffRoles
 from pw_model.driver_negotiation.driver_interest import DriverRejectionReason
 from pw_view.staff_page.staff_dialogs import RejectionDialog, AcceptDialog, DriverOfferDialog
 from pw_view.custom_widgets import custom_container
+from pw_view.custom_widgets.rating_widget import RatingWidget
+from pw_view.custom_widgets.custom_datatable import CustomDataTable
 
 if TYPE_CHECKING:
 	from pw_view.view import View
@@ -25,66 +29,42 @@ class HireStaffPage(ft.Column):
 		super().__init__(expand=1)
 
 	def update_free_agent_list(self, free_agents: list[str], role: StaffRoles,
-							pay_drivers: list[str]) -> None:
+							pay_drivers: list[str],
+							ratings: list[int]) -> None:
 		title = role.value.title().replace("1", " 1").replace("2", " 2")
 		self.title_text.value = f"Hire: {title}"
 		self.current_role = role
 
-		rows = []
-		self.name_text_buttons: list[ft.TextButton] = []
+		columns = ["Name", "Ability"]
+		data = [[name, ratings[idx]] for idx, name in enumerate(free_agents)]
 
-		# Add rows for each free agent
-		for name in free_agents:
-			disabled = False
-
-			self.name_text_buttons.append(ft.TextButton(name, data=name, on_click=self.update_staff, disabled=disabled))
-
-			cells = [ft.DataCell(self.name_text_buttons[-1])]
-
-			# Add pay driver column
-			if role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
-				if name in pay_drivers:
-					cells.append(ft.DataCell(ft.Text("Yes")))
-				else:
-					cells.append(ft.DataCell(ft.Text("")))
-
-			row = ft.DataRow(
-				cells = cells
-			)
-			
-			rows.append(row)
-
-		columns=[
-			ft.DataColumn(label=ft.Text("Name")),
-		]
-
+		# Add pay driver column for drivers
 		if role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
-			columns.append(ft.DataColumn(label=ft.Text("Pay Driver")))
+			columns.append("Pay Driver")
 
-		self.free_agent_table = ft.DataTable(columns=columns, rows=rows, data_row_max_height=30, data_row_min_height=30, width=400)
-		
-		# Make table scrollable
+			for row in data:
+				if row[0] in pay_drivers:
+					row.append("Yes")
+				else:
+					row.append("")
 
-		self.scrollable_free_agents_table = ft.Column(
-			controls=[self.free_agent_table],
-			height=self.view.main_app.window.height - self.view.vscroll_buffer,
-			expand=True,  # Set height to show scrollbar if content exceeds this height
-			scroll=ft.ScrollMode.AUTO  # Automatically show scrollbar when needed
-		)
+		self.free_agent_table = CustomDataTable(self.view, columns, header_text="Free Agents")
+		self.free_agent_table.update_table_data(data, rating_col_idx=1, ratings=ratings)
+		self.free_agent_table.assign_on_tap_callback(0, self.update_staff)
 
-		self.free_agents_column = ft.Column(
-			controls=[
-				ft.Text("Free Agents", weight=ft.FontWeight.BOLD, size=25,),
-				self.scrollable_free_agents_table,
-			],
-			expand=True
-		)
+		# header = custom_container.CustomContainer(self.view, ft.Text("Free Agents", weight=ft.FontWeight.BOLD, size=25,), expand=False)
+		# self.free_agents_column = ft.Column(
+		# 	controls=[
+		# 		self.free_agent_table.list_view,
+		# 	],
+		# 	expand=True
+		# )
 
-		self.free_agents_container = custom_container.CustomContainer(
-			self.view,
-			self.free_agents_column,
-			expand=True
-		)
+		# self.free_agents_container = custom_container.CustomContainer(
+		# 	self.view,
+		# 	self.free_agents_column,
+		# 	expand=True
+		# )
 		
 		self.setup_page()
 
@@ -95,19 +75,50 @@ class HireStaffPage(ft.Column):
 		self.age_text = ft.Text("Driver Age: 99")
 		self.contract_length_text = ft.Text("Contract Length: 2 years")
 
+		image_path = os.path.abspath(fr"{self.view.driver_images_path}\driver_placeholder.png")
+		self.image = ft.Image(
+			src=image_path,
+			width=150,
+			height=150,
+			fit=ft.ImageFit.CONTAIN,
+	  	)
+
 		self.offer_btn = ft.TextButton("Offer", on_click=self.approach_staff)
 
-		self.contract_column = ft.Column(
+		self.details_column = ft.Column(
 			controls=[
-				ft.Text("Contract Details", weight=ft.FontWeight.BOLD, size=25,),
 				self.name_text,
 				self.age_text,
 				self.contract_length_text,
-				self.offer_btn
-			]
+				self.offer_btn,
+			],
+			expand=False
 		)
 
-		self.container_container = custom_container.CustomContainer(
+		self.image_column = ft.Column(
+			controls=[
+				self.image,
+			],
+		)
+
+		self.contract_row = ft.Row(
+			controls=[
+				self.details_column,
+				ft.VerticalDivider(),
+				self.image_column,
+			],
+			expand=False
+		)
+
+		self.contract_column = ft.Column(
+			controls=[
+				custom_container.HeaderContainer(self.view, "Details", expand=False),
+				self.contract_row,
+			],
+			expand=False
+		)
+
+		self.contract_container = custom_container.CustomContainer(
 			self.view,
 			self.contract_column,
 			expand=True
@@ -117,9 +128,10 @@ class HireStaffPage(ft.Column):
 	def setup_page(self) -> None:
 		content_row = ft.Row(
 			controls=[
-				self.free_agents_container,
-				self.container_container
+				self.free_agent_table.list_view,
+				self.contract_container
 			],
+			vertical_alignment=ft.CrossAxisAlignment.START,
 			expand=True
 		)
 
@@ -143,8 +155,8 @@ class HireStaffPage(ft.Column):
 			name = e.control.data
 
 		details = self.view.controller.staff_hire_controller.get_staff_details(name, self.current_role)
-		self.name_text.value = f"Driver Name: {details['name']}"
-		self.age_text.value = f"Driver Age: {details['age']}"
+		self.name_text.value = f"Name: {details['name']}"
+		self.age_text.value = f"Age: {details['age']}"
 
 		self.offer_btn.data = name
 
@@ -152,6 +164,12 @@ class HireStaffPage(ft.Column):
 			self.offer_btn.disabled = True
 		else:
 			self.offer_btn.disabled = False
+
+		# Update image
+		if self.current_role in [StaffRoles.DRIVER1, StaffRoles.DRIVER2]:
+			self.image.src = fr"{self.view.driver_images_path}\{name.lower()}.png"
+		else:
+			self.image.src = fr"{self.view.manager_images_path}\{name.lower()}.png"
 		
 		self.view.main_app.update()
 

@@ -85,7 +85,7 @@ def save_commercial_managers(model: Model, save_file: sqlite3.Connection) -> Non
 	cursor = save_file.cursor()
 	# TODO condense into a single "managers" table
 	cursor.execute('''
-	CREATE TABLE IF NOT EXISTS "commercial_managers" (
+	CREATE TABLE IF NOT EXISTS "CommercialManagers" (
 	"Year"	TEXT,
 	"Name"	TEXT,
 	"Age"	INTEGER,
@@ -98,7 +98,7 @@ def save_commercial_managers(model: Model, save_file: sqlite3.Connection) -> Non
 			)'''
 				)
 	
-	cursor.execute("DELETE FROM commercial_managers") # clear existing data
+	cursor.execute("DELETE FROM CommercialManagers") # clear existing data
 
 	for idx, list_type in enumerate([model.commercial_managers, model.future_managers]):
 		for commercial_manager in list_type:
@@ -115,7 +115,7 @@ def save_commercial_managers(model: Model, save_file: sqlite3.Connection) -> Non
 			if process is True:
 
 				cursor.execute('''
-					INSERT INTO commercial_managers (year, name, age, skill, salary, contractlength, retiringage, retiring, retired) 
+					INSERT INTO CommercialManagers (year, name, age, skill, salary, contractlength, retiringage, retiring, retired) 
 					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 				''', (
 					year,
@@ -136,7 +136,7 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 	cursor = save_file.cursor()
 
 	cursor.execute('''
-	CREATE TABLE IF NOT EXISTS "teams" (
+	CREATE TABLE IF NOT EXISTS "Teams" (
 	"Year"	TEXT,
 	"Name"	TEXT,
 	"Country"	TEXT,
@@ -158,12 +158,12 @@ def save_teams(model: Model, save_file: sqlite3.Connection) -> None:
 	)'''
 				)
 	
-	cursor.execute("DELETE FROM teams") # clear existing data
+	cursor.execute("DELETE FROM Teams") # clear existing data
 
 	for team in model.teams:
 
 		cursor.execute('''
-			INSERT INTO teams (year, name, country, TeamPrincipal, Driver1,
+			INSERT INTO Teams (year, name, country, TeamPrincipal, Driver1,
 				 Driver2, CarSpeed, NumberofStaff, Facilities, StartingBalance,
 				 CommercialManager, TechnicalDirector, EngineSupplier, EngineSupplierDeal, EngineSupplierCosts,
 				 TyreSupplier, TyreSupplierDeal, TyreSupplierCosts) 

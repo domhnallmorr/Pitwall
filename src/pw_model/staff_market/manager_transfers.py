@@ -38,6 +38,16 @@ def get_free_agents(model: Model, role: StaffRoles, for_player_team: bool=False)
 
 	return free_agents
 
+def get_ratings(model: Model, role: StaffRoles, free_agents: List[str]) -> List[int]:
+	if role == StaffRoles.TECHNICAL_DIRECTOR:
+		ratings = [model.entity_manager.get_technical_director_model(manager).average_skill for manager in free_agents]
+	elif role == StaffRoles.COMMERCIAL_MANAGER:
+		ratings = [model.entity_manager.get_commercial_manager_model(manager).average_skill for manager in free_agents]
+	elif role == StaffRoles.TEAM_PRINCIPAL:
+		ratings = [model.entity_manager.get_team_principal_model(manager).average_skill for manager in free_agents]
+
+	return ratings
+
 def determine_technical_director_transfers(model: Model) -> None:
 	'''
 	compute transfers for AI teams

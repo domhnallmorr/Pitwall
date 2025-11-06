@@ -69,7 +69,7 @@ def test_year_week():
 def test_retirement_age_senior_manager():
 	model = create_model.create_model()
 
-	brawn_model = model.entity_manager.get_technical_director_model("Ross Brawn")
+	brawn_model = model.entity_manager.get_technical_director_model("Rob Brann")
 	brawn_model.retiring_age = 45
 	brawn_model.retired = True
 	brawn_model.retiring = True
@@ -78,7 +78,7 @@ def test_retirement_age_senior_manager():
 	model = create_model.create_model() # reset the model
 	load(model, save_file, mode="memory") # load data
 
-	brawn_model = model.entity_manager.get_technical_director_model("Ross Brawn")
+	brawn_model = model.entity_manager.get_technical_director_model("Rob Brann")
 	
 	assert brawn_model.retired is True
 	assert brawn_model.retiring_age == 45

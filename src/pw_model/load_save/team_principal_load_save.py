@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 def save_team_principals(model: Model, save_file: sqlite3.Connection) -> None:
     cursor = save_file.cursor()
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS "team_principals" (
+        CREATE TABLE IF NOT EXISTS "TeamPrincipals" (
         "Year"  TEXT,
         "Name"  TEXT,
         "Age"   INTEGER,
@@ -24,12 +24,12 @@ def save_team_principals(model: Model, save_file: sqlite3.Connection) -> None:
         )'''
     )
     
-    cursor.execute("DELETE FROM team_principals")  # Clear existing data
+    cursor.execute("DELETE FROM TeamPrincipals")  # Clear existing data
 
     # Save current team principals
     for team_principal_model in model.team_principals:
             cursor.execute('''
-                INSERT INTO team_principals (
+                INSERT INTO TeamPrincipals (
                     Year, Name, Age, Skill, Salary, ContractLength, 
                     RetiringAge, Retiring, Retired
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -51,7 +51,7 @@ def save_team_principals(model: Model, save_file: sqlite3.Connection) -> None:
             year = future_manager[0]
             tp = future_manager[1]
             cursor.execute('''
-                INSERT INTO team_principals (
+                INSERT INTO TeamPrincipals (
                     Year, Name, Age, Skill, Salary, ContractLength, 
                     RetiringAge, Retiring, Retired
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)

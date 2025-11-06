@@ -26,24 +26,24 @@ def test_get_top_technical_directors():
 
 	top_technical_directors = manager_transfers.get_top_available_technical_directors(model, 5)
 	# Only John Barnard should be available by default
-	assert top_technical_directors == ["John Barnard"]
+	assert top_technical_directors == ["James Barnwood"]
 
 	# Make newey available and check he get's picked up
-	newey_model = model.entity_manager.get_technical_director_model("Adrian Newey")
+	newey_model = model.entity_manager.get_technical_director_model("Aidan Newson")
 	newey_model.contract.contract_length = 1
 	newey_model.retiring = False
 	model.staff_market.setup_dataframes()
 
 	top_technical_directors = manager_transfers.get_top_available_technical_directors(model, 5)
 	assert len(top_technical_directors) == 2
-	assert "Adrian Newey" in top_technical_directors
-	assert "John Barnard" in top_technical_directors
+	assert "Aidan Newson" in top_technical_directors
+	assert "James Barnwood" in top_technical_directors
 
 def test_top_5_technical_directors():
 	model = create_model.create_model(mode="headless", auto_save=False)
 
 	for i in range(50):
-		assert "John Barnard" not in manager_transfers.get_free_agents(model, StaffRoles.TECHNICAL_DIRECTOR)
+		assert "James Barnwood" not in manager_transfers.get_free_agents(model, StaffRoles.TECHNICAL_DIRECTOR)
 		model.staff_market.setup_dataframes()
 		model.staff_market.compute_transfers()
 

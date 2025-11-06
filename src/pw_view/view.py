@@ -66,6 +66,7 @@ class View:
 		self.sponsor_logos_path = fr"{self.run_directory}\pw_view\assets\sponsor_logos"
 		self.sidepod_logos_path = fr"{self.run_directory}\pw_view\assets\sidepod_logos"
 		self.driver_images_path = fr"{self.run_directory}\pw_view\assets\driver_images"
+		self.manager_images_path = fr"{self.run_directory}\pw_view\assets\manager_images"
 
 		self.setup_background_images()
 		self.setup_pages()
@@ -139,12 +140,12 @@ class View:
 			self.main_window.nav_sidebar.update_advance_button(AdvanceModeEnums.ADVANCE)
 			self.main_window.change_page(ViewPageEnums.STANDINGS)
 
-		self.main_app.update()
-
 		# Hack to get background image to appear on home page when the game starts
 		if mode == "start_career":
+			self.main_window.change_page(ViewPageEnums.EMAIL)
 			self.main_window.change_page(ViewPageEnums.HOME)
 
+		self.main_window.reset_page_history()
 		self.main_app.update()
 
 	def show_title_screen(self) -> None:

@@ -139,6 +139,7 @@ class StaffDetailsContainer:
 
 		elif self.role in [StaffRoles.TECHNICAL_DIRECTOR, StaffRoles.COMMERCIAL_MANAGER]:
 			self.ability_widget.update_row(data.skill)
+			self.image.src = fr"{self.view.manager_images_path}\{data.name.lower()}.png"
 			
 	def replace(self, e: ft.ControlEvent) -> None:
 		self.view.controller.staff_hire_controller.launch_replace_staff(e.control.data)
