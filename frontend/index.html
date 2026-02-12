@@ -8,9 +8,42 @@
 </head>
 
 <body>
-  <div class="title-screen">
+
+  <!-- Title Screen -->
+  <div class="title-screen" id="title-screen">
     <div class="title-content">
       <button id="start-career-btn" class="btn-primary">Start Career</button>
+    </div>
+  </div>
+
+  <!-- Game Dashboard (Hidden by default) -->
+  <div id="game-dashboard" class="dashboard-container" style="display: none;">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo-area">Pitwall</div>
+      <nav>
+        <button class="nav-item active">Home</button>
+        <button class="nav-item">Email</button>
+        <button class="nav-item">Grid</button>
+        <button class="nav-item">Standings</button>
+      </nav>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-wrapper">
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div id="team-name" class="team-info">Team Name</div>
+        <!-- Date Display: Will show "Australia - Week 8 1998" -->
+        <div id="date-display" class="date-info">Date</div>
+      </div>
+
+      <!-- Page Content -->
+      <div class="content-area">
+        <h2>Dashboard Home</h2>
+        <p>Welcome to the Pitwall.</p>
+      </div>
     </div>
   </div>
 
@@ -22,14 +55,22 @@
   </div>
 
   <script>
+    // Buttons
     const startBtn = document.getElementById('start-career-btn')
     const btn = document.getElementById('ping-btn')
     const rosterBtn = document.getElementById('roster-btn')
 
-    // Placeholder for start career
+    // UI Elements
+    const titleScreen = document.getElementById('title-screen');
+    const dashboard = document.getElementById('game-dashboard');
+    const teamNameEl = document.getElementById('team-name');
+    const dateEl = document.getElementById('date-display');
+
+    // --- Event Listeners ---
+
     startBtn.addEventListener('click', () => {
-      console.log("Start Career Clicked");
-      alert("Career Mode starting soon...");
+      console.log("Starting Career...");
+      window.electronAPI.sendToPython({ type: 'start_career' });
     });
 
     btn.addEventListener('click', () => {
@@ -42,15 +83,29 @@
       window.electronAPI.sendToPython({ type: 'load_roster' })
     })
 
+    // --- IPC Handler ---
+
     window.electronAPI.onPythonData((data) => {
       console.log('Python Data:', data);
       try {
         const parsed = JSON.parse(data);
-        if (parsed.type === 'status') {
+
+        // Handle Game Start Success
+        if (parsed.type === 'game_started' && parsed.status === 'success') {
+          titleScreen.style.display = 'none';
+          dashboard.style.display = 'flex';
+
+          teamNameEl.textContent = parsed.data.team_name;
+
+          // Format: "Australia - Week 8 1998"
+          const dateStr = parsed.data.current_date; // "Australia - Week 8"
+          const yearStr = parsed.data.year;         // 1998
+          dateEl.textContent = `${dateStr} ${yearStr}`;
+        }
+        else if (parsed.type === 'status') {
           console.log("Status:", parsed.message);
         } else if (parsed.data) {
           console.log("Data Received");
-          // alert(`Received: ${JSON.stringify(parsed.data).substring(0, 100)}...`);
         }
       } catch (e) {
         console.error('Raw Data:', data);

@@ -29,6 +29,13 @@ def init_db():
             start_year INTEGER DEFAULT 0
         )
     ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS metadata (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    ''')
     
     conn.commit()
     return conn
@@ -39,7 +46,10 @@ def seed_data(conn):
     # Check if data exists
     c.execute('SELECT count(*) FROM drivers')
     if c.fetchone()[0] > 0:
-        print("Data already exists, skipping seed.")
+        print("Data already exists. Checking metadata...")
+        # Ensure metadata exists even if drivers do
+        c.execute('INSERT OR IGNORE INTO metadata (key, value) VALUES (?, ?)', ('start_year', '1998'))
+        conn.commit()
         return
 
     drivers_data = [
@@ -84,6 +94,9 @@ def seed_data(conn):
     ]
 
     c.executemany('INSERT INTO teams (start_year, name, country, driver1_name, driver2_name) VALUES (?, ?, ?, ?, ?)', teams_data)
+    
+    # Metadata
+    c.execute('INSERT OR IGNORE INTO metadata (key, value) VALUES (?, ?)', ('start_year', '1998'))
 
     conn.commit()
     print("Database seeded successfully.")

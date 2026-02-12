@@ -44,6 +44,11 @@ def load_roster(year: int = 0) -> Tuple[List[Team], List[Driver]]:
             d2.role = DriverRole.DRIVER_2
 
         teams.append(t)
+    
+    # Load Metadata (Start Year)
+    c.execute('SELECT value FROM metadata WHERE key = "start_year"')
+    row = c.fetchone()
+    start_year = int(row[0]) if row else 2025
 
     conn.close()
-    return teams, drivers
+    return teams, drivers, start_year

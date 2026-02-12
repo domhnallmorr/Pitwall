@@ -21,20 +21,49 @@ def process_command(command):
     
     if cmd_type == 'load_roster':
         try:
-            teams, drivers = load_roster(year=0) # Load default
-            CURRENT_STATE = GameState(year=2025, teams=teams, drivers=drivers)
+            teams, drivers, year = load_roster(year=0) # Load default
+            CURRENT_STATE = GameState(year=year, teams=teams, drivers=drivers)
             
             grid_json = CURRENT_STATE.get_grid_json()
-            # Parse it back to object so it's nested in our response JSON properly
             grid_data = json.loads(grid_json) 
             
             return {
                 "status": "success", 
-                "message": "Roster loaded",
+                "message": f"Roster loaded for {year}",
                 "data": grid_data
             }
         except Exception as e:
             logging.error(f"Error loading roster: {e}")
+            return {"status": "error", "message": str(e)}
+
+    if cmd_type == 'start_career':
+        try:
+            # 1. Ensure Roster is loaded
+            if not CURRENT_STATE:
+                 teams, drivers, year = load_roster(year=0)
+                 CURRENT_STATE = GameState(year=year, teams=teams, drivers=drivers)
+            
+            # 2. Find Team "Warrick"
+            warrick_team = next((t for t in CURRENT_STATE.teams if t.name == "Warrick"), None)
+            
+            if not warrick_team:
+                return {"status": "error", "message": "Team 'Warrick' not found in roster."}
+
+            # 3. Assign Player
+            CURRENT_STATE.player_team_id = warrick_team.id
+            
+            # 4. Return Success with Game Info
+            return {
+                "type": "game_started",
+                "status": "success",
+                "data": {
+                    "team_name": warrick_team.name,
+                    "current_date": CURRENT_STATE.current_date,
+                    "year": CURRENT_STATE.year
+                }
+            }
+        except Exception as e:
+            logging.error(f"Error starting career: {e}")
             return {"status": "error", "message": str(e)}
 
     return {"status": "error", "message": "Unknown command"}

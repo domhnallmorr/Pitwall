@@ -9,6 +9,8 @@ class GameState(BaseModel):
     year: int
     teams: List[Team]
     drivers: List[Driver]
+    player_team_id: int | None = None
+    current_date: str = "Australia - Week 8" # Placeholder default
 
     model_config = {
         "arbitrary_types_allowed": True 
