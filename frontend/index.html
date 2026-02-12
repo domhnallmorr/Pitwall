@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>F1 Manager Game</title>
+  <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'"> -->
+</head>
+
+<body>
+  <h1>F1 Manager Game</h1>
+  <p>We are using Node.js <span id="node-version"></span>,
+    Chromium <span id="chrome-version"></span>,
+    and Electron <span id="electron-version"></span>.</p>
+
+  <div style="margin-top: 20px; padding: 20px; border: 1px solid #ccc;">
+    <h2>Python Backend Connection</h2>
+    <button id="ping-btn">Ping Python</button>
+    <button id="roster-btn">Load Roster</button>
+    <div id="output" style="margin-top: 10px; font-family: monospace; white-space: pre-wrap;"></div>
+  </div>
+
+  <script>
+    const btn = document.getElementById('ping-btn')
+    const rosterBtn = document.getElementById('roster-btn')
+    const output = document.getElementById('output')
+
+    btn.addEventListener('click', () => {
+      output.textContent += '> Sending Ping...\n'
+      window.electronAPI.sendToPython({ type: 'ping' })
+    })
+
+    rosterBtn.addEventListener('click', () => {
+      output.textContent += '> Loading Roster...\n'
+      window.electronAPI.sendToPython({ type: 'load_roster' })
+    })
+
+    window.electronAPI.onPythonData((data) => {
+      try {
+        // Attempt to pretty print JSON
+        const parsed = JSON.parse(data);
+        output.textContent += `< ${JSON.stringify(parsed, null, 2)}\n`;
+      } catch (e) {
+        output.textContent += `< Raw: ${data}\n`;
+      }
+
+    })
+  </script>
+</body>
+
+</html>

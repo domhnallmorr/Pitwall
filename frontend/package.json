@@ -1,0 +1,19 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "set ELECTRON_RUN_AS_NODE=&& electron .",
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^29.4.6",
+    "playwright": "^1.58.2",
+    "vitest": "^4.0.18"
+  }
+}

@@ -1,0 +1,19 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=3.0.0",
+    "pydantic>=2.12.5",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
+
+[tool.pytest.ini_options]
+pythonpath = "."
+testpaths = ["tests"]

@@ -1,0 +1,25 @@
+# Node
+node_modules/
+dist/
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+*.log
+
+# Database
+# We ignore the binary DB because we have a seed script
+backend/data/roster.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
