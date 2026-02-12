@@ -35,9 +35,12 @@ function createPythonProcess() {
 }
 
 function createWindow() {
+  const version = require('./package.json').version;
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    title: `Pitwall v${version}`,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -45,10 +48,8 @@ function createWindow() {
     }
   })
 
+  mainWindow.setMenuBarVisibility(false);
   mainWindow.loadFile('index.html')
-
-  // Open DevTools for debugging
-  // mainWindow.webContents.openDevTools()
 }
 
 app.whenReady().then(() => {

@@ -3,47 +3,58 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>F1 Manager Game</title>
-  <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'"> -->
+  <title>Pitwall</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-  <h1>F1 Manager Game</h1>
-  <p>We are using Node.js <span id="node-version"></span>,
-    Chromium <span id="chrome-version"></span>,
-    and Electron <span id="electron-version"></span>.</p>
+  <div class="title-screen">
+    <div class="title-content">
+      <button id="start-career-btn" class="btn-primary">Start Career</button>
+    </div>
+  </div>
 
-  <div style="margin-top: 20px; padding: 20px; border: 1px solid #ccc;">
-    <h2>Python Backend Connection</h2>
-    <button id="ping-btn">Ping Python</button>
+  <!-- Debug Panel (Hidden/Small) -->
+  <div class="debug-panel">
+    <span style="margin-right: 10px; opacity: 0.7;">Debug:</span>
+    <button id="ping-btn">Ping</button>
     <button id="roster-btn">Load Roster</button>
-    <div id="output" style="margin-top: 10px; font-family: monospace; white-space: pre-wrap;"></div>
   </div>
 
   <script>
+    const startBtn = document.getElementById('start-career-btn')
     const btn = document.getElementById('ping-btn')
     const rosterBtn = document.getElementById('roster-btn')
-    const output = document.getElementById('output')
+
+    // Placeholder for start career
+    startBtn.addEventListener('click', () => {
+      console.log("Start Career Clicked");
+      alert("Career Mode starting soon...");
+    });
 
     btn.addEventListener('click', () => {
-      output.textContent += '> Sending Ping...\n'
+      console.log('> Sending Ping...');
       window.electronAPI.sendToPython({ type: 'ping' })
     })
 
     rosterBtn.addEventListener('click', () => {
-      output.textContent += '> Loading Roster...\n'
+      console.log('> Loading Roster...');
       window.electronAPI.sendToPython({ type: 'load_roster' })
     })
 
     window.electronAPI.onPythonData((data) => {
+      console.log('Python Data:', data);
       try {
-        // Attempt to pretty print JSON
         const parsed = JSON.parse(data);
-        output.textContent += `< ${JSON.stringify(parsed, null, 2)}\n`;
+        if (parsed.type === 'status') {
+          console.log("Status:", parsed.message);
+        } else if (parsed.data) {
+          console.log("Data Received");
+          // alert(`Received: ${JSON.stringify(parsed.data).substring(0, 100)}...`);
+        }
       } catch (e) {
-        output.textContent += `< Raw: ${data}\n`;
+        console.error('Raw Data:', data);
       }
-
     })
   </script>
 </body>
