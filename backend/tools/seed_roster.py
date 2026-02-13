@@ -3,9 +3,7 @@ import os
 
 DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'roster.db')
 
-def init_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+def create_schema(conn):
     c = conn.cursor()
     
     # Create Tables
@@ -36,20 +34,123 @@ def init_db():
             value TEXT
         )
     ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS calendar (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            year INTEGER,
+            week INTEGER,
+            name TEXT,
+            type TEXT
+        )
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS circuits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            country TEXT,
+            location TEXT,
+            laps INTEGER,
+            base_laptime_ms INTEGER,
+            length_km REAL,
+            overtaking_delta INTEGER,
+            power_factor INTEGER,
+            track_map_path TEXT
+        )
+    ''')
     
     conn.commit()
+
+def init_db():
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
+    create_schema(conn)
     return conn
 
 def seed_data(conn):
     c = conn.cursor()
     
+    # ... (Drivers/Teams logic omitted for brevity, keeping existing structure via tool)    
+    # Double check if circuits exist
+    c.execute('SELECT count(*) FROM circuits')
+    circuits_exist = c.fetchone()[0] > 0
+    
+    if not circuits_exist:
+        print("Seeding Circuits...")
+        circuits_data = [
+            ("Albert Park", "Australia", "Melbourne", 58, 84000, 5.303, 1200, 6, None),
+            ("Interlagos", "Brazil", "Sao Paulo", 72, 72000, 4.292, 900, 7, None),
+            ("Autodromo Oscar Alfredo Galvez", "Argentina", "Buenos Aries", 72, 80000, 4.259, 1300, 3, None),
+            ("Autodromo Enzo e Dino Ferrari", "San Marino", "Imola", 62, 81000, 4.933, 1800, 3, None),
+            ("Circuit de Barcelona-Catalunya", "Spain", "Barcelona", 66, 75000, 4.728, 1800, 5, None)
+        ]
+        
+        c.executemany('''
+            INSERT INTO circuits (name, country, location, laps, base_laptime_ms, length_km, overtaking_delta, power_factor, track_map_path) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', circuits_data)
+        conn.commit()
+        print("Circuits seeded.")
+
     # Check if data exists
     c.execute('SELECT count(*) FROM drivers')
-    if c.fetchone()[0] > 0:
-        print("Data already exists. Checking metadata...")
+
+    drivers_exist = c.fetchone()[0] > 0
+    
+    if drivers_exist:
+        print("Driver data already exists. Checking metadata...")
         # Ensure metadata exists even if drivers do
         c.execute('INSERT OR IGNORE INTO metadata (key, value) VALUES (?, ?)', ('start_year', '1998'))
+        
+    # Check if Calendar exists
+    c.execute('SELECT count(*) FROM calendar')
+    calendar_exists = c.fetchone()[0] > 0
+    
+    if not calendar_exists:
+        print("Seeding Calendar...")
+        calendar_events = [
+            (1998, 5, "Circuit de Barcelona-Catalunya", "TEST"),
+            (1998, 7, "Circuit de Barcelona-Catalunya", "TEST"),
+            (1998, 10, "Albert Park", "RACE"),
+            (1998, 13, "Interlagos", "RACE"),
+            (1998, 15, "Autodromo Oscar Alfredo Galvez", "RACE"),
+            (1998, 17, "Autodromo Enzo e Dino Ferrari", "RACE"),
+            (1998, 19, "Circuit de Barcelona-Catalunya", "RACE"),
+            (1998, 21, "Circuit de Monaco", "RACE"),
+            (1998, 23, "Circuit Gilles Villeneuve", "RACE"),
+            (1998, 26, "Circuit de Nevers Magny-Cours", "RACE"),
+            (1998, 28, "Silverstone Circuit", "RACE"),
+            (1998, 30, "A1 Ring", "RACE"),
+            (1998, 31, "Hockenheimring", "RACE"),
+            (1998, 33, "Hungaroring", "RACE"),
+            (1998, 35, "Circuit de Spa-Francorchamps", "RACE"),
+            (1998, 37, "Autodromo Nazionale di Monza", "RACE"),
+            (1998, 39, "Nurburgring", "RACE"),
+            (1998, 44, "Suzuka Circuit", "RACE")
+            # Testing sessions from user list
+            # (1998, 5, "Circuit de Barcelona-Catalunya", "TEST"), # Added above
+            # (1998, 7, "Circuit de Barcelona-Catalunya", "TEST"), # Added above
+            # (1998, 16, "Circuit de Barcelona-Catalunya", "TEST")
+            # ... (truncated for brevity, adding full user list if needed, but starting with requested subset)
+        ]
+        # Adding the rest of user requested testing sessions for completeness if simple
+        more_tests = [
+            (1998, 16, "Circuit de Barcelona-Catalunya", "TEST"),
+            (1998, 20, "Silverstone Circuit", "TEST"),
+            (1998, 25, "Circuit de Nevers Magny-Cours", "TEST"),
+            (1998, 29, "Circuit de Barcelona-Catalunya", "TEST"),
+            (1998, 34, "Silverstone Circuit", "TEST"),
+            (1998, 38, "Circuit de Barcelona-Catalunya", "TEST"),
+            (1998, 41, "Circuit de Barcelona-Catalunya", "TEST")
+        ]
+        calendar_events.extend(more_tests)
+        
+        c.executemany('INSERT INTO calendar (year, week, name, type) VALUES (?, ?, ?, ?)', calendar_events)
         conn.commit()
+        print("Calendar seeded.")
+        
+    if drivers_exist:
         return
 
     drivers_data = [

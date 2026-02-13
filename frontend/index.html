@@ -25,6 +25,7 @@
       <nav>
         <button class="nav-item active">Home</button>
         <button class="nav-item">Email</button>
+        <button class="nav-item">Calendar</button>
         <button class="nav-item">Grid</button>
         <button class="nav-item">Standings</button>
       </nav>
@@ -35,14 +36,122 @@
       <!-- Top Bar -->
       <div class="top-bar">
         <div id="team-name" class="team-info">Team Name</div>
-        <!-- Date Display: Will show "Australia - Week 8 1998" -->
-        <div id="date-display" class="date-info">Date</div>
+        <div class="right-info">
+          <span id="current-date" class="date-info">Date</span>
+        </div>
       </div>
 
       <!-- Page Content -->
       <div class="content-area">
-        <h2>Dashboard Home</h2>
-        <p>Welcome to the Pitwall.</p>
+
+        <!-- Home View -->
+        <div id="home-view" class="view-section">
+          <h2>Dashboard Home</h2>
+          <p>Welcome to the Pitwall.</p>
+        </div>
+
+        <!-- Calendar View -->
+        <div id="calendar-view" class="view-section" style="display: none;">
+          <div class="view-header">
+            <h2>Season Calendar</h2>
+            <div class="controls">
+              <label for="calendar-filter">Filter:</label>
+              <select id="calendar-filter">
+                <option value="all">All Events</option>
+                <option value="Grand Prix">Grand Prix</option>
+                <option value="Test">Tests</option>
+              </select>
+            </div>
+          </div>
+          <div id="calendar-content">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Rnd</th>
+                  <th>Week</th>
+                  <th>Event</th>
+                  <th>Track</th>
+                  <th>Country</th>
+                  <th>Winner</th>
+                </tr>
+              </thead>
+              <tbody id="calendar-table-body">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Grid View -->
+        <div id="grid-view" class="view-section" style="display: none;">
+          <div class="tabs">
+            <button class="tab-btn active" data-year="1998">1998</button>
+            <button class="tab-btn" data-year="1999">1999</button>
+          </div>
+
+          <div id="grid-content-1998" class="grid-content">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Team</th>
+                  <th>Driver 1</th>
+                  <th>Driver 2</th>
+                </tr>
+              </thead>
+              <tbody id="grid-table-body">
+                <!-- Rows populated by JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="grid-content-1999" class="grid-content" style="display: none;">
+            <div class="placeholder-msg">
+              <h3>1999 Season</h3>
+              <p>Grid not yet finalized.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Standings View -->
+        <div id="standings-view" class="view-section" style="display: none;">
+          <div class="tabs">
+            <button class="tab-btn standings-tab-btn active" data-type="drivers">Drivers</button>
+            <button class="tab-btn standings-tab-btn" data-type="constructors">Constructors</button>
+          </div>
+
+          <!-- Drivers Table -->
+          <div id="standings-content-drivers">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Pos</th>
+                  <th>Driver</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody id="driver-standings-body">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Constructors Table -->
+          <div id="standings-content-constructors" style="display: none;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Pos</th>
+                  <th>Team</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody id="constructor-standings-body">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -54,64 +163,7 @@
     <button id="roster-btn">Load Roster</button>
   </div>
 
-  <script>
-    // Buttons
-    const startBtn = document.getElementById('start-career-btn')
-    const btn = document.getElementById('ping-btn')
-    const rosterBtn = document.getElementById('roster-btn')
-
-    // UI Elements
-    const titleScreen = document.getElementById('title-screen');
-    const dashboard = document.getElementById('game-dashboard');
-    const teamNameEl = document.getElementById('team-name');
-    const dateEl = document.getElementById('date-display');
-
-    // --- Event Listeners ---
-
-    startBtn.addEventListener('click', () => {
-      console.log("Starting Career...");
-      window.electronAPI.sendToPython({ type: 'start_career' });
-    });
-
-    btn.addEventListener('click', () => {
-      console.log('> Sending Ping...');
-      window.electronAPI.sendToPython({ type: 'ping' })
-    })
-
-    rosterBtn.addEventListener('click', () => {
-      console.log('> Loading Roster...');
-      window.electronAPI.sendToPython({ type: 'load_roster' })
-    })
-
-    // --- IPC Handler ---
-
-    window.electronAPI.onPythonData((data) => {
-      console.log('Python Data:', data);
-      try {
-        const parsed = JSON.parse(data);
-
-        // Handle Game Start Success
-        if (parsed.type === 'game_started' && parsed.status === 'success') {
-          titleScreen.style.display = 'none';
-          dashboard.style.display = 'flex';
-
-          teamNameEl.textContent = parsed.data.team_name;
-
-          // Format: "Australia - Week 8 1998"
-          const dateStr = parsed.data.current_date; // "Australia - Week 8"
-          const yearStr = parsed.data.year;         // 1998
-          dateEl.textContent = `${dateStr} ${yearStr}`;
-        }
-        else if (parsed.type === 'status') {
-          console.log("Status:", parsed.message);
-        } else if (parsed.data) {
-          console.log("Data Received");
-        }
-      } catch (e) {
-        console.error('Raw Data:', data);
-      }
-    })
-  </script>
+  <script type="module" src="./src/renderer.js"></script>
 </body>
 
 </html>

@@ -7,3 +7,4 @@ class Team(BaseModel):
     country: str
     driver1_id: Optional[int] = None
     driver2_id: Optional[int] = None
+    points: int = 0

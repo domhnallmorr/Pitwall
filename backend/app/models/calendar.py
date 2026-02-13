@@ -1,0 +1,64 @@
+from pydantic import BaseModel
+from typing import List, Optional, Dict, Any
+from enum import Enum
+from app.models.circuit import Circuit
+
+class EventType(str, Enum):
+    RACE = "RACE"
+    TEST = "TEST"
+
+class Event(BaseModel):
+    name: str
+    week: int
+    type: EventType
+
+class Calendar(BaseModel):
+    events: List[Event]
+    current_week: int = 1 # Start at week 1
+    
+    @property
+    def current_event(self) -> Optional[Event]:
+        """Returns the event for the current week, if any."""
+        for event in self.events:
+            if event.week == self.current_week:
+                return event
+        return None
+
+    def advance_week(self):
+        """Advances the calendar by one week."""
+        self.current_week += 1
+
+    def get_schedule_data(self, circuits: List[Circuit]) -> List[Dict[str, Any]]:
+        """
+        Returns a list of dictionaries representing the schedule for the UI.
+        Format: {round, week, track, country, winner}
+        """
+        schedule = []
+        race_counter = 0
+        
+        # Create a lookup for circuits by name for O(1) access
+        circuit_map = {c.name: c for c in circuits}
+
+        for event in self.events:
+            round_display = "-"
+            if event.type == EventType.RACE:
+                race_counter += 1
+                round_display = str(race_counter)
+            
+            # Lookup country
+            country = "Unknown"
+            if event.name in circuit_map:
+                country = circuit_map[event.name].country
+            
+            type_display = "Grand Prix" if event.type == EventType.RACE else "Test"
+
+            schedule.append({
+                "round": round_display,
+                "week": event.week,
+                "type": type_display,
+                "track": event.name,
+                "country": country,
+                "winner": "" # Placeholder
+            })
+            
+        return schedule

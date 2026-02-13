@@ -13,6 +13,7 @@
   "type": "commonjs",
   "devDependencies": {
     "electron": "^29.4.6",
+    "jsdom": "^28.0.0",
     "playwright": "^1.58.2",
     "vitest": "^4.0.18"
   }

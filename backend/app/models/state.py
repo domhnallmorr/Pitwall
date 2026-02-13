@@ -2,6 +2,8 @@ from pydantic import BaseModel
 from typing import List, Dict, Any
 from app.models.driver import Driver
 from app.models.team import Team
+from app.models.calendar import Calendar
+from app.models.circuit import Circuit
 import pandas as pd
 import json
 
@@ -9,8 +11,17 @@ class GameState(BaseModel):
     year: int
     teams: List[Team]
     drivers: List[Driver]
+    calendar: Calendar
+    circuits: List[Circuit]
     player_team_id: int | None = None
-    current_date: str = "Australia - Week 8" # Placeholder default
+    
+    @property
+    def current_date(self) -> str:
+        """Dynamic date string based on Calendar state."""
+        evt = self.calendar.current_event
+        if evt:
+            return f"{evt.name} - Week {self.calendar.current_week}"
+        return f"Week {self.calendar.current_week}"
 
     model_config = {
         "arbitrary_types_allowed": True 

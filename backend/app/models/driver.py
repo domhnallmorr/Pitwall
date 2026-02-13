@@ -8,3 +8,4 @@ class Driver(BaseModel):
     country: str
     team_id: Optional[int] = None
     role: Optional[str] = None # Uses DriverRole enum string value
+    points: int = 0
