@@ -27,7 +27,8 @@ def create_schema(conn):
             driver1_name TEXT, 
             driver2_name TEXT,
             start_year INTEGER DEFAULT 0,
-            balance INTEGER DEFAULT 0
+            balance INTEGER DEFAULT 0,
+            facilities INTEGER DEFAULT 0
         )
     ''')
 
@@ -184,20 +185,20 @@ def seed_data(conn):
     c.executemany('INSERT INTO drivers (start_year, name, age, country, wage, pay_driver) VALUES (?, ?, ?, ?, ?, ?)', drivers_data)
 
     teams_data = [
-        (0, "Warrick", "United Kingdom", "John Newhouse", "Henrik Friedrich", 47000000),
-        (0, "Ferano", "Italy", "Marco Schneider", "Evan Irving", 56000000),
-        (0, "Benedetti", "Italy", "Fabrizio Giorgetti", "Andreas Wurst", 38000000),
-        (0, "McAlister", "United Kingdom", "Mikko Hanninen", "Daniel Caldwell", 53000000),
-        (0, "Joyce", "Ireland", "Donovan Upland", "Roland Schneider", 28775000),
-        (0, "Pascal", "France", "Alexis Perrin", "Luca Treno", 32000000),
-        (0, "Schweizer", "Switzerland", "Julien Alesso", "Jimmy Hobart", 26000000),
-        (0, "Swords", "United Kingdom", "Pablo Dinez", "Mikko Salmi", 16000000),
-        (0, "Strathmore", "United Kingdom", "Rodrigo Barros", "Lars Nielsen", 17000000),
-        (0, "Tarnwell", "United Kingdom", "Roberto Rossi", "Toshiro Tanaka", 6600000),
-        (0, "Marchetti", "Italy", "Kazuki Nakamura", "Eduardo Torres", 8900000),
+        (0, "Warrick", "United Kingdom", "John Newhouse", "Henrik Friedrich", 47000000, 75),
+        (0, "Ferano", "Italy", "Marco Schneider", "Evan Irving", 56000000, 70),
+        (0, "Benedetti", "Italy", "Fabrizio Giorgetti", "Andreas Wurst", 38000000, 70),
+        (0, "McAlister", "United Kingdom", "Mikko Hanninen", "Daniel Caldwell", 53000000, 85),
+        (0, "Joyce", "Ireland", "Donovan Upland", "Roland Schneider", 28775000, 60),
+        (0, "Pascal", "France", "Alexis Perrin", "Luca Treno", 32000000, 55),
+        (0, "Schweizer", "Switzerland", "Julien Alesso", "Jimmy Hobart", 26000000, 75),
+        (0, "Swords", "United Kingdom", "Pablo Dinez", "Mikko Salmi", 16000000, 40),
+        (0, "Strathmore", "United Kingdom", "Rodrigo Barros", "Lars Nielsen", 17000000, 60),
+        (0, "Tarnwell", "United Kingdom", "Roberto Rossi", "Toshiro Tanaka", 6600000, 35),
+        (0, "Marchetti", "Italy", "Kazuki Nakamura", "Eduardo Torres", 8900000, 18),
     ]
 
-    c.executemany('INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance) VALUES (?, ?, ?, ?, ?, ?)', teams_data)
+    c.executemany('INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities) VALUES (?, ?, ?, ?, ?, ?, ?)', teams_data)
     
     # Metadata
     c.execute('INSERT OR IGNORE INTO metadata (key, value) VALUES (?, ?)', ('start_year', '1998'))

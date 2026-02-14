@@ -15,6 +15,7 @@ export default class Navigation {
 			'grid': document.getElementById('grid-view'),
 			'staff': document.getElementById('staff-view'),
 			'finance': document.getElementById('finance-view'),
+			'facilities': document.getElementById('facilities-view'),
 			'standings': document.getElementById('standings-view')
 		};
 
@@ -36,7 +37,7 @@ export default class Navigation {
 	}
 
 	handleNavigation(index) {
-		// 0: Home, 1: Email, 2: Calendar, 3: Grid, 4: Staff, 5: Finance, 6: Standings
+		// 0: Home, 1: Email, 2: Calendar, 3: Grid, 4: Staff, 5: Finance, 6: Facilities, 7: Standings
 		if (index === 0) { // Home
 			this.showView('home');
 		} else if (index === 1) { // Email
@@ -59,7 +60,11 @@ export default class Navigation {
 			this.showView('finance');
 			console.log("Requesting Finance Data...");
 			API.getFinance();
-		} else if (index === 6) { // Standings
+		} else if (index === 6) { // Facilities
+			this.showView('facilities');
+			console.log("Requesting Facilities Data...");
+			API.getFacilities();
+		} else if (index === 7) { // Standings
 			this.showView('standings');
 			console.log("Requesting Standings Data...");
 			API.getStandings();

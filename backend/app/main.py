@@ -253,6 +253,27 @@ def process_command(command):
             logging.error(f"Error getting staff: {e}")
             return {"status": "error", "message": str(e)}
 
+    if cmd_type == 'get_facilities':
+        try:
+            if not CURRENT_STATE:
+                return {"status": "error", "message": "Game not started"}
+            
+            player_team = CURRENT_STATE.player_team
+            if not player_team:
+                return {"status": "error", "message": "No player team assigned"}
+            
+            return {
+                "type": "facilities_data",
+                "status": "success",
+                "data": {
+                    "team_name": player_team.name,
+                    "facilities": player_team.facilities
+                }
+            }
+        except Exception as e:
+            logging.error(f"Error getting facilities: {e}")
+            return {"status": "error", "message": str(e)}
+
     if cmd_type == 'get_finance':
         try:
             if not CURRENT_STATE:

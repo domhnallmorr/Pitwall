@@ -9,3 +9,4 @@ class Team(BaseModel):
     driver2_id: Optional[int] = None
     points: int = 0
     balance: int = 0
+    facilities: int = 0

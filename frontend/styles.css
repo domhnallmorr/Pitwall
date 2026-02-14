@@ -865,3 +865,66 @@ p {
   font-weight: 500;
   text-transform: capitalize;
 }
+
+/* ============================
+   Facilities View
+   ============================ */
+
+.facilities-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 28px 36px;
+  max-width: 450px;
+}
+
+.facilities-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.facilities-team-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.facilities-tier {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.facilities-rating-display {
+  margin-bottom: 16px;
+}
+
+.facilities-rating-number {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.facilities-rating-max {
+  font-size: 1.2rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.facilities-bar-bg {
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.facilities-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.6s ease;
+}

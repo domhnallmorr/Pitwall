@@ -11,6 +11,7 @@ import CalendarView from './views/calendar.js';
 import EmailView from './views/email.js';
 import StaffView from './views/staff.js';
 import FinanceView from './views/finance.js';
+import FacilitiesView from './views/facilities.js';
 
 // Elements
 const titleScreen = document.getElementById('title-screen');
@@ -31,6 +32,7 @@ let calendarView;
 let emailView;
 let staffView;
 let financeView;
+let facilitiesView;
 
 // --- Initialization ---
 
@@ -42,6 +44,7 @@ function init() {
 	emailView = new EmailView();
 	staffView = new StaffView();
 	financeView = new FinanceView();
+	facilitiesView = new FacilitiesView();
 
 	setupEventListeners();
 	setupIPC();
@@ -120,6 +123,11 @@ function setupIPC() {
 				calendarView.render(parsed.data);
 			} else if (parsed.type === 'week_advanced') {
 				updateDashboard(parsed.data);
+				// Auto-refresh finance view if it's currently visible
+				const financeEl = document.getElementById('finance-view');
+				if (financeEl && financeEl.style.display !== 'none') {
+					API.getFinance();
+				}
 			} else if (parsed.type === 'race_result') {
 				renderRaceResults(parsed.data);
 			} else if (parsed.type === 'email_data') {
@@ -130,6 +138,8 @@ function setupIPC() {
 				staffView.render(parsed.data);
 			} else if (parsed.type === 'finance_data') {
 				financeView.render(parsed.data);
+			} else if (parsed.type === 'facilities_data') {
+				facilitiesView.render(parsed.data);
 			} else if (parsed.type === 'status') {
 				console.log("Status:", parsed.message);
 			}
