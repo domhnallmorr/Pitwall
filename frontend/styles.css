@@ -245,6 +245,22 @@ body {
   padding-left: 20px;
 }
 
+.center-info {
+  display: flex;
+  align-items: center;
+}
+
+.balance-info {
+  font-size: 1.2rem;
+  color: #22c55e;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.balance-negative {
+  color: #ef4444;
+}
+
 .date-info {
   font-size: 1rem;
   color: var(--accent-color);
@@ -699,4 +715,88 @@ p {
   font-size: 0.65rem;
   padding: 1px 5px;
   margin-left: 4px;
+}
+
+/* ================================
+   STAFF VIEW
+   ================================ */
+
+.staff-drivers-container {
+  display: flex;
+  gap: 24px;
+  padding: 10px 0;
+}
+
+.staff-driver-card {
+  flex: 1;
+  background: rgba(10, 25, 47, 0.6);
+  border: 1px solid #233554;
+  border-radius: 10px;
+  padding: 28px;
+  transition: border-color 0.2s;
+}
+
+.staff-driver-card:hover {
+  border-color: #3b82f6;
+}
+
+.staff-card-role {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #3b82f6;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.staff-card-portrait {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.staff-card-portrait img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #233554;
+}
+
+.staff-card-name {
+  font-size: 1.4rem;
+  color: #e0e6ed;
+  margin: 0 0 20px 0;
+  font-weight: 700;
+}
+
+.staff-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.staff-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(35, 53, 84, 0.4);
+}
+
+.staff-detail-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.staff-detail-value {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.staff-pay-driver {
+  color: #22c55e;
+  font-weight: 600;
 }

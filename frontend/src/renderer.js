@@ -9,6 +9,7 @@ import GridView from './views/grid.js';
 import StandingsView from './views/standings.js';
 import CalendarView from './views/calendar.js';
 import EmailView from './views/email.js';
+import StaffView from './views/staff.js';
 
 // Elements
 const titleScreen = document.getElementById('title-screen');
@@ -19,6 +20,7 @@ const startBtn = document.getElementById('start-career-btn');
 const teamNameEl = document.getElementById('team-name');
 const weekEl = document.getElementById('current-week');
 const nextEventEl = document.getElementById('next-event');
+const balanceEl = document.getElementById('team-balance');
 
 // Modules
 let navigation;
@@ -26,6 +28,7 @@ let gridView;
 let standingsView;
 let calendarView;
 let emailView;
+let staffView;
 
 // --- Initialization ---
 
@@ -35,6 +38,7 @@ function init() {
 	standingsView = new StandingsView();
 	calendarView = new CalendarView();
 	emailView = new EmailView();
+	staffView = new StaffView();
 
 	setupEventListeners();
 	setupIPC();
@@ -119,6 +123,8 @@ function setupIPC() {
 				emailView.render(parsed.data);
 			} else if (parsed.type === 'email_read') {
 				emailView.updateUnreadBadge(parsed.data.unread_count);
+			} else if (parsed.type === 'staff_data') {
+				staffView.render(parsed.data);
 			} else if (parsed.type === 'status') {
 				console.log("Status:", parsed.message);
 			}
@@ -135,11 +141,13 @@ function handleGameStart(data) {
 	teamNameEl.textContent = data.team_name;
 	weekEl.textContent = data.week_display;
 	nextEventEl.textContent = data.next_event_display;
+	if (data.balance !== undefined) updateBalance(data.balance);
 }
 
 function updateDashboard(data) {
 	weekEl.textContent = data.new_date_display;
 	nextEventEl.textContent = data.next_event_display;
+	if (data.balance !== undefined) updateBalance(data.balance);
 
 	const advanceBtn = document.getElementById('advance-btn');
 	if (advanceBtn && data.button_text) {
@@ -152,6 +160,12 @@ function updateDashboard(data) {
 			advanceBtn.classList.remove('event-active');
 		}
 	}
+}
+
+function updateBalance(amount) {
+	const formatted = '$' + Math.abs(amount).toLocaleString();
+	balanceEl.textContent = amount < 0 ? '-' + formatted : formatted;
+	balanceEl.className = amount < 0 ? 'balance-info balance-negative' : 'balance-info';
 }
 
 // --- Race View Functions ---

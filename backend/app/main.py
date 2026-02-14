@@ -61,7 +61,11 @@ def process_command(command):
             # 3. Assign Player
             CURRENT_STATE.player_team_id = warrick_team.id
 
-            # 4. Send Welcome Email
+            # 4. Initialize Finance with team starting balance
+            from app.models.finance import Finance
+            CURRENT_STATE.finance = Finance(balance=warrick_team.balance)
+
+            # 5. Send Welcome Email
             CURRENT_STATE.add_email(
                 sender="Board of Directors",
                 subject="Welcome to Pitwall",
@@ -69,7 +73,7 @@ def process_command(command):
                 category=EmailCategory.GENERAL
             )
             
-            # 5. Return Success with Game Info
+            # 6. Return Success with Game Info
             return {
                 "type": "game_started",
                 "status": "success",
@@ -77,7 +81,8 @@ def process_command(command):
                     "team_name": warrick_team.name,
                     "week_display": CURRENT_STATE.week_display,
                     "next_event_display": CURRENT_STATE.next_event_display,
-                    "year": CURRENT_STATE.year
+                    "year": CURRENT_STATE.year,
+                    "balance": CURRENT_STATE.finance.balance
                 }
             }
         except Exception as e:

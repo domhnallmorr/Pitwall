@@ -34,10 +34,10 @@ def load_roster(year: int = 0) -> Tuple[List[Team], List[Driver], int, List[Even
 
     # 3. Teams
     # Link drivers to teams using the map
-    c.execute('SELECT id, name, country, driver1_name, driver2_name FROM teams WHERE start_year = ? OR start_year = 0', (start_year,))
+    c.execute('SELECT id, name, country, driver1_name, driver2_name, balance FROM teams WHERE start_year = ? OR start_year = 0', (start_year,))
     teams = []
     for row in c.fetchall():
-        t = Team(id=row[0], name=row[1], country=row[2])
+        t = Team(id=row[0], name=row[1], country=row[2], balance=row[5])
         
         # Link Drivers to Teams
         d1_name = row[3]

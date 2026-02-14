@@ -28,6 +28,7 @@
             style="display:none;">0</span></button>
         <button class="nav-item">Calendar</button>
         <button class="nav-item">Grid</button>
+        <button class="nav-item">Staff</button>
         <button class="nav-item">Standings</button>
       </nav>
       <div class="sidebar-footer">
@@ -42,6 +43,9 @@
         <div class="left-info">
           <div id="team-name" class="team-info">Team Name</div>
           <span id="current-week" class="week-info">Week 1 1998</span>
+        </div>
+        <div class="center-info">
+          <span id="team-balance" class="balance-info">$0</span>
         </div>
         <div class="right-info">
           <span id="next-event" class="date-info">Next: Loading...</span>
@@ -131,6 +135,16 @@
               <h3>1999 Season</h3>
               <p>Grid not yet finalized.</p>
             </div>
+          </div>
+        </div>
+
+        <!-- Staff View -->
+        <div id="staff-view" class="view-section" style="display: none;">
+          <div class="view-header">
+            <h2>Staff</h2>
+          </div>
+          <div class="staff-drivers-container" id="staff-drivers-container">
+            <!-- JS populated: two driver cards -->
           </div>
         </div>
 

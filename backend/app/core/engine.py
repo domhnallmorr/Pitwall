@@ -47,7 +47,8 @@ class GameEngine:
             "new_date_display": state.week_display,
             "next_event_display": state.next_event_display,
             "event_active": event_active,
-            "button_text": button_text
+            "button_text": button_text,
+            "balance": state.finance.balance
         }
 
     def handle_event_action(self, state: GameState, action: str) -> dict:

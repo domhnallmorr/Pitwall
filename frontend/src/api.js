@@ -13,6 +13,7 @@ const API = {
 	simulateRace: () => window.electronAPI.sendToPython({ type: 'simulate_race' }),
 	getEmails: () => window.electronAPI.sendToPython({ type: 'get_emails' }),
 	readEmail: (emailId) => window.electronAPI.sendToPython({ type: 'read_email', email_id: emailId }),
+	getStaff: () => window.electronAPI.sendToPython({ type: 'get_staff' }),
 	ping: () => window.electronAPI.sendToPython({ type: 'ping' }),
 	loadRoster: () => window.electronAPI.sendToPython({ type: 'load_roster' }),
 

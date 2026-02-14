@@ -5,6 +5,7 @@ from app.models.team import Team
 from app.models.calendar import Calendar, EventType
 from app.models.circuit import Circuit
 from app.models.email import Email, EmailCategory
+from app.models.finance import Finance
 import json
 
 class GameState(BaseModel):
@@ -17,6 +18,7 @@ class GameState(BaseModel):
     events_processed: List[str] = [] # Track events handled this week/season
     emails: List[Email] = []
     next_email_id: int = 1
+    finance: Finance = Finance()
 
     def add_email(self, sender: str, subject: str, body: str, 
                   category: EmailCategory = EmailCategory.GENERAL) -> Email:
@@ -34,6 +36,14 @@ class GameState(BaseModel):
         self.next_email_id += 1
         return email
     
+    @property
+    def player_team(self):
+        """Returns the player's team object."""
+        for t in self.teams:
+            if t.id == self.player_team_id:
+                return t
+        return None
+
     @property
     def week_display(self) -> str:
         """e.g. 'Week 1 1998'"""

@@ -8,3 +8,4 @@ class Team(BaseModel):
     driver1_id: Optional[int] = None
     driver2_id: Optional[int] = None
     points: int = 0
+    balance: int = 0

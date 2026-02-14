@@ -13,6 +13,7 @@ export default class Navigation {
 			'email': document.getElementById('email-view'),
 			'calendar': document.getElementById('calendar-view'),
 			'grid': document.getElementById('grid-view'),
+			'staff': document.getElementById('staff-view'),
 			'standings': document.getElementById('standings-view')
 		};
 
@@ -34,7 +35,7 @@ export default class Navigation {
 	}
 
 	handleNavigation(index) {
-		// 0: Home, 1: Email, 2: Calendar, 3: Grid, 4: Standings
+		// 0: Home, 1: Email, 2: Calendar, 3: Grid, 4: Staff, 5: Standings
 		if (index === 0) { // Home
 			this.showView('home');
 		} else if (index === 1) { // Email
@@ -49,12 +50,16 @@ export default class Navigation {
 			this.showView('grid');
 			console.log("Requesting Grid Data...");
 			API.getGrid();
-		} else if (index === 4) { // Standings
+		} else if (index === 4) { // Staff
+			this.showView('staff');
+			console.log("Requesting Staff Data...");
+			API.getStaff();
+		} else if (index === 5) { // Standings
 			this.showView('standings');
 			console.log("Requesting Standings Data...");
 			API.getStandings();
 		} else {
-			console.log("Navigating to placeholder/email...");
+			console.log("Navigating to placeholder...");
 		}
 	}
 
