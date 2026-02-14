@@ -62,3 +62,24 @@ class Calendar(BaseModel):
             })
             
         return schedule
+
+    def get_next_event_display(self, circuits: List[Circuit]) -> str:
+        """
+        Returns a string describing the next upcoming event.
+        e.g. 'Next: Melbourne Grand Prix - Week 5'
+        """
+        # Find the first event that is this week or in the future
+        next_evt = next((e for e in self.events if e.week >= self.current_week), None)
+        
+        if next_evt:
+            # Find circuit location
+            location = next_evt.name
+            for c in circuits:
+                if c.name == next_evt.name:
+                    location = c.location
+                    break
+            
+            event_type = "Grand Prix" if next_evt.type == EventType.RACE else "Test"
+            return f"Next: {location} {event_type} - Week {next_evt.week}"
+        
+        return "Next: Season Finished"

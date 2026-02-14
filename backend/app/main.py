@@ -3,6 +3,7 @@ import json
 import logging
 from app.core.roster import load_roster
 from app.core.standings import StandingsManager
+from app.core.grid import GridManager
 from app.models.calendar import Calendar
 from app.models.state import GameState
 
@@ -27,7 +28,8 @@ def process_command(command):
             calendar = Calendar(events=events, current_week=1) 
             CURRENT_STATE = GameState(year=year, teams=teams, drivers=drivers, calendar=calendar, circuits=circuits)
             
-            grid_json = CURRENT_STATE.get_grid_json()
+            grid_manager = GridManager()
+            grid_json = grid_manager.get_grid_json(CURRENT_STATE)
             grid_data = json.loads(grid_json) 
             
             return {
@@ -76,7 +78,8 @@ def process_command(command):
             if not CURRENT_STATE:
                 return {"status": "error", "message": "Game not started"}
             
-            grid_json = CURRENT_STATE.get_grid_json()
+            grid_manager = GridManager()
+            grid_json = grid_manager.get_grid_json(CURRENT_STATE)
             grid_data = json.loads(grid_json)
             
             return {
