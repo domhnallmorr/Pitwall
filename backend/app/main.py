@@ -86,7 +86,8 @@ def process_command(command):
                     "week_display": CURRENT_STATE.week_display,
                     "next_event_display": CURRENT_STATE.next_event_display,
                     "year": CURRENT_STATE.year,
-                    "balance": CURRENT_STATE.finance.balance
+                    "balance": CURRENT_STATE.finance.balance,
+                    "unread_count": sum(1 for e in CURRENT_STATE.emails if not e.read)
                 }
             }
         except Exception as e:
@@ -253,7 +254,8 @@ def process_command(command):
                     "week_display": CURRENT_STATE.week_display,
                     "next_event_display": CURRENT_STATE.next_event_display,
                     "year": CURRENT_STATE.year,
-                    "balance": CURRENT_STATE.finance.balance
+                    "balance": CURRENT_STATE.finance.balance,
+                    "unread_count": sum(1 for e in CURRENT_STATE.emails if not e.read)
                 }
             }
         except FileNotFoundError:

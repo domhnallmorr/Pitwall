@@ -172,6 +172,7 @@ function handleGameStart(data) {
 	weekEl.textContent = data.week_display;
 	nextEventEl.textContent = data.next_event_display;
 	if (data.balance !== undefined) updateBalance(data.balance);
+	if (data.unread_count !== undefined) emailView.updateUnreadBadge(data.unread_count);
 }
 
 function updateDashboard(data) {
