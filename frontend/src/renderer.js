@@ -17,6 +17,7 @@ import FacilitiesView from './views/facilities.js';
 const titleScreen = document.getElementById('title-screen');
 const dashboard = document.getElementById('game-dashboard');
 const startBtn = document.getElementById('start-career-btn');
+const loadBtn = document.getElementById('load-game-btn');
 
 // Dashboard Info
 const teamNameEl = document.getElementById('team-name');
@@ -48,12 +49,20 @@ function init() {
 
 	setupEventListeners();
 	setupIPC();
+
+	// Check if a save file exists
+	API.checkSave();
 }
 
 function setupEventListeners() {
 	startBtn.addEventListener('click', () => {
 		console.log("Starting Career...");
 		API.startCareer();
+	});
+
+	loadBtn.addEventListener('click', () => {
+		console.log("Loading Game...");
+		API.loadGame();
 	});
 
 	// Debug
@@ -115,6 +124,12 @@ function setupIPC() {
 
 			if (parsed.type === 'game_started' && parsed.status === 'success') {
 				handleGameStart(parsed.data);
+			} else if (parsed.type === 'game_loaded' && parsed.status === 'success') {
+				handleGameStart(parsed.data);
+			} else if (parsed.type === 'save_status') {
+				if (parsed.data.has_save) {
+					loadBtn.disabled = false;
+				}
 			} else if (parsed.type === 'grid_data') {
 				gridView.render(parsed.data);
 			} else if (parsed.type === 'standings_data') {

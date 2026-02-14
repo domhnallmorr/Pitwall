@@ -16,6 +16,9 @@ venv/
 # We ignore the binary DB because we have a seed script
 backend/data/roster.db
 
+# Save files
+backend/saves/
+
 # OS
 .DS_Store
 Thumbs.db

@@ -1,0 +1,570 @@
+{
+  "year": 1998,
+  "teams": [
+    {
+      "id": 1,
+      "name": "Warrick",
+      "country": "United Kingdom",
+      "driver1_id": 1,
+      "driver2_id": 2,
+      "points": 0,
+      "balance": 47000000,
+      "facilities": 75
+    },
+    {
+      "id": 2,
+      "name": "Ferano",
+      "country": "Italy",
+      "driver1_id": 3,
+      "driver2_id": 4,
+      "points": 0,
+      "balance": 56000000,
+      "facilities": 70
+    },
+    {
+      "id": 3,
+      "name": "Benedetti",
+      "country": "Italy",
+      "driver1_id": 5,
+      "driver2_id": 6,
+      "points": 0,
+      "balance": 38000000,
+      "facilities": 70
+    },
+    {
+      "id": 4,
+      "name": "McAlister",
+      "country": "United Kingdom",
+      "driver1_id": 8,
+      "driver2_id": 7,
+      "points": 0,
+      "balance": 53000000,
+      "facilities": 85
+    },
+    {
+      "id": 5,
+      "name": "Joyce",
+      "country": "Ireland",
+      "driver1_id": 9,
+      "driver2_id": 10,
+      "points": 0,
+      "balance": 28775000,
+      "facilities": 60
+    },
+    {
+      "id": 6,
+      "name": "Pascal",
+      "country": "France",
+      "driver1_id": 11,
+      "driver2_id": 12,
+      "points": 0,
+      "balance": 32000000,
+      "facilities": 55
+    },
+    {
+      "id": 7,
+      "name": "Schweizer",
+      "country": "Switzerland",
+      "driver1_id": 13,
+      "driver2_id": 14,
+      "points": 0,
+      "balance": 26000000,
+      "facilities": 75
+    },
+    {
+      "id": 8,
+      "name": "Swords",
+      "country": "United Kingdom",
+      "driver1_id": 15,
+      "driver2_id": 16,
+      "points": 0,
+      "balance": 16000000,
+      "facilities": 40
+    },
+    {
+      "id": 9,
+      "name": "Strathmore",
+      "country": "United Kingdom",
+      "driver1_id": 17,
+      "driver2_id": 18,
+      "points": 0,
+      "balance": 17000000,
+      "facilities": 60
+    },
+    {
+      "id": 10,
+      "name": "Tarnwell",
+      "country": "United Kingdom",
+      "driver1_id": 19,
+      "driver2_id": 20,
+      "points": 0,
+      "balance": 6600000,
+      "facilities": 35
+    },
+    {
+      "id": 11,
+      "name": "Marchetti",
+      "country": "Italy",
+      "driver1_id": 21,
+      "driver2_id": 22,
+      "points": 0,
+      "balance": 8900000,
+      "facilities": 18
+    }
+  ],
+  "drivers": [
+    {
+      "id": 1,
+      "name": "John Newhouse",
+      "age": 27,
+      "country": "Canada",
+      "team_id": 1,
+      "role": "Driver1",
+      "points": 0,
+      "wage": 9600000,
+      "pay_driver": false
+    },
+    {
+      "id": 2,
+      "name": "Henrik Friedrich",
+      "age": 31,
+      "country": "Germany",
+      "team_id": 1,
+      "role": "Driver2",
+      "points": 0,
+      "wage": 3200000,
+      "pay_driver": false
+    },
+    {
+      "id": 3,
+      "name": "Marco Schneider",
+      "age": 29,
+      "country": "Germany",
+      "team_id": 2,
+      "role": "Driver1",
+      "points": 0,
+      "wage": 24000000,
+      "pay_driver": false
+    },
+    {
+      "id": 4,
+      "name": "Evan Irving",
+      "age": 33,
+      "country": "United Kingdom",
+      "team_id": 2,
+      "role": "Driver2",
+      "points": 0,
+      "wage": 5280000,
+      "pay_driver": false
+    },
+    {
+      "id": 5,
+      "name": "Fabrizio Giorgetti",
+      "age": 25,
+      "country": "Italy",
+      "team_id": 3,
+      "role": "Driver1",
+      "points": 0,
+      "wage": 2080000,
+      "pay_driver": false
+    },
+    {
+      "id": 6,
+      "name": "Andreas Wurst",
+      "age": 24,
+      "country": "Austria",
+      "team_id": 3,
+      "role": "Driver2",
+      "points": 0,
+      "wage": 1600000,
+      "pay_driver": false
+    },
+    {
+      "id": 7,
+      "name": "Daniel Caldwell",
+      "age": 27,
+      "country": "United Kingdom",
+      "team_id": 4,
+      "role": "Driver2",
+      "points": 0,
+      "wage": 3680000,
+      "pay_driver": false
+    },
+    {
+      "id": 8,
+      "name": "Mikko Hanninen",
+      "age": 30,
+      "country": "Finland",
+      "team_id": 4,
+      "role": "Driver1",
+      "points": 0,
+      "wage": 7200000,
+      "pay_driver": false
+    },
+    {
+      "id": 9,
+      "name": "Donovan Upland",
+      "age": 38,
+      "country": "United Kingdom",
+      "team_id": 5,
+      "role": "Driver1",
+      "points": 0,
+      "wage": 8000000,
+      "pay_driver": false
+    },
+    {
+      "id": 10,
+      "name": "Roland Schneider",
+      "age": 23,
+      "country": "Germany",
+      "team_id": 5,
+      "role": "Driver2",
+      "points": 0,
+      "wage": 3200000,
+      "pay_driver": false
+    },
+    {
+      "id": 11,
+      "name": "Alexis Perrin",
+      "age": 32,
+      "country": "France",
+      "team_id": 6,
+      "role": "Driver1",
+      "points": 0,
+      "wage": 2080000,
+      "pay_driver": false
+    },
+    {
+      "id": 12,
+      "name": "Luca Treno",
+      "age": 24,
+      "country": "Italy",
+      "team_id": 6,
+      "role": "Driver2",
+      "points": 0,
+      "wage": 1440000,
+      "pay_driver": false
+    },
+    {
+      "id": 13,
+      "name": "Julien Alesso",
+      "age": 34,
+      "country": "France",
+      "team_id": 7,
+      "role": "Driver1",
+      "points": 0,
+      "wage": 6400000,
+      "pay_driver": false
+    },
+    {
+      "id": 14,
+      "name": "Jimmy Hobart",
+      "age": 34,
+      "country": "United Kingdom",
+      "team_id": 7,
+      "role": "Driver2",
+      "points": 0,
+      "wage": 3040000,
+      "pay_driver": false
+    },
+    {
+      "id": 15,
+      "name": "Pablo Dinez",
+      "age": 28,
+      "country": "Brazil",
+      "team_id": 8,
+      "role": "Driver1",
+      "points": 0,
+      "wage": -9600000,
+      "pay_driver": true
+    },
+    {
+      "id": 16,
+      "name": "Mikko Salmi",
+      "age": 32,
+      "country": "Finland",
+      "team_id": 8,
+      "role": "Driver2",
+      "points": 0,
+      "wage": 1920000,
+      "pay_driver": false
+    },
+    {
+      "id": 17,
+      "name": "Rodrigo Barros",
+      "age": 26,
+      "country": "Brazil",
+      "team_id": 9,
+      "role": "Driver1",
+      "points": 0,
+      "wage": 4160000,
+      "pay_driver": false
+    },
+    {
+      "id": 18,
+      "name": "Lars Nielsen",
+      "age": 25,
+      "country": "Denmark",
+      "team_id": 9,
+      "role": "Driver2",
+      "points": 0,
+      "wage": 1280000,
+      "pay_driver": false
+    },
+    {
+      "id": 19,
+      "name": "Roberto Rossi",
+      "age": 26,
+      "country": "Brazil",
+      "team_id": 10,
+      "role": "Driver1",
+      "points": 0,
+      "wage": -4300000,
+      "pay_driver": true
+    },
+    {
+      "id": 20,
+      "name": "Toshiro Tanaka",
+      "age": 24,
+      "country": "Japan",
+      "team_id": 10,
+      "role": "Driver2",
+      "points": 0,
+      "wage": -6400000,
+      "pay_driver": true
+    },
+    {
+      "id": 21,
+      "name": "Kazuki Nakamura",
+      "age": 27,
+      "country": "Japan",
+      "team_id": 11,
+      "role": "Driver1",
+      "points": 0,
+      "wage": -2900000,
+      "pay_driver": true
+    },
+    {
+      "id": 22,
+      "name": "Eduardo Torres",
+      "age": 20,
+      "country": "Argentina",
+      "team_id": 11,
+      "role": "Driver2",
+      "points": 0,
+      "wage": -3700000,
+      "pay_driver": true
+    }
+  ],
+  "calendar": {
+    "events": [
+      {
+        "name": "Circuit de Barcelona-Catalunya",
+        "week": 5,
+        "type": "TEST"
+      },
+      {
+        "name": "Circuit de Barcelona-Catalunya",
+        "week": 7,
+        "type": "TEST"
+      },
+      {
+        "name": "Albert Park",
+        "week": 10,
+        "type": "RACE"
+      },
+      {
+        "name": "Interlagos",
+        "week": 13,
+        "type": "RACE"
+      },
+      {
+        "name": "Autodromo Oscar Alfredo Galvez",
+        "week": 15,
+        "type": "RACE"
+      },
+      {
+        "name": "Circuit de Barcelona-Catalunya",
+        "week": 16,
+        "type": "TEST"
+      },
+      {
+        "name": "Autodromo Enzo e Dino Ferrari",
+        "week": 17,
+        "type": "RACE"
+      },
+      {
+        "name": "Circuit de Barcelona-Catalunya",
+        "week": 19,
+        "type": "RACE"
+      },
+      {
+        "name": "Silverstone Circuit",
+        "week": 20,
+        "type": "TEST"
+      },
+      {
+        "name": "Circuit de Monaco",
+        "week": 21,
+        "type": "RACE"
+      },
+      {
+        "name": "Circuit Gilles Villeneuve",
+        "week": 23,
+        "type": "RACE"
+      },
+      {
+        "name": "Circuit de Nevers Magny-Cours",
+        "week": 25,
+        "type": "TEST"
+      },
+      {
+        "name": "Circuit de Nevers Magny-Cours",
+        "week": 26,
+        "type": "RACE"
+      },
+      {
+        "name": "Silverstone Circuit",
+        "week": 28,
+        "type": "RACE"
+      },
+      {
+        "name": "Circuit de Barcelona-Catalunya",
+        "week": 29,
+        "type": "TEST"
+      },
+      {
+        "name": "A1 Ring",
+        "week": 30,
+        "type": "RACE"
+      },
+      {
+        "name": "Hockenheimring",
+        "week": 31,
+        "type": "RACE"
+      },
+      {
+        "name": "Hungaroring",
+        "week": 33,
+        "type": "RACE"
+      },
+      {
+        "name": "Silverstone Circuit",
+        "week": 34,
+        "type": "TEST"
+      },
+      {
+        "name": "Circuit de Spa-Francorchamps",
+        "week": 35,
+        "type": "RACE"
+      },
+      {
+        "name": "Autodromo Nazionale di Monza",
+        "week": 37,
+        "type": "RACE"
+      },
+      {
+        "name": "Circuit de Barcelona-Catalunya",
+        "week": 38,
+        "type": "TEST"
+      },
+      {
+        "name": "Nurburgring",
+        "week": 39,
+        "type": "RACE"
+      },
+      {
+        "name": "Circuit de Barcelona-Catalunya",
+        "week": 41,
+        "type": "TEST"
+      },
+      {
+        "name": "Suzuka Circuit",
+        "week": 44,
+        "type": "RACE"
+      }
+    ],
+    "current_week": 1
+  },
+  "circuits": [
+    {
+      "id": 1,
+      "name": "Albert Park",
+      "country": "Australia",
+      "location": "Melbourne",
+      "laps": 58,
+      "base_laptime_ms": 84000,
+      "length_km": 5.303,
+      "overtaking_delta": 1200.0,
+      "power_factor": 6.0,
+      "track_map_path": null
+    },
+    {
+      "id": 2,
+      "name": "Interlagos",
+      "country": "Brazil",
+      "location": "Sao Paulo",
+      "laps": 72,
+      "base_laptime_ms": 72000,
+      "length_km": 4.292,
+      "overtaking_delta": 900.0,
+      "power_factor": 7.0,
+      "track_map_path": null
+    },
+    {
+      "id": 3,
+      "name": "Autodromo Oscar Alfredo Galvez",
+      "country": "Argentina",
+      "location": "Buenos Aries",
+      "laps": 72,
+      "base_laptime_ms": 80000,
+      "length_km": 4.259,
+      "overtaking_delta": 1300.0,
+      "power_factor": 3.0,
+      "track_map_path": null
+    },
+    {
+      "id": 4,
+      "name": "Autodromo Enzo e Dino Ferrari",
+      "country": "San Marino",
+      "location": "Imola",
+      "laps": 62,
+      "base_laptime_ms": 81000,
+      "length_km": 4.933,
+      "overtaking_delta": 1800.0,
+      "power_factor": 3.0,
+      "track_map_path": null
+    },
+    {
+      "id": 5,
+      "name": "Circuit de Barcelona-Catalunya",
+      "country": "Spain",
+      "location": "Barcelona",
+      "laps": 66,
+      "base_laptime_ms": 75000,
+      "length_km": 4.728,
+      "overtaking_delta": 1800.0,
+      "power_factor": 5.0,
+      "track_map_path": null
+    }
+  ],
+  "player_team_id": 1,
+  "events_processed": [],
+  "emails": [
+    {
+      "id": 1,
+      "sender": "Board of Directors",
+      "subject": "Welcome to Pitwall",
+      "body": "Welcome to Warrick! As the new Team Principal, you have full control over the team's strategy, development, and driver lineup. We're counting on you to lead us to glory. Good luck!",
+      "week": 1,
+      "year": 1998,
+      "read": false,
+      "category": "GENERAL"
+    }
+  ],
+  "next_email_id": 2,
+  "finance": {
+    "balance": 47000000,
+    "transactions": []
+  }
+}

@@ -5,6 +5,7 @@ from app.core.roster import load_roster
 from app.core.standings import StandingsManager
 from app.core.grid import GridManager
 from app.core.engine import GameEngine
+from app.core.save_manager import save_game, load_game as load_game_file, has_save
 from app.race.race_manager import RaceManager
 from app.models.calendar import Calendar
 from app.models.state import GameState
@@ -73,7 +74,10 @@ def process_command(command):
                 category=EmailCategory.GENERAL
             )
             
-            # 6. Return Success with Game Info
+            # 6. Auto-save
+            save_game(CURRENT_STATE)
+
+            # 7. Return Success with Game Info
             return {
                 "type": "game_started",
                 "status": "success",
@@ -159,6 +163,9 @@ def process_command(command):
             engine = GameEngine()
             summary = engine.advance_week(CURRENT_STATE)
             
+            # Auto-save
+            save_game(CURRENT_STATE)
+            
             return {
                 "type": "week_advanced",
                 "status": "success",
@@ -175,6 +182,9 @@ def process_command(command):
             
             engine = GameEngine()
             summary = engine.handle_event_action(CURRENT_STATE, "skip")
+            
+            # Auto-save
+            save_game(CURRENT_STATE)
             
             return {
                 "type": "week_advanced", # Re-use same update type for UI
@@ -211,6 +221,9 @@ def process_command(command):
                 category=EmailCategory.RACE_RESULT
             )
             
+            # Auto-save
+            save_game(CURRENT_STATE)
+            
             return {
                 "type": "race_result",
                 "status": "success",
@@ -218,6 +231,35 @@ def process_command(command):
             }
         except Exception as e:
             logging.error(f"Error simulating race: {e}")
+            return {"status": "error", "message": str(e)}
+
+    if cmd_type == 'check_save':
+        return {
+            "type": "save_status",
+            "status": "success",
+            "data": {"has_save": has_save()}
+        }
+
+    if cmd_type == 'load_game':
+        try:
+            CURRENT_STATE = load_game_file()
+            player_team = CURRENT_STATE.player_team
+            
+            return {
+                "type": "game_loaded",
+                "status": "success",
+                "data": {
+                    "team_name": player_team.name if player_team else "Unknown",
+                    "week_display": CURRENT_STATE.week_display,
+                    "next_event_display": CURRENT_STATE.next_event_display,
+                    "year": CURRENT_STATE.year,
+                    "balance": CURRENT_STATE.finance.balance
+                }
+            }
+        except FileNotFoundError:
+            return {"status": "error", "message": "No save file found"}
+        except Exception as e:
+            logging.error(f"Error loading game: {e}")
             return {"status": "error", "message": str(e)}
 
     if cmd_type == 'get_staff':
