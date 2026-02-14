@@ -3,7 +3,7 @@ import json
 import logging
 from app.models.state import GameState
 
-SAVE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "saves")
+SAVE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "saves")
 AUTOSAVE_PATH = os.path.join(SAVE_DIR, "autosave.json")
 
 
