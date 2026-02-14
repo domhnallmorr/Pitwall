@@ -10,6 +10,7 @@ export default class Navigation {
 		this.navItems = document.querySelectorAll('.nav-item');
 		this.views = {
 			'home': document.getElementById('home-view'),
+			'email': document.getElementById('email-view'),
 			'calendar': document.getElementById('calendar-view'),
 			'grid': document.getElementById('grid-view'),
 			'standings': document.getElementById('standings-view')
@@ -36,6 +37,10 @@ export default class Navigation {
 		// 0: Home, 1: Email, 2: Calendar, 3: Grid, 4: Standings
 		if (index === 0) { // Home
 			this.showView('home');
+		} else if (index === 1) { // Email
+			this.showView('email');
+			console.log("Requesting Email Data...");
+			API.getEmails();
 		} else if (index === 2) { // Calendar
 			this.showView('calendar');
 			console.log("Requesting Calendar Data...");

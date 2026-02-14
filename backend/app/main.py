@@ -4,8 +4,11 @@ import logging
 from app.core.roster import load_roster
 from app.core.standings import StandingsManager
 from app.core.grid import GridManager
+from app.core.engine import GameEngine
+from app.race.race_manager import RaceManager
 from app.models.calendar import Calendar
 from app.models.state import GameState
+from app.models.email import EmailCategory
 
 # Configure logging to write to a file, since stdout is used for IPC
 logging.basicConfig(filename='backend_debug.log', level=logging.DEBUG)
@@ -57,8 +60,16 @@ def process_command(command):
 
             # 3. Assign Player
             CURRENT_STATE.player_team_id = warrick_team.id
+
+            # 4. Send Welcome Email
+            CURRENT_STATE.add_email(
+                sender="Board of Directors",
+                subject="Welcome to Pitwall",
+                body=f"Welcome to {warrick_team.name}! As the new Team Principal, you have full control over the team's strategy, development, and driver lineup. We're counting on you to lead us to glory. Good luck!",
+                category=EmailCategory.GENERAL
+            )
             
-            # 4. Return Success with Game Info
+            # 5. Return Success with Game Info
             return {
                 "type": "game_started",
                 "status": "success",
@@ -82,16 +93,6 @@ def process_command(command):
             grid_json = grid_manager.get_grid_json(CURRENT_STATE)
             grid_data = json.loads(grid_json)
             
-            return {
-                "type": "grid_data",
-                "status": "success",
-                "data": grid_data,
-                "year": CURRENT_STATE.year
-            }
-        except Exception as e:
-            logging.error(f"Error getting grid: {e}")
-            return {"status": "error", "message": str(e)}
-
             return {
                 "type": "grid_data",
                 "status": "success",
@@ -143,6 +144,116 @@ def process_command(command):
             }
         except Exception as e:
             logging.error(f"Error getting standings: {e}")
+            return {"status": "error", "message": str(e)}
+
+    if cmd_type == 'advance_week':
+        try:
+            if not CURRENT_STATE:
+                return {"status": "error", "message": "Game not started"}
+            
+            engine = GameEngine()
+            summary = engine.advance_week(CURRENT_STATE)
+            
+            return {
+                "type": "week_advanced",
+                "status": "success",
+                "data": summary
+            }
+        except Exception as e:
+            logging.error(f"Error advancing week: {e}")
+            return {"status": "error", "message": str(e)}
+
+    if cmd_type == 'skip_event':
+        try:
+            if not CURRENT_STATE:
+                return {"status": "error", "message": "Game not started"}
+            
+            engine = GameEngine()
+            summary = engine.handle_event_action(CURRENT_STATE, "skip")
+            
+            return {
+                "type": "week_advanced", # Re-use same update type for UI
+                "status": "success",
+                "data": summary
+            }
+        except Exception as e:
+            logging.error(f"Error skipping event: {e}")
+            return {"status": "error", "message": str(e)}
+
+    if cmd_type == 'simulate_race':
+        try:
+            if not CURRENT_STATE:
+                return {"status": "error", "message": "Game not started"}
+            
+            race_manager = RaceManager()
+            race_result = race_manager.simulate_race(CURRENT_STATE)
+
+            # Generate race result email
+            winner = race_result["results"][0]
+            event_name = race_result.get("event_name", "Grand Prix")
+            
+            # Find player team results
+            player_team_id = CURRENT_STATE.player_team_id
+            player_results = [r for r in race_result["results"] if r["team_id"] == player_team_id]
+            player_lines = ""
+            for pr in player_results:
+                player_lines += f"\n  P{pr['position']} - {pr['driver_name']} ({pr['points']} pts)"
+            
+            CURRENT_STATE.add_email(
+                sender="Race Director",
+                subject=f"Race Report: {event_name}",
+                body=f"The {event_name} has concluded.\n\nWinner: {winner['driver_name']} ({winner['team_name']})\n\nYour Team Results:{player_lines}",
+                category=EmailCategory.RACE_RESULT
+            )
+            
+            return {
+                "type": "race_result",
+                "status": "success",
+                "data": race_result
+            }
+        except Exception as e:
+            logging.error(f"Error simulating race: {e}")
+            return {"status": "error", "message": str(e)}
+
+    if cmd_type == 'get_emails':
+        try:
+            if not CURRENT_STATE:
+                return {"status": "error", "message": "Game not started"}
+            
+            emails_data = [e.model_dump() for e in reversed(CURRENT_STATE.emails)]  # Newest first
+            unread_count = sum(1 for e in CURRENT_STATE.emails if not e.read)
+            
+            return {
+                "type": "email_data",
+                "status": "success",
+                "data": {
+                    "emails": emails_data,
+                    "unread_count": unread_count
+                }
+            }
+        except Exception as e:
+            logging.error(f"Error getting emails: {e}")
+            return {"status": "error", "message": str(e)}
+
+    if cmd_type == 'read_email':
+        try:
+            if not CURRENT_STATE:
+                return {"status": "error", "message": "Game not started"}
+            
+            email_id = command.get('email_id')
+            for email in CURRENT_STATE.emails:
+                if email.id == email_id:
+                    email.read = True
+                    break
+            
+            unread_count = sum(1 for e in CURRENT_STATE.emails if not e.read)
+            return {
+                "type": "email_read",
+                "status": "success",
+                "data": {"email_id": email_id, "unread_count": unread_count}
+            }
+        except Exception as e:
+            logging.error(f"Error reading email: {e}")
             return {"status": "error", "message": str(e)}
 
     return {"status": "error", "message": "Unknown command"}

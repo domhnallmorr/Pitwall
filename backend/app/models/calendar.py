@@ -28,6 +28,18 @@ class Calendar(BaseModel):
         """Advances the calendar by one week."""
         self.current_week += 1
 
+    @property
+    def last_event_week(self) -> int:
+        """Returns the week number of the last event in the season."""
+        if not self.events:
+            return 0
+        return max(e.week for e in self.events)
+
+    @property
+    def season_over(self) -> bool:
+        """True if the current week is past the last event."""
+        return self.current_week > self.last_event_week
+
     def get_schedule_data(self, circuits: List[Circuit]) -> List[Dict[str, Any]]:
         """
         Returns a list of dictionaries representing the schedule for the UI.

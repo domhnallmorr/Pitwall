@@ -1,0 +1,64 @@
+from app.models.state import GameState
+from app.models.calendar import EventType
+from app.core.rollover import SeasonRolloverManager
+
+class GameEngine:
+    """
+    The main orchestrator for game progression.
+    """
+    def __init__(self):
+        self.rollover_manager = SeasonRolloverManager()
+
+    def advance_week(self, state: GameState) -> dict:
+        """
+        Advances the game by one week.
+        Returns a summary of what happened.
+        """
+        state.calendar.advance_week()
+
+        # Check for season end
+        if state.calendar.season_over:
+            rollover_info = self.rollover_manager.process_rollover(state)
+            summary = self.get_week_summary(state)
+            summary["season_rollover"] = True
+            summary["rollover_info"] = rollover_info
+            return summary
+
+        return self.get_week_summary(state)
+
+    def get_week_summary(self, state: GameState) -> dict:
+        """Returns current state summary without advancing time."""
+        event = state.calendar.current_event
+        event_active = False
+        button_text = "ADVANCE"
+
+        if event:
+            event_id = f"{event.week}_{event.name}"
+            if event_id not in state.events_processed:
+                event_active = True
+                if event.type == EventType.RACE:
+                    button_text = "GO TO RACE"
+                else:
+                    button_text = "GO TO TEST"
+
+        return {
+            "week": state.calendar.current_week,
+            "year": state.year,
+            "new_date_display": state.week_display,
+            "next_event_display": state.next_event_display,
+            "event_active": event_active,
+            "button_text": button_text
+        }
+
+    def handle_event_action(self, state: GameState, action: str) -> dict:
+        """
+        Handles actions like 'skip' or 'attend' for the current event.
+        Returns the updated week summary.
+        """
+        event = state.calendar.current_event
+        if event:
+            event_id = f"{event.week}_{event.name}"
+            if event_id not in state.events_processed:
+                state.events_processed.append(event_id)
+
+        return self.get_week_summary(state)

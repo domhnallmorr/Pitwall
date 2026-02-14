@@ -4,6 +4,7 @@ from app.models.driver import Driver
 from app.models.team import Team
 from app.models.calendar import Calendar, EventType
 from app.models.circuit import Circuit
+from app.models.email import Email, EmailCategory
 import json
 
 class GameState(BaseModel):
@@ -13,6 +14,25 @@ class GameState(BaseModel):
     calendar: Calendar
     circuits: List[Circuit]
     player_team_id: int | None = None
+    events_processed: List[str] = [] # Track events handled this week/season
+    emails: List[Email] = []
+    next_email_id: int = 1
+
+    def add_email(self, sender: str, subject: str, body: str, 
+                  category: EmailCategory = EmailCategory.GENERAL) -> Email:
+        """Creates and adds a new email to the inbox."""
+        email = Email(
+            id=self.next_email_id,
+            sender=sender,
+            subject=subject,
+            body=body,
+            week=self.calendar.current_week,
+            year=self.year,
+            category=category
+        )
+        self.emails.append(email)
+        self.next_email_id += 1
+        return email
     
     @property
     def week_display(self) -> str:
