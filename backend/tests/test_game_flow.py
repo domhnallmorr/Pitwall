@@ -52,5 +52,5 @@ def test_start_career_flow(mock_get_conn, test_db):
     assert response['status'] == 'success'
     assert response['type'] == 'game_started'
     assert response['data']['team_name'] == 'Warrick'
-    assert "Week 5" in response['data']['current_date']
+    assert "Week 1" in response['data']['week_display']
     assert response['data']['year'] == 1998

@@ -24,7 +24,7 @@ def process_command(command):
     if cmd_type == 'load_roster':
         try:
             teams, drivers, year, events, circuits = load_roster(year=0) # Load default
-            calendar = Calendar(events=events, current_week=5) 
+            calendar = Calendar(events=events, current_week=1) 
             CURRENT_STATE = GameState(year=year, teams=teams, drivers=drivers, calendar=calendar, circuits=circuits)
             
             grid_json = CURRENT_STATE.get_grid_json()
@@ -44,7 +44,7 @@ def process_command(command):
             # 1. Ensure Roster is loaded
             if not CURRENT_STATE:
                  teams, drivers, year, events, circuits = load_roster(year=0)
-                 calendar = Calendar(events=events, current_week=5)
+                 calendar = Calendar(events=events, current_week=1)
                  CURRENT_STATE = GameState(year=year, teams=teams, drivers=drivers, calendar=calendar, circuits=circuits)
             
             # 2. Find Team "Warrick"
@@ -62,7 +62,8 @@ def process_command(command):
                 "status": "success",
                 "data": {
                     "team_name": warrick_team.name,
-                    "current_date": CURRENT_STATE.current_date,
+                    "week_display": CURRENT_STATE.week_display,
+                    "next_event_display": CURRENT_STATE.next_event_display,
                     "year": CURRENT_STATE.year
                 }
             }

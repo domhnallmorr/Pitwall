@@ -16,7 +16,8 @@ const startBtn = document.getElementById('start-career-btn');
 
 // Dashboard Info
 const teamNameEl = document.getElementById('team-name');
-const dateEl = document.getElementById('current-date');
+const weekEl = document.getElementById('current-week');
+const nextEventEl = document.getElementById('next-event');
 
 // Modules
 let navigation;
@@ -75,7 +76,8 @@ function handleGameStart(data) {
 	dashboard.style.display = 'flex';
 
 	teamNameEl.textContent = data.team_name;
-	dateEl.textContent = `${data.current_date} ${data.year}`;
+	weekEl.textContent = data.week_display;
+	nextEventEl.textContent = data.next_event_display;
 }
 
 // Start

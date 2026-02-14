@@ -2,6 +2,17 @@ from app.core.standings import StandingsManager
 from app.models.state import GameState
 from app.models.driver import Driver
 from app.models.team import Team
+from app.models.calendar import Calendar
+from unittest.mock import MagicMock
+
+def create_mock_state(year, teams, drivers):
+    return GameState(
+        year=year,
+        teams=teams,
+        drivers=drivers,
+        calendar=Calendar(events=[], current_week=1),
+        circuits=[]
+    )
 
 def test_reset_season():
     # Setup Data with points
@@ -13,7 +24,7 @@ def test_reset_season():
         Team(id=1, name="T1", country="UK", points=20),
         Team(id=2, name="T2", country="UK", points=15)
     ]
-    state = GameState(year=1998, teams=teams, drivers=drivers)
+    state = create_mock_state(year=1998, teams=teams, drivers=drivers)
     
     # Action
     manager = StandingsManager()
@@ -29,7 +40,7 @@ def test_driver_standings_order():
         Driver(id=2, name="Bob", age=20, country="UK", points=20),
         Driver(id=3, name="Charlie", age=20, country="UK", points=5)
     ]
-    state = GameState(year=1998, teams=[], drivers=drivers)
+    state = create_mock_state(year=1998, teams=[], drivers=drivers)
     
     manager = StandingsManager()
     standings = manager.get_driver_standings(state)
@@ -43,7 +54,7 @@ def test_constructor_standings_order():
         Team(id=1, name="Ferrari", country="IT", points=50),
         Team(id=2, name="McLaren", country="UK", points=80)
     ]
-    state = GameState(year=1998, teams=teams, drivers=[])
+    state = create_mock_state(year=1998, teams=teams, drivers=[])
     
     manager = StandingsManager()
     standings = manager.get_constructor_standings(state)
