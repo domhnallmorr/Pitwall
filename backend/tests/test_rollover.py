@@ -70,3 +70,14 @@ def test_calendar_season_over_property():
 
     cal.current_week = 6
     assert cal.season_over is True
+
+
+def test_rollover_increments_driver_ages():
+    state = create_end_of_season_state()
+    original_ages = [d.age for d in state.drivers]  # [25, 28]
+
+    manager = SeasonRolloverManager()
+    manager.process_rollover(state)
+
+    for i, driver in enumerate(state.drivers):
+        assert driver.age == original_ages[i] + 1

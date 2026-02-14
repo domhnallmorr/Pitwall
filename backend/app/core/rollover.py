@@ -41,7 +41,10 @@ class SeasonRolloverManager:
         # 5. Clear processed events
         state.events_processed.clear()
 
-        # 6. Generate New Season email
+        # 6. Update drivers (age, etc.)
+        self._update_drivers(state)
+
+        # 7. Generate New Season email
         champion = final_drivers[0]["name"] if final_drivers else "Unknown"
         state.add_email(
             sender="Board of Directors",
@@ -56,3 +59,12 @@ class SeasonRolloverManager:
             "final_driver_standings": final_drivers,
             "final_constructor_standings": final_constructors,
         }
+
+    def _update_drivers(self, state: GameState):
+        """
+        End-of-season driver updates.
+        Currently: increment age.
+        Future: skill progression, retirement checks, contract expiry, etc.
+        """
+        for driver in state.drivers:
+            driver.age += 1

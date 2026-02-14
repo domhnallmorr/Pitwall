@@ -13,7 +13,9 @@ def create_schema(conn):
             name TEXT NOT NULL,
             age INTEGER,
             country TEXT,
-            start_year INTEGER DEFAULT 0 -- 0 represents 'default'
+            start_year INTEGER DEFAULT 0,
+            wage INTEGER DEFAULT 0,
+            pay_driver INTEGER DEFAULT 0
         )
     ''')
     
@@ -154,31 +156,31 @@ def seed_data(conn):
         return
 
     drivers_data = [
-        (0, "John Newhouse", 27, "Canada"),
-        (0, "Henrik Friedrich", 31, "Germany"),
-        (0, "Marco Schneider", 29, "Germany"),
-        (0, "Evan Irving", 33, "United Kingdom"),
-        (0, "Fabrizio Giorgetti", 25, "Italy"),
-        (0, "Andreas Wurst", 24, "Austria"),
-        (0, "Daniel Caldwell", 27, "United Kingdom"),
-        (0, "Mikko Hanninen", 30, "Finland"),
-        (0, "Donovan Upland", 38, "United Kingdom"),
-        (0, "Roland Schneider", 23, "Germany"),
-        (0, "Alexis Perrin", 32, "France"),
-        (0, "Luca Treno", 24, "Italy"),
-        (0, "Julien Alesso", 34, "France"),
-        (0, "Jimmy Hobart", 34, "United Kingdom"),
-        (0, "Pablo Dinez", 28, "Brazil"),
-        (0, "Mikko Salmi", 32, "Finland"),
-        (0, "Rodrigo Barros", 26, "Brazil"),
-        (0, "Lars Nielsen", 25, "Denmark"),
-        (0, "Roberto Rossi", 26, "Brazil"),
-        (0, "Toshiro Tanaka", 24, "Japan"),
-        (0, "Kazuki Nakamura", 27, "Japan"),
-        (0, "Eduardo Torres", 20, "Argentina"),
+        (0, "John Newhouse", 27, "Canada", 9600000, 0),
+        (0, "Henrik Friedrich", 31, "Germany", 3200000, 0),
+        (0, "Marco Schneider", 29, "Germany", 24000000, 0),
+        (0, "Evan Irving", 33, "United Kingdom", 5280000, 0),
+        (0, "Fabrizio Giorgetti", 25, "Italy", 2080000, 0),
+        (0, "Andreas Wurst", 24, "Austria", 1600000, 0),
+        (0, "Daniel Caldwell", 27, "United Kingdom", 3680000, 0),
+        (0, "Mikko Hanninen", 30, "Finland", 7200000, 0),
+        (0, "Donovan Upland", 38, "United Kingdom", 8000000, 0),
+        (0, "Roland Schneider", 23, "Germany", 3200000, 0),
+        (0, "Alexis Perrin", 32, "France", 2080000, 0),
+        (0, "Luca Treno", 24, "Italy", 1440000, 0),
+        (0, "Julien Alesso", 34, "France", 6400000, 0),
+        (0, "Jimmy Hobart", 34, "United Kingdom", 3040000, 0),
+        (0, "Pablo Dinez", 28, "Brazil", -9600000, 1),
+        (0, "Mikko Salmi", 32, "Finland", 1920000, 0),
+        (0, "Rodrigo Barros", 26, "Brazil", 4160000, 0),
+        (0, "Lars Nielsen", 25, "Denmark", 1280000, 0),
+        (0, "Roberto Rossi", 26, "Brazil", -4300000, 1),
+        (0, "Toshiro Tanaka", 24, "Japan", -6400000, 1),
+        (0, "Kazuki Nakamura", 27, "Japan", -2900000, 1),
+        (0, "Eduardo Torres", 20, "Argentina", -3700000, 1),
     ]
 
-    c.executemany('INSERT INTO drivers (start_year, name, age, country) VALUES (?, ?, ?, ?)', drivers_data)
+    c.executemany('INSERT INTO drivers (start_year, name, age, country, wage, pay_driver) VALUES (?, ?, ?, ?, ?, ?)', drivers_data)
 
     teams_data = [
         (0, "Warrick", "United Kingdom", "John Newhouse", "Henrik Friedrich"),

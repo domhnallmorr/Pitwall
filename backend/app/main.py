@@ -215,6 +215,39 @@ def process_command(command):
             logging.error(f"Error simulating race: {e}")
             return {"status": "error", "message": str(e)}
 
+    if cmd_type == 'get_staff':
+        try:
+            if not CURRENT_STATE:
+                return {"status": "error", "message": "Game not started"}
+            
+            player_team = next((t for t in CURRENT_STATE.teams if t.id == CURRENT_STATE.player_team_id), None)
+            if not player_team:
+                return {"status": "error", "message": "No player team assigned"}
+            
+            team_drivers = []
+            for d in CURRENT_STATE.drivers:
+                if d.team_id == player_team.id:
+                    team_drivers.append({
+                        "name": d.name,
+                        "age": d.age,
+                        "country": d.country,
+                        "points": d.points,
+                        "wage": d.wage,
+                        "pay_driver": d.pay_driver,
+                    })
+            
+            return {
+                "type": "staff_data",
+                "status": "success",
+                "data": {
+                    "team_name": player_team.name,
+                    "drivers": team_drivers
+                }
+            }
+        except Exception as e:
+            logging.error(f"Error getting staff: {e}")
+            return {"status": "error", "message": str(e)}
+
     if cmd_type == 'get_emails':
         try:
             if not CURRENT_STATE:

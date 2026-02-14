@@ -24,11 +24,11 @@ def load_roster(year: int = 0) -> Tuple[List[Team], List[Driver], int, List[Even
 
     # 2. Drivers
     # Allow loading drivers assigned to specific year OR default (0)
-    c.execute('SELECT id, name, age, country FROM drivers WHERE start_year = ? OR start_year = 0', (start_year,))
+    c.execute('SELECT id, name, age, country, wage, pay_driver FROM drivers WHERE start_year = ? OR start_year = 0', (start_year,))
     drivers = []
     driver_map = {} # Name -> ID mapping for assigning to teams
     for row in c.fetchall():
-        d = Driver(id=row[0], name=row[1], age=row[2], country=row[3])
+        d = Driver(id=row[0], name=row[1], age=row[2], country=row[3], wage=row[4], pay_driver=bool(row[5]))
         drivers.append(d)
         driver_map[d.name] = d
 
