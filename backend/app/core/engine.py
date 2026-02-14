@@ -1,6 +1,7 @@
 from app.models.state import GameState
 from app.models.calendar import EventType
 from app.core.rollover import SeasonRolloverManager
+from app.models.finance import TransactionCategory
 
 class GameEngine:
     """
@@ -15,6 +16,9 @@ class GameEngine:
         Returns a summary of what happened.
         """
         state.calendar.advance_week()
+
+        # Process weekly finances
+        self._process_weekly_finances(state)
 
         # Check for season end
         if state.calendar.season_over:
@@ -63,3 +67,22 @@ class GameEngine:
                 state.events_processed.append(event_id)
 
         return self.get_week_summary(state)
+
+    def _process_weekly_finances(self, state: GameState):
+        """Process weekly financial transactions (driver wages, etc.)."""
+        player_team = state.player_team
+        if not player_team:
+            return
+
+        for driver in state.drivers:
+            if driver.team_id == player_team.id:
+                weekly_wage = driver.wage // 52
+                # For regular drivers: wage is positive, so we subtract it (expense)
+                # For pay drivers: wage is negative, so subtracting a negative = adding (income)
+                state.finance.add_transaction(
+                    week=state.calendar.current_week,
+                    year=state.year,
+                    amount=-weekly_wage,
+                    category=TransactionCategory.DRIVER_WAGES,
+                    description=f"Weekly wage: {driver.name}"
+                )

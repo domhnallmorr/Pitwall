@@ -253,6 +253,25 @@ def process_command(command):
             logging.error(f"Error getting staff: {e}")
             return {"status": "error", "message": str(e)}
 
+    if cmd_type == 'get_finance':
+        try:
+            if not CURRENT_STATE:
+                return {"status": "error", "message": "Game not started"}
+            
+            transactions = [t.model_dump() for t in CURRENT_STATE.finance.transactions]
+            
+            return {
+                "type": "finance_data",
+                "status": "success",
+                "data": {
+                    "balance": CURRENT_STATE.finance.balance,
+                    "transactions": transactions
+                }
+            }
+        except Exception as e:
+            logging.error(f"Error getting finance: {e}")
+            return {"status": "error", "message": str(e)}
+
     if cmd_type == 'get_emails':
         try:
             if not CURRENT_STATE:

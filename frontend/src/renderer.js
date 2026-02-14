@@ -10,6 +10,7 @@ import StandingsView from './views/standings.js';
 import CalendarView from './views/calendar.js';
 import EmailView from './views/email.js';
 import StaffView from './views/staff.js';
+import FinanceView from './views/finance.js';
 
 // Elements
 const titleScreen = document.getElementById('title-screen');
@@ -29,6 +30,7 @@ let standingsView;
 let calendarView;
 let emailView;
 let staffView;
+let financeView;
 
 // --- Initialization ---
 
@@ -39,6 +41,7 @@ function init() {
 	calendarView = new CalendarView();
 	emailView = new EmailView();
 	staffView = new StaffView();
+	financeView = new FinanceView();
 
 	setupEventListeners();
 	setupIPC();
@@ -125,6 +128,8 @@ function setupIPC() {
 				emailView.updateUnreadBadge(parsed.data.unread_count);
 			} else if (parsed.type === 'staff_data') {
 				staffView.render(parsed.data);
+			} else if (parsed.type === 'finance_data') {
+				financeView.render(parsed.data);
 			} else if (parsed.type === 'status') {
 				console.log("Status:", parsed.message);
 			}

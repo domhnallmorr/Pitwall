@@ -29,6 +29,7 @@
         <button class="nav-item">Calendar</button>
         <button class="nav-item">Grid</button>
         <button class="nav-item">Staff</button>
+        <button class="nav-item">Finance</button>
         <button class="nav-item">Standings</button>
       </nav>
       <div class="sidebar-footer">
@@ -145,6 +146,32 @@
           </div>
           <div class="staff-drivers-container" id="staff-drivers-container">
             <!-- JS populated: two driver cards -->
+          </div>
+        </div>
+
+        <!-- Finance View -->
+        <div id="finance-view" class="view-section" style="display: none;">
+          <div class="finance-summary">
+            <div class="finance-balance-card">
+              <div class="finance-balance-label">Team Balance</div>
+              <div id="finance-balance-value" class="finance-balance-amount">$0</div>
+            </div>
+          </div>
+          <div class="finance-transactions">
+            <h3 class="finance-section-title">Transaction Log</h3>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Week</th>
+                  <th>Description</th>
+                  <th>Category</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody id="finance-transactions-body">
+                <!-- JS populated -->
+              </tbody>
+            </table>
           </div>
         </div>
 

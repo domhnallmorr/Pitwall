@@ -800,3 +800,68 @@ p {
   color: #22c55e;
   font-weight: 600;
 }
+
+/* ============================
+   Finance View
+   ============================ */
+
+.finance-summary {
+  margin-bottom: 24px;
+}
+
+.finance-balance-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 24px 32px;
+  display: inline-block;
+}
+
+.finance-balance-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.finance-balance-amount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #22c55e;
+}
+
+.finance-negative {
+  color: #ef4444;
+}
+
+.finance-section-title {
+  font-size: 1rem;
+  color: var(--text-color);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.finance-transactions {
+  margin-top: 16px;
+}
+
+.finance-amount-positive {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.finance-amount-negative {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.finance-category-badge {
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  font-weight: 500;
+  text-transform: capitalize;
+}

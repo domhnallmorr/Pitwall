@@ -14,6 +14,7 @@ const API = {
 	getEmails: () => window.electronAPI.sendToPython({ type: 'get_emails' }),
 	readEmail: (emailId) => window.electronAPI.sendToPython({ type: 'read_email', email_id: emailId }),
 	getStaff: () => window.electronAPI.sendToPython({ type: 'get_staff' }),
+	getFinance: () => window.electronAPI.sendToPython({ type: 'get_finance' }),
 	ping: () => window.electronAPI.sendToPython({ type: 'ping' }),
 	loadRoster: () => window.electronAPI.sendToPython({ type: 'load_roster' }),
 
