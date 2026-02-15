@@ -2,6 +2,7 @@
  * Standings View Module
  * Handles Drivers and Constructors standings tables.
  */
+import { renderFlagLabel } from './flags.js';
 
 export default class StandingsView {
 	constructor() {
@@ -50,7 +51,7 @@ export default class StandingsView {
 			const tr = document.createElement('tr');
 			tr.innerHTML = `
                 <td>${index + 1}</td>
-                <td>${driver.name}</td>
+                <td>${renderFlagLabel(driver.country, driver.name)}</td>
                 <td>${driver.points}</td>
             `;
 			this.driverTableBody.appendChild(tr);
@@ -63,7 +64,7 @@ export default class StandingsView {
 			const tr = document.createElement('tr');
 			tr.innerHTML = `
                 <td>${index + 1}</td>
-                <td>${team.name}</td>
+                <td>${renderFlagLabel(team.country, team.name)}</td>
                 <td>${team.points}</td>
             `;
 			this.constructorTableBody.appendChild(tr);

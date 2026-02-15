@@ -55,6 +55,8 @@ def test_start_career_flow(mock_get_conn, test_db):
     assert response['data']['team_name'] == 'Warrick'
     assert "Week 1" in response['data']['week_display']
     assert response['data']['year'] == 1998
+    assert app_main.CURRENT_STATE.finance.prize_money_entitlement == 33_000_000
+    assert app_main.CURRENT_STATE.finance.prize_money_total_races > 0
 
 @patch('app.core.retirement.random.random', return_value=0.0)
 @patch('app.core.roster.get_connection')
@@ -70,3 +72,21 @@ def test_start_career_can_announce_donovan_final_season(mock_get_conn, mock_rand
 
     assert len(retirement_watch_emails) == 1
     assert "Donovan Upland" in retirement_watch_emails[0].body
+
+
+@patch('app.core.roster.get_connection')
+def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
+    mock_get_conn.return_value = test_db
+    app_main.CURRENT_STATE = None
+
+    start_response = process_command({'type': 'start_career'})
+    assert start_response['status'] == 'success'
+    starting_balance = app_main.CURRENT_STATE.finance.balance
+
+    race_response = process_command({'type': 'simulate_race'})
+    assert race_response['status'] == 'success'
+
+    finance = app_main.CURRENT_STATE.finance
+    assert finance.prize_money_races_paid == 1
+    assert finance.prize_money_paid > 0
+    assert finance.balance > starting_balance

@@ -6,6 +6,7 @@ from app.core.standings import StandingsManager
 from app.core.grid import GridManager
 from app.core.engine import GameEngine
 from app.core.retirement import RetirementManager
+from app.core.prize_money import PrizeMoneyManager
 from app.core.save_manager import save_game, load_game as load_game_file, has_save
 from app.race.race_manager import RaceManager
 from app.models.calendar import Calendar
@@ -66,6 +67,8 @@ def process_command(command):
             # 4. Initialize Finance with team starting balance
             from app.models.finance import Finance
             CURRENT_STATE.finance = Finance(balance=warrick_team.balance)
+            prize_money_manager = PrizeMoneyManager()
+            prize_money_manager.assign_initial_entitlement_from_roster_order(CURRENT_STATE)
 
             # 5. Send Welcome Email
             CURRENT_STATE.add_email(
@@ -224,6 +227,8 @@ def process_command(command):
             
             race_manager = RaceManager()
             race_result = race_manager.simulate_race(CURRENT_STATE)
+            prize_money_manager = PrizeMoneyManager()
+            prize_money_manager.process_race_payout(CURRENT_STATE)
 
             # Generate race result email
             winner = race_result["results"][0]
@@ -351,6 +356,13 @@ def process_command(command):
                 "status": "success",
                 "data": {
                     "balance": CURRENT_STATE.finance.balance,
+                    "prize_money_entitlement": CURRENT_STATE.finance.prize_money_entitlement,
+                    "prize_money_paid": CURRENT_STATE.finance.prize_money_paid,
+                    "prize_money_remaining": max(
+                        CURRENT_STATE.finance.prize_money_entitlement - CURRENT_STATE.finance.prize_money_paid, 0
+                    ),
+                    "prize_money_races_paid": CURRENT_STATE.finance.prize_money_races_paid,
+                    "prize_money_total_races": CURRENT_STATE.finance.prize_money_total_races,
                     "transactions": transactions
                 }
             }

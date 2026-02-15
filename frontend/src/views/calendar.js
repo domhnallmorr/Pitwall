@@ -1,3 +1,5 @@
+import { renderFlagLabel } from './flags.js';
+
 export default class CalendarView {
 	constructor() {
 		this.view = document.getElementById('calendar-view');
@@ -41,6 +43,7 @@ export default class CalendarView {
 
 		data.forEach(event => {
 			const row = document.createElement('tr');
+			const country = event.country || 'Unknown';
 
 			// Highlight testing rows
 			if (event.type === 'Test') {
@@ -53,7 +56,7 @@ export default class CalendarView {
                 <td>${event.week}</td>
                 <td>${event.type}</td>
                 <td>${event.track}</td>
-                <td>${event.country}</td>
+                <td class="calendar-country-cell">${renderFlagLabel(country, country)}</td>
                 <td>${event.winner}</td>
             `;
 			this.tableBody.appendChild(row);

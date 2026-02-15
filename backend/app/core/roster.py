@@ -24,7 +24,7 @@ def load_roster(year: int = 0) -> Tuple[List[Team], List[Driver], int, List[Even
 
     # 2. Drivers
     # Allow loading drivers assigned to specific year OR default (0)
-    c.execute('SELECT id, name, age, country, wage, pay_driver FROM drivers WHERE start_year = ? OR start_year = 0', (start_year,))
+    c.execute('SELECT id, name, age, country, wage, pay_driver FROM drivers WHERE start_year = ? OR start_year = 0 ORDER BY id ASC', (start_year,))
     drivers = []
     driver_map = {} # Name -> ID mapping for assigning to teams
     for row in c.fetchall():
@@ -34,7 +34,7 @@ def load_roster(year: int = 0) -> Tuple[List[Team], List[Driver], int, List[Even
 
     # 3. Teams
     # Link drivers to teams using the map
-    c.execute('SELECT id, name, country, driver1_name, driver2_name, balance, facilities FROM teams WHERE start_year = ? OR start_year = 0', (start_year,))
+    c.execute('SELECT id, name, country, driver1_name, driver2_name, balance, facilities FROM teams WHERE start_year = ? OR start_year = 0 ORDER BY id ASC', (start_year,))
     teams = []
     for row in c.fetchall():
         t = Team(id=row[0], name=row[1], country=row[2], balance=row[5], facilities=row[6])

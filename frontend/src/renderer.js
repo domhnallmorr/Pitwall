@@ -135,6 +135,7 @@ function setupIPC() {
 				gridView.render(parsed.data, parsed.year);
 			} else if (parsed.type === 'standings_data') {
 				standingsView.render(parsed.data);
+				gridView.setDriverCountryMap(parsed.data.drivers);
 			} else if (parsed.type === 'calendar_data') {
 				calendarView.render(parsed.data);
 			} else if (parsed.type === 'week_advanced') {
@@ -148,6 +149,8 @@ function setupIPC() {
 				}
 			} else if (parsed.type === 'race_result') {
 				renderRaceResults(parsed.data);
+				refreshVisibleViews();
+				API.getFinance();
 			} else if (parsed.type === 'email_data') {
 				emailView.render(parsed.data);
 			} else if (parsed.type === 'email_read') {
@@ -179,6 +182,7 @@ function handleGameStart(data) {
 	if (data.unread_count !== undefined) emailView.updateUnreadBadge(data.unread_count);
 
 	// Prime both grid tabs.
+	API.getStandings();
 	API.getGrid(data.year);
 	API.getGrid(data.year + 1);
 }
@@ -217,6 +221,16 @@ function refreshVisibleViews() {
 	const staffEl = document.getElementById('staff-view');
 	if (staffEl && staffEl.style.display !== 'none') {
 		API.getStaff();
+	}
+
+	const standingsEl = document.getElementById('standings-view');
+	if (standingsEl && standingsEl.style.display !== 'none') {
+		API.getStandings();
+	}
+
+	const financeEl = document.getElementById('finance-view');
+	if (financeEl && financeEl.style.display !== 'none') {
+		API.getFinance();
 	}
 }
 

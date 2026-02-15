@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List
 from enum import Enum
 
@@ -23,7 +23,11 @@ class Transaction(BaseModel):
 
 class Finance(BaseModel):
     balance: int = 0
-    transactions: List[Transaction] = []
+    transactions: List[Transaction] = Field(default_factory=list)
+    prize_money_entitlement: int = 0
+    prize_money_paid: int = 0
+    prize_money_races_paid: int = 0
+    prize_money_total_races: int = 0
 
     def add_transaction(self, week: int, year: int, amount: int,
                         category: TransactionCategory, description: str):

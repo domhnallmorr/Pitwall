@@ -2,6 +2,7 @@
  * Staff View Module
  * Displays the player's two drivers in side-by-side cards.
  */
+import { renderFlagLabel } from './flags.js';
 
 export default class StaffView {
 	constructor() {
@@ -40,7 +41,7 @@ export default class StaffView {
 					</div>
 					<div class="staff-detail-row">
 						<span class="staff-detail-label">Country</span>
-						<span class="staff-detail-value">${driver.country}</span>
+						<span class="staff-detail-value">${renderFlagLabel(driver.country, driver.country)}</span>
 					</div>
 					<div class="staff-detail-row">
 						<span class="staff-detail-label">Wage</span>

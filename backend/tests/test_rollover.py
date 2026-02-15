@@ -85,6 +85,38 @@ def test_rollover_increments_driver_ages():
 
 
 @patch('app.core.retirement.random.random', return_value=1.0)
+def test_rollover_updates_next_season_prize_money_from_constructor_position(mock_random):
+    teams = [
+        Team(id=1, name="Team A", country="UK", driver1_id=1, driver2_id=2, points=15),
+        Team(id=2, name="Team B", country="IT", driver1_id=3, driver2_id=4, points=25),
+    ]
+    drivers = [
+        Driver(id=1, name="A1", age=30, country="UK", team_id=1),
+        Driver(id=2, name="A2", age=31, country="UK", team_id=1),
+        Driver(id=3, name="B1", age=28, country="IT", team_id=2),
+        Driver(id=4, name="B2", age=27, country="IT", team_id=2),
+    ]
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        calendar=Calendar(events=[Event(name="Race 1", week=3, type=EventType.RACE)], current_week=3),
+        circuits=[],
+        player_team_id=1
+    )
+
+    manager = SeasonRolloverManager()
+    result = manager.process_rollover(state)
+
+    # Team A finished 2nd in constructors, so next season entitlement is 31,000,000.
+    assert result["next_season_prize_money"]["position"] == 2
+    assert result["next_season_prize_money"]["entitlement"] == 31_000_000
+    assert state.finance.prize_money_entitlement == 31_000_000
+    assert state.finance.prize_money_paid == 0
+    assert state.finance.prize_money_races_paid == 0
+
+
+@patch('app.core.retirement.random.random', return_value=1.0)
 def test_rollover_retires_due_driver_and_vacates_seat(mock_random):
     teams = [
         Team(id=1, name="Team A", country="UK", driver1_id=1, driver2_id=2, points=50),

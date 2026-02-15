@@ -2,6 +2,7 @@ from app.models.state import GameState
 from app.core.standings import StandingsManager
 from app.core.retirement import RetirementManager
 from app.core.recruitment import RecruitmentManager
+from app.core.prize_money import PrizeMoneyManager
 from app.core.grid import GridManager
 from app.models.email import EmailCategory
 
@@ -15,6 +16,7 @@ class SeasonRolloverManager:
     def __init__(self):
         self.retirement_manager = RetirementManager()
         self.recruitment_manager = RecruitmentManager()
+        self.prize_money_manager = PrizeMoneyManager()
         self.grid_manager = GridManager()
 
     def process_rollover(self, state: GameState) -> dict:
@@ -36,6 +38,9 @@ class SeasonRolloverManager:
             for t in standings.get_constructor_standings(state)
             if t.points > 0
         ]
+
+        # 1b. Set next season prize entitlement from final constructor standings
+        next_season_prize_money = self.prize_money_manager.assign_next_season_entitlement_from_standings(state)
 
         # 2. Retire drivers whose final season just ended
         retired_drivers = self.retirement_manager.retire_due_drivers(state, old_year)
@@ -120,6 +125,7 @@ class SeasonRolloverManager:
             "final_constructor_standings": final_constructors,
             "retired_drivers": retired_drivers,
             "signings": signings,
+            "next_season_prize_money": next_season_prize_money,
             "next_season_final_season_drivers": final_season_drivers,
         }
 

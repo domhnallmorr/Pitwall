@@ -436,6 +436,27 @@ p {
   background-color: rgba(255, 255, 255, 0.03);
 }
 
+.calendar-country-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-flag {
+  width: 18px;
+  height: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.flag-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .placeholder-msg {
   text-align: center;
   padding: 50px;
@@ -806,15 +827,17 @@ p {
    ============================ */
 
 .finance-summary {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
 }
 
 .finance-balance-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: rgba(10, 25, 47, 0.6);
+  border: 1px solid #233554;
   border-radius: 12px;
-  padding: 24px 32px;
-  display: inline-block;
+  padding: 20px 24px;
 }
 
 .finance-balance-label {
@@ -844,6 +867,12 @@ p {
 
 .finance-transactions {
   margin-top: 16px;
+}
+
+.finance-prize-progress {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin-bottom: 8px;
 }
 
 .finance-amount-positive {

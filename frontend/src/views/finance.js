@@ -6,6 +6,10 @@
 export default class FinanceView {
 	constructor() {
 		this.balanceEl = document.getElementById('finance-balance-value');
+		this.prizeEntitlementEl = document.getElementById('finance-prize-entitlement');
+		this.prizePaidEl = document.getElementById('finance-prize-paid');
+		this.prizeRemainingEl = document.getElementById('finance-prize-remaining');
+		this.prizeProgressEl = document.getElementById('finance-prize-progress');
 		this.tbody = document.getElementById('finance-transactions-body');
 	}
 
@@ -17,6 +21,17 @@ export default class FinanceView {
 		this.balanceEl.className = balance < 0
 			? 'finance-balance-amount finance-negative'
 			: 'finance-balance-amount';
+
+		const entitlement = data.prize_money_entitlement || 0;
+		const paid = data.prize_money_paid || 0;
+		const remaining = data.prize_money_remaining || 0;
+		const racesPaid = data.prize_money_races_paid || 0;
+		const totalRaces = data.prize_money_total_races || 0;
+
+		if (this.prizeEntitlementEl) this.prizeEntitlementEl.textContent = '$' + entitlement.toLocaleString();
+		if (this.prizePaidEl) this.prizePaidEl.textContent = '$' + paid.toLocaleString();
+		if (this.prizeRemainingEl) this.prizeRemainingEl.textContent = '$' + remaining.toLocaleString();
+		if (this.prizeProgressEl) this.prizeProgressEl.textContent = `Race installments: ${racesPaid} / ${totalRaces}`;
 
 		// Render transactions (most recent first)
 		this.tbody.innerHTML = '';

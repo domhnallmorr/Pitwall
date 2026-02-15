@@ -53,6 +53,7 @@ export default class Navigation {
 			console.log("Requesting Grid Data...");
 			const activeGridTab = document.querySelector('#grid-view .tab-btn[data-year].active');
 			const year = activeGridTab ? Number(activeGridTab.getAttribute('data-year')) : undefined;
+			API.getStandings(); // Supplies driver country metadata for flags.
 			API.getGrid(year);
 		} else if (index === 4) { // Staff
 			this.showView('staff');

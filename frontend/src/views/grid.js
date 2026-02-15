@@ -2,6 +2,7 @@
  * Grid View Module
  * Handles Grid table rendering and tab logic.
  */
+import { renderFlagLabel } from './flags.js';
 
 export default class GridView {
 	constructor() {
@@ -13,6 +14,7 @@ export default class GridView {
 		this.content1999 = document.getElementById('grid-content-1999');
 		this.baseYear = 1998;
 		this.requestYearData = null;
+		this.driverCountryByName = {};
 
 		this.initTabs();
 	}
@@ -37,6 +39,16 @@ export default class GridView {
 
 	setYearRequestHandler(handler) {
 		this.requestYearData = handler;
+	}
+
+	setDriverCountryMap(drivers) {
+		const map = {};
+		(drivers || []).forEach((d) => {
+			if (d && d.name) {
+				map[d.name] = d.country || '';
+			}
+		});
+		this.driverCountryByName = map;
 	}
 
 	getActiveYear() {
@@ -80,11 +92,16 @@ export default class GridView {
 
 		targetBody.innerHTML = ''; // Clear existing
 		data.forEach(row => {
+			const d1Name = row.Driver1 || 'Vacant';
+			const d2Name = row.Driver2 || 'Vacant';
+			const d1Country = this.driverCountryByName[d1Name] || '';
+			const d2Country = this.driverCountryByName[d2Name] || '';
+
 			const tr = document.createElement('tr');
 			tr.innerHTML = `
                 <td>${row.Team}</td>
-                <td>${row.Driver1 || 'Vacant'}</td>
-                <td>${row.Driver2 || 'Vacant'}</td>
+                <td>${renderFlagLabel(d1Country, d1Name)}</td>
+                <td>${renderFlagLabel(d2Country, d2Name)}</td>
             `;
 			targetBody.appendChild(tr);
 		});
