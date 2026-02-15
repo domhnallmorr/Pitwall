@@ -7,18 +7,52 @@ export default class GridView {
 	constructor() {
 		this.view = document.getElementById('grid-view');
 		this.tableBody = document.getElementById('grid-table-body');
+		this.tableBodyNext = document.getElementById('grid-table-body-1999');
 		this.tabBtns = this.view ? this.view.querySelectorAll('.tab-btn[data-year]') : [];
 		this.content1998 = document.getElementById('grid-content-1998');
 		this.content1999 = document.getElementById('grid-content-1999');
+		this.baseYear = 1998;
+		this.requestYearData = null;
 
 		this.initTabs();
+	}
+
+	setSeasonBase(year) {
+		this.baseYear = Number(year) || this.baseYear;
+		const years = [this.baseYear, this.baseYear + 1];
+
+		this.tabBtns.forEach((btn, idx) => {
+			const y = years[idx];
+			btn.setAttribute('data-year', String(y));
+			btn.textContent = String(y);
+		});
+
+		// Keep first tab active by default when season changes.
+		const first = this.tabBtns[0];
+		if (first) {
+			this.setActiveTab(first);
+			this.toggleContent(first.getAttribute('data-year'));
+		}
+	}
+
+	setYearRequestHandler(handler) {
+		this.requestYearData = handler;
+	}
+
+	getActiveYear() {
+		const active = this.view ? this.view.querySelector('.tab-btn[data-year].active') : null;
+		return active ? Number(active.getAttribute('data-year')) : this.baseYear;
 	}
 
 	initTabs() {
 		this.tabBtns.forEach(btn => {
 			btn.addEventListener('click', () => {
 				this.setActiveTab(btn);
-				this.toggleContent(btn.getAttribute('data-year'));
+				const year = btn.getAttribute('data-year');
+				this.toggleContent(year);
+				if (this.requestYearData) {
+					this.requestYearData(Number(year));
+				}
 			});
 		});
 	}
@@ -29,7 +63,7 @@ export default class GridView {
 	}
 
 	toggleContent(year) {
-		if (year === '1998') {
+		if (Number(year) === this.baseYear) {
 			this.content1998.style.display = 'block';
 			this.content1999.style.display = 'none';
 		} else {
@@ -38,9 +72,13 @@ export default class GridView {
 		}
 	}
 
-	render(data) {
-		this.tableBody.innerHTML = ''; // Clear existing
+	render(data, year) {
+		const targetYear = Number.isFinite(Number(year)) ? Number(year) : this.getActiveYear();
+		const isCurrentTab = targetYear === this.baseYear;
+		const targetBody = isCurrentTab ? this.tableBody : this.tableBodyNext;
+		if (!targetBody) return;
 
+		targetBody.innerHTML = ''; // Clear existing
 		data.forEach(row => {
 			const tr = document.createElement('tr');
 			tr.innerHTML = `
@@ -48,7 +86,7 @@ export default class GridView {
                 <td>${row.Driver1 || 'Vacant'}</td>
                 <td>${row.Driver2 || 'Vacant'}</td>
             `;
-			this.tableBody.appendChild(tr);
+			targetBody.appendChild(tr);
 		});
 	}
 }

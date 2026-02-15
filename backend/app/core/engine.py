@@ -20,6 +20,9 @@ class GameEngine:
         # Process weekly finances
         self._process_weekly_finances(state)
 
+        # Publish any scheduled announcements for this week.
+        state.publish_queued_emails()
+
         # Check for season end
         if state.calendar.season_over:
             rollover_info = self.rollover_manager.process_rollover(state)

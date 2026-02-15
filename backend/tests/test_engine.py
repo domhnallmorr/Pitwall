@@ -70,3 +70,22 @@ def test_skip_event_updates_button():
     assert summary2["week"] == 1
     assert summary2["button_text"] == "ADVANCE"
     assert len(state.events_processed) == 1
+
+
+def test_advance_week_publishes_queued_emails():
+    state = create_mock_state(week=1)
+    state.queue_email(
+        sender="Competition Office",
+        subject="Scheduled Notice",
+        body="Delivered on week 2",
+        week=2,
+        year=1998
+    )
+    engine = GameEngine()
+
+    engine.advance_week(state)
+
+    delivered = [e for e in state.emails if e.subject == "Scheduled Notice"]
+    assert len(delivered) == 1
+    assert delivered[0].week == 2
+    assert delivered[0].year == 1998

@@ -89,11 +89,15 @@ def process_command(command):
                     ),
                     category=EmailCategory.SEASON
                 )
+
+            # 7. Capture initial grid snapshot for current season
+            grid_manager = GridManager()
+            grid_manager.capture_season_snapshot(CURRENT_STATE, year=CURRENT_STATE.year)
             
-            # 7. Auto-save
+            # 8. Auto-save
             save_game(CURRENT_STATE)
 
-            # 8. Return Success with Game Info
+            # 9. Return Success with Game Info
             return {
                 "type": "game_started",
                 "status": "success",
@@ -114,16 +118,17 @@ def process_command(command):
         try:
             if not CURRENT_STATE:
                 return {"status": "error", "message": "Game not started"}
-            
+
+            year = command.get('year')
             grid_manager = GridManager()
-            grid_json = grid_manager.get_grid_json(CURRENT_STATE)
+            grid_json = grid_manager.get_grid_json(CURRENT_STATE, year=year)
             grid_data = json.loads(grid_json)
             
             return {
                 "type": "grid_data",
                 "status": "success",
                 "data": grid_data,
-                "year": CURRENT_STATE.year
+                "year": year if year is not None else CURRENT_STATE.year
             }
         except Exception as e:
             logging.error(f"Error getting grid: {e}")

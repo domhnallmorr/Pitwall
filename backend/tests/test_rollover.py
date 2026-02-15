@@ -120,3 +120,49 @@ def test_rollover_retires_due_driver_and_vacates_seat(mock_random):
 
     assert remaining.active is True
     assert remaining.age == 31
+
+
+@patch('app.core.recruitment.random.choice', side_effect=lambda choices: choices[0])
+@patch('app.core.retirement.random.random', return_value=1.0)
+def test_rollover_recruits_replacements_announces_and_snapshots(mock_random, mock_choice):
+    teams = [
+        Team(id=1, name="Team A", country="UK", driver1_id=1, driver2_id=2, points=50),
+    ]
+    drivers = [
+        Driver(
+            id=1, name="Retiring Driver", age=38, country="UK", team_id=1, role="DRIVER_1",
+            points=30, retirement_year=1998
+        ),
+        Driver(id=2, name="Staying Driver", age=30, country="FR", team_id=1, role="DRIVER_2", points=20),
+        Driver(id=99, name="Free Agent", age=24, country="DE"),
+    ]
+    events = [Event(name="Race 2", week=3, type=EventType.RACE)]
+    state = GameState(
+        year=1998, teams=teams, drivers=drivers,
+        calendar=Calendar(events=events, current_week=3),
+        circuits=[],
+        events_processed=["3_Race 2"]
+    )
+
+    manager = SeasonRolloverManager()
+    result = manager.process_rollover(state)
+
+    # Free agent is signed into retired seat.
+    assert state.teams[0].driver1_id == 99
+    assert state.drivers[2].team_id == 1
+
+    # Signing appears in rollover summary.
+    assert len(result["signings"]) == 1
+    assert result["signings"][0]["driver_name"] == "Free Agent"
+
+    # Week 1 signing announcement is published.
+    signing_emails = [e for e in state.emails if e.subject == "Driver Signings: 1999"]
+    assert len(signing_emails) == 1
+    assert "Team A: Free Agent (Driver 1)" in signing_emails[0].body
+    assert signing_emails[0].week == 1
+    assert signing_emails[0].year == 1999
+
+    # Snapshot for next season contains updated lineup.
+    assert 1999 in state.grid_snapshots
+    team_row = next(r for r in state.grid_snapshots[1999] if r["Team"] == "Team A")
+    assert team_row["Driver1"] == "Free Agent"

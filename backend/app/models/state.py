@@ -1,12 +1,20 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 from app.models.driver import Driver
 from app.models.team import Team
-from app.models.calendar import Calendar, EventType
+from app.models.calendar import Calendar
 from app.models.circuit import Circuit
 from app.models.email import Email, EmailCategory
 from app.models.finance import Finance
-import json
+
+
+class QueuedEmail(BaseModel):
+    sender: str
+    subject: str
+    body: str
+    week: int
+    year: int
+    category: EmailCategory = EmailCategory.GENERAL
 
 class GameState(BaseModel):
     year: int
@@ -15,10 +23,12 @@ class GameState(BaseModel):
     calendar: Calendar
     circuits: List[Circuit]
     player_team_id: int | None = None
-    events_processed: List[str] = [] # Track events handled this week/season
-    emails: List[Email] = []
+    events_processed: List[str] = Field(default_factory=list) # Track events handled this week/season
+    emails: List[Email] = Field(default_factory=list)
     next_email_id: int = 1
-    finance: Finance = Finance()
+    finance: Finance = Field(default_factory=Finance)
+    queued_emails: List[QueuedEmail] = Field(default_factory=list)
+    grid_snapshots: Dict[int, List[Dict[str, str]]] = Field(default_factory=dict)
 
     def add_email(self, sender: str, subject: str, body: str, 
                   category: EmailCategory = EmailCategory.GENERAL) -> Email:
@@ -35,6 +45,40 @@ class GameState(BaseModel):
         self.emails.append(email)
         self.next_email_id += 1
         return email
+
+    def queue_email(self, sender: str, subject: str, body: str, week: int, year: int,
+                    category: EmailCategory = EmailCategory.GENERAL):
+        """Queue an email for delivery on a specific week/year."""
+        self.queued_emails.append(QueuedEmail(
+            sender=sender,
+            subject=subject,
+            body=body,
+            week=week,
+            year=year,
+            category=category
+        ))
+
+    def publish_queued_emails(self, week: int | None = None, year: int | None = None) -> int:
+        """Publish queued emails due for the supplied or current game week/year."""
+        target_week = week if week is not None else self.calendar.current_week
+        target_year = year if year is not None else self.year
+        remaining: List[QueuedEmail] = []
+        published = 0
+
+        for queued in self.queued_emails:
+            if queued.week == target_week and queued.year == target_year:
+                self.add_email(
+                    sender=queued.sender,
+                    subject=queued.subject,
+                    body=queued.body,
+                    category=queued.category
+                )
+                published += 1
+            else:
+                remaining.append(queued)
+
+        self.queued_emails = remaining
+        return published
     
     @property
     def player_team(self):

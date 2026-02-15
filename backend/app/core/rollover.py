@@ -1,6 +1,8 @@
 from app.models.state import GameState
 from app.core.standings import StandingsManager
 from app.core.retirement import RetirementManager
+from app.core.recruitment import RecruitmentManager
+from app.core.grid import GridManager
 from app.models.email import EmailCategory
 
 
@@ -12,6 +14,8 @@ class SeasonRolloverManager:
 
     def __init__(self):
         self.retirement_manager = RetirementManager()
+        self.recruitment_manager = RecruitmentManager()
+        self.grid_manager = GridManager()
 
     def process_rollover(self, state: GameState) -> dict:
         """
@@ -51,7 +55,13 @@ class SeasonRolloverManager:
         # 7. Update drivers (age, etc.)
         self._update_drivers(state)
 
-        # 8. Generate New Season email
+        # 8. Fill vacancies from free agents
+        signings = self.recruitment_manager.fill_vacancies(state)
+
+        # 9. Snapshot the new season grid after retirements/signings
+        self.grid_manager.capture_season_snapshot(state, year=state.year)
+
+        # 10. Generate New Season email
         champion = final_drivers[0]["name"] if final_drivers else "Unknown"
         state.add_email(
             sender="Board of Directors",
@@ -60,7 +70,7 @@ class SeasonRolloverManager:
             category=EmailCategory.SEASON
         )
 
-        # 9. Notify player about confirmed retirements from last season
+        # 11. Notify player about confirmed retirements from last season
         if retired_drivers:
             retired_lines = [f"- {d['name']} ({d['team_name']})" for d in retired_drivers]
             state.add_email(
@@ -73,7 +83,23 @@ class SeasonRolloverManager:
                 category=EmailCategory.SEASON
             )
 
-        # 10. Plan and announce final seasons for the new year
+        # 12. Queue and publish Week 1 signing announcements
+        if signings:
+            signing_lines = [f"- {s['team_name']}: {s['driver_name']} ({s['seat']})" for s in signings]
+            state.queue_email(
+                sender="Driver Market Desk",
+                subject=f"Driver Signings: {state.year}",
+                body=(
+                    f"Completed signings for Week 1 of {state.year}:\n\n"
+                    + "\n".join(signing_lines)
+                ),
+                week=1,
+                year=state.year,
+                category=EmailCategory.SEASON
+            )
+            state.publish_queued_emails(week=1, year=state.year)
+
+        # 13. Plan and announce final seasons for the new year
         final_season_drivers = self.retirement_manager.mark_final_season_drivers(state)
         if final_season_drivers:
             lines = [f"- {d['name']} ({d['team_name']}), age {d['age']}" for d in final_season_drivers]
@@ -93,6 +119,7 @@ class SeasonRolloverManager:
             "final_driver_standings": final_drivers,
             "final_constructor_standings": final_constructors,
             "retired_drivers": retired_drivers,
+            "signings": signings,
             "next_season_final_season_drivers": final_season_drivers,
         }
 

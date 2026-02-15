@@ -7,7 +7,9 @@ const API = {
 	startCareer: () => window.electronAPI.sendToPython({ type: 'start_career' }),
 	loadGame: () => window.electronAPI.sendToPython({ type: 'load_game' }),
 	checkSave: () => window.electronAPI.sendToPython({ type: 'check_save' }),
-	getGrid: () => window.electronAPI.sendToPython({ type: 'get_grid' }),
+	getGrid: (year) => window.electronAPI.sendToPython(
+		year !== undefined ? { type: 'get_grid', year } : { type: 'get_grid' }
+	),
 	getCalendar: () => window.electronAPI.sendToPython({ type: 'get_calendar' }),
 	getStandings: () => window.electronAPI.sendToPython({ type: 'get_standings' }),
 	advanceWeek: () => window.electronAPI.sendToPython({ type: 'advance_week' }),

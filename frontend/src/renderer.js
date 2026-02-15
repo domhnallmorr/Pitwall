@@ -46,6 +46,7 @@ function init() {
 	staffView = new StaffView();
 	financeView = new FinanceView();
 	facilitiesView = new FacilitiesView();
+	gridView.setYearRequestHandler((year) => API.getGrid(year));
 
 	setupEventListeners();
 	setupIPC();
@@ -131,13 +132,15 @@ function setupIPC() {
 					loadBtn.disabled = false;
 				}
 			} else if (parsed.type === 'grid_data') {
-				gridView.render(parsed.data);
+				gridView.render(parsed.data, parsed.year);
 			} else if (parsed.type === 'standings_data') {
 				standingsView.render(parsed.data);
 			} else if (parsed.type === 'calendar_data') {
 				calendarView.render(parsed.data);
 			} else if (parsed.type === 'week_advanced') {
 				updateDashboard(parsed.data);
+				refreshVisibleViews();
+				API.getEmails(); // Keep unread badge/messages in sync with new events.
 				// Auto-refresh finance view if it's currently visible
 				const financeEl = document.getElementById('finance-view');
 				if (financeEl && financeEl.style.display !== 'none') {
@@ -167,12 +170,17 @@ function setupIPC() {
 function handleGameStart(data) {
 	titleScreen.style.display = 'none';
 	dashboard.style.display = 'flex';
+	gridView.setSeasonBase(data.year);
 
 	teamNameEl.textContent = data.team_name;
 	weekEl.textContent = data.week_display;
 	nextEventEl.textContent = data.next_event_display;
 	if (data.balance !== undefined) updateBalance(data.balance);
 	if (data.unread_count !== undefined) emailView.updateUnreadBadge(data.unread_count);
+
+	// Prime both grid tabs.
+	API.getGrid(data.year);
+	API.getGrid(data.year + 1);
 }
 
 function updateDashboard(data) {
@@ -190,6 +198,25 @@ function updateDashboard(data) {
 		} else {
 			advanceBtn.classList.remove('event-active');
 		}
+	}
+
+	// If season changed, refresh grid year labels and reload current + next season grids.
+	if (data.year && Number(data.year) !== gridView.baseYear) {
+		gridView.setSeasonBase(data.year);
+		API.getGrid(data.year);
+		API.getGrid(data.year + 1);
+	}
+}
+
+function refreshVisibleViews() {
+	const gridEl = document.getElementById('grid-view');
+	if (gridEl && gridEl.style.display !== 'none') {
+		API.getGrid(gridView.getActiveYear());
+	}
+
+	const staffEl = document.getElementById('staff-view');
+	if (staffEl && staffEl.style.display !== 'none') {
+		API.getStaff();
 	}
 }
 

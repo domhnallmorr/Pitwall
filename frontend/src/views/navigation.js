@@ -51,7 +51,9 @@ export default class Navigation {
 		} else if (index === 3) { // Grid
 			this.showView('grid');
 			console.log("Requesting Grid Data...");
-			API.getGrid();
+			const activeGridTab = document.querySelector('#grid-view .tab-btn[data-year].active');
+			const year = activeGridTab ? Number(activeGridTab.getAttribute('data-year')) : undefined;
+			API.getGrid(year);
 		} else if (index === 4) { // Staff
 			this.showView('staff');
 			console.log("Requesting Staff Data...");

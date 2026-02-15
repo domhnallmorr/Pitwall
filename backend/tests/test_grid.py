@@ -46,3 +46,37 @@ def test_grid_json_output():
     assert isinstance(json_output, str)
     assert "Driver A" in json_output
     assert "VACANT" in json_output
+
+
+def test_grid_dataframe_uses_year_snapshot_when_available():
+    state = create_mock_state()
+    manager = GridManager()
+    state.grid_snapshots[1999] = [
+        {"Team": "Team 1", "Country": "UK", "Driver1": "Next Driver 1", "Driver2": "Next Driver 2"},
+        {"Team": "Team 2", "Country": "IT", "Driver1": "Next Driver 3", "Driver2": "VACANT"},
+    ]
+
+    df = manager.get_grid_dataframe(state, year=1999)
+
+    row1 = df[df["Team"] == "Team 1"].iloc[0]
+    assert row1["Driver1"] == "Next Driver 1"
+    assert row1["Driver2"] == "Next Driver 2"
+
+
+def test_grid_next_year_projection_excludes_retiring_drivers():
+    drivers = [
+        Driver(id=1, name="Retiring Driver", age=38, country="UK", points=0, team_id=1, retirement_year=1998),
+        Driver(id=2, name="Staying Driver", age=24, country="DE", points=0, team_id=1),
+    ]
+    teams = [
+        Team(id=1, name="Team 1", country="UK", driver1_id=1, driver2_id=2, points=0),
+    ]
+    calendar = Calendar(events=[], current_week=1)
+    state = GameState(year=1998, teams=teams, drivers=drivers, calendar=calendar, circuits=[])
+    manager = GridManager()
+
+    df = manager.get_grid_dataframe(state, year=1999)
+
+    row = df[df["Team"] == "Team 1"].iloc[0]
+    assert row["Driver1"] == "VACANT"
+    assert row["Driver2"] == "Staying Driver"
