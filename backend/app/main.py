@@ -5,6 +5,7 @@ from app.core.roster import load_roster
 from app.core.standings import StandingsManager
 from app.core.grid import GridManager
 from app.core.engine import GameEngine
+from app.core.retirement import RetirementManager
 from app.core.save_manager import save_game, load_game as load_game_file, has_save
 from app.race.race_manager import RaceManager
 from app.models.calendar import Calendar
@@ -73,11 +74,26 @@ def process_command(command):
                 body=f"Welcome to {warrick_team.name}! As the new Team Principal, you have full control over the team's strategy, development, and driver lineup. We're counting on you to lead us to glory. Good luck!",
                 category=EmailCategory.GENERAL
             )
+
+            # 6. Plan season-end retirements and notify player about final seasons
+            retirement_manager = RetirementManager()
+            final_season_drivers = retirement_manager.mark_final_season_drivers(CURRENT_STATE)
+            if final_season_drivers:
+                lines = [f"- {d['name']} ({d['team_name']}), age {d['age']}" for d in final_season_drivers]
+                CURRENT_STATE.add_email(
+                    sender="Competition Office",
+                    subject=f"Retirement Watch: {CURRENT_STATE.year} Final Seasons",
+                    body=(
+                        "The following drivers have announced this will be their final season:\n\n"
+                        + "\n".join(lines)
+                    ),
+                    category=EmailCategory.SEASON
+                )
             
-            # 6. Auto-save
+            # 7. Auto-save
             save_game(CURRENT_STATE)
 
-            # 7. Return Success with Game Info
+            # 8. Return Success with Game Info
             return {
                 "type": "game_started",
                 "status": "success",

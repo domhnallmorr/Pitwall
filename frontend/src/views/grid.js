@@ -5,8 +5,9 @@
 
 export default class GridView {
 	constructor() {
+		this.view = document.getElementById('grid-view');
 		this.tableBody = document.getElementById('grid-table-body');
-		this.tabBtns = document.querySelectorAll('.tab-btn');
+		this.tabBtns = this.view ? this.view.querySelectorAll('.tab-btn[data-year]') : [];
 		this.content1998 = document.getElementById('grid-content-1998');
 		this.content1999 = document.getElementById('grid-content-1999');
 

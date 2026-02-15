@@ -1,8 +1,8 @@
 import pytest
 import sqlite3
-import json
 from unittest.mock import patch
-from app.main import process_command, CURRENT_STATE
+import app.main as app_main
+from app.main import process_command
 from app.core.roster import load_roster
 from tools.seed_roster import create_schema, seed_data
 
@@ -38,6 +38,7 @@ def test_start_career_flow(mock_get_conn, test_db):
     Integration test for 'start_career' command.
     """
     mock_get_conn.return_value = test_db
+    app_main.CURRENT_STATE = None
     
     # 1. Start Career Command
     cmd = {'type': 'start_career'}
@@ -54,3 +55,18 @@ def test_start_career_flow(mock_get_conn, test_db):
     assert response['data']['team_name'] == 'Warrick'
     assert "Week 1" in response['data']['week_display']
     assert response['data']['year'] == 1998
+
+@patch('app.core.retirement.random.random', return_value=0.0)
+@patch('app.core.roster.get_connection')
+def test_start_career_can_announce_donovan_final_season(mock_get_conn, mock_random, test_db):
+    mock_get_conn.return_value = test_db
+    app_main.CURRENT_STATE = None
+
+    response = process_command({'type': 'start_career'})
+
+    assert response['status'] == 'success'
+    state = app_main.CURRENT_STATE
+    retirement_watch_emails = [e for e in state.emails if "Retirement Watch:" in e.subject]
+
+    assert len(retirement_watch_emails) == 1
+    assert "Donovan Upland" in retirement_watch_emails[0].body

@@ -4,6 +4,7 @@ from app.models.state import GameState
 from app.models.calendar import Calendar, Event, EventType
 from app.models.driver import Driver
 from app.models.team import Team
+from unittest.mock import patch
 
 
 def create_end_of_season_state():
@@ -81,3 +82,41 @@ def test_rollover_increments_driver_ages():
 
     for i, driver in enumerate(state.drivers):
         assert driver.age == original_ages[i] + 1
+
+
+@patch('app.core.retirement.random.random', return_value=1.0)
+def test_rollover_retires_due_driver_and_vacates_seat(mock_random):
+    teams = [
+        Team(id=1, name="Team A", country="UK", driver1_id=1, driver2_id=2, points=50),
+    ]
+    drivers = [
+        Driver(
+            id=1, name="Veteran Driver", age=38, country="UK", team_id=1, role="DRIVER_1",
+            points=30, retirement_year=1998
+        ),
+        Driver(id=2, name="Younger Driver", age=30, country="FR", team_id=1, role="DRIVER_2", points=20),
+    ]
+    events = [Event(name="Race 2", week=3, type=EventType.RACE)]
+    state = GameState(
+        year=1998, teams=teams, drivers=drivers,
+        calendar=Calendar(events=events, current_week=3),
+        circuits=[],
+        events_processed=["3_Race 2"]
+    )
+
+    manager = SeasonRolloverManager()
+    result = manager.process_rollover(state)
+
+    retired = state.drivers[0]
+    remaining = state.drivers[1]
+
+    assert result["old_year"] == 1998
+    assert retired.active is False
+    assert retired.retired_year == 1998
+    assert retired.team_id is None
+    assert retired.role is None
+    assert retired.age == 38
+    assert state.teams[0].driver1_id is None
+
+    assert remaining.active is True
+    assert remaining.age == 31

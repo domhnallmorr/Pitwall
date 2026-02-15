@@ -4,6 +4,7 @@ const { spawn } = require('child_process')
 
 let pythonProcess = null
 let mainWindow = null
+let pythonStdoutBuffer = ''
 
 function createPythonProcess() {
   // We use 'uv run' to execute the python script in the correct environment
@@ -18,9 +19,16 @@ function createPythonProcess() {
   })
 
   pythonProcess.stdout.on('data', (data) => {
-    console.log(`Python stdout: ${data}`)
-    if (mainWindow) {
-      mainWindow.webContents.send('python-data', data.toString())
+    pythonStdoutBuffer += data.toString()
+    const lines = pythonStdoutBuffer.split(/\r?\n/)
+    pythonStdoutBuffer = lines.pop() || ''
+
+    if (!mainWindow) return
+
+    for (const line of lines) {
+      if (!line.trim()) continue
+      console.log(`Python stdout: ${line}`)
+      mainWindow.webContents.send('python-data', line)
     }
   })
 

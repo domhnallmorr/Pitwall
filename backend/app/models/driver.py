@@ -11,3 +11,6 @@ class Driver(BaseModel):
     points: int = 0
     wage: int = 0
     pay_driver: bool = False
+    active: bool = True
+    retirement_year: Optional[int] = None
+    retired_year: Optional[int] = None

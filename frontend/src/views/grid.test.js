@@ -33,13 +33,12 @@ describe('GridView', () => {
 		// Check first row content
 		const cells1 = rows[0].querySelectorAll('td');
 		expect(cells1[0].textContent).toBe('Team A');
-		expect(cells1[1].textContent).toBe('UK');
-		expect(cells1[2].textContent).toBe('Driver 1');
-		expect(cells1[3].textContent).toBe('Driver 2');
+		expect(cells1[1].textContent).toBe('Driver 1');
+		expect(cells1[2].textContent).toBe('Driver 2');
 
 		// Check second row content
 		const cells2 = rows[1].querySelectorAll('td');
-		expect(cells2[3].textContent).toBe('VACANT');
+		expect(cells2[2].textContent).toBe('VACANT');
 	});
 
 	it('handles empty data', () => {
