@@ -76,24 +76,30 @@ def seed_data(conn):
     c = conn.cursor()
     
     # ... (Drivers/Teams logic omitted for brevity, keeping existing structure via tool)    
-    # Double check if circuits exist
-    c.execute('SELECT count(*) FROM circuits')
-    circuits_exist = c.fetchone()[0] > 0
-    
-    if not circuits_exist:
-        print("Seeding Circuits...")
-        circuits_data = [
-            ("Albert Park", "Australia", "Melbourne", 58, 84000, 5.303, 1200, 6, None),
-            ("Interlagos", "Brazil", "Sao Paulo", 72, 72000, 4.292, 900, 7, None),
-            ("Autodromo Oscar Alfredo Galvez", "Argentina", "Buenos Aries", 72, 80000, 4.259, 1300, 3, None),
-            ("Autodromo Enzo e Dino Ferrari", "San Marino", "Imola", 62, 81000, 4.933, 1800, 3, None),
-            ("Circuit de Barcelona-Catalunya", "Spain", "Barcelona", 66, 75000, 4.728, 1800, 5, None)
-        ]
-        
+    # Ensure required circuits exist (safe for existing DBs).
+    required_circuits = [
+        ("Albert Park", "Australia", "Melbourne", 58, 84000, 5.303, 1200, 6, None),
+        ("Interlagos", "Brazil", "Sao Paulo", 72, 72000, 4.292, 900, 7, None),
+        ("Autodromo Oscar Alfredo Galvez", "Argentina", "Buenos Aries", 72, 80000, 4.259, 1300, 3, None),
+        ("Autodromo Enzo e Dino Ferrari", "San Marino", "Imola", 62, 81000, 4.933, 1800, 3, None),
+        ("Circuit de Barcelona-Catalunya", "Spain", "Barcelona", 66, 75000, 4.728, 1800, 5, None),
+        ("Circuit de Monaco", "Monaco", "Monte Carlo", 78, 75000, 3.367, 2000, 1, None),
+        ("Circuit Gilles Villeneuve", "Canada", "Montreal", 70, 73000, 4.421, 700, 8, None),
+        ("Circuit de Nevers Magny-Cours", "France", "Magny-Cours", 72, 70000, 4.250, 1500, 5, None),
+        ("Silverstone Circuit", "United Kingdom", "Silverstone", 60, 79000, 5.140, 900, 7, None),
+        ("A1 Ring", "Austria", "Spielberg", 71, 68000, 4.319, 800, 7, None),
+        ("Hockenheimring", "Germany", "Hockenheim", 45, 97000, 6.823, 600, 10, None),
+    ]
+    c.execute('SELECT name FROM circuits')
+    existing_circuit_names = {row[0] for row in c.fetchall()}
+    circuits_to_insert = [row for row in required_circuits if row[0] not in existing_circuit_names]
+
+    if circuits_to_insert:
+        print(f"Seeding {len(circuits_to_insert)} missing circuit(s)...")
         c.executemany('''
             INSERT INTO circuits (name, country, location, laps, base_laptime_ms, length_km, overtaking_delta, power_factor, track_map_path) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', circuits_data)
+        ''', circuits_to_insert)
         conn.commit()
         print("Circuits seeded.")
 
@@ -106,6 +112,22 @@ def seed_data(conn):
         print("Driver data already exists. Checking metadata...")
         # Ensure metadata exists even if drivers do
         c.execute('INSERT OR IGNORE INTO metadata (key, value) VALUES (?, ?)', ('start_year', '1998'))
+        # Ensure future-season drivers exist for existing DBs
+        future_drivers_data = [
+            (1999, "Jamie Brenton", 19, "United Kingdom", 0, 0),
+            (1999, "Nico Heidmann", 22, "Germany", 0, 0),
+            (1999, "Gustav Mazzane", 24, "Argentina", 0, 1),
+        ]
+        c.execute('SELECT name, start_year FROM drivers')
+        existing_driver_keys = {(row[0], row[1]) for row in c.fetchall()}
+        drivers_to_insert = [d for d in future_drivers_data if (d[1], d[0]) not in existing_driver_keys]
+        if drivers_to_insert:
+            print(f"Seeding {len(drivers_to_insert)} future driver(s)...")
+            c.executemany(
+                'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver) VALUES (?, ?, ?, ?, ?, ?)',
+                drivers_to_insert
+            )
+            conn.commit()
         
     # Check if Calendar exists
     c.execute('SELECT count(*) FROM calendar')
@@ -180,6 +202,9 @@ def seed_data(conn):
         (0, "Toshiro Tanaka", 24, "Japan", -6400000, 1),
         (0, "Kazuki Nakamura", 27, "Japan", -2900000, 1),
         (0, "Eduardo Torres", 20, "Argentina", -3700000, 1),
+        (1999, "Jamie Brenton", 19, "United Kingdom", 0, 0),
+        (1999, "Nico Heidmann", 22, "Germany", 0, 0),
+        (1999, "Gustav Mazzane", 24, "Argentina", 0, 1),
     ]
 
     c.executemany('INSERT INTO drivers (start_year, name, age, country, wage, pay_driver) VALUES (?, ?, ?, ?, ?, ?)', drivers_data)

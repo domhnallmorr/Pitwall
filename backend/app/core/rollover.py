@@ -4,6 +4,7 @@ from app.core.retirement import RetirementManager
 from app.core.recruitment import RecruitmentManager
 from app.core.prize_money import PrizeMoneyManager
 from app.core.grid import GridManager
+from app.core.roster import load_roster
 from app.models.email import EmailCategory
 
 
@@ -60,13 +61,16 @@ class SeasonRolloverManager:
         # 7. Update drivers (age, etc.)
         self._update_drivers(state)
 
-        # 8. Fill vacancies from free agents
+        # 8. Load new seasonal driver entrants into free-agent pool
+        new_entrants = self._add_new_season_drivers(state)
+
+        # 9. Fill vacancies from free agents
         signings = self.recruitment_manager.fill_vacancies(state)
 
-        # 9. Snapshot the new season grid after retirements/signings
+        # 10. Snapshot the new season grid after retirements/signings
         self.grid_manager.capture_season_snapshot(state, year=state.year)
 
-        # 10. Generate New Season email
+        # 11. Generate New Season email
         champion = final_drivers[0]["name"] if final_drivers else "Unknown"
         state.add_email(
             sender="Board of Directors",
@@ -75,7 +79,7 @@ class SeasonRolloverManager:
             category=EmailCategory.SEASON
         )
 
-        # 11. Notify player about confirmed retirements from last season
+        # 12. Notify player about confirmed retirements from last season
         if retired_drivers:
             retired_lines = [f"- {d['name']} ({d['team_name']})" for d in retired_drivers]
             state.add_email(
@@ -88,7 +92,20 @@ class SeasonRolloverManager:
                 category=EmailCategory.SEASON
             )
 
-        # 12. Queue and publish Week 1 signing announcements
+        # 13. Notify player about new season entrants
+        if new_entrants:
+            entrant_lines = [f"- {d['name']} ({d['country']})" for d in new_entrants]
+            state.add_email(
+                sender="Competition Office",
+                subject=f"New Drivers Entering {state.year}",
+                body=(
+                    f"The following drivers have entered the championship pool for {state.year}:\n\n"
+                    + "\n".join(entrant_lines)
+                ),
+                category=EmailCategory.SEASON
+            )
+
+        # 14. Queue and publish Week 1 signing announcements
         if signings:
             signing_lines = [f"- {s['team_name']}: {s['driver_name']} ({s['seat']})" for s in signings]
             state.queue_email(
@@ -104,7 +121,7 @@ class SeasonRolloverManager:
             )
             state.publish_queued_emails(week=1, year=state.year)
 
-        # 13. Plan and announce final seasons for the new year
+        # 15. Plan and announce final seasons for the new year
         final_season_drivers = self.retirement_manager.mark_final_season_drivers(state)
         if final_season_drivers:
             lines = [f"- {d['name']} ({d['team_name']}), age {d['age']}" for d in final_season_drivers]
@@ -124,6 +141,7 @@ class SeasonRolloverManager:
             "final_driver_standings": final_drivers,
             "final_constructor_standings": final_constructors,
             "retired_drivers": retired_drivers,
+            "new_entrants": new_entrants,
             "signings": signings,
             "next_season_prize_money": next_season_prize_money,
             "next_season_final_season_drivers": final_season_drivers,
@@ -138,3 +156,29 @@ class SeasonRolloverManager:
         for driver in state.drivers:
             if driver.active:
                 driver.age += 1
+
+    def _add_new_season_drivers(self, state: GameState) -> list[dict]:
+        """Load and append drivers whose start_year matches the new season."""
+        _, season_drivers, _, _, _ = load_roster(year=state.year)
+        existing_ids = {d.id for d in state.drivers}
+        new_entrants = []
+
+        for driver in season_drivers:
+            if driver.id in existing_ids:
+                continue
+            # Ensure entrants begin as active free agents.
+            driver.team_id = None
+            driver.role = None
+            driver.active = True
+            driver.retirement_year = None
+            driver.retired_year = None
+            state.drivers.append(driver)
+            new_entrants.append({
+                "id": driver.id,
+                "name": driver.name,
+                "country": driver.country,
+                "age": driver.age,
+                "pay_driver": driver.pay_driver,
+            })
+
+        return new_entrants

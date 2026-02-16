@@ -5,6 +5,7 @@ from app.models.calendar import Calendar, Event, EventType
 from app.models.driver import Driver
 from app.models.team import Team
 from unittest.mock import patch
+from app.models.enums import DriverRole
 
 
 def create_end_of_season_state():
@@ -73,7 +74,8 @@ def test_calendar_season_over_property():
     assert cal.season_over is True
 
 
-def test_rollover_increments_driver_ages():
+@patch('app.core.rollover.load_roster', return_value=([], [], 1999, [], []))
+def test_rollover_increments_driver_ages(mock_load_roster):
     state = create_end_of_season_state()
     original_ages = [d.age for d in state.drivers]  # [25, 28]
 
@@ -116,8 +118,9 @@ def test_rollover_updates_next_season_prize_money_from_constructor_position(mock
     assert state.finance.prize_money_races_paid == 0
 
 
+@patch('app.core.rollover.load_roster', return_value=([], [], 1999, [], []))
 @patch('app.core.retirement.random.random', return_value=1.0)
-def test_rollover_retires_due_driver_and_vacates_seat(mock_random):
+def test_rollover_retires_due_driver_and_vacates_seat(mock_random, mock_load_roster):
     teams = [
         Team(id=1, name="Team A", country="UK", driver1_id=1, driver2_id=2, points=50),
     ]
@@ -148,6 +151,7 @@ def test_rollover_retires_due_driver_and_vacates_seat(mock_random):
     assert retired.team_id is None
     assert retired.role is None
     assert retired.age == 38
+    # No entrants/free-agents were loaded in this test, so seat stays vacant.
     assert state.teams[0].driver1_id is None
 
     assert remaining.active is True
@@ -198,3 +202,44 @@ def test_rollover_recruits_replacements_announces_and_snapshots(mock_random, moc
     assert 1999 in state.grid_snapshots
     team_row = next(r for r in state.grid_snapshots[1999] if r["Team"] == "Team A")
     assert team_row["Driver1"] == "Free Agent"
+
+
+@patch('app.core.rollover.load_roster')
+@patch('app.core.recruitment.random.choice', side_effect=lambda choices: choices[0])
+@patch('app.core.retirement.random.random', return_value=1.0)
+def test_rollover_adds_new_season_entrants(mock_random, mock_choice, mock_load_roster):
+    teams = [
+        Team(id=1, name="Team A", country="UK", driver1_id=1, driver2_id=2, points=50),
+    ]
+    existing_drivers = [
+        Driver(id=1, name="Driver A1", age=25, country="UK", team_id=1, role=DriverRole.DRIVER_1, points=10),
+        Driver(id=2, name="Driver A2", age=26, country="UK", team_id=1, role=DriverRole.DRIVER_2, points=8),
+    ]
+    calendar = Calendar(events=[Event(name="Race 1", week=3, type=EventType.RACE)], current_week=3)
+    state = GameState(year=1998, teams=teams, drivers=existing_drivers, calendar=calendar, circuits=[])
+
+    entrants = [
+        Driver(id=101, name="Jenson Button", age=19, country="United Kingdom", wage=0, pay_driver=False),
+        Driver(id=102, name="Nick Heidfeld", age=22, country="Germany", wage=0, pay_driver=False),
+        Driver(id=103, name="Gaston Mazzacane", age=24, country="Argentina", wage=0, pay_driver=True),
+    ]
+    mock_load_roster.return_value = ([], existing_drivers + entrants, 1999, [], [])
+
+    manager = SeasonRolloverManager()
+    result = manager.process_rollover(state)
+
+    entrant_names = {d["name"] for d in result["new_entrants"]}
+    assert {"Jenson Button", "Nick Heidfeld", "Gaston Mazzacane"} <= entrant_names
+
+    jb = next(d for d in state.drivers if d.name == "Jenson Button")
+    nh = next(d for d in state.drivers if d.name == "Nick Heidfeld")
+    gm = next(d for d in state.drivers if d.name == "Gaston Mazzacane")
+    assert jb.wage == 0 and jb.team_id is None and jb.active is True
+    assert nh.wage == 0 and nh.team_id is None and nh.active is True
+    assert gm.wage == 0 and gm.pay_driver is True and gm.team_id is None and gm.active is True
+
+    entrants_email = [e for e in state.emails if e.subject == "New Drivers Entering 1999"]
+    assert len(entrants_email) == 1
+    assert "Jenson Button" in entrants_email[0].body
+    assert "Nick Heidfeld" in entrants_email[0].body
+    assert "Gaston Mazzacane" in entrants_email[0].body

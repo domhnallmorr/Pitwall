@@ -35,12 +35,16 @@ def test_reset_season():
     assert all(t.points == 0 for t in state.teams)
 
 def test_driver_standings_order():
-    drivers = [
-        Driver(id=1, name="Alice", age=20, country="UK", points=10),
-        Driver(id=2, name="Bob", age=20, country="UK", points=20),
-        Driver(id=3, name="Charlie", age=20, country="UK", points=5)
+    teams = [
+        Team(id=1, name="Team A", country="UK", points=0),
+        Team(id=2, name="Team B", country="UK", points=0),
     ]
-    state = create_mock_state(year=1998, teams=[], drivers=drivers)
+    drivers = [
+        Driver(id=1, name="Alice", age=20, country="UK", team_id=1, points=10),
+        Driver(id=2, name="Bob", age=20, country="UK", team_id=2, points=20),
+        Driver(id=3, name="Charlie", age=20, country="UK", team_id=2, points=5)
+    ]
+    state = create_mock_state(year=1998, teams=teams, drivers=drivers)
     
     manager = StandingsManager()
     standings = manager.get_driver_standings(state)
@@ -48,6 +52,24 @@ def test_driver_standings_order():
     assert standings[0].name == "Bob"    # 20
     assert standings[1].name == "Alice"  # 10
     assert standings[2].name == "Charlie"# 5
+
+
+def test_driver_standings_excludes_unassigned_and_inactive_drivers():
+    teams = [
+        Team(id=1, name="Team A", country="UK", points=0),
+    ]
+    drivers = [
+        Driver(id=1, name="Assigned Active", age=25, country="UK", team_id=1, points=8, active=True),
+        Driver(id=2, name="Free Agent", age=28, country="DE", team_id=None, points=99, active=True),
+        Driver(id=3, name="Retired Driver", age=40, country="FR", team_id=None, points=50, active=False),
+    ]
+    state = create_mock_state(year=1998, teams=teams, drivers=drivers)
+
+    manager = StandingsManager()
+    standings = manager.get_driver_standings(state)
+
+    assert len(standings) == 1
+    assert standings[0].name == "Assigned Active"
 
 def test_constructor_standings_order():
     teams = [

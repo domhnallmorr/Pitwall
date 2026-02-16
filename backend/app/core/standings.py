@@ -22,10 +22,14 @@ class StandingsManager:
 
     def get_driver_standings(self, game_state: GameState) -> List[Driver]:
         """
-        Returns a list of drivers sorted by points (descending).
+        Returns active, team-assigned drivers sorted by points (descending).
         """
+        eligible_drivers = [
+            d for d in game_state.drivers
+            if d.active and d.team_id is not None
+        ]
         # Sort by points (desc), then by wins (todo), then by name (asc)
-        return sorted(game_state.drivers, key=lambda d: (-d.points, d.name))
+        return sorted(eligible_drivers, key=lambda d: (-d.points, d.name))
 
     def get_constructor_standings(self, game_state: GameState) -> List[Team]:
         """
