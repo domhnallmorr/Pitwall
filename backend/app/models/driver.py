@@ -6,6 +6,9 @@ class Driver(BaseModel):
     name: str
     age: int
     country: str
+    speed: int = 50
+    race_starts: int = 0
+    wins: int = 0
     team_id: Optional[int] = None
     role: Optional[str] = None # Uses DriverRole enum string value
     points: int = 0

@@ -14,6 +14,8 @@ export default class Navigation {
 			'calendar': document.getElementById('calendar-view'),
 			'grid': document.getElementById('grid-view'),
 			'staff': document.getElementById('staff-view'),
+			'driver': document.getElementById('driver-view'),
+			'car': document.getElementById('car-view'),
 			'finance': document.getElementById('finance-view'),
 			'facilities': document.getElementById('facilities-view'),
 			'standings': document.getElementById('standings-view')
@@ -37,7 +39,7 @@ export default class Navigation {
 	}
 
 	handleNavigation(index) {
-		// 0: Home, 1: Email, 2: Calendar, 3: Grid, 4: Staff, 5: Finance, 6: Facilities, 7: Standings
+		// 0: Home, 1: Email, 2: Calendar, 3: Grid, 4: Staff, 5: Car, 6: Finance, 7: Facilities, 8: Standings
 		if (index === 0) { // Home
 			this.showView('home');
 		} else if (index === 1) { // Email
@@ -59,15 +61,19 @@ export default class Navigation {
 			this.showView('staff');
 			console.log("Requesting Staff Data...");
 			API.getStaff();
-		} else if (index === 5) { // Finance
+		} else if (index === 5) { // Car
+			this.showView('car');
+			console.log("Requesting Car Data...");
+			API.getCar();
+		} else if (index === 6) { // Finance
 			this.showView('finance');
 			console.log("Requesting Finance Data...");
 			API.getFinance();
-		} else if (index === 6) { // Facilities
+		} else if (index === 7) { // Facilities
 			this.showView('facilities');
 			console.log("Requesting Facilities Data...");
 			API.getFacilities();
-		} else if (index === 7) { // Standings
+		} else if (index === 8) { // Standings
 			this.showView('standings');
 			console.log("Requesting Standings Data...");
 			API.getStandings();

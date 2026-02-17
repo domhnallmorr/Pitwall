@@ -1,4 +1,5 @@
 import pytest
+import random
 from app.race.race_manager import RaceManager, POINTS_TABLE
 from app.models.state import GameState
 from app.models.calendar import Calendar, Event, EventType
@@ -63,3 +64,61 @@ def test_simulate_race_winner_gets_10_points():
 
     winner = result["results"][0]
     assert winner["points"] == 10
+
+
+def test_simulate_race_increments_race_starts_for_participants():
+    state = create_race_state()
+    manager = RaceManager()
+
+    before = {d.id: d.race_starts for d in state.drivers}
+    result = manager.simulate_race(state)
+    participant_ids = {r["driver_id"] for r in result["results"]}
+
+    for d in state.drivers:
+        expected = before[d.id] + (1 if d.id in participant_ids else 0)
+        assert d.race_starts == expected
+
+
+def test_simulate_race_increments_wins_for_winner_only():
+    state = create_race_state()
+    manager = RaceManager()
+
+    before = {d.id: d.wins for d in state.drivers}
+    result = manager.simulate_race(state)
+    winner_id = result["results"][0]["driver_id"]
+
+    for d in state.drivers:
+        expected = before[d.id] + (1 if d.id == winner_id else 0)
+        assert d.wins == expected
+
+
+def test_performance_weight_blends_driver_and_car_speed():
+    manager = RaceManager()
+    assert manager._get_performance_weight(100, 100) == 100
+    assert manager._get_performance_weight(80, 40) == 66
+    assert manager._get_performance_weight(0, 0) == 1
+
+
+def test_simulate_race_weighting_favors_faster_driver_and_car():
+    manager = RaceManager()
+    random.seed(12345)
+    wins_for_fastest = 0
+    runs = 250
+
+    for _ in range(runs):
+        state = create_race_state()
+        # Strong favorite: Driver A1 in a fast car.
+        state.drivers[0].speed = 100
+        state.teams[0].car_speed = 95
+
+        # Keep everyone else slower.
+        state.drivers[1].speed = 25
+        state.drivers[2].speed = 30
+        state.drivers[3].speed = 20
+        state.teams[1].car_speed = 30
+
+        result = manager.simulate_race(state)
+        if result["results"][0]["driver_id"] == 1:
+            wins_for_fastest += 1
+
+    assert wins_for_fastest > 120

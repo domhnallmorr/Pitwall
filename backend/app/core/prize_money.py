@@ -65,12 +65,20 @@ class PrizeMoneyManager:
         finance.prize_money_paid += installment
 
         if installment > 0:
+            event = state.calendar.current_event
+            event_name = event.name if event else None
+            event_type = event.type.value if event else None
+            circuit = next((c for c in state.circuits if event and c.name == event.name), None)
+            circuit_country = circuit.country if circuit else None
             state.finance.add_transaction(
                 week=state.calendar.current_week,
                 year=state.year,
                 amount=installment,
                 category=TransactionCategory.PRIZE_MONEY,
                 description=f"Prize money installment ({finance.prize_money_races_paid}/{total_races})",
+                event_name=event_name,
+                event_type=event_type,
+                circuit_country=circuit_country,
             )
 
         return {

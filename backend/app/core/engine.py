@@ -2,6 +2,8 @@ from app.models.state import GameState
 from app.models.calendar import EventType
 from app.core.rollover import SeasonRolloverManager
 from app.models.finance import TransactionCategory
+from app.core.transport import TransportManager
+from app.models.email import EmailCategory
 
 class GameEngine:
     """
@@ -9,6 +11,7 @@ class GameEngine:
     """
     def __init__(self):
         self.rollover_manager = SeasonRolloverManager()
+        self.transport_manager = TransportManager()
 
     def advance_week(self, state: GameState) -> dict:
         """
@@ -67,6 +70,19 @@ class GameEngine:
         if event:
             event_id = f"{event.week}_{event.name}"
             if event_id not in state.events_processed:
+                attended = action == "attend"
+                charge = self.transport_manager.charge_for_event(state, event, attended=attended)
+                if charge:
+                    state.add_email(
+                        sender="Logistics Coordinator",
+                        subject=f"Transport Confirmed: {charge.event_name}",
+                        body=(
+                            f"Transport for {charge.event_name} has been confirmed.\n\n"
+                            f"Destination: {charge.country}\n"
+                            f"Cost: ${charge.applied_cost:,}"
+                        ),
+                        category=EmailCategory.GENERAL,
+                    )
                 state.events_processed.append(event_id)
 
         return self.get_week_summary(state)

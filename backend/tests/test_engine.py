@@ -2,6 +2,10 @@ import pytest
 from app.core.engine import GameEngine
 from app.models.state import GameState
 from app.models.calendar import Calendar, Event, EventType
+from app.models.team import Team
+from app.models.driver import Driver
+from app.models.circuit import Circuit
+from app.models.finance import TransactionCategory
 
 def create_mock_state(week=1):
     # Include an event at week 52 so season doesn't end prematurely
@@ -89,3 +93,52 @@ def test_advance_week_publishes_queued_emails():
     assert len(delivered) == 1
     assert delivered[0].week == 2
     assert delivered[0].year == 1998
+
+
+def create_test_event_state():
+    evt = Event(name="Circuit de Barcelona-Catalunya", week=1, type=EventType.TEST)
+    calendar = Calendar(events=[evt], current_week=1)
+    team = Team(id=1, name="Warrick", country="United Kingdom", driver1_id=1, car_speed=80)
+    driver = Driver(id=1, name="John Newhouse", age=27, country="Canada", team_id=1, speed=84)
+    circuit = Circuit(
+        id=1,
+        name="Circuit de Barcelona-Catalunya",
+        country="Spain",
+        location="Barcelona",
+        laps=66,
+        base_laptime_ms=75000,
+        length_km=4.728,
+        overtaking_delta=1800,
+        power_factor=5,
+    )
+    return GameState(
+        year=1998,
+        teams=[team],
+        drivers=[driver],
+        calendar=calendar,
+        circuits=[circuit],
+        player_team_id=1,
+    )
+
+
+def test_skip_test_event_does_not_charge_transport():
+    state = create_test_event_state()
+    engine = GameEngine()
+
+    engine.handle_event_action(state, "skip")
+
+    transport_txs = [t for t in state.finance.transactions if t.category == TransactionCategory.TRANSPORT]
+    assert len(transport_txs) == 0
+
+
+def test_attend_test_event_charges_transport_and_sends_email():
+    state = create_test_event_state()
+    engine = GameEngine()
+
+    engine.handle_event_action(state, "attend")
+
+    transport_txs = [t for t in state.finance.transactions if t.category == TransactionCategory.TRANSPORT]
+    assert len(transport_txs) == 1
+    assert transport_txs[0].amount < 0
+    transport_emails = [e for e in state.emails if e.subject.startswith("Transport Confirmed:")]
+    assert len(transport_emails) == 1

@@ -7,6 +7,8 @@ from app.core.grid import GridManager
 from app.core.engine import GameEngine
 from app.core.retirement import RetirementManager
 from app.core.prize_money import PrizeMoneyManager
+from app.core.transport import TransportManager
+from app.core.finance_reporting import build_finance_report
 from app.core.save_manager import save_game, load_game as load_game_file, has_save
 from app.race.race_manager import RaceManager
 from app.models.calendar import Calendar
@@ -229,6 +231,24 @@ def process_command(command):
             race_result = race_manager.simulate_race(CURRENT_STATE)
             prize_money_manager = PrizeMoneyManager()
             prize_money_manager.process_race_payout(CURRENT_STATE)
+            transport_manager = TransportManager()
+            transport_charge = transport_manager.charge_for_event(
+                CURRENT_STATE,
+                CURRENT_STATE.calendar.current_event,
+                attended=True,
+            )
+
+            if transport_charge:
+                CURRENT_STATE.add_email(
+                    sender="Logistics Coordinator",
+                    subject=f"Transport Confirmed: {transport_charge.event_name}",
+                    body=(
+                        f"Transport for {transport_charge.event_name} has been confirmed.\n\n"
+                        f"Destination: {transport_charge.country}\n"
+                        f"Cost: ${transport_charge.applied_cost:,}"
+                    ),
+                    category=EmailCategory.GENERAL
+                )
 
             # Generate race result email
             winner = race_result["results"][0]
@@ -306,6 +326,7 @@ def process_command(command):
                         "name": d.name,
                         "age": d.age,
                         "country": d.country,
+                        "speed": d.speed,
                         "points": d.points,
                         "wage": d.wage,
                         "pay_driver": d.pay_driver,
@@ -321,6 +342,43 @@ def process_command(command):
             }
         except Exception as e:
             logging.error(f"Error getting staff: {e}")
+            return {"status": "error", "message": str(e)}
+
+    if cmd_type == 'get_driver':
+        try:
+            if not CURRENT_STATE:
+                return {"status": "error", "message": "Game not started"}
+
+            driver_name = command.get('name')
+            if not driver_name:
+                return {"status": "error", "message": "Driver name is required"}
+
+            driver = next((d for d in CURRENT_STATE.drivers if d.name == driver_name), None)
+            if not driver:
+                return {"status": "error", "message": f"Driver '{driver_name}' not found"}
+
+            team = next((t for t in CURRENT_STATE.teams if t.id == driver.team_id), None)
+            team_name = team.name if team else "Free Agent"
+
+            return {
+                "type": "driver_data",
+                "status": "success",
+                "data": {
+                    "id": driver.id,
+                    "name": driver.name,
+                    "age": driver.age,
+                    "country": driver.country,
+                    "team_name": team_name,
+                    "speed": driver.speed,
+                    "race_starts": driver.race_starts,
+                    "wins": driver.wins,
+                    "points": driver.points,
+                    "wage": driver.wage,
+                    "pay_driver": driver.pay_driver,
+                }
+            }
+        except Exception as e:
+            logging.error(f"Error getting driver: {e}")
             return {"status": "error", "message": str(e)}
 
     if cmd_type == 'get_facilities':
@@ -344,12 +402,37 @@ def process_command(command):
             logging.error(f"Error getting facilities: {e}")
             return {"status": "error", "message": str(e)}
 
+    if cmd_type == 'get_car':
+        try:
+            if not CURRENT_STATE:
+                return {"status": "error", "message": "Game not started"}
+
+            teams_data = [
+                {
+                    "id": t.id,
+                    "name": t.name,
+                    "country": t.country,
+                    "car_speed": t.car_speed,
+                }
+                for t in CURRENT_STATE.teams
+            ]
+
+            return {
+                "type": "car_data",
+                "status": "success",
+                "data": {"teams": teams_data},
+            }
+        except Exception as e:
+            logging.error(f"Error getting car data: {e}")
+            return {"status": "error", "message": str(e)}
+
     if cmd_type == 'get_finance':
         try:
             if not CURRENT_STATE:
                 return {"status": "error", "message": "Game not started"}
             
             transactions = [t.model_dump() for t in CURRENT_STATE.finance.transactions]
+            report = build_finance_report(CURRENT_STATE)
             
             return {
                 "type": "finance_data",
@@ -363,7 +446,9 @@ def process_command(command):
                     ),
                     "prize_money_races_paid": CURRENT_STATE.finance.prize_money_races_paid,
                     "prize_money_total_races": CURRENT_STATE.finance.prize_money_total_races,
-                    "transactions": transactions
+                    "transactions": transactions,
+                    "summary": report["summary"],
+                    "track_profit_loss": report["track_profit_loss"],
                 }
             }
         except Exception as e:

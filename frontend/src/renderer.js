@@ -10,6 +10,8 @@ import StandingsView from './views/standings.js';
 import CalendarView from './views/calendar.js';
 import EmailView from './views/email.js';
 import StaffView from './views/staff.js';
+import DriverView from './views/driver.js';
+import CarView from './views/car.js';
 import FinanceView from './views/finance.js';
 import FacilitiesView from './views/facilities.js';
 
@@ -32,6 +34,8 @@ let standingsView;
 let calendarView;
 let emailView;
 let staffView;
+let driverView;
+let carView;
 let financeView;
 let facilitiesView;
 
@@ -44,9 +48,13 @@ function init() {
 	calendarView = new CalendarView();
 	emailView = new EmailView();
 	staffView = new StaffView();
+	driverView = new DriverView();
+	carView = new CarView();
 	financeView = new FinanceView();
 	facilitiesView = new FacilitiesView();
 	gridView.setYearRequestHandler((year) => API.getGrid(year));
+	gridView.setDriverSelectHandler((name) => openDriverProfile(name));
+	standingsView.setDriverSelectHandler((name) => openDriverProfile(name));
 
 	setupEventListeners();
 	setupIPC();
@@ -157,6 +165,10 @@ function setupIPC() {
 				emailView.updateUnreadBadge(parsed.data.unread_count);
 			} else if (parsed.type === 'staff_data') {
 				staffView.render(parsed.data);
+			} else if (parsed.type === 'driver_data') {
+				driverView.render(parsed.data);
+			} else if (parsed.type === 'car_data') {
+				carView.render(parsed.data);
 			} else if (parsed.type === 'finance_data') {
 				financeView.render(parsed.data);
 			} else if (parsed.type === 'facilities_data') {
@@ -223,9 +235,19 @@ function refreshVisibleViews() {
 		API.getStaff();
 	}
 
+	const carEl = document.getElementById('car-view');
+	if (carEl && carEl.style.display !== 'none') {
+		API.getCar();
+	}
+
 	const standingsEl = document.getElementById('standings-view');
 	if (standingsEl && standingsEl.style.display !== 'none') {
 		API.getStandings();
+	}
+
+	const driverEl = document.getElementById('driver-view');
+	if (driverEl && driverEl.style.display !== 'none' && driverView?.currentDriverName) {
+		API.getDriver(driverView.currentDriverName);
 	}
 
 	const financeEl = document.getElementById('finance-view');
@@ -238,6 +260,14 @@ function updateBalance(amount) {
 	const formatted = '$' + Math.abs(amount).toLocaleString();
 	balanceEl.textContent = amount < 0 ? '-' + formatted : formatted;
 	balanceEl.className = amount < 0 ? 'balance-info balance-negative' : 'balance-info';
+}
+
+function openDriverProfile(driverName) {
+	if (!driverName) return;
+	if (navigation) {
+		navigation.showView('driver');
+	}
+	API.getDriver(driverName);
 }
 
 // --- Race View Functions ---

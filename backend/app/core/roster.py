@@ -24,20 +24,60 @@ def load_roster(year: int = 0) -> Tuple[List[Team], List[Driver], int, List[Even
 
     # 2. Drivers
     # Allow loading drivers assigned to specific year OR default (0)
-    c.execute('SELECT id, name, age, country, wage, pay_driver FROM drivers WHERE start_year = ? OR start_year = 0 ORDER BY id ASC', (start_year,))
+    c.execute("PRAGMA table_info(drivers)")
+    driver_columns = {row[1] for row in c.fetchall()}
+    has_speed = "speed" in driver_columns
+    has_race_starts = "race_starts" in driver_columns
+    has_wins = "wins" in driver_columns
+
+    speed_expr = "speed" if has_speed else "50"
+    race_starts_expr = "race_starts" if has_race_starts else "0"
+    wins_expr = "wins" if has_wins else "0"
+    c.execute(
+        f'SELECT id, name, age, country, wage, pay_driver, {speed_expr} AS speed, {race_starts_expr} AS race_starts, {wins_expr} AS wins '
+        'FROM drivers WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
+        (start_year,),
+    )
     drivers = []
     driver_map = {} # Name -> ID mapping for assigning to teams
     for row in c.fetchall():
-        d = Driver(id=row[0], name=row[1], age=row[2], country=row[3], wage=row[4], pay_driver=bool(row[5]))
+        speed = row[6] if row[6] is not None else 50
+        race_starts = row[7] if row[7] is not None else 0
+        wins = row[8] if row[8] is not None else 0
+        d = Driver(
+            id=row[0],
+            name=row[1],
+            age=row[2],
+            country=row[3],
+            wage=row[4],
+            pay_driver=bool(row[5]),
+            speed=speed,
+            race_starts=race_starts,
+            wins=wins,
+        )
         drivers.append(d)
         driver_map[d.name] = d
 
     # 3. Teams
     # Link drivers to teams using the map
-    c.execute('SELECT id, name, country, driver1_name, driver2_name, balance, facilities FROM teams WHERE start_year = ? OR start_year = 0 ORDER BY id ASC', (start_year,))
+    c.execute("PRAGMA table_info(teams)")
+    team_columns = {row[1] for row in c.fetchall()}
+    has_car_speed = "car_speed" in team_columns
+
+    if has_car_speed:
+        c.execute(
+            'SELECT id, name, country, driver1_name, driver2_name, balance, facilities, car_speed FROM teams WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
+            (start_year,),
+        )
+    else:
+        c.execute(
+            'SELECT id, name, country, driver1_name, driver2_name, balance, facilities FROM teams WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
+            (start_year,),
+        )
     teams = []
     for row in c.fetchall():
-        t = Team(id=row[0], name=row[1], country=row[2], balance=row[5], facilities=row[6])
+        car_speed = row[7] if has_car_speed and row[7] is not None else 50
+        t = Team(id=row[0], name=row[1], country=row[2], balance=row[5], facilities=row[6], car_speed=car_speed)
         
         # Link Drivers to Teams
         d1_name = row[3]

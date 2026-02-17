@@ -15,6 +15,7 @@ export default class GridView {
 		this.baseYear = 1998;
 		this.requestYearData = null;
 		this.driverCountryByName = {};
+		this.onDriverSelected = null;
 
 		this.initTabs();
 	}
@@ -39,6 +40,10 @@ export default class GridView {
 
 	setYearRequestHandler(handler) {
 		this.requestYearData = handler;
+	}
+
+	setDriverSelectHandler(handler) {
+		this.onDriverSelected = handler;
 	}
 
 	setDriverCountryMap(drivers) {
@@ -100,10 +105,25 @@ export default class GridView {
 			const tr = document.createElement('tr');
 			tr.innerHTML = `
                 <td>${row.Team}</td>
-                <td>${renderFlagLabel(d1Country, d1Name)}</td>
-                <td>${renderFlagLabel(d2Country, d2Name)}</td>
+                <td>${this.renderDriverCell(d1Country, d1Name)}</td>
+                <td>${this.renderDriverCell(d2Country, d2Name)}</td>
             `;
 			targetBody.appendChild(tr);
 		});
+
+		targetBody.querySelectorAll('.driver-link').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				if (this.onDriverSelected) {
+					this.onDriverSelected(btn.getAttribute('data-driver-name'));
+				}
+			});
+		});
+	}
+
+	renderDriverCell(country, name) {
+		if (!name || name === 'VACANT' || name === 'Vacant') {
+			return name || 'VACANT';
+		}
+		return `<button class="driver-link" data-driver-name="${name}">${renderFlagLabel(country, name)}</button>`;
 	}
 }

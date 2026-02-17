@@ -817,9 +817,93 @@ p {
   font-weight: 500;
 }
 
+.staff-speed-rating {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.staff-speed-block {
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid #3a4f74;
+  background: rgba(58, 79, 116, 0.25);
+}
+
+.staff-speed-block.is-filled {
+  border-color: #64ffda;
+  background: linear-gradient(90deg, #64ffda, #31d0ad);
+}
+
 .staff-pay-driver {
   color: #22c55e;
   font-weight: 600;
+}
+
+.driver-link {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.driver-link:hover {
+  color: var(--accent-color);
+  text-decoration: underline;
+}
+
+.driver-profile-container {
+  max-width: 520px;
+}
+
+.driver-profile-card {
+  margin-top: 8px;
+}
+
+.driver-speed-rating {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.driver-speed-block {
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid #3a4f74;
+  background: rgba(58, 79, 116, 0.25);
+}
+
+.driver-speed-block.is-filled {
+  border-color: #64ffda;
+  background: linear-gradient(90deg, #64ffda, #31d0ad);
+}
+
+/* ============================
+   Car View
+   ============================ */
+
+.car-speed-rating {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.car-speed-block {
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid #3a4f74;
+  background: rgba(58, 79, 116, 0.25);
+}
+
+.car-speed-block.is-filled {
+  border-color: #64ffda;
+  background: linear-gradient(90deg, #64ffda, #31d0ad);
 }
 
 /* ============================
@@ -869,6 +953,10 @@ p {
   margin-top: 16px;
 }
 
+.finance-track-pl {
+  margin-top: 20px;
+}
+
 .finance-prize-progress {
   font-size: 0.9rem;
   color: #94a3b8;
@@ -893,6 +981,11 @@ p {
   color: #3b82f6;
   font-weight: 500;
   text-transform: capitalize;
+}
+
+.finance-category-transport {
+  background: rgba(249, 115, 22, 0.16);
+  color: #fb923c;
 }
 
 /* ============================

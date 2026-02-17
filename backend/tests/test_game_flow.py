@@ -4,6 +4,7 @@ from unittest.mock import patch
 import app.main as app_main
 from app.main import process_command
 from app.core.roster import load_roster
+from app.models.finance import TransactionCategory
 from tools.seed_roster import create_schema, seed_data
 
 @pytest.fixture
@@ -82,6 +83,7 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     start_response = process_command({'type': 'start_career'})
     assert start_response['status'] == 'success'
     starting_balance = app_main.CURRENT_STATE.finance.balance
+    app_main.CURRENT_STATE.calendar.current_week = 10  # Albert Park race week
 
     race_response = process_command({'type': 'simulate_race'})
     assert race_response['status'] == 'success'
@@ -90,3 +92,14 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     assert finance.prize_money_races_paid == 1
     assert finance.prize_money_paid > 0
     assert finance.balance > starting_balance
+    transport_txs = [t for t in finance.transactions if t.category == TransactionCategory.TRANSPORT]
+    assert len(transport_txs) == 1
+    assert transport_txs[0].amount < 0
+    transport_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Transport Confirmed:")]
+    assert len(transport_emails) >= 1
+
+    finance_response = process_command({'type': 'get_finance'})
+    assert finance_response['status'] == 'success'
+    assert 'summary' in finance_response['data']
+    assert 'track_profit_loss' in finance_response['data']
+    assert finance_response['data']['summary']['transport_total'] > 0

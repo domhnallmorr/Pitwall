@@ -15,7 +15,10 @@ def create_schema(conn):
             country TEXT,
             start_year INTEGER DEFAULT 0,
             wage INTEGER DEFAULT 0,
-            pay_driver INTEGER DEFAULT 0
+            pay_driver INTEGER DEFAULT 0,
+            speed INTEGER DEFAULT 50,
+            race_starts INTEGER DEFAULT 0,
+            wins INTEGER DEFAULT 0
         )
     ''')
     
@@ -28,7 +31,8 @@ def create_schema(conn):
             driver2_name TEXT,
             start_year INTEGER DEFAULT 0,
             balance INTEGER DEFAULT 0,
-            facilities INTEGER DEFAULT 0
+            facilities INTEGER DEFAULT 0,
+            car_speed INTEGER DEFAULT 50
         )
     ''')
 
@@ -63,6 +67,21 @@ def create_schema(conn):
             track_map_path TEXT
         )
     ''')
+
+    # Backwards-compatible migration for existing DBs.
+    c.execute("PRAGMA table_info(drivers)")
+    driver_columns = {row[1] for row in c.fetchall()}
+    if "speed" not in driver_columns:
+        c.execute("ALTER TABLE drivers ADD COLUMN speed INTEGER DEFAULT 50")
+    if "race_starts" not in driver_columns:
+        c.execute("ALTER TABLE drivers ADD COLUMN race_starts INTEGER DEFAULT 0")
+    if "wins" not in driver_columns:
+        c.execute("ALTER TABLE drivers ADD COLUMN wins INTEGER DEFAULT 0")
+
+    c.execute("PRAGMA table_info(teams)")
+    team_columns = {row[1] for row in c.fetchall()}
+    if "car_speed" not in team_columns:
+        c.execute("ALTER TABLE teams ADD COLUMN car_speed INTEGER DEFAULT 50")
     
     conn.commit()
 
@@ -74,6 +93,133 @@ def init_db():
 
 def seed_data(conn):
     c = conn.cursor()
+    driver_speeds = {
+        "John Newhouse": 84,
+        "Henrik Friedrich": 72,
+        "Marco Schneider": 98,
+        "Evan Irving": 75,
+        "Fabrizio Giorgetti": 70,
+        "Andreas Wurst": 71,
+        "Daniel Caldwell": 77,
+        "Mikko Hanninen": 87,
+        "Donovan Upland": 78,
+        "Roland Schneider": 70,
+        "Alexis Perrin": 59,
+        "Luca Treno": 76,
+        "Julien Alesso": 75,
+        "Jimmy Hobart": 69,
+        "Pablo Dinez": 55,
+        "Mikko Salmi": 68,
+        "Rodrigo Barros": 77,
+        "Lars Nielsen": 45,
+        "Roberto Rossi": 21,
+        "Toshiro Tanaka": 55,
+        "Kazuki Nakamura": 39,
+        "Eduardo Torres": 29,
+        "Javier Perez Mendoza": 79,
+        "Leonardo Badei": 59,
+        "Jan van der Veen": 66,
+        "Pablo del Rosario": 65,
+        "Stefan Sarrien": 64,
+        "Jorn Maller": 48,
+        "Luisano Burci": 61,
+        "Jean-Claude Boulain": 54,
+        "Alex Zanetto": 55,
+        "Marco Genoa": 64,
+        "Rico Zanda": 66,
+        "Jamie Brenton": 80,
+        "Nico Heidmann": 74,
+        "Gustav Mazzane": 52,
+    }
+    driver_race_starts = {
+        "John Newhouse": 33,
+        "Henrik Friedrich": 65,
+        "Marco Schneider": 101,
+        "Evan Irving": 65,
+        "Fabrizio Giorgetti": 25,
+        "Andreas Wurst": 3,
+        "Daniel Caldwell": 58,
+        "Mikko Hanninen": 96,
+        "Donovan Upland": 83,
+        "Roland Schneider": 17,
+        "Alexis Perrin": 59,
+        "Luca Treno": 13,
+        "Julien Alesso": 167,
+        "Jimmy Hobart": 112,
+        "Pablo Dinez": 50,
+        "Mikko Salmi": 52,
+        "Rodrigo Barros": 81,
+        "Lars Nielsen": 17,
+        "Roberto Rossi": 16,
+        "Toshiro Tanaka": 0,
+        "Kazuki Nakamura": 0,
+        "Eduardo Torres": 0,
+        "Javier Perez Mendoza": 0,
+        "Leonardo Badei": 34,
+        "Jan van der Veen": 48,
+        "Pablo del Rosario": 0,
+        "Stefan Sarrien": 0,
+        "Jorn Maller": 0,
+        "Luisano Burci": 0,
+        "Jean-Claude Boulain": 0,
+        "Alex Zanetto": 25,
+        "Marco Genoa": 0,
+        "Rico Zanda": 0,
+        "Jamie Brenton": 0,
+        "Nico Heidmann": 0,
+        "Gustav Mazzane": 0,
+    }
+    driver_wins = {
+        "John Newhouse": 11,
+        "Henrik Friedrich": 1,
+        "Marco Schneider": 28,
+        "Evan Irving": 0,
+        "Fabrizio Giorgetti": 0,
+        "Andreas Wurst": 0,
+        "Daniel Caldwell": 3,
+        "Mikko Hanninen": 1,
+        "Donovan Upland": 21,
+        "Roland Schneider": 0,
+        "Alexis Perrin": 1,
+        "Luca Treno": 0,
+        "Julien Alesso": 1,
+        "Jimmy Hobart": 2,
+        "Pablo Dinez": 0,
+        "Mikko Salmi": 0,
+        "Rodrigo Barros": 0,
+        "Lars Nielsen": 0,
+        "Roberto Rossi": 0,
+        "Toshiro Tanaka": 0,
+        "Kazuki Nakamura": 0,
+        "Eduardo Torres": 0,
+        "Javier Perez Mendoza": 0,
+        "Leonardo Badei": 0,
+        "Jan van der Veen": 0,
+        "Pablo del Rosario": 0,
+        "Stefan Sarrien": 0,
+        "Jorn Maller": 0,
+        "Luisano Burci": 0,
+        "Jean-Claude Boulain": 0,
+        "Alex Zanetto": 0,
+        "Marco Genoa": 0,
+        "Rico Zanda": 0,
+        "Jamie Brenton": 0,
+        "Nico Heidmann": 0,
+        "Gustav Mazzane": 0,
+    }
+    team_speeds = {
+        "Warrick": 80,
+        "Ferano": 84,
+        "Benedetti": 74,
+        "McAlister": 90,
+        "Joyce": 70,
+        "Pascal": 60,
+        "Schweizer": 70,
+        "Swords": 45,
+        "Strathmore": 50,
+        "Tarnwell": 40,
+        "Marchetti": 35,
+    }
     
     # ... (Drivers/Teams logic omitted for brevity, keeping existing structure via tool)    
     # Ensure required circuits exist (safe for existing DBs).
@@ -89,6 +235,11 @@ def seed_data(conn):
         ("Silverstone Circuit", "United Kingdom", "Silverstone", 60, 79000, 5.140, 900, 7, None),
         ("A1 Ring", "Austria", "Spielberg", 71, 68000, 4.319, 800, 7, None),
         ("Hockenheimring", "Germany", "Hockenheim", 45, 97000, 6.823, 600, 10, None),
+        ("Hungaroring", "Hungary", "Budapest", 77, 73000, 3.972, 1900, 2, None),
+        ("Circuit de Spa-Francorchamps", "Belgium", "Stavelot", 44, 104000, 6.968, 700, 9, None),
+        ("Autodromo Nazionale di Monza", "Italy", "Monza", 53, 80000, 5.770, 700, 10, None),
+        ("Nurburgring", "Luxembourg", "Nurburg", 67, 74000, 4.556, 1100, 7, None),
+        ("Suzuka Circuit", "Japan", "Suzuka", 53, 90000, 5.860, 1400, 6, None),
     ]
     c.execute('SELECT name FROM circuits')
     existing_circuit_names = {row[0] for row in c.fetchall()}
@@ -123,11 +274,34 @@ def seed_data(conn):
         drivers_to_insert = [d for d in future_drivers_data if (d[1], d[0]) not in existing_driver_keys]
         if drivers_to_insert:
             print(f"Seeding {len(drivers_to_insert)} future driver(s)...")
+            drivers_to_insert_with_attrs = [
+                (*d, driver_speeds.get(d[1], 50), driver_race_starts.get(d[1], 0), driver_wins.get(d[1], 0))
+                for d in drivers_to_insert
+            ]
             c.executemany(
-                'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver) VALUES (?, ?, ?, ?, ?, ?)',
-                drivers_to_insert
+                'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, speed, race_starts, wins) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                drivers_to_insert_with_attrs
             )
             conn.commit()
+
+        # Always refresh speed values for known names in existing DBs.
+        c.executemany(
+            'UPDATE drivers SET speed = ? WHERE name = ?',
+            [(speed, name) for name, speed in driver_speeds.items()]
+        )
+        c.executemany(
+            'UPDATE drivers SET race_starts = ? WHERE name = ?',
+            [(starts, name) for name, starts in driver_race_starts.items()]
+        )
+        c.executemany(
+            'UPDATE drivers SET wins = ? WHERE name = ?',
+            [(wins, name) for name, wins in driver_wins.items()]
+        )
+        c.executemany(
+            'UPDATE teams SET car_speed = ? WHERE name = ?',
+            [(speed, name) for name, speed in team_speeds.items()]
+        )
+        conn.commit()
         
     # Check if Calendar exists
     c.execute('SELECT count(*) FROM calendar')
@@ -207,7 +381,14 @@ def seed_data(conn):
         (1999, "Gustav Mazzane", 24, "Argentina", 0, 1),
     ]
 
-    c.executemany('INSERT INTO drivers (start_year, name, age, country, wage, pay_driver) VALUES (?, ?, ?, ?, ?, ?)', drivers_data)
+    drivers_data_with_attrs = [
+        (*d, driver_speeds.get(d[1], 50), driver_race_starts.get(d[1], 0), driver_wins.get(d[1], 0))
+        for d in drivers_data
+    ]
+    c.executemany(
+        'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, speed, race_starts, wins) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        drivers_data_with_attrs
+    )
 
     teams_data = [
         (0, "Warrick", "United Kingdom", "John Newhouse", "Henrik Friedrich", 47000000, 75),
@@ -223,7 +404,11 @@ def seed_data(conn):
         (0, "Marchetti", "Italy", "Kazuki Nakamura", "Eduardo Torres", 8900000, 18),
     ]
 
-    c.executemany('INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities) VALUES (?, ?, ?, ?, ?, ?, ?)', teams_data)
+    teams_data_with_speed = [(*t, team_speeds.get(t[1], 50)) for t in teams_data]
+    c.executemany(
+        'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        teams_data_with_speed
+    )
     
     # Metadata
     c.execute('INSERT OR IGNORE INTO metadata (key, value) VALUES (?, ?)', ('start_year', '1998'))

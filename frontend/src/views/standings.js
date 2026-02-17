@@ -12,6 +12,7 @@ export default class StandingsView {
 		this.tabBtns = document.querySelectorAll('.standings-tab-btn');
 		this.driverContent = document.getElementById('standings-content-drivers');
 		this.constructorContent = document.getElementById('standings-content-constructors');
+		this.onDriverSelected = null;
 
 		this.initTabs();
 	}
@@ -45,16 +46,28 @@ export default class StandingsView {
 		this.renderConstructors(data.constructors);
 	}
 
+	setDriverSelectHandler(handler) {
+		this.onDriverSelected = handler;
+	}
+
 	renderDrivers(drivers) {
 		this.driverTableBody.innerHTML = '';
 		drivers.forEach((driver, index) => {
 			const tr = document.createElement('tr');
 			tr.innerHTML = `
                 <td>${index + 1}</td>
-                <td>${renderFlagLabel(driver.country, driver.name)}</td>
+                <td><button class="driver-link" data-driver-name="${driver.name}">${renderFlagLabel(driver.country, driver.name)}</button></td>
                 <td>${driver.points}</td>
             `;
 			this.driverTableBody.appendChild(tr);
+		});
+
+		this.driverTableBody.querySelectorAll('.driver-link').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				if (this.onDriverSelected) {
+					this.onDriverSelected(btn.getAttribute('data-driver-name'));
+				}
+			});
 		});
 	}
 

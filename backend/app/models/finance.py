@@ -6,6 +6,7 @@ from enum import Enum
 class TransactionCategory(str, Enum):
     DRIVER_WAGES = "driver_wages"
     PRIZE_MONEY = "prize_money"
+    TRANSPORT = "transport"
     SPONSORSHIP = "sponsorship"
     TRANSFER_FEE = "transfer_fee"
     DEVELOPMENT = "development"
@@ -19,6 +20,9 @@ class Transaction(BaseModel):
     amount: int  # Positive = income, negative = expense
     category: TransactionCategory
     description: str
+    event_name: str | None = None
+    event_type: str | None = None
+    circuit_country: str | None = None
 
 
 class Finance(BaseModel):
@@ -30,10 +34,17 @@ class Finance(BaseModel):
     prize_money_total_races: int = 0
 
     def add_transaction(self, week: int, year: int, amount: int,
-                        category: TransactionCategory, description: str):
+                        category: TransactionCategory, description: str,
+                        event_name: str | None = None,
+                        event_type: str | None = None,
+                        circuit_country: str | None = None):
         """Record a transaction and update the balance."""
         self.transactions.append(Transaction(
             week=week, year=year, amount=amount,
-            category=category, description=description
+            category=category,
+            description=description,
+            event_name=event_name,
+            event_type=event_type,
+            circuit_country=circuit_country,
         ))
         self.balance += amount

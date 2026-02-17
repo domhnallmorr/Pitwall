@@ -5,6 +5,7 @@ class Team(BaseModel):
     id: int
     name: str
     country: str
+    car_speed: int = 50
     driver1_id: Optional[int] = None
     driver2_id: Optional[int] = None
     points: int = 0
