@@ -92,6 +92,24 @@ def test_simulate_race_increments_wins_for_winner_only():
         assert d.wins == expected
 
 
+def test_simulate_race_records_driver_season_results():
+    state = create_race_state()
+    manager = RaceManager()
+    result = manager.simulate_race(state)
+
+    assert state.year in state.driver_season_results
+    season = state.driver_season_results[state.year]
+    assert len(season) == 4
+
+    for row in result["results"]:
+        driver_id = row["driver_id"]
+        entries = season.get(driver_id, [])
+        assert len(entries) == 1
+        assert entries[0]["position"] == row["position"]
+        assert entries[0]["event_name"] == "Test GP"
+        assert entries[0]["round"] == 1
+
+
 def test_performance_weight_blends_driver_and_car_speed():
     manager = RaceManager()
     assert manager._get_performance_weight(100, 100) == 100

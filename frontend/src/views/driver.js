@@ -3,10 +3,12 @@
  * Shows a dedicated profile card for one driver.
  */
 import { renderFlagLabel } from './flags.js';
+import { toFlagSlug } from './flags.js';
 
 export default class DriverView {
 	constructor() {
 		this.container = document.getElementById('driver-profile-container');
+		this.seasonContainer = document.getElementById('driver-season-results-container');
 		this.title = document.getElementById('driver-profile-title');
 		this.currentDriverName = null;
 	}
@@ -27,6 +29,43 @@ export default class DriverView {
 		return `<span class="driver-speed-rating" role="img" aria-label="Speed rating ${rating} out of 5">${blocks}</span>`;
 	}
 
+	renderSeasonResults(results) {
+		const rows = Array.isArray(results) ? results : [];
+		if (rows.length === 0) {
+			return '<div class="driver-season-empty">No race results recorded this season yet.</div>';
+		}
+
+		const flagCells = rows.map((r) => {
+			const country = r.country || 'Unknown';
+			const flagSlug = toFlagSlug(country);
+			const primarySrc = `assets/flags/${encodeURIComponent(country)}.png`;
+			const fallbackSrc = `assets/flags/${flagSlug}.png`;
+			return `
+				<td class="driver-season-flag-cell" title="Round ${r.round}: ${country}">
+					<img class="app-flag" src="${primarySrc}" alt="${country} flag" onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='${fallbackSrc}';}else{this.style.display='none';}">
+				</td>
+			`;
+		}).join('');
+
+		const posCells = rows.map((r) => {
+			const pos = Number(r.position) || 0;
+			const podiumClass = pos === 1 ? 'is-gold' : pos === 2 ? 'is-silver' : pos === 3 ? 'is-bronze' : '';
+			return `<td class="driver-season-pos-cell ${podiumClass}">${pos}</td>`;
+		}).join('');
+
+		return `
+			<div class="driver-season-results">
+				<div class="driver-season-title">Season Results</div>
+				<table class="driver-season-table">
+					<tbody>
+						<tr>${flagCells}</tr>
+						<tr>${posCells}</tr>
+					</tbody>
+				</table>
+			</div>
+		`;
+	}
+
 	render(data) {
 		if (!this.container) return;
 		this.currentDriverName = data?.name || null;
@@ -34,6 +73,7 @@ export default class DriverView {
 
 		if (!data || !data.name) {
 			this.container.innerHTML = '<p style="color: #64748b;">Driver not found.</p>';
+			if (this.seasonContainer) this.seasonContainer.innerHTML = '';
 			return;
 		}
 
@@ -87,5 +127,8 @@ export default class DriverView {
 				</div>
 			</div>
 		`;
+		if (this.seasonContainer) {
+			this.seasonContainer.innerHTML = this.renderSeasonResults(data.season_results);
+		}
 	}
 }

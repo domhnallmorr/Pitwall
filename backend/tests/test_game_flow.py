@@ -103,3 +103,8 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     assert 'summary' in finance_response['data']
     assert 'track_profit_loss' in finance_response['data']
     assert finance_response['data']['summary']['transport_total'] > 0
+
+    driver_response = process_command({'type': 'get_driver', 'name': 'John Newhouse'})
+    assert driver_response['status'] == 'success'
+    assert 'season_results' in driver_response['data']
+    assert len(driver_response['data']['season_results']) == 1

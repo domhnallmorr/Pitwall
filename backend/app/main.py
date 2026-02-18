@@ -359,6 +359,7 @@ def process_command(command):
 
             team = next((t for t in CURRENT_STATE.teams if t.id == driver.team_id), None)
             team_name = team.name if team else "Free Agent"
+            state_year_results = CURRENT_STATE.driver_season_results.get(CURRENT_STATE.year, {})
 
             return {
                 "type": "driver_data",
@@ -375,6 +376,10 @@ def process_command(command):
                     "points": driver.points,
                     "wage": driver.wage,
                     "pay_driver": driver.pay_driver,
+                    "season_results": sorted(
+                        state_year_results.get(driver.id, []),
+                        key=lambda r: r.get("round", 0)
+                    ),
                 }
             }
         except Exception as e:

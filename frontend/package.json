@@ -5,13 +5,15 @@
   "main": "main.js",
   "scripts": {
     "start": "set ELECTRON_RUN_AS_NODE=&& electron .",
-    "test": "vitest"
+    "test": "vitest",
+    "coverage": "vitest --coverage"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.18",
     "electron": "^29.4.6",
     "jsdom": "^28.0.0",
     "playwright": "^1.58.2",

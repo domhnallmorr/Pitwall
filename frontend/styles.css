@@ -864,6 +864,11 @@ p {
   margin-top: 8px;
 }
 
+.driver-season-results-container {
+  margin-top: 22px;
+  width: 100%;
+}
+
 .driver-speed-rating {
   display: inline-flex;
   gap: 4px;
@@ -881,6 +886,66 @@ p {
 .driver-speed-block.is-filled {
   border-color: #64ffda;
   background: linear-gradient(90deg, #64ffda, #31d0ad);
+}
+
+.driver-season-results {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #233554;
+  border-radius: 10px;
+  background: rgba(10, 25, 47, 0.45);
+}
+
+.driver-season-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+
+.driver-season-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 6px;
+  table-layout: fixed;
+}
+
+.driver-season-flag-cell,
+.driver-season-pos-cell {
+  text-align: center;
+  padding: 6px 4px;
+  border: 1px solid rgba(35, 53, 84, 0.6);
+  border-radius: 6px;
+  background: rgba(10, 25, 47, 0.35);
+}
+
+.driver-season-pos-cell {
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.driver-season-pos-cell.is-gold {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.55);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.driver-season-pos-cell.is-silver {
+  color: #d1d5db;
+  border-color: rgba(209, 213, 219, 0.55);
+  background: rgba(209, 213, 219, 0.12);
+}
+
+.driver-season-pos-cell.is-bronze {
+  color: #d97706;
+  border-color: rgba(217, 119, 6, 0.55);
+  background: rgba(217, 119, 6, 0.12);
+}
+
+.driver-season-empty {
+  margin-top: 16px;
+  color: #64748b;
 }
 
 /* ============================

@@ -29,6 +29,7 @@ class GameState(BaseModel):
     finance: Finance = Field(default_factory=Finance)
     queued_emails: List[QueuedEmail] = Field(default_factory=list)
     grid_snapshots: Dict[int, List[Dict[str, str]]] = Field(default_factory=dict)
+    driver_season_results: Dict[int, Dict[int, List[Dict[str, Any]]]] = Field(default_factory=dict)
 
     def add_email(self, sender: str, subject: str, body: str, 
                   category: EmailCategory = EmailCategory.GENERAL) -> Email:
