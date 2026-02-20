@@ -83,10 +83,20 @@ export default class GridView {
 		if (Number(year) === this.baseYear) {
 			this.content1998.style.display = 'block';
 			this.content1999.style.display = 'none';
+			this.playTabTransition(this.content1998);
 		} else {
 			this.content1998.style.display = 'none';
 			this.content1999.style.display = 'block';
+			this.playTabTransition(this.content1999);
 		}
+	}
+
+	playTabTransition(contentEl) {
+		if (!contentEl) return;
+		contentEl.classList.remove('grid-tab-enter');
+		// Force reflow so rapid repeated tab clicks replay animation.
+		void contentEl.offsetWidth;
+		contentEl.classList.add('grid-tab-enter');
 	}
 
 	render(data, year) {

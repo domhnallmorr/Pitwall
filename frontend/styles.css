@@ -352,6 +352,54 @@ p {
   margin-top: 20px;
 }
 
+.grid-content.grid-tab-enter {
+  animation: gridTabEnter 0.24s ease;
+}
+
+@keyframes gridTabEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#grid-view {
+  background-image: linear-gradient(rgba(5, 14, 26, 0.62), rgba(5, 14, 26, 0.62)), url('assets/images/grid_background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin: -16px -16px 0;
+  min-height: calc(100vh - 150px);
+}
+
+#grid-view .data-table {
+  background: rgba(8, 20, 38, 0.35);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#grid-view .data-table th {
+  background: rgba(8, 20, 38, 0.45);
+}
+
+#grid-view .data-table td {
+  background: rgba(8, 20, 38, 0.24);
+}
+
+#grid-view .data-table tr:nth-child(even) td {
+  background: rgba(8, 20, 38, 0.32);
+}
+
+#grid-view .data-table tr:hover td {
+  background: rgba(17, 34, 64, 0.48) !important;
+}
+
 /* --- View Headers & Controls --- */
 .view-header {
   display: flex;
