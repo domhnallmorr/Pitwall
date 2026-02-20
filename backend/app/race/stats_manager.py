@@ -41,6 +41,7 @@ class DriverStatsManager:
                         "event_name": event.name,
                         "country": country,
                         "position": entry.get("position", 0),
+                        "status": entry.get("status", "FINISHED"),
                     }
                     # Upsert by round to avoid duplicates if race is re-simulated.
                     replaced = False

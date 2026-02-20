@@ -5,6 +5,7 @@ import app.main as app_main
 from app.main import process_command
 from app.core.roster import load_roster
 from app.models.finance import TransactionCategory
+from app.core.crash_damage import DamageTier
 from tools.seed_roster import create_schema, seed_data
 
 @pytest.fixture
@@ -108,3 +109,36 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     assert driver_response['status'] == 'success'
     assert 'season_results' in driver_response['data']
     assert len(driver_response['data']['season_results']) == 1
+
+
+@patch('app.core.roster.get_connection')
+@patch('app.race.race_manager.random.sample', side_effect=lambda seq, k: [seq[0]])
+@patch('app.race.race_manager.RaceManager._pick_crash_count', return_value=1)
+@patch(
+    'app.core.crash_damage.CrashDamageManager.calculate_damage_cost',
+    return_value=(DamageTier("minor", 50_000, 150_000, 0.5), 100_000),
+)
+def test_simulate_race_applies_crash_damage_cost_for_player_team(
+    mock_damage_cost,
+    mock_pick_crash_count,
+    mock_sample,
+    mock_get_conn,
+    test_db,
+):
+    mock_get_conn.return_value = test_db
+    app_main.CURRENT_STATE = None
+
+    start_response = process_command({'type': 'start_career'})
+    assert start_response['status'] == 'success'
+    app_main.CURRENT_STATE.calendar.current_week = 10
+
+    race_response = process_command({'type': 'simulate_race'})
+    assert race_response['status'] == 'success'
+
+    finance = app_main.CURRENT_STATE.finance
+    damage_txs = [t for t in finance.transactions if t.category == TransactionCategory.CRASH_DAMAGE]
+    assert len(damage_txs) == 1
+    assert damage_txs[0].amount == -100_000
+
+    damage_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Crash Damage Report:")]
+    assert len(damage_emails) == 1

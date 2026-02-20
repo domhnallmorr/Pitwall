@@ -27,6 +27,7 @@ def create_race_state():
 def test_simulate_race_returns_all_drivers():
     state = create_race_state()
     manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
     result = manager.simulate_race(state)
 
     assert len(result["results"]) == 4
@@ -37,6 +38,7 @@ def test_simulate_race_returns_all_drivers():
 def test_simulate_race_awards_points():
     state = create_race_state()
     manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
     result = manager.simulate_race(state)
 
     # Total points awarded should equal sum of top positions available
@@ -51,6 +53,7 @@ def test_simulate_race_awards_points():
 def test_simulate_race_marks_event_processed():
     state = create_race_state()
     manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
     manager.simulate_race(state)
 
     assert len(state.events_processed) == 1
@@ -60,6 +63,7 @@ def test_simulate_race_marks_event_processed():
 def test_simulate_race_winner_gets_10_points():
     state = create_race_state()
     manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
     result = manager.simulate_race(state)
 
     winner = result["results"][0]
@@ -69,6 +73,7 @@ def test_simulate_race_winner_gets_10_points():
 def test_simulate_race_increments_race_starts_for_participants():
     state = create_race_state()
     manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
 
     before = {d.id: d.race_starts for d in state.drivers}
     result = manager.simulate_race(state)
@@ -82,6 +87,7 @@ def test_simulate_race_increments_race_starts_for_participants():
 def test_simulate_race_increments_wins_for_winner_only():
     state = create_race_state()
     manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
 
     before = {d.id: d.wins for d in state.drivers}
     result = manager.simulate_race(state)
@@ -95,6 +101,7 @@ def test_simulate_race_increments_wins_for_winner_only():
 def test_simulate_race_records_driver_season_results():
     state = create_race_state()
     manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
     result = manager.simulate_race(state)
 
     assert state.year in state.driver_season_results
@@ -134,9 +141,28 @@ def test_simulate_race_weighting_favors_faster_driver_and_car():
         state.drivers[2].speed = 30
         state.drivers[3].speed = 20
         state.teams[1].car_speed = 30
+        manager._pick_crash_count = lambda _: 0
 
         result = manager.simulate_race(state)
         if result["results"][0]["driver_id"] == 1:
             wins_for_fastest += 1
 
     assert wins_for_fastest > 120
+
+
+def test_simulate_race_can_include_crash_outs_and_marks_dnf():
+    state = create_race_state()
+    manager = RaceManager()
+    manager._pick_crash_count = lambda _: 2
+
+    result = manager.simulate_race(state)
+
+    crash_results = [r for r in result["results"] if r.get("status") == "DNF"]
+    finished_results = [r for r in result["results"] if r.get("status") == "FINISHED"]
+
+    assert len(crash_results) == 2
+    assert len(finished_results) == 2
+    assert all(r["position"] is None for r in crash_results)
+    assert all(r["points"] == 0 for r in crash_results)
+    assert len(result["crash_outs"]) == 2
+    assert len(state.latest_race_incidents) == 2

@@ -48,9 +48,11 @@ export default class DriverView {
 		}).join('');
 
 		const posCells = rows.map((r) => {
-			const pos = Number(r.position) || 0;
-			const podiumClass = pos === 1 ? 'is-gold' : pos === 2 ? 'is-silver' : pos === 3 ? 'is-bronze' : '';
-			return `<td class="driver-season-pos-cell ${podiumClass}">${pos}</td>`;
+			const numericPos = Number(r.position);
+			const isClassified = Number.isFinite(numericPos) && numericPos > 0;
+			const podiumClass = numericPos === 1 ? 'is-gold' : numericPos === 2 ? 'is-silver' : numericPos === 3 ? 'is-bronze' : '';
+			const displayPos = isClassified ? numericPos : (r.status || 'DNF');
+			return `<td class="driver-season-pos-cell ${podiumClass}">${displayPos}</td>`;
 		}).join('');
 
 		return `

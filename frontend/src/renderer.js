@@ -298,9 +298,10 @@ function renderRaceResults(data) {
 
 	tbody.innerHTML = '';
 	data.results.forEach(r => {
+		const positionLabel = Number.isInteger(r.position) ? r.position : (r.status || 'DNF');
 		const row = document.createElement('tr');
 		row.innerHTML = `
-			<td>${r.position}</td>
+			<td>${positionLabel}</td>
 			<td>${r.driver_name}</td>
 			<td>${r.team_name}</td>
 			<td>${r.points > 0 ? r.points : '-'}</td>

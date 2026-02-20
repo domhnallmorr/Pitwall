@@ -45,4 +45,25 @@ describe('DriverView', () => {
 		expect(document.querySelectorAll('.driver-season-pos-cell.is-silver').length).toBe(1);
 		expect(document.querySelectorAll('.driver-season-pos-cell.is-bronze').length).toBe(1);
 	});
+
+	it('renders DNF for non-classified season results', () => {
+		driverView.render({
+			name: 'Jamie Brenton',
+			team_name: 'Warrick',
+			age: 20,
+			country: 'United Kingdom',
+			speed: 80,
+			race_starts: 1,
+			wins: 0,
+			points: 0,
+			wage: 0,
+			pay_driver: false,
+			season_results: [
+				{ round: 1, country: 'Australia', position: null, status: 'DNF' },
+			],
+		});
+
+		const seasonHtml = document.getElementById('driver-season-results-container').textContent;
+		expect(seasonHtml).toContain('DNF');
+	});
 });

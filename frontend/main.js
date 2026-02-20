@@ -56,6 +56,7 @@ function createWindow() {
     }
   })
 
+  mainWindow.maximize()
   mainWindow.setMenuBarVisibility(false);
   mainWindow.loadFile('index.html')
 }

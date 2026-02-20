@@ -8,6 +8,7 @@ from app.core.engine import GameEngine
 from app.core.retirement import RetirementManager
 from app.core.prize_money import PrizeMoneyManager
 from app.core.transport import TransportManager
+from app.core.crash_damage import CrashDamageManager
 from app.core.finance_reporting import build_finance_report
 from app.core.save_manager import save_game, load_game as load_game_file, has_save
 from app.race.race_manager import RaceManager
@@ -237,6 +238,12 @@ def process_command(command):
                 CURRENT_STATE.calendar.current_event,
                 attended=True,
             )
+            crash_damage_manager = CrashDamageManager()
+            crash_damage_charges = crash_damage_manager.charge_for_race(
+                CURRENT_STATE,
+                race_result,
+                CURRENT_STATE.calendar.current_event,
+            )
 
             if transport_charge:
                 CURRENT_STATE.add_email(
@@ -249,6 +256,22 @@ def process_command(command):
                     ),
                     category=EmailCategory.GENERAL
                 )
+            if crash_damage_charges:
+                total_damage = sum(c.applied_cost for c in crash_damage_charges)
+                lines = "\n".join(
+                    f"- {c.driver_name}: {c.tier.title()} damage (${c.applied_cost:,})"
+                    for c in crash_damage_charges
+                )
+                CURRENT_STATE.add_email(
+                    sender="Chief Mechanic",
+                    subject=f"Crash Damage Report: {race_result.get('event_name', 'Grand Prix')}",
+                    body=(
+                        "The following crash repair work has been logged:\n\n"
+                        f"{lines}\n\n"
+                        f"Total repair cost: ${total_damage:,}"
+                    ),
+                    category=EmailCategory.GENERAL,
+                )
 
             # Generate race result email
             winner = race_result["results"][0]
@@ -259,7 +282,8 @@ def process_command(command):
             player_results = [r for r in race_result["results"] if r["team_id"] == player_team_id]
             player_lines = ""
             for pr in player_results:
-                player_lines += f"\n  P{pr['position']} - {pr['driver_name']} ({pr['points']} pts)"
+                result_label = f"P{pr['position']}" if pr.get("position") else pr.get("status", "DNF")
+                player_lines += f"\n  {result_label} - {pr['driver_name']} ({pr['points']} pts)"
             
             CURRENT_STATE.add_email(
                 sender="Race Director",

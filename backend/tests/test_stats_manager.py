@@ -55,3 +55,14 @@ def test_apply_race_results_without_current_event_skips_result_history():
     assert state.drivers[0].race_starts == 34
     assert state.drivers[0].wins == 12
     assert state.driver_season_results.get(1998, {}) == {}
+
+
+def test_apply_race_results_persists_status_for_dnf_entries():
+    state = create_state_with_race_event()
+    manager = DriverStatsManager()
+
+    manager.apply_race_results(state, [{"driver_id": 1, "position": None, "status": "DNF"}])
+
+    season = state.driver_season_results[1998]
+    assert season[1][0]["status"] == "DNF"
+    assert season[1][0]["position"] is None
