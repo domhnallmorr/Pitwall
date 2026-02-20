@@ -35,19 +35,30 @@ def test_build_finance_report_summarizes_and_groups_by_track():
         category=TransactionCategory.DRIVER_WAGES,
         description="Wage",
     )
+    finance.add_transaction(
+        week=10,
+        year=1998,
+        amount=-120_000,
+        category=TransactionCategory.WORKFORCE_WAGES,
+        description="Workforce payroll",
+        event_name="Albert Park",
+        event_type="RACE",
+        circuit_country="Australia",
+    )
     state.finance = finance
 
     report = build_finance_report(state)
 
     assert report["summary"]["income_total"] == 2_000_000
-    assert report["summary"]["expense_total"] == 430_000
-    assert report["summary"]["net_profit_loss"] == 1_570_000
+    assert report["summary"]["expense_total"] == 550_000
+    assert report["summary"]["net_profit_loss"] == 1_450_000
     assert report["summary"]["transport_total"] == 350_000
+    assert report["summary"]["workforce_total"] == 120_000
 
     assert len(report["track_profit_loss"]) == 1
     track = report["track_profit_loss"][0]
     assert track["track"] == "Albert Park"
     assert track["country"] == "Australia"
     assert track["income"] == 2_000_000
-    assert track["expense"] == 350_000
-    assert track["net"] == 1_650_000
+    assert track["expense"] == 470_000
+    assert track["net"] == 1_530_000

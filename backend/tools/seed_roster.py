@@ -32,7 +32,22 @@ def create_schema(conn):
             start_year INTEGER DEFAULT 0,
             balance INTEGER DEFAULT 0,
             facilities INTEGER DEFAULT 0,
-            car_speed INTEGER DEFAULT 50
+            car_speed INTEGER DEFAULT 50,
+            workforce INTEGER DEFAULT 0
+        )
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS technical_directors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            country TEXT,
+            age INTEGER,
+            skill INTEGER DEFAULT 50,
+            contract_length INTEGER DEFAULT 0,
+            salary INTEGER DEFAULT 0,
+            team_name TEXT,
+            start_year INTEGER DEFAULT 0
         )
     ''')
 
@@ -82,6 +97,23 @@ def create_schema(conn):
     team_columns = {row[1] for row in c.fetchall()}
     if "car_speed" not in team_columns:
         c.execute("ALTER TABLE teams ADD COLUMN car_speed INTEGER DEFAULT 50")
+    if "workforce" not in team_columns:
+        c.execute("ALTER TABLE teams ADD COLUMN workforce INTEGER DEFAULT 0")
+
+    c.execute("PRAGMA table_info(technical_directors)")
+    td_columns = {row[1] for row in c.fetchall()}
+    if "skill" not in td_columns:
+        c.execute("ALTER TABLE technical_directors ADD COLUMN skill INTEGER DEFAULT 50")
+    if "country" not in td_columns:
+        c.execute("ALTER TABLE technical_directors ADD COLUMN country TEXT")
+    if "contract_length" not in td_columns:
+        c.execute("ALTER TABLE technical_directors ADD COLUMN contract_length INTEGER DEFAULT 0")
+    if "salary" not in td_columns:
+        c.execute("ALTER TABLE technical_directors ADD COLUMN salary INTEGER DEFAULT 0")
+    if "team_name" not in td_columns:
+        c.execute("ALTER TABLE technical_directors ADD COLUMN team_name TEXT")
+    if "start_year" not in td_columns:
+        c.execute("ALTER TABLE technical_directors ADD COLUMN start_year INTEGER DEFAULT 0")
     
     conn.commit()
 
@@ -220,6 +252,41 @@ def seed_data(conn):
         "Tarnwell": 40,
         "Marchetti": 35,
     }
+    team_workforce = {
+        "Warrick": 250,
+        "Ferano": 230,
+        "Benedetti": 190,
+        "McAlister": 240,
+        "Joyce": 138,
+        "Pascal": 110,
+        "Schweizer": 180,
+        "Swords": 97,
+        "Strathmore": 130,
+        "Tarnwell": 105,
+        "Marchetti": 90,
+    }
+    technical_directors_data = [
+        (0, "Peter Heed", "United Kingdom", 52, 75, 5, 4_800_000, "Warrick"),
+        (0, "Rob Brann", "United Kingdom", 48, 90, 3, 2_800_000, "Ferano"),
+        (0, "Paddy Simons", "United Kingdom", 45, 80, 3, 2_400_000, "Benedetti"),
+        (0, "Aidan Newson", "United Kingdom", 40, 95, 5, 3_200_000, "McAlister"),
+        (0, "Gerry Mandarin", "United Kingdom", 47, 62, 1, 800_000, "Joyce"),
+        (0, "Bertrand Duvet", "France", 59, 50, 1, 720_000, "Pascal"),
+        (0, "Leon Ressner", "Germany", 47, 55, 3, 640_000, "Schweizer"),
+        (0, "James Barnwood", "United Kingdom", 52, 78, 1, 2_000_000, "Swords"),
+        (0, "Adrian Jenson", "United Kingdom", 51, 35, 1, 560_000, "Strathmore"),
+        (0, "Henry Pendleton", "United Kingdom", 54, 45, 1, 480_000, "Tarnwell"),
+        (0, "Ginter Brumer", "Austria", 48, 50, 3, 400_000, "Marchetti"),
+        (0, "Francis Durney", None, 48, 30, 0, 0, None),
+        (0, "Louis Bigoire", None, 38, 32, 0, 0, None),
+        (0, "Gianni Tredoni", None, 41, 29, 0, 0, None),
+        (0, "Andrew Rennard", None, 47, 42, 0, 0, None),
+        (0, "Mike Coughlan", None, 39, 45, 0, 0, None),
+        (0, "Mike Gascoyne", None, 35, 70, 0, 0, None),
+        (0, "Neil Oatley", None, 44, 60, 0, 0, None),
+        (0, "Sergio Rinland", None, 46, 34, 0, 0, None),
+        (0, "Aldo Costa", None, 37, 66, 0, 0, None),
+    ]
     
     # ... (Drivers/Teams logic omitted for brevity, keeping existing structure via tool)    
     # Ensure required circuits exist (safe for existing DBs).
@@ -301,6 +368,25 @@ def seed_data(conn):
             'UPDATE teams SET car_speed = ? WHERE name = ?',
             [(speed, name) for name, speed in team_speeds.items()]
         )
+        c.executemany(
+            'UPDATE teams SET workforce = ? WHERE name = ?',
+            [(workforce, name) for name, workforce in team_workforce.items()]
+        )
+
+        c.execute('SELECT name, start_year FROM technical_directors')
+        existing_td_keys = {(row[0], row[1]) for row in c.fetchall()}
+        tds_to_insert = [td for td in technical_directors_data if (td[1], td[0]) not in existing_td_keys]
+        if tds_to_insert:
+            c.executemany(
+                'INSERT INTO technical_directors (start_year, name, country, age, skill, contract_length, salary, team_name) '
+                'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                tds_to_insert,
+            )
+
+        c.executemany(
+            'UPDATE technical_directors SET country = ?, age = ?, skill = ?, contract_length = ?, salary = ?, team_name = ? WHERE name = ? AND start_year = ?',
+            [(td[2], td[3], td[4], td[5], td[6], td[7], td[1], td[0]) for td in technical_directors_data],
+        )
         conn.commit()
         
     # Check if Calendar exists
@@ -349,6 +435,22 @@ def seed_data(conn):
         c.executemany('INSERT INTO calendar (year, week, name, type) VALUES (?, ?, ?, ?)', calendar_events)
         conn.commit()
         print("Calendar seeded.")
+
+    # Always ensure technical directors are seeded and up to date.
+    c.execute('SELECT name, start_year FROM technical_directors')
+    existing_td_keys = {(row[0], row[1]) for row in c.fetchall()}
+    tds_to_insert = [td for td in technical_directors_data if (td[1], td[0]) not in existing_td_keys]
+    if tds_to_insert:
+        c.executemany(
+            'INSERT INTO technical_directors (start_year, name, country, age, skill, contract_length, salary, team_name) '
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            tds_to_insert,
+        )
+    c.executemany(
+        'UPDATE technical_directors SET country = ?, age = ?, skill = ?, contract_length = ?, salary = ?, team_name = ? WHERE name = ? AND start_year = ?',
+        [(td[2], td[3], td[4], td[5], td[6], td[7], td[1], td[0]) for td in technical_directors_data],
+    )
+    conn.commit()
         
     if drivers_exist:
         return
@@ -404,10 +506,10 @@ def seed_data(conn):
         (0, "Marchetti", "Italy", "Kazuki Nakamura", "Eduardo Torres", 8900000, 18),
     ]
 
-    teams_data_with_speed = [(*t, team_speeds.get(t[1], 50)) for t in teams_data]
+    teams_data_with_attrs = [(*t, team_speeds.get(t[1], 50), team_workforce.get(t[1], 0)) for t in teams_data]
     c.executemany(
-        'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        teams_data_with_speed
+        'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed, workforce) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        teams_data_with_attrs
     )
     
     # Metadata

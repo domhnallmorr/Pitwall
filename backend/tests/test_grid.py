@@ -27,6 +27,7 @@ def test_grid_dataframe_structure():
     assert "Team" in df.columns
     assert "Driver1" in df.columns
     assert "Driver2" in df.columns
+    assert "TechnicalDirector" in df.columns
     
     # Check Team 1 (Full)
     row1 = df[df["Team"] == "Team 1"].iloc[0]
@@ -52,8 +53,8 @@ def test_grid_dataframe_uses_year_snapshot_when_available():
     state = create_mock_state()
     manager = GridManager()
     state.grid_snapshots[1999] = [
-        {"Team": "Team 1", "Country": "UK", "Driver1": "Next Driver 1", "Driver2": "Next Driver 2"},
-        {"Team": "Team 2", "Country": "IT", "Driver1": "Next Driver 3", "Driver2": "VACANT"},
+        {"Team": "Team 1", "Country": "UK", "Driver1": "Next Driver 1", "Driver2": "Next Driver 2", "TechnicalDirector": "VACANT"},
+        {"Team": "Team 2", "Country": "IT", "Driver1": "Next Driver 3", "Driver2": "VACANT", "TechnicalDirector": "VACANT"},
     ]
 
     df = manager.get_grid_dataframe(state, year=1999)
@@ -61,6 +62,7 @@ def test_grid_dataframe_uses_year_snapshot_when_available():
     row1 = df[df["Team"] == "Team 1"].iloc[0]
     assert row1["Driver1"] == "Next Driver 1"
     assert row1["Driver2"] == "Next Driver 2"
+    assert row1["TechnicalDirector"] == "VACANT"
 
 
 def test_grid_next_year_projection_excludes_retiring_drivers():

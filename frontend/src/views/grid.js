@@ -99,14 +99,17 @@ export default class GridView {
 		data.forEach(row => {
 			const d1Name = row.Driver1 || 'Vacant';
 			const d2Name = row.Driver2 || 'Vacant';
+			const tdName = row.TechnicalDirector || 'VACANT';
 			const d1Country = this.driverCountryByName[d1Name] || '';
 			const d2Country = this.driverCountryByName[d2Name] || '';
+			const tdCountry = row.TechnicalDirectorCountry || '';
 
 			const tr = document.createElement('tr');
 			tr.innerHTML = `
                 <td>${row.Team}</td>
                 <td>${this.renderDriverCell(d1Country, d1Name)}</td>
                 <td>${this.renderDriverCell(d2Country, d2Name)}</td>
+                <td>${this.renderStaffCell(tdCountry, tdName)}</td>
             `;
 			targetBody.appendChild(tr);
 		});
@@ -125,5 +128,12 @@ export default class GridView {
 			return name || 'VACANT';
 		}
 		return `<button class="driver-link" data-driver-name="${name}">${renderFlagLabel(country, name)}</button>`;
+	}
+
+	renderStaffCell(country, name) {
+		if (!name || name === 'VACANT' || name === 'Vacant') {
+			return name || 'VACANT';
+		}
+		return renderFlagLabel(country, name);
 	}
 }

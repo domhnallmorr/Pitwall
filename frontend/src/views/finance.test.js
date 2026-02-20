@@ -15,6 +15,7 @@ describe('FinanceView', () => {
 			<div id="finance-expense-total"></div>
 			<div id="finance-net-pl"></div>
 			<div id="finance-transport-total"></div>
+			<div id="finance-workforce-total"></div>
 			<div id="finance-prize-progress"></div>
 			<table><tbody id="finance-track-pl-body"></tbody></table>
 			<table><tbody id="finance-transactions-body"></tbody></table>
@@ -36,7 +37,8 @@ describe('FinanceView', () => {
 				income_total: 5000,
 				expense_total: 1200,
 				net_profit_loss: 3800,
-				transport_total: 400
+				transport_total: 400,
+				workforce_total: 700
 			},
 			track_profit_loss: [
 				{ track: 'Albert Park', country: 'Australia', income: 5000, expense: 400, net: 4600 }
@@ -48,6 +50,7 @@ describe('FinanceView', () => {
 
 		expect(document.getElementById('finance-income-total').textContent).toBe('$5,000')
 		expect(document.getElementById('finance-transport-total').textContent).toBe('$400')
+		expect(document.getElementById('finance-workforce-total').textContent).toBe('$700')
 		const trackRows = document.querySelectorAll('#finance-track-pl-body tr')
 		expect(trackRows.length).toBe(1)
 		expect(trackRows[0].innerHTML).toContain('Albert Park')

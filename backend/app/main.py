@@ -9,12 +9,15 @@ from app.core.retirement import RetirementManager
 from app.core.prize_money import PrizeMoneyManager
 from app.core.transport import TransportManager
 from app.core.crash_damage import CrashDamageManager
+from app.core.driver_wages import DriverWageManager
+from app.core.workforce_costs import WorkforceCostManager
 from app.core.finance_reporting import build_finance_report
 from app.core.save_manager import save_game, load_game as load_game_file, has_save
 from app.race.race_manager import RaceManager
 from app.models.calendar import Calendar
 from app.models.state import GameState
 from app.models.email import EmailCategory
+from app.models.finance import TransactionCategory
 
 # Configure logging to write to a file, since stdout is used for IPC
 logging.basicConfig(filename='backend_debug.log', level=logging.DEBUG)
@@ -33,9 +36,19 @@ def process_command(command):
     
     if cmd_type == 'load_roster':
         try:
-            teams, drivers, year, events, circuits = load_roster(year=0) # Load default
+            teams, drivers, year, events, circuits, technical_directors = load_roster(
+                year=0,
+                include_technical_directors=True,
+            ) # Load default
             calendar = Calendar(events=events, current_week=1) 
-            CURRENT_STATE = GameState(year=year, teams=teams, drivers=drivers, calendar=calendar, circuits=circuits)
+            CURRENT_STATE = GameState(
+                year=year,
+                teams=teams,
+                drivers=drivers,
+                technical_directors=technical_directors,
+                calendar=calendar,
+                circuits=circuits,
+            )
             
             grid_manager = GridManager()
             grid_json = grid_manager.get_grid_json(CURRENT_STATE)
@@ -54,9 +67,19 @@ def process_command(command):
         try:
             # 1. Ensure Roster is loaded
             if not CURRENT_STATE:
-                 teams, drivers, year, events, circuits = load_roster(year=0)
+                 teams, drivers, year, events, circuits, technical_directors = load_roster(
+                     year=0,
+                     include_technical_directors=True,
+                 )
                  calendar = Calendar(events=events, current_week=1)
-                 CURRENT_STATE = GameState(year=year, teams=teams, drivers=drivers, calendar=calendar, circuits=circuits)
+                 CURRENT_STATE = GameState(
+                     year=year,
+                     teams=teams,
+                     drivers=drivers,
+                     technical_directors=technical_directors,
+                     calendar=calendar,
+                     circuits=circuits,
+                 )
             
             # 2. Find Team "Warrick"
             warrick_team = next((t for t in CURRENT_STATE.teams if t.name == "Warrick"), None)
@@ -230,19 +253,32 @@ def process_command(command):
             
             race_manager = RaceManager()
             race_result = race_manager.simulate_race(CURRENT_STATE)
+            current_event = CURRENT_STATE.calendar.current_event
+            event_name = race_result.get("event_name", "Grand Prix")
+
             prize_money_manager = PrizeMoneyManager()
             prize_money_manager.process_race_payout(CURRENT_STATE)
+            driver_wage_manager = DriverWageManager()
+            driver_wage_manager.charge_for_event(
+                CURRENT_STATE,
+                current_event,
+            )
+            workforce_cost_manager = WorkforceCostManager()
+            workforce_charge = workforce_cost_manager.charge_for_event(
+                CURRENT_STATE,
+                current_event,
+            )
             transport_manager = TransportManager()
             transport_charge = transport_manager.charge_for_event(
                 CURRENT_STATE,
-                CURRENT_STATE.calendar.current_event,
+                current_event,
                 attended=True,
             )
             crash_damage_manager = CrashDamageManager()
             crash_damage_charges = crash_damage_manager.charge_for_race(
                 CURRENT_STATE,
                 race_result,
-                CURRENT_STATE.calendar.current_event,
+                current_event,
             )
 
             if transport_charge:
@@ -255,6 +291,18 @@ def process_command(command):
                         f"Cost: ${transport_charge.applied_cost:,}"
                     ),
                     category=EmailCategory.GENERAL
+                )
+            if workforce_charge:
+                CURRENT_STATE.add_email(
+                    sender="HR & Operations",
+                    subject=f"Workforce Payroll Processed: {workforce_charge.event_name}",
+                    body=(
+                        f"Race workforce payroll has been processed for {workforce_charge.event_name}.\n\n"
+                        f"Staff count: {workforce_charge.workforce}\n"
+                        f"Cost this race: ${workforce_charge.applied_cost:,}\n"
+                        f"(Based on average annual wage ${workforce_charge.annual_avg_wage:,})"
+                    ),
+                    category=EmailCategory.GENERAL,
                 )
             if crash_damage_charges:
                 total_damage = sum(c.applied_cost for c in crash_damage_charges)
@@ -273,9 +321,47 @@ def process_command(command):
                     category=EmailCategory.GENERAL,
                 )
 
+            # Send race finance summary after all race-linked transactions are posted.
+            race_transactions = [
+                t for t in CURRENT_STATE.finance.transactions
+                if t.week == CURRENT_STATE.calendar.current_week
+                and t.year == CURRENT_STATE.year
+                and t.event_name == event_name
+                and t.event_type == "RACE"
+            ]
+            if race_transactions:
+                income_total = sum(t.amount for t in race_transactions if t.amount > 0)
+                expense_total = sum(-t.amount for t in race_transactions if t.amount < 0)
+                net_total = income_total - expense_total
+
+                def category_total(category):
+                    return sum(t.amount for t in race_transactions if t.category == category)
+
+                prize_total = category_total(TransactionCategory.PRIZE_MONEY)
+                driver_wage_total = category_total(TransactionCategory.DRIVER_WAGES)
+                workforce_total = category_total(TransactionCategory.WORKFORCE_WAGES)
+                transport_total = category_total(TransactionCategory.TRANSPORT)
+                crash_total = category_total(TransactionCategory.CRASH_DAMAGE)
+
+                CURRENT_STATE.add_email(
+                    sender="Finance Department",
+                    subject=f"Race Finance Summary: {event_name}",
+                    body=(
+                        f"Financial summary for {event_name}:\n\n"
+                        f"Prize money: {'+' if prize_total >= 0 else '-'}${abs(prize_total):,}\n"
+                        f"Driver wages: {'+' if driver_wage_total >= 0 else '-'}${abs(driver_wage_total):,}\n"
+                        f"Workforce payroll: {'+' if workforce_total >= 0 else '-'}${abs(workforce_total):,}\n"
+                        f"Transport: {'+' if transport_total >= 0 else '-'}${abs(transport_total):,}\n"
+                        f"Crash damage: {'+' if crash_total >= 0 else '-'}${abs(crash_total):,}\n\n"
+                        f"Income: ${income_total:,}\n"
+                        f"Expenses: ${expense_total:,}\n"
+                        f"Net: {'+' if net_total >= 0 else '-'}${abs(net_total):,}"
+                    ),
+                    category=EmailCategory.GENERAL,
+                )
+
             # Generate race result email
             winner = race_result["results"][0]
-            event_name = race_result.get("event_name", "Grand Prix")
             
             # Find player team results
             player_team_id = CURRENT_STATE.player_team_id
@@ -355,13 +441,40 @@ def process_command(command):
                         "wage": d.wage,
                         "pay_driver": d.pay_driver,
                     })
+
+            team_td = next(
+                (td for td in CURRENT_STATE.technical_directors if td.team_id == player_team.id),
+                None,
+            )
             
             return {
                 "type": "staff_data",
                 "status": "success",
                 "data": {
                     "team_name": player_team.name,
-                    "drivers": team_drivers
+                    "drivers": team_drivers,
+                    "technical_director": (
+                        {
+                            "id": team_td.id,
+                            "name": team_td.name,
+                            "country": team_td.country,
+                            "age": team_td.age,
+                            "skill": team_td.skill,
+                            "contract_length": team_td.contract_length,
+                            "salary": team_td.salary,
+                        }
+                        if team_td else None
+                    ),
+                    "player_workforce": player_team.workforce,
+                    "teams": [
+                        {
+                            "id": t.id,
+                            "name": t.name,
+                            "country": t.country,
+                            "workforce": t.workforce,
+                        }
+                        for t in CURRENT_STATE.teams
+                    ],
                 }
             }
         except Exception as e:

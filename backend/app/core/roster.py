@@ -5,8 +5,63 @@ from app.models.enums import DriverRole
 from app.models.calendar import Event, EventType
 from typing import List, Tuple
 from app.models.circuit import Circuit
+from app.models.technical_director import TechnicalDirector
 
-def load_roster(year: int = 0) -> Tuple[List[Team], List[Driver], int, List[Event], List[Circuit]]:
+
+def _resolve_start_year(cursor, year: int) -> int:
+    if year == 0:
+        cursor.execute("SELECT value FROM metadata WHERE key='start_year'")
+        result = cursor.fetchone()
+        return int(result[0]) if result else 1998
+    return year
+
+
+def load_technical_directors(year: int = 0, teams: List[Team] | None = None) -> List[TechnicalDirector]:
+    """
+    Loads technical directors for the supplied year (or metadata default).
+    Optionally links directors to supplied Team objects.
+    """
+    conn = get_connection()
+    c = conn.cursor()
+    start_year = _resolve_start_year(c, year)
+
+    c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='technical_directors'")
+    if c.fetchone() is None:
+        conn.close()
+        return []
+
+    c.execute(
+        'SELECT id, name, country, age, skill, contract_length, salary, team_name '
+        'FROM technical_directors WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
+        (start_year,),
+    )
+
+    team_by_name = {t.name: t for t in teams} if teams else {}
+    technical_directors: List[TechnicalDirector] = []
+    for row in c.fetchall():
+        team_name = row[7]
+        team = team_by_name.get(team_name) if team_name else None
+        td = TechnicalDirector(
+            id=row[0],
+            name=row[1],
+            country=row[2],
+            age=row[3],
+            skill=row[4],
+            contract_length=row[5] if row[5] is not None else 0,
+            salary=row[6] if row[6] is not None else 0,
+            team_id=team.id if team else None,
+        )
+        if team:
+            team.technical_director_id = td.id
+        technical_directors.append(td)
+
+    conn.close()
+    return technical_directors
+
+def load_roster(
+    year: int = 0,
+    include_technical_directors: bool = False,
+) -> Tuple[List[Team], List[Driver], int, List[Event], List[Circuit]] | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector]]:
     """
     Loads teams, drivers, calendar, and circuits.
     Returns: (Teams, Drivers, StartYear, Events, Circuits)
@@ -15,12 +70,7 @@ def load_roster(year: int = 0) -> Tuple[List[Team], List[Driver], int, List[Even
     c = conn.cursor()
 
     # 1. Start Year
-    if year == 0:
-        c.execute("SELECT value FROM metadata WHERE key='start_year'")
-        result = c.fetchone()
-        start_year = int(result[0]) if result else 1998
-    else:
-        start_year = year
+    start_year = _resolve_start_year(c, year)
 
     # 2. Drivers
     # Allow loading drivers assigned to specific year OR default (0)
@@ -63,21 +113,28 @@ def load_roster(year: int = 0) -> Tuple[List[Team], List[Driver], int, List[Even
     c.execute("PRAGMA table_info(teams)")
     team_columns = {row[1] for row in c.fetchall()}
     has_car_speed = "car_speed" in team_columns
+    has_workforce = "workforce" in team_columns
+    car_speed_expr = "car_speed" if has_car_speed else "50"
+    workforce_expr = "workforce" if has_workforce else "0"
 
-    if has_car_speed:
-        c.execute(
-            'SELECT id, name, country, driver1_name, driver2_name, balance, facilities, car_speed FROM teams WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
-            (start_year,),
-        )
-    else:
-        c.execute(
-            'SELECT id, name, country, driver1_name, driver2_name, balance, facilities FROM teams WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
-            (start_year,),
-        )
+    c.execute(
+        f'SELECT id, name, country, driver1_name, driver2_name, balance, facilities, {car_speed_expr} AS car_speed, {workforce_expr} AS workforce '
+        'FROM teams WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
+        (start_year,),
+    )
     teams = []
     for row in c.fetchall():
-        car_speed = row[7] if has_car_speed and row[7] is not None else 50
-        t = Team(id=row[0], name=row[1], country=row[2], balance=row[5], facilities=row[6], car_speed=car_speed)
+        car_speed = row[7] if row[7] is not None else 50
+        workforce = row[8] if row[8] is not None else 0
+        t = Team(
+            id=row[0],
+            name=row[1],
+            country=row[2],
+            balance=row[5],
+            facilities=row[6],
+            car_speed=car_speed,
+            workforce=workforce,
+        )
         
         # Link Drivers to Teams
         d1_name = row[3]
@@ -97,7 +154,40 @@ def load_roster(year: int = 0) -> Tuple[List[Team], List[Driver], int, List[Even
 
         teams.append(t)
 
-    # 4. Load Calendar
+    # 4. Load Technical Directors and link to team ids (if table exists).
+    technical_directors: List[TechnicalDirector] = []
+    try:
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='technical_directors'")
+        has_td_table = c.fetchone() is not None
+        if has_td_table:
+            c.execute(
+                'SELECT id, name, country, age, skill, contract_length, salary, team_name '
+                'FROM technical_directors WHERE start_year = ? OR start_year = 0',
+                (start_year,),
+            )
+            td_rows = c.fetchall()
+            team_by_name = {t.name: t for t in teams}
+            for td_id, td_name, td_country, td_age, td_skill, td_contract_length, td_salary, team_name in td_rows:
+                team = team_by_name.get(team_name)
+                if team:
+                    team.technical_director_id = td_id
+                if include_technical_directors:
+                    technical_directors.append(
+                        TechnicalDirector(
+                            id=td_id,
+                            name=td_name,
+                            country=td_country,
+                            age=td_age,
+                            skill=td_skill,
+                            contract_length=td_contract_length if td_contract_length is not None else 0,
+                            salary=td_salary if td_salary is not None else 0,
+                            team_id=team.id if team else None,
+                        )
+                    )
+    except Exception as e:
+        print(f"Error linking technical directors: {e}")
+
+    # 5. Load Calendar
     try:
         c.execute('SELECT name, week, type FROM calendar WHERE year = ? ORDER BY week ASC', (start_year,))
         calendar_data = c.fetchall()
@@ -109,7 +199,7 @@ def load_roster(year: int = 0) -> Tuple[List[Team], List[Driver], int, List[Even
         print(f"Error loading calendar: {e}")
         events = []
 
-    # 5. Load Circuits
+    # 6. Load Circuits
     try:
         c.execute('SELECT id, name, country, location, laps, base_laptime_ms, length_km, overtaking_delta, power_factor, track_map_path FROM circuits')
         circuit_data = c.fetchall()
@@ -126,4 +216,6 @@ def load_roster(year: int = 0) -> Tuple[List[Team], List[Driver], int, List[Even
         circuits = []
 
     conn.close()
+    if include_technical_directors:
+        return teams, drivers, start_year, events, circuits, technical_directors
     return teams, drivers, start_year, events, circuits

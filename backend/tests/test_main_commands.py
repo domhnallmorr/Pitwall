@@ -116,6 +116,7 @@ def test_get_finance_returns_summary_and_track_profit_loss():
     assert "summary" in result["data"]
     assert "track_profit_loss" in result["data"]
     assert result["data"]["summary"]["transport_total"] == 200_000
+    assert "workforce_total" in result["data"]["summary"]
     assert len(result["data"]["track_profit_loss"]) == 1
 
 

@@ -126,6 +126,7 @@
                   <th>Team</th>
                   <th>Driver 1</th>
                   <th>Driver 2</th>
+                  <th>Technical Director</th>
                 </tr>
               </thead>
               <tbody id="grid-table-body">
@@ -141,6 +142,7 @@
                   <th>Team</th>
                   <th>Driver 1</th>
                   <th>Driver 2</th>
+                  <th>Technical Director</th>
                 </tr>
               </thead>
               <tbody id="grid-table-body-1999">
@@ -155,8 +157,36 @@
           <div class="view-header">
             <h2>Staff</h2>
           </div>
-          <div class="staff-drivers-container" id="staff-drivers-container">
-            <!-- JS populated: two driver cards -->
+          <div class="tabs">
+            <button class="tab-btn staff-tab-btn active" data-type="drivers">Drivers</button>
+            <button class="tab-btn staff-tab-btn" data-type="management">Management</button>
+            <button class="tab-btn staff-tab-btn" data-type="workforce">Workforce</button>
+          </div>
+          <div id="staff-content-drivers">
+            <div class="staff-drivers-container" id="staff-drivers-container">
+              <!-- JS populated: two driver cards -->
+            </div>
+          </div>
+          <div id="staff-content-workforce" style="display: none;">
+            <div id="staff-workforce-summary" class="staff-workforce-summary"></div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Pos</th>
+                  <th>Team</th>
+                  <th>Country</th>
+                  <th>Rating</th>
+                </tr>
+              </thead>
+              <tbody id="staff-workforce-table-body">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+          <div id="staff-content-management" style="display: none;">
+            <div class="staff-management-container" id="staff-management-container">
+              <!-- JS populated: technical director -->
+            </div>
           </div>
         </div>
 
@@ -227,6 +257,10 @@
             <div class="finance-balance-card">
               <div class="finance-balance-label">Transport Costs</div>
               <div id="finance-transport-total" class="finance-balance-amount finance-negative">$0</div>
+            </div>
+            <div class="finance-balance-card">
+              <div class="finance-balance-label">Workforce Costs</div>
+              <div id="finance-workforce-total" class="finance-balance-amount finance-negative">$0</div>
             </div>
           </div>
           <div id="finance-prize-progress" class="finance-prize-progress">Race installments: 0 / 0</div>

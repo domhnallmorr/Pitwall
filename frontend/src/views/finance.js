@@ -13,6 +13,7 @@ export default class FinanceView {
 		this.expenseTotalEl = document.getElementById('finance-expense-total');
 		this.netPlEl = document.getElementById('finance-net-pl');
 		this.transportTotalEl = document.getElementById('finance-transport-total');
+		this.workforceTotalEl = document.getElementById('finance-workforce-total');
 		this.prizeProgressEl = document.getElementById('finance-prize-progress');
 		this.trackPlBody = document.getElementById('finance-track-pl-body');
 		this.tbody = document.getElementById('finance-transactions-body');
@@ -43,10 +44,12 @@ export default class FinanceView {
 		const expenseTotal = summary.expense_total || 0;
 		const netPl = summary.net_profit_loss || 0;
 		const transportTotal = summary.transport_total || 0;
+		const workforceTotal = summary.workforce_total || 0;
 
 		if (this.incomeTotalEl) this.incomeTotalEl.textContent = '$' + incomeTotal.toLocaleString();
 		if (this.expenseTotalEl) this.expenseTotalEl.textContent = '$' + expenseTotal.toLocaleString();
 		if (this.transportTotalEl) this.transportTotalEl.textContent = '$' + transportTotal.toLocaleString();
+		if (this.workforceTotalEl) this.workforceTotalEl.textContent = '$' + workforceTotal.toLocaleString();
 		if (this.netPlEl) {
 			const netFormatted = '$' + Math.abs(netPl).toLocaleString();
 			this.netPlEl.textContent = netPl < 0 ? '-' + netFormatted : netFormatted;

@@ -1,7 +1,6 @@
 from app.models.state import GameState
 from app.models.calendar import EventType
 from app.core.rollover import SeasonRolloverManager
-from app.models.finance import TransactionCategory
 from app.core.transport import TransportManager
 from app.models.email import EmailCategory
 
@@ -88,20 +87,5 @@ class GameEngine:
         return self.get_week_summary(state)
 
     def _process_weekly_finances(self, state: GameState):
-        """Process weekly financial transactions (driver wages, etc.)."""
-        player_team = state.player_team
-        if not player_team:
-            return
-
-        for driver in state.drivers:
-            if driver.team_id == player_team.id:
-                weekly_wage = driver.wage // 52
-                # For regular drivers: wage is positive, so we subtract it (expense)
-                # For pay drivers: wage is negative, so subtracting a negative = adding (income)
-                state.finance.add_transaction(
-                    week=state.calendar.current_week,
-                    year=state.year,
-                    amount=-weekly_wage,
-                    category=TransactionCategory.DRIVER_WAGES,
-                    description=f"Weekly wage: {driver.name}"
-                )
+        """Reserved for non-race recurring finances; driver/workforce costs are race-linked."""
+        return

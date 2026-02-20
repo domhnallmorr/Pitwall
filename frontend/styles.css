@@ -748,6 +748,20 @@ p {
   padding: 10px 0;
 }
 
+.staff-management-container {
+  display: flex;
+  gap: 24px;
+  padding: 10px 0;
+  max-width: 560px;
+}
+
+.staff-workforce-summary {
+  margin: 12px 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e0e6ed;
+}
+
 .staff-driver-card {
   flex: 1;
   background: rgba(10, 25, 47, 0.6);
@@ -832,6 +846,44 @@ p {
 }
 
 .staff-speed-block.is-filled {
+  border-color: #64ffda;
+  background: linear-gradient(90deg, #64ffda, #31d0ad);
+}
+
+.staff-workforce-rating {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.staff-workforce-block {
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid #3a4f74;
+  background: rgba(58, 79, 116, 0.25);
+}
+
+.staff-workforce-block.is-filled {
+  border-color: #64ffda;
+  background: linear-gradient(90deg, #64ffda, #31d0ad);
+}
+
+.staff-skill-rating {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.staff-skill-block {
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid #3a4f74;
+  background: rgba(58, 79, 116, 0.25);
+}
+
+.staff-skill-block.is-filled {
   border-color: #64ffda;
   background: linear-gradient(90deg, #64ffda, #31d0ad);
 }

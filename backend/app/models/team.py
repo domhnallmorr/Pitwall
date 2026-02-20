@@ -6,6 +6,8 @@ class Team(BaseModel):
     name: str
     country: str
     car_speed: int = 50
+    workforce: int = 0
+    technical_director_id: Optional[int] = None
     driver1_id: Optional[int] = None
     driver2_id: Optional[int] = None
     points: int = 0

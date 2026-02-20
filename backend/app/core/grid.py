@@ -23,16 +23,20 @@ class GridManager:
         """
         data = []
         driver_lookup = {d.id: d for d in state.drivers}
+        td_lookup = {td.id: td for td in state.technical_directors}
 
         for team in state.teams:
             d1 = driver_lookup.get(team.driver1_id)
             d2 = driver_lookup.get(team.driver2_id)
+            td = td_lookup.get(team.technical_director_id)
 
             row = {
                 "Team": team.name,
                 "Country": team.country,
                 "Driver1": d1.name if d1 else "VACANT",
-                "Driver2": d2.name if d2 else "VACANT"
+                "Driver2": d2.name if d2 else "VACANT",
+                "TechnicalDirector": td.name if td else "VACANT",
+                "TechnicalDirectorCountry": td.country if td and td.country else "",
             }
             data.append(row)
 
@@ -48,16 +52,20 @@ class GridManager:
             d.id: d for d in state.drivers
             if d.active and (d.retirement_year is None or d.retirement_year > state.year)
         }
+        td_lookup = {td.id: td for td in state.technical_directors}
 
         for team in state.teams:
             d1 = projected_driver_lookup.get(team.driver1_id)
             d2 = projected_driver_lookup.get(team.driver2_id)
+            td = td_lookup.get(team.technical_director_id)
 
             row = {
                 "Team": team.name,
                 "Country": team.country,
                 "Driver1": d1.name if d1 else "VACANT",
-                "Driver2": d2.name if d2 else "VACANT"
+                "Driver2": d2.name if d2 else "VACANT",
+                "TechnicalDirector": td.name if td else "VACANT",
+                "TechnicalDirectorCountry": td.country if td and td.country else "",
             }
             data.append(row)
 
@@ -71,7 +79,7 @@ class GridManager:
     def get_grid_dataframe(self, state: GameState, year: int | None = None) -> pd.DataFrame:
         """
         Generates a DataFrame representing the grid for a given year.
-        Columns: Team, Country, Driver1, Driver2
+        Columns: Team, Country, Driver1, Driver2, TechnicalDirector
         """
         return pd.DataFrame(self.get_grid_records(state, year=year))
 
