@@ -108,45 +108,54 @@ export default class StaffView {
 	renderManagement(data) {
 		if (!this.managementContainer) return;
 		const td = data?.technical_director;
-		if (!td) {
-			this.managementContainer.innerHTML = '<p style="color: #64748b;">No technical director assigned.</p>';
+		const cm = data?.commercial_manager;
+		if (!td && !cm) {
+			this.managementContainer.innerHTML = '<p style="color: #64748b;">No management staff assigned.</p>';
 			return;
 		}
 
-		const portraitFile = encodeURIComponent((td.name || '').toLowerCase() + '.png');
-		const absSalary = Math.abs(td.salary || 0);
-		const salaryFormatted = '$' + absSalary.toLocaleString();
+		const renderCard = (member, roleLabel, showCountry = false) => {
+			if (!member) return '';
+			const portraitFile = encodeURIComponent((member.name || '').toLowerCase() + '.png');
+			const absSalary = Math.abs(member.salary || 0);
+			const salaryFormatted = '$' + absSalary.toLocaleString();
+			return `
+				<div class="staff-driver-card">
+					<div class="staff-card-role">${roleLabel}</div>
+					<div class="staff-card-portrait">
+						<img src="assets/managers/${portraitFile}" alt="${member.name}" onerror="this.style.display='none'">
+					</div>
+					<h3 class="staff-card-name">${member.name}</h3>
+					<div class="staff-card-details">
+						${showCountry ? `
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Country</span>
+							<span class="staff-detail-value">${renderFlagLabel(member.country || '', member.country || 'Unknown')}</span>
+						</div>` : ''}
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Age</span>
+							<span class="staff-detail-value">${member.age}</span>
+						</div>
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Skill</span>
+							<span class="staff-detail-value">${this.renderSkillBlocks(member.skill)}</span>
+						</div>
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Contract</span>
+							<span class="staff-detail-value">${member.contract_length} year(s)</span>
+						</div>
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Salary</span>
+							<span class="staff-detail-value">${salaryFormatted}</span>
+						</div>
+					</div>
+				</div>
+			`;
+		};
 
 		this.managementContainer.innerHTML = `
-			<div class="staff-driver-card">
-				<div class="staff-card-role">Technical Director</div>
-				<div class="staff-card-portrait">
-					<img src="assets/managers/${portraitFile}" alt="${td.name}" onerror="this.style.display='none'">
-				</div>
-				<h3 class="staff-card-name">${td.name}</h3>
-				<div class="staff-card-details">
-					<div class="staff-detail-row">
-						<span class="staff-detail-label">Country</span>
-						<span class="staff-detail-value">${renderFlagLabel(td.country || '', td.country || 'Unknown')}</span>
-					</div>
-					<div class="staff-detail-row">
-						<span class="staff-detail-label">Age</span>
-						<span class="staff-detail-value">${td.age}</span>
-					</div>
-					<div class="staff-detail-row">
-						<span class="staff-detail-label">Skill</span>
-						<span class="staff-detail-value">${this.renderSkillBlocks(td.skill)}</span>
-					</div>
-					<div class="staff-detail-row">
-						<span class="staff-detail-label">Contract</span>
-						<span class="staff-detail-value">${td.contract_length} year(s)</span>
-					</div>
-					<div class="staff-detail-row">
-						<span class="staff-detail-label">Salary</span>
-						<span class="staff-detail-value">${salaryFormatted}</span>
-					</div>
-				</div>
-			</div>
+			${renderCard(td, 'Technical Director', true)}
+			${renderCard(cm, 'Commercial Manager')}
 		`;
 	}
 

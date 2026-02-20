@@ -9,6 +9,9 @@ export default class GridView {
 		this.view = document.getElementById('grid-view');
 		this.tableBody = document.getElementById('grid-table-body');
 		this.tableBodyNext = document.getElementById('grid-table-body-1999');
+		this.headCurrent = document.getElementById('grid-head-1998');
+		this.headNext = document.getElementById('grid-head-1999');
+		this.modeToggle = document.getElementById('grid-mode-toggle');
 		this.tabBtns = this.view ? this.view.querySelectorAll('.tab-btn[data-year]') : [];
 		this.content1998 = document.getElementById('grid-content-1998');
 		this.content1999 = document.getElementById('grid-content-1999');
@@ -16,8 +19,11 @@ export default class GridView {
 		this.requestYearData = null;
 		this.driverCountryByName = {};
 		this.onDriverSelected = null;
+		this.mode = 'staff';
+		this.yearData = new Map();
 
 		this.initTabs();
+		this.initModeToggle();
 	}
 
 	setSeasonBase(year) {
@@ -70,7 +76,16 @@ export default class GridView {
 				if (this.requestYearData) {
 					this.requestYearData(Number(year));
 				}
+				this.renderYear(Number(year));
 			});
+		});
+	}
+
+	initModeToggle() {
+		if (!this.modeToggle) return;
+		this.modeToggle.addEventListener('change', () => {
+			this.mode = this.modeToggle.value === 'sponsors' ? 'sponsors' : 'staff';
+			this.renderYear(this.getActiveYear(), true);
 		});
 	}
 
@@ -101,36 +116,65 @@ export default class GridView {
 
 	render(data, year) {
 		const targetYear = Number.isFinite(Number(year)) ? Number(year) : this.getActiveYear();
+		this.yearData.set(targetYear, Array.isArray(data) ? data : []);
+		this.renderYear(targetYear);
+	}
+
+	renderYear(targetYear, animate = false) {
 		const isCurrentTab = targetYear === this.baseYear;
 		const targetBody = isCurrentTab ? this.tableBody : this.tableBodyNext;
+		const targetHead = isCurrentTab ? this.headCurrent : this.headNext;
+		const targetContent = isCurrentTab ? this.content1998 : this.content1999;
 		if (!targetBody) return;
+		const data = this.yearData.get(targetYear) || [];
+
+		if (targetHead) {
+			targetHead.innerHTML = this.mode === 'sponsors'
+				? '<tr><th>Team</th><th>Title Sponsor</th></tr>'
+				: '<tr><th>Team</th><th>Driver 1</th><th>Driver 2</th><th>Technical Director</th><th>Commercial Manager</th></tr>';
+		}
 
 		targetBody.innerHTML = ''; // Clear existing
 		data.forEach(row => {
-			const d1Name = row.Driver1 || 'Vacant';
-			const d2Name = row.Driver2 || 'Vacant';
-			const tdName = row.TechnicalDirector || 'VACANT';
-			const d1Country = this.driverCountryByName[d1Name] || '';
-			const d2Country = this.driverCountryByName[d2Name] || '';
-			const tdCountry = row.TechnicalDirectorCountry || '';
-
 			const tr = document.createElement('tr');
-			tr.innerHTML = `
-                <td>${row.Team}</td>
-                <td>${this.renderDriverCell(d1Country, d1Name)}</td>
-                <td>${this.renderDriverCell(d2Country, d2Name)}</td>
-                <td>${this.renderStaffCell(tdCountry, tdName)}</td>
-            `;
+			if (this.mode === 'sponsors') {
+				const sponsorName = row.TitleSponsor || 'VACANT';
+				tr.innerHTML = `
+					<td>${row.Team}</td>
+					<td>${this.renderSponsorCell(sponsorName)}</td>
+				`;
+			} else {
+				const d1Name = row.Driver1 || 'Vacant';
+				const d2Name = row.Driver2 || 'Vacant';
+				const tdName = row.TechnicalDirector || 'VACANT';
+				const d1Country = this.driverCountryByName[d1Name] || '';
+				const d2Country = this.driverCountryByName[d2Name] || '';
+				const tdCountry = row.TechnicalDirectorCountry || '';
+				const cmName = row.CommercialManager || 'VACANT';
+				tr.innerHTML = `
+	                <td>${row.Team}</td>
+	                <td>${this.renderDriverCell(d1Country, d1Name)}</td>
+	                <td>${this.renderDriverCell(d2Country, d2Name)}</td>
+	                <td>${this.renderStaffCell(tdCountry, tdName)}</td>
+	                <td>${this.renderStaffCell('', cmName)}</td>
+	            `;
+			}
 			targetBody.appendChild(tr);
 		});
 
-		targetBody.querySelectorAll('.driver-link').forEach((btn) => {
-			btn.addEventListener('click', () => {
-				if (this.onDriverSelected) {
-					this.onDriverSelected(btn.getAttribute('data-driver-name'));
-				}
+		if (this.mode === 'staff') {
+			targetBody.querySelectorAll('.driver-link').forEach((btn) => {
+				btn.addEventListener('click', () => {
+					if (this.onDriverSelected) {
+						this.onDriverSelected(btn.getAttribute('data-driver-name'));
+					}
+				});
 			});
-		});
+		}
+
+		if (animate && targetContent) {
+			this.playTabTransition(targetContent);
+		}
 	}
 
 	renderDriverCell(country, name) {
@@ -145,5 +189,21 @@ export default class GridView {
 			return name || 'VACANT';
 		}
 		return renderFlagLabel(country, name);
+	}
+
+	renderSponsorCell(name) {
+		if (!name || name === 'VACANT' || name === 'Vacant') {
+			return 'VACANT';
+		}
+		const encodedOriginal = encodeURIComponent(name);
+		const encodedLower = encodeURIComponent(name.toLowerCase());
+		const encodedUpper = encodeURIComponent(name.toUpperCase());
+		return `
+			<span class="sponsor-label">
+				<img class="sponsor-logo" src="assets/sponsor_logos/${encodedOriginal}.png" alt="${name} logo"
+					onerror="if(!this.dataset.f1){this.dataset.f1='1';this.src='assets/sponsor_logos/${encodedLower}.png';}else if(!this.dataset.f2){this.dataset.f2='1';this.src='assets/sponsor_logos/${encodedUpper}.png';}else{this.style.display='none';}">
+				<span>${name}</span>
+			</span>
+		`;
 	}
 }

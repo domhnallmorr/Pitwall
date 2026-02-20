@@ -23,7 +23,7 @@ describe('StaffView', () => {
 		staffView = new StaffView();
 	});
 
-	it('renders technical director in management section and supports tab switch', () => {
+	it('renders management section with technical and commercial managers and supports tab switch', () => {
 		staffView.render({
 			team_name: 'Warrick',
 			player_workforce: 250,
@@ -36,6 +36,13 @@ describe('StaffView', () => {
 				contract_length: 5,
 				salary: 4800000,
 			},
+			commercial_manager: {
+				name: 'Jace Whitman',
+				age: 29,
+				skill: 70,
+				contract_length: 5,
+				salary: 360000,
+			},
 		});
 
 		const managementBtn = document.querySelector('.staff-tab-btn[data-type="management"]');
@@ -43,5 +50,6 @@ describe('StaffView', () => {
 
 		expect(document.getElementById('staff-content-management').style.display).toBe('block');
 		expect(document.getElementById('staff-management-container').innerHTML).toContain('Peter Heed');
+		expect(document.getElementById('staff-management-container').innerHTML).toContain('Jace Whitman');
 	});
 });

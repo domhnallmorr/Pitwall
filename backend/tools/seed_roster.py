@@ -33,7 +33,9 @@ def create_schema(conn):
             balance INTEGER DEFAULT 0,
             facilities INTEGER DEFAULT 0,
             car_speed INTEGER DEFAULT 50,
-            workforce INTEGER DEFAULT 0
+            workforce INTEGER DEFAULT 0,
+            title_sponsor_name TEXT,
+            title_sponsor_yearly INTEGER DEFAULT 0
         )
     ''')
 
@@ -47,6 +49,28 @@ def create_schema(conn):
             contract_length INTEGER DEFAULT 0,
             salary INTEGER DEFAULT 0,
             team_name TEXT,
+            start_year INTEGER DEFAULT 0
+        )
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS commercial_managers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            age INTEGER,
+            skill INTEGER DEFAULT 50,
+            contract_length INTEGER DEFAULT 0,
+            salary INTEGER DEFAULT 0,
+            team_name TEXT,
+            start_year INTEGER DEFAULT 0
+        )
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS title_sponsors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            wealth INTEGER DEFAULT 0,
             start_year INTEGER DEFAULT 0
         )
     ''')
@@ -99,6 +123,10 @@ def create_schema(conn):
         c.execute("ALTER TABLE teams ADD COLUMN car_speed INTEGER DEFAULT 50")
     if "workforce" not in team_columns:
         c.execute("ALTER TABLE teams ADD COLUMN workforce INTEGER DEFAULT 0")
+    if "title_sponsor_name" not in team_columns:
+        c.execute("ALTER TABLE teams ADD COLUMN title_sponsor_name TEXT")
+    if "title_sponsor_yearly" not in team_columns:
+        c.execute("ALTER TABLE teams ADD COLUMN title_sponsor_yearly INTEGER DEFAULT 0")
 
     c.execute("PRAGMA table_info(technical_directors)")
     td_columns = {row[1] for row in c.fetchall()}
@@ -114,6 +142,28 @@ def create_schema(conn):
         c.execute("ALTER TABLE technical_directors ADD COLUMN team_name TEXT")
     if "start_year" not in td_columns:
         c.execute("ALTER TABLE technical_directors ADD COLUMN start_year INTEGER DEFAULT 0")
+
+    c.execute("PRAGMA table_info(commercial_managers)")
+    cm_columns = {row[1] for row in c.fetchall()}
+    if "skill" not in cm_columns:
+        c.execute("ALTER TABLE commercial_managers ADD COLUMN skill INTEGER DEFAULT 50")
+    if "age" not in cm_columns:
+        c.execute("ALTER TABLE commercial_managers ADD COLUMN age INTEGER")
+    if "contract_length" not in cm_columns:
+        c.execute("ALTER TABLE commercial_managers ADD COLUMN contract_length INTEGER DEFAULT 0")
+    if "salary" not in cm_columns:
+        c.execute("ALTER TABLE commercial_managers ADD COLUMN salary INTEGER DEFAULT 0")
+    if "team_name" not in cm_columns:
+        c.execute("ALTER TABLE commercial_managers ADD COLUMN team_name TEXT")
+    if "start_year" not in cm_columns:
+        c.execute("ALTER TABLE commercial_managers ADD COLUMN start_year INTEGER DEFAULT 0")
+
+    c.execute("PRAGMA table_info(title_sponsors)")
+    sponsor_columns = {row[1] for row in c.fetchall()}
+    if "wealth" not in sponsor_columns:
+        c.execute("ALTER TABLE title_sponsors ADD COLUMN wealth INTEGER DEFAULT 0")
+    if "start_year" not in sponsor_columns:
+        c.execute("ALTER TABLE title_sponsors ADD COLUMN start_year INTEGER DEFAULT 0")
     
     conn.commit()
 
@@ -265,6 +315,19 @@ def seed_data(conn):
         "Tarnwell": 105,
         "Marchetti": 90,
     }
+    team_title_sponsors = {
+        "Warrick": ("Windale", 32_500_000),
+        "Ferano": ("Marbano", 31_500_000),
+        "Benedetti": ("Soft Eight", 26_500_000),
+        "McAlister": ("East", 32_000_000),
+        "Joyce": ("Barlow & Hunt", 23_500_000),
+        "Pascal": ("Gavalon", 25_000_000),
+        "Schweizer": ("Yellow Cow", 21_500_000),
+        "Swords": ("Dasko", 5_200_000),
+        "Strathmore": ("HBRC", 3_800_000),
+        "Tarnwell": ("PIKA", 4_000_000),
+        "Marchetti": ("Tonometal", 4_400_000),
+    }
     technical_directors_data = [
         (0, "Peter Heed", "United Kingdom", 52, 75, 5, 4_800_000, "Warrick"),
         (0, "Rob Brann", "United Kingdom", 48, 90, 3, 2_800_000, "Ferano"),
@@ -286,6 +349,39 @@ def seed_data(conn):
         (0, "Neil Oatley", None, 44, 60, 0, 0, None),
         (0, "Sergio Rinland", None, 46, 34, 0, 0, None),
         (0, "Aldo Costa", None, 37, 66, 0, 0, None),
+    ]
+    commercial_managers_data = [
+        (0, "Jace Whitman", 29, 70, 5, 360_000, "Warrick"),
+        (0, "Silvano Domencari", 33, 90, 5, 560_000, "Ferano"),
+        (0, "Dylan Warden", 29, 66, 1, 416_000, "Benedetti"),
+        (0, "Emre Sadi", 29, 82, 4, 512_000, "McAlister"),
+        (0, "Iain Philbrook", 47, 92, 4, 464_000, "Joyce"),
+        (0, "Yann Lamberti", 44, 55, 2, 320_000, "Pascal"),
+        (0, "Felix Kessler", 43, 52, 3, 272_000, "Schweizer"),
+        (0, "Jodie Olivetti", 56, 40, 1, 176_000, "Swords"),
+        (0, "Rory Armstead", 29, 61, 3, 304_000, "Strathmore"),
+        (0, "Rufus Marlowing", 42, 42, 1, 80_000, "Tarnwell"),
+        (0, "Gianluca Rumiere", 58, 39, 1, 128_000, "Marchetti"),
+        (0, "Gaston Seville", 50, 35, 0, 0, None),
+        (0, "Miles Galloway", 38, 66, 0, 0, None),
+        (0, "Matteo Cusano", 39, 31, 0, 0, None),
+        (0, "Ronan Wexton", 41, 46, 0, 0, None),
+        (0, "Lars Olsson", 43, 59, 0, 0, None),
+        (0, "Hugo Bourdain", 52, 28, 0, 0, None),
+        (0, "Matteo Fessari", 45, 60, 0, 0, None),
+    ]
+    title_sponsors_data = [
+        (0, "Windale", 80),
+        (0, "Marbano", 99),
+        (0, "Soft Eight", 75),
+        (0, "East", 90),
+        (0, "Barlow & Hunt", 70),
+        (0, "Gavalon", 60),
+        (0, "Yellow Cow", 99),
+        (0, "Dasko", 45),
+        (0, "HBRC", 58),
+        (0, "PIKA", 28),
+        (0, "Tonometal", 25),
     ]
     
     # ... (Drivers/Teams logic omitted for brevity, keeping existing structure via tool)    
@@ -372,6 +468,10 @@ def seed_data(conn):
             'UPDATE teams SET workforce = ? WHERE name = ?',
             [(workforce, name) for name, workforce in team_workforce.items()]
         )
+        c.executemany(
+            'UPDATE teams SET title_sponsor_name = ?, title_sponsor_yearly = ? WHERE name = ?',
+            [(s[0], s[1], team_name) for team_name, s in team_title_sponsors.items()]
+        )
 
         c.execute('SELECT name, start_year FROM technical_directors')
         existing_td_keys = {(row[0], row[1]) for row in c.fetchall()}
@@ -386,6 +486,38 @@ def seed_data(conn):
         c.executemany(
             'UPDATE technical_directors SET country = ?, age = ?, skill = ?, contract_length = ?, salary = ?, team_name = ? WHERE name = ? AND start_year = ?',
             [(td[2], td[3], td[4], td[5], td[6], td[7], td[1], td[0]) for td in technical_directors_data],
+        )
+
+        c.execute('SELECT name, start_year FROM commercial_managers')
+        existing_cm_keys = {(row[0], row[1]) for row in c.fetchall()}
+        cms_to_insert = [cm for cm in commercial_managers_data if (cm[1], cm[0]) not in existing_cm_keys]
+        if cms_to_insert:
+            c.executemany(
+                'INSERT INTO commercial_managers (start_year, name, age, skill, contract_length, salary, team_name) '
+                'VALUES (?, ?, ?, ?, ?, ?, ?)',
+                cms_to_insert,
+            )
+
+        c.executemany(
+            'UPDATE commercial_managers SET age = ?, skill = ?, contract_length = ?, salary = ?, team_name = ? WHERE name = ? AND start_year = ?',
+            [(cm[2], cm[3], cm[4], cm[5], cm[6], cm[1], cm[0]) for cm in commercial_managers_data],
+        )
+
+        c.execute('SELECT name, start_year FROM title_sponsors')
+        existing_sponsor_keys = {(row[0], row[1]) for row in c.fetchall()}
+        sponsors_to_insert = [s for s in title_sponsors_data if (s[1], s[0]) not in existing_sponsor_keys]
+        if sponsors_to_insert:
+            c.executemany(
+                'INSERT INTO title_sponsors (start_year, name, wealth) VALUES (?, ?, ?)',
+                sponsors_to_insert,
+            )
+        c.executemany(
+            'DELETE FROM title_sponsors WHERE start_year = ? AND name = ?',
+            [(0, name) for name in ("Bright Shot", "Technonica", "x-plus")],
+        )
+        c.executemany(
+            'UPDATE title_sponsors SET wealth = ? WHERE name = ? AND start_year = ?',
+            [(s[2], s[1], s[0]) for s in title_sponsors_data],
         )
         conn.commit()
         
@@ -450,6 +582,30 @@ def seed_data(conn):
         'UPDATE technical_directors SET country = ?, age = ?, skill = ?, contract_length = ?, salary = ?, team_name = ? WHERE name = ? AND start_year = ?',
         [(td[2], td[3], td[4], td[5], td[6], td[7], td[1], td[0]) for td in technical_directors_data],
     )
+    c.execute('SELECT name, start_year FROM commercial_managers')
+    existing_cm_keys = {(row[0], row[1]) for row in c.fetchall()}
+    cms_to_insert = [cm for cm in commercial_managers_data if (cm[1], cm[0]) not in existing_cm_keys]
+    if cms_to_insert:
+        c.executemany(
+            'INSERT INTO commercial_managers (start_year, name, age, skill, contract_length, salary, team_name) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            cms_to_insert,
+        )
+    c.executemany(
+        'UPDATE commercial_managers SET age = ?, skill = ?, contract_length = ?, salary = ?, team_name = ? WHERE name = ? AND start_year = ?',
+        [(cm[2], cm[3], cm[4], cm[5], cm[6], cm[1], cm[0]) for cm in commercial_managers_data],
+    )
+    c.execute('SELECT name, start_year FROM title_sponsors')
+    existing_sponsor_keys = {(row[0], row[1]) for row in c.fetchall()}
+    sponsors_to_insert = [s for s in title_sponsors_data if (s[1], s[0]) not in existing_sponsor_keys]
+    if sponsors_to_insert:
+        c.executemany(
+            'INSERT INTO title_sponsors (start_year, name, wealth) VALUES (?, ?, ?)',
+            sponsors_to_insert,
+        )
+    c.executemany(
+        'UPDATE title_sponsors SET wealth = ? WHERE name = ? AND start_year = ?',
+        [(s[2], s[1], s[0]) for s in title_sponsors_data],
+    )
     conn.commit()
         
     if drivers_exist:
@@ -507,8 +663,12 @@ def seed_data(conn):
     ]
 
     teams_data_with_attrs = [(*t, team_speeds.get(t[1], 50), team_workforce.get(t[1], 0)) for t in teams_data]
+    teams_data_with_attrs = [
+        (*row, team_title_sponsors.get(row[1], (None, 0))[0], team_title_sponsors.get(row[1], (None, 0))[1])
+        for row in teams_data_with_attrs
+    ]
     c.executemany(
-        'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed, workforce) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed, workforce, title_sponsor_name, title_sponsor_yearly) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         teams_data_with_attrs
     )
     

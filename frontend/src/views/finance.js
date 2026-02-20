@@ -5,6 +5,10 @@
 
 export default class FinanceView {
 	constructor() {
+		this.tabBtns = document.querySelectorAll('.finance-tab-btn');
+		this.mainContent = document.getElementById('finance-content-main');
+		this.trackerContent = document.getElementById('finance-content-tracker');
+		this.logContent = document.getElementById('finance-content-log');
 		this.balanceEl = document.getElementById('finance-balance-value');
 		this.prizeEntitlementEl = document.getElementById('finance-prize-entitlement');
 		this.prizePaidEl = document.getElementById('finance-prize-paid');
@@ -14,9 +18,45 @@ export default class FinanceView {
 		this.netPlEl = document.getElementById('finance-net-pl');
 		this.transportTotalEl = document.getElementById('finance-transport-total');
 		this.workforceTotalEl = document.getElementById('finance-workforce-total');
+		this.sponsorshipTotalEl = document.getElementById('finance-sponsorship-total');
 		this.prizeProgressEl = document.getElementById('finance-prize-progress');
+		this.sponsorNameEl = document.getElementById('finance-sponsor-name');
+		this.sponsorAnnualEl = document.getElementById('finance-sponsor-annual');
+		this.sponsorInstallmentEl = document.getElementById('finance-sponsor-installment');
+		this.sponsorPaidEl = document.getElementById('finance-sponsor-paid');
+		this.sponsorRemainingEl = document.getElementById('finance-sponsor-remaining');
+		this.sponsorLogoWrap = document.getElementById('finance-sponsor-logo-wrap');
 		this.trackPlBody = document.getElementById('finance-track-pl-body');
 		this.tbody = document.getElementById('finance-transactions-body');
+		this.bindTabs();
+	}
+
+	bindTabs() {
+		if (!this.tabBtns.length) return;
+		const panelByType = {
+			main: this.mainContent,
+			tracker: this.trackerContent,
+			log: this.logContent,
+		};
+		const showPanel = (panel) => {
+			if (!panel) return;
+			panel.style.display = 'block';
+			panel.classList.remove('finance-tab-enter');
+			// Force reflow so the animation can replay on repeated tab changes.
+			void panel.offsetWidth;
+			panel.classList.add('finance-tab-enter');
+		};
+		this.tabBtns.forEach((btn) => {
+			btn.addEventListener('click', () => {
+				this.tabBtns.forEach((b) => b.classList.remove('active'));
+				btn.classList.add('active');
+				const type = btn.getAttribute('data-type');
+				if (this.mainContent) this.mainContent.style.display = 'none';
+				if (this.trackerContent) this.trackerContent.style.display = 'none';
+				if (this.logContent) this.logContent.style.display = 'none';
+				showPanel(panelByType[type]);
+			});
+		});
 	}
 
 	render(data) {
@@ -45,17 +85,45 @@ export default class FinanceView {
 		const netPl = summary.net_profit_loss || 0;
 		const transportTotal = summary.transport_total || 0;
 		const workforceTotal = summary.workforce_total || 0;
+		const sponsorshipTotal = summary.sponsorship_total || 0;
 
 		if (this.incomeTotalEl) this.incomeTotalEl.textContent = '$' + incomeTotal.toLocaleString();
 		if (this.expenseTotalEl) this.expenseTotalEl.textContent = '$' + expenseTotal.toLocaleString();
 		if (this.transportTotalEl) this.transportTotalEl.textContent = '$' + transportTotal.toLocaleString();
 		if (this.workforceTotalEl) this.workforceTotalEl.textContent = '$' + workforceTotal.toLocaleString();
+		if (this.sponsorshipTotalEl) this.sponsorshipTotalEl.textContent = '$' + sponsorshipTotal.toLocaleString();
 		if (this.netPlEl) {
 			const netFormatted = '$' + Math.abs(netPl).toLocaleString();
 			this.netPlEl.textContent = netPl < 0 ? '-' + netFormatted : netFormatted;
 			this.netPlEl.className = netPl < 0
 				? 'finance-balance-amount finance-negative'
 				: 'finance-balance-amount';
+		}
+
+		const sponsor = data.sponsor || {};
+		const sponsorName = sponsor.name || 'Unassigned';
+		const annualValue = sponsor.annual_value || 0;
+		const installment = sponsor.installment || 0;
+		const paidSoFar = sponsor.paid_so_far || 0;
+		const sponsorRemaining = sponsor.remaining || 0;
+
+		if (this.sponsorNameEl) this.sponsorNameEl.textContent = sponsorName;
+		if (this.sponsorAnnualEl) this.sponsorAnnualEl.textContent = '$' + annualValue.toLocaleString();
+		if (this.sponsorInstallmentEl) this.sponsorInstallmentEl.textContent = '$' + installment.toLocaleString();
+		if (this.sponsorPaidEl) this.sponsorPaidEl.textContent = '$' + paidSoFar.toLocaleString();
+		if (this.sponsorRemainingEl) this.sponsorRemainingEl.textContent = '$' + sponsorRemaining.toLocaleString();
+		if (this.sponsorLogoWrap) {
+			if (!sponsor.name) {
+				this.sponsorLogoWrap.innerHTML = '';
+			} else {
+				const encodedOriginal = encodeURIComponent(sponsor.name);
+				const encodedLower = encodeURIComponent(sponsor.name.toLowerCase());
+				const encodedUpper = encodeURIComponent(sponsor.name.toUpperCase());
+				this.sponsorLogoWrap.innerHTML = `
+					<img class="sponsor-logo" src="assets/sponsor_logos/${encodedOriginal}.png" alt="${sponsor.name} logo"
+						onerror="if(!this.dataset.f1){this.dataset.f1='1';this.src='assets/sponsor_logos/${encodedLower}.png';}else if(!this.dataset.f2){this.dataset.f2='1';this.src='assets/sponsor_logos/${encodedUpper}.png';}else{this.style.display='none';}">
+				`;
+			}
 		}
 
 		// Track P/L table

@@ -13,6 +13,7 @@ def build_finance_report(state: GameState) -> dict[str, Any]:
     net_profit_loss = income_total - expense_total
     transport_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.TRANSPORT and t.amount < 0)
     workforce_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.WORKFORCE_WAGES and t.amount < 0)
+    sponsorship_total = sum(t.amount for t in transactions if t.category == TransactionCategory.SPONSORSHIP and t.amount > 0)
 
     per_track = defaultdict(lambda: {"track": "", "country": "Unknown", "income": 0, "expense": 0, "net": 0})
     for t in transactions:
@@ -41,6 +42,7 @@ def build_finance_report(state: GameState) -> dict[str, Any]:
             "net_profit_loss": net_profit_loss,
             "transport_total": transport_total,
             "workforce_total": workforce_total,
+            "sponsorship_total": sponsorship_total,
         },
         "track_profit_loss": track_profit_loss,
     }

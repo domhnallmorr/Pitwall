@@ -6,6 +6,8 @@ from app.models.calendar import Event, EventType
 from typing import List, Tuple
 from app.models.circuit import Circuit
 from app.models.technical_director import TechnicalDirector
+from app.models.commercial_manager import CommercialManager
+from app.models.title_sponsor import TitleSponsor
 
 
 def _resolve_start_year(cursor, year: int) -> int:
@@ -58,10 +60,63 @@ def load_technical_directors(year: int = 0, teams: List[Team] | None = None) -> 
     conn.close()
     return technical_directors
 
+
+def load_commercial_managers(year: int = 0, teams: List[Team] | None = None) -> List[CommercialManager]:
+    """
+    Loads commercial managers for the supplied year (or metadata default).
+    Optionally links managers to supplied Team objects.
+    """
+    conn = get_connection()
+    c = conn.cursor()
+    start_year = _resolve_start_year(c, year)
+
+    c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='commercial_managers'")
+    if c.fetchone() is None:
+        conn.close()
+        return []
+
+    c.execute(
+        'SELECT id, name, age, skill, contract_length, salary, team_name '
+        'FROM commercial_managers WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
+        (start_year,),
+    )
+
+    team_by_name = {t.name: t for t in teams} if teams else {}
+    commercial_managers: List[CommercialManager] = []
+    for row in c.fetchall():
+        team_name = row[6]
+        team = team_by_name.get(team_name) if team_name else None
+        manager = CommercialManager(
+            id=row[0],
+            name=row[1],
+            age=row[2],
+            skill=row[3],
+            contract_length=row[4] if row[4] is not None else 0,
+            salary=row[5] if row[5] is not None else 0,
+            team_id=team.id if team else None,
+        )
+        if team:
+            team.commercial_manager_id = manager.id
+        commercial_managers.append(manager)
+
+    conn.close()
+    return commercial_managers
+
 def load_roster(
     year: int = 0,
     include_technical_directors: bool = False,
-) -> Tuple[List[Team], List[Driver], int, List[Event], List[Circuit]] | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector]]:
+    include_commercial_managers: bool = False,
+    include_title_sponsors: bool = False,
+) -> (
+    Tuple[List[Team], List[Driver], int, List[Event], List[Circuit]]
+    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector]]
+    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[CommercialManager]]
+    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TitleSponsor]]
+    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector], List[CommercialManager]]
+    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[CommercialManager], List[TitleSponsor]]
+    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector], List[TitleSponsor]]
+    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector], List[CommercialManager], List[TitleSponsor]]
+):
     """
     Loads teams, drivers, calendar, and circuits.
     Returns: (Teams, Drivers, StartYear, Events, Circuits)
@@ -114,11 +169,16 @@ def load_roster(
     team_columns = {row[1] for row in c.fetchall()}
     has_car_speed = "car_speed" in team_columns
     has_workforce = "workforce" in team_columns
+    has_title_sponsor_name = "title_sponsor_name" in team_columns
+    has_title_sponsor_yearly = "title_sponsor_yearly" in team_columns
     car_speed_expr = "car_speed" if has_car_speed else "50"
     workforce_expr = "workforce" if has_workforce else "0"
+    title_sponsor_name_expr = "title_sponsor_name" if has_title_sponsor_name else "NULL"
+    title_sponsor_yearly_expr = "title_sponsor_yearly" if has_title_sponsor_yearly else "0"
 
     c.execute(
-        f'SELECT id, name, country, driver1_name, driver2_name, balance, facilities, {car_speed_expr} AS car_speed, {workforce_expr} AS workforce '
+        f'SELECT id, name, country, driver1_name, driver2_name, balance, facilities, {car_speed_expr} AS car_speed, {workforce_expr} AS workforce, '
+        f'{title_sponsor_name_expr} AS title_sponsor_name, {title_sponsor_yearly_expr} AS title_sponsor_yearly '
         'FROM teams WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
         (start_year,),
     )
@@ -126,6 +186,8 @@ def load_roster(
     for row in c.fetchall():
         car_speed = row[7] if row[7] is not None else 50
         workforce = row[8] if row[8] is not None else 0
+        title_sponsor_name = row[9] if row[9] is not None else None
+        title_sponsor_yearly = row[10] if row[10] is not None else 0
         t = Team(
             id=row[0],
             name=row[1],
@@ -134,6 +196,8 @@ def load_roster(
             facilities=row[6],
             car_speed=car_speed,
             workforce=workforce,
+            title_sponsor_name=title_sponsor_name,
+            title_sponsor_yearly=title_sponsor_yearly,
         )
         
         # Link Drivers to Teams
@@ -187,7 +251,62 @@ def load_roster(
     except Exception as e:
         print(f"Error linking technical directors: {e}")
 
-    # 5. Load Calendar
+    # 5. Load Commercial Managers and link to team ids (if table exists).
+    commercial_managers: List[CommercialManager] = []
+    try:
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='commercial_managers'")
+        has_cm_table = c.fetchone() is not None
+        if has_cm_table:
+            c.execute(
+                'SELECT id, name, age, skill, contract_length, salary, team_name '
+                'FROM commercial_managers WHERE start_year = ? OR start_year = 0',
+                (start_year,),
+            )
+            cm_rows = c.fetchall()
+            team_by_name = {t.name: t for t in teams}
+            for cm_id, cm_name, cm_age, cm_skill, cm_contract_length, cm_salary, team_name in cm_rows:
+                team = team_by_name.get(team_name)
+                if team:
+                    team.commercial_manager_id = cm_id
+                if include_commercial_managers:
+                    commercial_managers.append(
+                        CommercialManager(
+                            id=cm_id,
+                            name=cm_name,
+                            age=cm_age,
+                            skill=cm_skill,
+                            contract_length=cm_contract_length if cm_contract_length is not None else 0,
+                            salary=cm_salary if cm_salary is not None else 0,
+                            team_id=team.id if team else None,
+                        )
+                    )
+    except Exception as e:
+        print(f"Error linking commercial managers: {e}")
+
+    # 6. Load Title Sponsors (optional).
+    title_sponsors: List[TitleSponsor] = []
+    try:
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='title_sponsors'")
+        has_sponsor_table = c.fetchone() is not None
+        if has_sponsor_table and include_title_sponsors:
+            c.execute(
+                'SELECT id, name, wealth, start_year FROM title_sponsors '
+                'WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
+                (start_year,),
+            )
+            title_sponsors = [
+                TitleSponsor(
+                    id=row[0],
+                    name=row[1],
+                    wealth=row[2] if row[2] is not None else 0,
+                    start_year=row[3] if row[3] is not None else 0,
+                )
+                for row in c.fetchall()
+            ]
+    except Exception as e:
+        print(f"Error loading title sponsors: {e}")
+
+    # 7. Load Calendar
     try:
         c.execute('SELECT name, week, type FROM calendar WHERE year = ? ORDER BY week ASC', (start_year,))
         calendar_data = c.fetchall()
@@ -199,7 +318,7 @@ def load_roster(
         print(f"Error loading calendar: {e}")
         events = []
 
-    # 6. Load Circuits
+    # 8. Load Circuits
     try:
         c.execute('SELECT id, name, country, location, laps, base_laptime_ms, length_km, overtaking_delta, power_factor, track_map_path FROM circuits')
         circuit_data = c.fetchall()
@@ -216,6 +335,18 @@ def load_roster(
         circuits = []
 
     conn.close()
+    if include_technical_directors and include_commercial_managers and include_title_sponsors:
+        return teams, drivers, start_year, events, circuits, technical_directors, commercial_managers, title_sponsors
+    if include_technical_directors and include_commercial_managers:
+        return teams, drivers, start_year, events, circuits, technical_directors, commercial_managers
+    if include_commercial_managers and include_title_sponsors:
+        return teams, drivers, start_year, events, circuits, commercial_managers, title_sponsors
+    if include_technical_directors and include_title_sponsors:
+        return teams, drivers, start_year, events, circuits, technical_directors, title_sponsors
     if include_technical_directors:
         return teams, drivers, start_year, events, circuits, technical_directors
+    if include_commercial_managers:
+        return teams, drivers, start_year, events, circuits, commercial_managers
+    if include_title_sponsors:
+        return teams, drivers, start_year, events, circuits, title_sponsors
     return teams, drivers, start_year, events, circuits

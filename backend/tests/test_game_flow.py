@@ -93,6 +93,9 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     assert finance.prize_money_races_paid == 1
     assert finance.prize_money_paid > 0
     assert finance.balance != starting_balance
+    sponsorship_txs = [t for t in finance.transactions if t.category == TransactionCategory.SPONSORSHIP]
+    assert len(sponsorship_txs) == 1
+    assert sponsorship_txs[0].amount > 0
     transport_txs = [t for t in finance.transactions if t.category == TransactionCategory.TRANSPORT]
     assert len(transport_txs) == 1
     assert transport_txs[0].amount < 0
@@ -104,6 +107,8 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     assert workforce_txs[0].amount < 0
     transport_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Transport Confirmed:")]
     assert len(transport_emails) >= 1
+    sponsorship_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Sponsorship Payment Received:")]
+    assert len(sponsorship_emails) >= 1
     payroll_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Workforce Payroll Processed:")]
     assert len(payroll_emails) >= 1
     finance_summary_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Race Finance Summary:")]
@@ -115,6 +120,7 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     assert 'track_profit_loss' in finance_response['data']
     assert finance_response['data']['summary']['transport_total'] > 0
     assert finance_response['data']['summary']['workforce_total'] > 0
+    assert finance_response['data']['summary']['sponsorship_total'] > 0
 
     driver_response = process_command({'type': 'get_driver', 'name': 'John Newhouse'})
     assert driver_response['status'] == 'success'

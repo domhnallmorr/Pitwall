@@ -20,9 +20,11 @@ def run_headless(num_seasons: int = 2):
     print(f"=== Headless Simulation: {num_seasons} Season(s) ===\n")
 
     # 1. Load roster
-    teams, drivers, year, events, circuits, technical_directors = load_roster(
+    teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors = load_roster(
         year=0,
         include_technical_directors=True,
+        include_commercial_managers=True,
+        include_title_sponsors=True,
     )
     calendar = Calendar(events=events, current_week=1)
     state = GameState(
@@ -30,6 +32,8 @@ def run_headless(num_seasons: int = 2):
         teams=teams,
         drivers=drivers,
         technical_directors=technical_directors,
+        commercial_managers=commercial_managers,
+        title_sponsors=title_sponsors,
         calendar=calendar,
         circuits=circuits,
     )
@@ -37,7 +41,10 @@ def run_headless(num_seasons: int = 2):
     engine = GameEngine()
     race_manager = RaceManager()
 
-    print(f"Loaded {len(teams)} teams, {len(drivers)} drivers, {len(technical_directors)} technical directors")
+    print(
+        f"Loaded {len(teams)} teams, {len(drivers)} drivers, "
+        f"{len(technical_directors)} technical directors, {len(commercial_managers)} commercial managers"
+    )
     print(f"Calendar: {len(events)} events, last event week {calendar.last_event_week}")
     print(f"Starting Year: {year}\n")
 

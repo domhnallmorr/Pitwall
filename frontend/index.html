@@ -114,6 +114,16 @@
 
         <!-- Grid View -->
         <div id="grid-view" class="view-section" style="display: none;">
+          <div class="view-header">
+            <h2>Grid</h2>
+            <div class="controls">
+              <label for="grid-mode-toggle">View:</label>
+              <select id="grid-mode-toggle">
+                <option value="staff">Staff</option>
+                <option value="sponsors">Sponsors</option>
+              </select>
+            </div>
+          </div>
           <div class="tabs">
             <button class="tab-btn active" data-year="1998">1998</button>
             <button class="tab-btn" data-year="1999">1999</button>
@@ -121,12 +131,13 @@
 
           <div id="grid-content-1998" class="grid-content">
             <table class="data-table">
-              <thead>
-                <tr>
+              <thead id="grid-head-1998">
+                <tr id="grid-head-row-1998">
                   <th>Team</th>
                   <th>Driver 1</th>
                   <th>Driver 2</th>
                   <th>Technical Director</th>
+                  <th>Commercial Manager</th>
                 </tr>
               </thead>
               <tbody id="grid-table-body">
@@ -137,12 +148,13 @@
 
           <div id="grid-content-1999" class="grid-content" style="display: none;">
             <table class="data-table">
-              <thead>
-                <tr>
+              <thead id="grid-head-1999">
+                <tr id="grid-head-row-1999">
                   <th>Team</th>
                   <th>Driver 1</th>
                   <th>Driver 2</th>
                   <th>Technical Director</th>
+                  <th>Commercial Manager</th>
                 </tr>
               </thead>
               <tbody id="grid-table-body-1999">
@@ -225,46 +237,76 @@
 
         <!-- Finance View -->
         <div id="finance-view" class="view-section" style="display: none;">
-          <div class="finance-summary">
-            <div class="finance-balance-card">
-              <div class="finance-balance-label">Team Balance</div>
-              <div id="finance-balance-value" class="finance-balance-amount">$0</div>
+          <div class="tabs">
+            <button class="tab-btn finance-tab-btn active" data-type="main">Main</button>
+            <button class="tab-btn finance-tab-btn" data-type="tracker">Tracker</button>
+            <button class="tab-btn finance-tab-btn" data-type="log">Log</button>
+          </div>
+
+          <div id="finance-content-main">
+            <div class="finance-summary">
+              <div class="finance-balance-card">
+                <div class="finance-balance-label">Team Balance</div>
+                <div id="finance-balance-value" class="finance-balance-amount">$0</div>
+              </div>
+              <div class="finance-balance-card">
+                <div class="finance-balance-label">Season Prize Money</div>
+                <div id="finance-prize-entitlement" class="finance-balance-amount">$0</div>
+              </div>
+              <div class="finance-balance-card">
+                <div class="finance-balance-label">Prize Paid</div>
+                <div id="finance-prize-paid" class="finance-balance-amount">$0</div>
+              </div>
+              <div class="finance-balance-card">
+                <div class="finance-balance-label">Prize Remaining</div>
+                <div id="finance-prize-remaining" class="finance-balance-amount">$0</div>
+              </div>
+              <div class="finance-balance-card">
+                <div class="finance-balance-label">Season Income</div>
+                <div id="finance-income-total" class="finance-balance-amount">$0</div>
+              </div>
+              <div class="finance-balance-card">
+                <div class="finance-balance-label">Season Expenses</div>
+                <div id="finance-expense-total" class="finance-balance-amount finance-negative">$0</div>
+              </div>
+              <div class="finance-balance-card">
+                <div class="finance-balance-label">Net Profit/Loss</div>
+                <div id="finance-net-pl" class="finance-balance-amount">$0</div>
+              </div>
+              <div class="finance-balance-card">
+                <div class="finance-balance-label">Transport Costs</div>
+                <div id="finance-transport-total" class="finance-balance-amount finance-negative">$0</div>
+              </div>
+              <div class="finance-balance-card">
+                <div class="finance-balance-label">Workforce Costs</div>
+                <div id="finance-workforce-total" class="finance-balance-amount finance-negative">$0</div>
+              </div>
+              <div class="finance-balance-card">
+                <div class="finance-balance-label">Sponsorship Income</div>
+                <div id="finance-sponsorship-total" class="finance-balance-amount">$0</div>
+              </div>
             </div>
-            <div class="finance-balance-card">
-              <div class="finance-balance-label">Season Prize Money</div>
-              <div id="finance-prize-entitlement" class="finance-balance-amount">$0</div>
-            </div>
-            <div class="finance-balance-card">
-              <div class="finance-balance-label">Prize Paid</div>
-              <div id="finance-prize-paid" class="finance-balance-amount">$0</div>
-            </div>
-            <div class="finance-balance-card">
-              <div class="finance-balance-label">Prize Remaining</div>
-              <div id="finance-prize-remaining" class="finance-balance-amount">$0</div>
-            </div>
-            <div class="finance-balance-card">
-              <div class="finance-balance-label">Season Income</div>
-              <div id="finance-income-total" class="finance-balance-amount">$0</div>
-            </div>
-            <div class="finance-balance-card">
-              <div class="finance-balance-label">Season Expenses</div>
-              <div id="finance-expense-total" class="finance-balance-amount finance-negative">$0</div>
-            </div>
-            <div class="finance-balance-card">
-              <div class="finance-balance-label">Net Profit/Loss</div>
-              <div id="finance-net-pl" class="finance-balance-amount">$0</div>
-            </div>
-            <div class="finance-balance-card">
-              <div class="finance-balance-label">Transport Costs</div>
-              <div id="finance-transport-total" class="finance-balance-amount finance-negative">$0</div>
-            </div>
-            <div class="finance-balance-card">
-              <div class="finance-balance-label">Workforce Costs</div>
-              <div id="finance-workforce-total" class="finance-balance-amount finance-negative">$0</div>
+            <div id="finance-prize-progress" class="finance-prize-progress">Race installments: 0 / 0</div>
+
+            <div class="finance-sponsor-card" id="finance-sponsor-card">
+              <div class="finance-sponsor-header">
+                <div id="finance-sponsor-logo-wrap"></div>
+                <div>
+                  <div class="finance-balance-label">Title Sponsor</div>
+                  <div id="finance-sponsor-name" class="finance-section-title">Unassigned</div>
+                </div>
+              </div>
+              <div class="finance-sponsor-grid">
+                <div><span class="finance-balance-label">Annual Value</span><div id="finance-sponsor-annual">$0</div></div>
+                <div><span class="finance-balance-label">Per Race</span><div id="finance-sponsor-installment">$0</div></div>
+                <div><span class="finance-balance-label">Paid So Far</span><div id="finance-sponsor-paid">$0</div></div>
+                <div><span class="finance-balance-label">Remaining</span><div id="finance-sponsor-remaining">$0</div></div>
+              </div>
             </div>
           </div>
-          <div id="finance-prize-progress" class="finance-prize-progress">Race installments: 0 / 0</div>
-          <div class="finance-track-pl">
+
+          <div id="finance-content-tracker" style="display:none;">
+            <div class="finance-track-pl">
             <h3 class="finance-section-title">Track Profit/Loss</h3>
             <table class="data-table">
               <thead>
@@ -281,7 +323,10 @@
               </tbody>
             </table>
           </div>
-          <div class="finance-transactions">
+          </div>
+
+          <div id="finance-content-log" style="display:none;">
+            <div class="finance-transactions">
             <h3 class="finance-section-title">Transaction Log</h3>
             <table class="data-table">
               <thead>
@@ -296,6 +341,7 @@
                 <!-- JS populated -->
               </tbody>
             </table>
+          </div>
           </div>
         </div>
 

@@ -16,7 +16,14 @@ describe('FinanceView', () => {
 			<div id="finance-net-pl"></div>
 			<div id="finance-transport-total"></div>
 			<div id="finance-workforce-total"></div>
+			<div id="finance-sponsorship-total"></div>
 			<div id="finance-prize-progress"></div>
+			<div id="finance-sponsor-name"></div>
+			<div id="finance-sponsor-annual"></div>
+			<div id="finance-sponsor-installment"></div>
+			<div id="finance-sponsor-paid"></div>
+			<div id="finance-sponsor-remaining"></div>
+			<div id="finance-sponsor-logo-wrap"></div>
 			<table><tbody id="finance-track-pl-body"></tbody></table>
 			<table><tbody id="finance-transactions-body"></tbody></table>
 		`)
@@ -38,7 +45,15 @@ describe('FinanceView', () => {
 				expense_total: 1200,
 				net_profit_loss: 3800,
 				transport_total: 400,
-				workforce_total: 700
+				workforce_total: 700,
+				sponsorship_total: 900
+			},
+			sponsor: {
+				name: 'Windale',
+				annual_value: 32500000,
+				installment: 2031250,
+				paid_so_far: 2031250,
+				remaining: 30468750,
 			},
 			track_profit_loss: [
 				{ track: 'Albert Park', country: 'Australia', income: 5000, expense: 400, net: 4600 }
@@ -51,6 +66,8 @@ describe('FinanceView', () => {
 		expect(document.getElementById('finance-income-total').textContent).toBe('$5,000')
 		expect(document.getElementById('finance-transport-total').textContent).toBe('$400')
 		expect(document.getElementById('finance-workforce-total').textContent).toBe('$700')
+		expect(document.getElementById('finance-sponsorship-total').textContent).toBe('$900')
+		expect(document.getElementById('finance-sponsor-name').textContent).toBe('Windale')
 		const trackRows = document.querySelectorAll('#finance-track-pl-body tr')
 		expect(trackRows.length).toBe(1)
 		expect(trackRows[0].innerHTML).toContain('Albert Park')

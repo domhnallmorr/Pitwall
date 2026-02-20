@@ -7,6 +7,7 @@ from app.core.grid import GridManager
 from app.core.engine import GameEngine
 from app.core.retirement import RetirementManager
 from app.core.prize_money import PrizeMoneyManager
+from app.core.sponsorships import SponsorshipManager
 from app.core.transport import TransportManager
 from app.core.crash_damage import CrashDamageManager
 from app.core.driver_wages import DriverWageManager
@@ -36,9 +37,11 @@ def process_command(command):
     
     if cmd_type == 'load_roster':
         try:
-            teams, drivers, year, events, circuits, technical_directors = load_roster(
+            teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors = load_roster(
                 year=0,
                 include_technical_directors=True,
+                include_commercial_managers=True,
+                include_title_sponsors=True,
             ) # Load default
             calendar = Calendar(events=events, current_week=1) 
             CURRENT_STATE = GameState(
@@ -46,6 +49,8 @@ def process_command(command):
                 teams=teams,
                 drivers=drivers,
                 technical_directors=technical_directors,
+                commercial_managers=commercial_managers,
+                title_sponsors=title_sponsors,
                 calendar=calendar,
                 circuits=circuits,
             )
@@ -67,9 +72,11 @@ def process_command(command):
         try:
             # 1. Ensure Roster is loaded
             if not CURRENT_STATE:
-                 teams, drivers, year, events, circuits, technical_directors = load_roster(
+                 teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors = load_roster(
                      year=0,
                      include_technical_directors=True,
+                     include_commercial_managers=True,
+                     include_title_sponsors=True,
                  )
                  calendar = Calendar(events=events, current_week=1)
                  CURRENT_STATE = GameState(
@@ -77,6 +84,8 @@ def process_command(command):
                      teams=teams,
                      drivers=drivers,
                      technical_directors=technical_directors,
+                     commercial_managers=commercial_managers,
+                     title_sponsors=title_sponsors,
                      calendar=calendar,
                      circuits=circuits,
                  )
@@ -258,6 +267,8 @@ def process_command(command):
 
             prize_money_manager = PrizeMoneyManager()
             prize_money_manager.process_race_payout(CURRENT_STATE)
+            sponsorship_manager = SponsorshipManager()
+            sponsorship_charge = sponsorship_manager.apply_for_event(CURRENT_STATE, current_event)
             driver_wage_manager = DriverWageManager()
             driver_wage_manager.charge_for_event(
                 CURRENT_STATE,
@@ -291,6 +302,17 @@ def process_command(command):
                         f"Cost: ${transport_charge.applied_cost:,}"
                     ),
                     category=EmailCategory.GENERAL
+                )
+            if sponsorship_charge:
+                CURRENT_STATE.add_email(
+                    sender="Commercial Department",
+                    subject=f"Sponsorship Payment Received: {sponsorship_charge.event_name}",
+                    body=(
+                        f"Title sponsor installment received from {sponsorship_charge.sponsor_name}.\n\n"
+                        f"Amount: ${sponsorship_charge.applied_income:,}\n"
+                        f"Annual deal value: ${sponsorship_charge.yearly_value:,}"
+                    ),
+                    category=EmailCategory.GENERAL,
                 )
             if workforce_charge:
                 CURRENT_STATE.add_email(
@@ -338,6 +360,7 @@ def process_command(command):
                     return sum(t.amount for t in race_transactions if t.category == category)
 
                 prize_total = category_total(TransactionCategory.PRIZE_MONEY)
+                sponsorship_total = category_total(TransactionCategory.SPONSORSHIP)
                 driver_wage_total = category_total(TransactionCategory.DRIVER_WAGES)
                 workforce_total = category_total(TransactionCategory.WORKFORCE_WAGES)
                 transport_total = category_total(TransactionCategory.TRANSPORT)
@@ -349,6 +372,7 @@ def process_command(command):
                     body=(
                         f"Financial summary for {event_name}:\n\n"
                         f"Prize money: {'+' if prize_total >= 0 else '-'}${abs(prize_total):,}\n"
+                        f"Sponsorship: {'+' if sponsorship_total >= 0 else '-'}${abs(sponsorship_total):,}\n"
                         f"Driver wages: {'+' if driver_wage_total >= 0 else '-'}${abs(driver_wage_total):,}\n"
                         f"Workforce payroll: {'+' if workforce_total >= 0 else '-'}${abs(workforce_total):,}\n"
                         f"Transport: {'+' if transport_total >= 0 else '-'}${abs(transport_total):,}\n"
@@ -446,6 +470,10 @@ def process_command(command):
                 (td for td in CURRENT_STATE.technical_directors if td.team_id == player_team.id),
                 None,
             )
+            team_cm = next(
+                (cm for cm in CURRENT_STATE.commercial_managers if cm.team_id == player_team.id),
+                None,
+            )
             
             return {
                 "type": "staff_data",
@@ -464,6 +492,17 @@ def process_command(command):
                             "salary": team_td.salary,
                         }
                         if team_td else None
+                    ),
+                    "commercial_manager": (
+                        {
+                            "id": team_cm.id,
+                            "name": team_cm.name,
+                            "age": team_cm.age,
+                            "skill": team_cm.skill,
+                            "contract_length": team_cm.contract_length,
+                            "salary": team_cm.salary,
+                        }
+                        if team_cm else None
                     ),
                     "player_workforce": player_team.workforce,
                     "teams": [
@@ -575,6 +614,19 @@ def process_command(command):
             
             transactions = [t.model_dump() for t in CURRENT_STATE.finance.transactions]
             report = build_finance_report(CURRENT_STATE)
+            player_team = CURRENT_STATE.player_team
+            sponsor_name = player_team.title_sponsor_name if player_team else None
+            sponsor_yearly = player_team.title_sponsor_yearly if player_team else 0
+            sponsorship_manager = SponsorshipManager()
+            sponsor_installment = sponsorship_manager.calculate_race_installment(
+                sponsor_yearly,
+                CURRENT_STATE.finance.prize_money_total_races or 0,
+            ) if sponsor_name else 0
+            sponsor_paid_so_far = sum(
+                t.amount for t in CURRENT_STATE.finance.transactions
+                if t.category == TransactionCategory.SPONSORSHIP and t.year == CURRENT_STATE.year and t.amount > 0
+            )
+            sponsor_remaining = max(sponsor_yearly - sponsor_paid_so_far, 0) if sponsor_name else 0
             
             return {
                 "type": "finance_data",
@@ -591,6 +643,13 @@ def process_command(command):
                     "transactions": transactions,
                     "summary": report["summary"],
                     "track_profit_loss": report["track_profit_loss"],
+                    "sponsor": {
+                        "name": sponsor_name,
+                        "annual_value": sponsor_yearly,
+                        "installment": sponsor_installment,
+                        "paid_so_far": sponsor_paid_so_far,
+                        "remaining": sponsor_remaining,
+                    },
                 }
             }
         except Exception as e:

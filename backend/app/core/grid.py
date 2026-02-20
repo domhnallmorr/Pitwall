@@ -24,11 +24,13 @@ class GridManager:
         data = []
         driver_lookup = {d.id: d for d in state.drivers}
         td_lookup = {td.id: td for td in state.technical_directors}
+        cm_lookup = {cm.id: cm for cm in state.commercial_managers}
 
         for team in state.teams:
             d1 = driver_lookup.get(team.driver1_id)
             d2 = driver_lookup.get(team.driver2_id)
             td = td_lookup.get(team.technical_director_id)
+            cm = cm_lookup.get(team.commercial_manager_id)
 
             row = {
                 "Team": team.name,
@@ -37,6 +39,8 @@ class GridManager:
                 "Driver2": d2.name if d2 else "VACANT",
                 "TechnicalDirector": td.name if td else "VACANT",
                 "TechnicalDirectorCountry": td.country if td and td.country else "",
+                "CommercialManager": cm.name if cm else "VACANT",
+                "TitleSponsor": team.title_sponsor_name if getattr(team, "title_sponsor_name", None) else "VACANT",
             }
             data.append(row)
 
@@ -53,11 +57,13 @@ class GridManager:
             if d.active and (d.retirement_year is None or d.retirement_year > state.year)
         }
         td_lookup = {td.id: td for td in state.technical_directors}
+        cm_lookup = {cm.id: cm for cm in state.commercial_managers}
 
         for team in state.teams:
             d1 = projected_driver_lookup.get(team.driver1_id)
             d2 = projected_driver_lookup.get(team.driver2_id)
             td = td_lookup.get(team.technical_director_id)
+            cm = cm_lookup.get(team.commercial_manager_id)
 
             row = {
                 "Team": team.name,
@@ -66,6 +72,8 @@ class GridManager:
                 "Driver2": d2.name if d2 else "VACANT",
                 "TechnicalDirector": td.name if td else "VACANT",
                 "TechnicalDirectorCountry": td.country if td and td.country else "",
+                "CommercialManager": cm.name if cm else "VACANT",
+                "TitleSponsor": team.title_sponsor_name if getattr(team, "title_sponsor_name", None) else "VACANT",
             }
             data.append(row)
 
