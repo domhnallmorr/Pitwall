@@ -8,6 +8,7 @@ from app.models.circuit import Circuit
 from app.models.technical_director import TechnicalDirector
 from app.models.commercial_manager import CommercialManager
 from app.models.title_sponsor import TitleSponsor
+from app.models.engine_supplier import EngineSupplier
 
 
 def _resolve_start_year(cursor, year: int) -> int:
@@ -107,6 +108,7 @@ def load_roster(
     include_technical_directors: bool = False,
     include_commercial_managers: bool = False,
     include_title_sponsors: bool = False,
+    include_engine_suppliers: bool = False,
 ) -> (
     Tuple[List[Team], List[Driver], int, List[Event], List[Circuit]]
     | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector]]
@@ -116,6 +118,8 @@ def load_roster(
     | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[CommercialManager], List[TitleSponsor]]
     | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector], List[TitleSponsor]]
     | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector], List[CommercialManager], List[TitleSponsor]]
+    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[EngineSupplier]]
+    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector], List[CommercialManager], List[TitleSponsor], List[EngineSupplier]]
 ):
     """
     Loads teams, drivers, calendar, and circuits.
@@ -171,14 +175,21 @@ def load_roster(
     has_workforce = "workforce" in team_columns
     has_title_sponsor_name = "title_sponsor_name" in team_columns
     has_title_sponsor_yearly = "title_sponsor_yearly" in team_columns
+    has_engine_supplier_name = "engine_supplier_name" in team_columns
+    has_engine_supplier_deal = "engine_supplier_deal" in team_columns
+    has_engine_supplier_yearly_cost = "engine_supplier_yearly_cost" in team_columns
     car_speed_expr = "car_speed" if has_car_speed else "50"
     workforce_expr = "workforce" if has_workforce else "0"
     title_sponsor_name_expr = "title_sponsor_name" if has_title_sponsor_name else "NULL"
     title_sponsor_yearly_expr = "title_sponsor_yearly" if has_title_sponsor_yearly else "0"
+    engine_supplier_name_expr = "engine_supplier_name" if has_engine_supplier_name else "NULL"
+    engine_supplier_deal_expr = "engine_supplier_deal" if has_engine_supplier_deal else "NULL"
+    engine_supplier_yearly_cost_expr = "engine_supplier_yearly_cost" if has_engine_supplier_yearly_cost else "0"
 
     c.execute(
         f'SELECT id, name, country, driver1_name, driver2_name, balance, facilities, {car_speed_expr} AS car_speed, {workforce_expr} AS workforce, '
-        f'{title_sponsor_name_expr} AS title_sponsor_name, {title_sponsor_yearly_expr} AS title_sponsor_yearly '
+        f'{title_sponsor_name_expr} AS title_sponsor_name, {title_sponsor_yearly_expr} AS title_sponsor_yearly, '
+        f'{engine_supplier_name_expr} AS engine_supplier_name, {engine_supplier_deal_expr} AS engine_supplier_deal, {engine_supplier_yearly_cost_expr} AS engine_supplier_yearly_cost '
         'FROM teams WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
         (start_year,),
     )
@@ -188,6 +199,9 @@ def load_roster(
         workforce = row[8] if row[8] is not None else 0
         title_sponsor_name = row[9] if row[9] is not None else None
         title_sponsor_yearly = row[10] if row[10] is not None else 0
+        engine_supplier_name = row[11] if row[11] is not None else None
+        engine_supplier_deal = row[12] if row[12] is not None else None
+        engine_supplier_yearly_cost = row[13] if row[13] is not None else 0
         t = Team(
             id=row[0],
             name=row[1],
@@ -198,6 +212,9 @@ def load_roster(
             workforce=workforce,
             title_sponsor_name=title_sponsor_name,
             title_sponsor_yearly=title_sponsor_yearly,
+            engine_supplier_name=engine_supplier_name,
+            engine_supplier_deal=engine_supplier_deal,
+            engine_supplier_yearly_cost=engine_supplier_yearly_cost,
         )
         
         # Link Drivers to Teams
@@ -306,7 +323,32 @@ def load_roster(
     except Exception as e:
         print(f"Error loading title sponsors: {e}")
 
-    # 7. Load Calendar
+    # 7. Load Engine Suppliers (optional).
+    engine_suppliers: List[EngineSupplier] = []
+    try:
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='engine_suppliers'")
+        has_engine_table = c.fetchone() is not None
+        if has_engine_table and include_engine_suppliers:
+            c.execute(
+                'SELECT id, name, country, resources, power, start_year FROM engine_suppliers '
+                'WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
+                (start_year,),
+            )
+            engine_suppliers = [
+                EngineSupplier(
+                    id=row[0],
+                    name=row[1],
+                    country=row[2] if row[2] is not None else "",
+                    resources=row[3] if row[3] is not None else 0,
+                    power=row[4] if row[4] is not None else 0,
+                    start_year=row[5] if row[5] is not None else 0,
+                )
+                for row in c.fetchall()
+            ]
+    except Exception as e:
+        print(f"Error loading engine suppliers: {e}")
+
+    # 8. Load Calendar
     try:
         c.execute('SELECT name, week, type FROM calendar WHERE year = ? ORDER BY week ASC', (start_year,))
         calendar_data = c.fetchall()
@@ -318,7 +360,7 @@ def load_roster(
         print(f"Error loading calendar: {e}")
         events = []
 
-    # 8. Load Circuits
+    # 9. Load Circuits
     try:
         c.execute('SELECT id, name, country, location, laps, base_laptime_ms, length_km, overtaking_delta, power_factor, track_map_path FROM circuits')
         circuit_data = c.fetchall()
@@ -335,18 +377,34 @@ def load_roster(
         circuits = []
 
     conn.close()
+    if include_technical_directors and include_commercial_managers and include_title_sponsors and include_engine_suppliers:
+        return teams, drivers, start_year, events, circuits, technical_directors, commercial_managers, title_sponsors, engine_suppliers
+    if include_technical_directors and include_commercial_managers and include_engine_suppliers:
+        return teams, drivers, start_year, events, circuits, technical_directors, commercial_managers, engine_suppliers
+    if include_technical_directors and include_title_sponsors and include_engine_suppliers:
+        return teams, drivers, start_year, events, circuits, technical_directors, title_sponsors, engine_suppliers
+    if include_commercial_managers and include_title_sponsors and include_engine_suppliers:
+        return teams, drivers, start_year, events, circuits, commercial_managers, title_sponsors, engine_suppliers
     if include_technical_directors and include_commercial_managers and include_title_sponsors:
         return teams, drivers, start_year, events, circuits, technical_directors, commercial_managers, title_sponsors
     if include_technical_directors and include_commercial_managers:
         return teams, drivers, start_year, events, circuits, technical_directors, commercial_managers
+    if include_technical_directors and include_engine_suppliers:
+        return teams, drivers, start_year, events, circuits, technical_directors, engine_suppliers
     if include_commercial_managers and include_title_sponsors:
         return teams, drivers, start_year, events, circuits, commercial_managers, title_sponsors
+    if include_commercial_managers and include_engine_suppliers:
+        return teams, drivers, start_year, events, circuits, commercial_managers, engine_suppliers
     if include_technical_directors and include_title_sponsors:
         return teams, drivers, start_year, events, circuits, technical_directors, title_sponsors
+    if include_title_sponsors and include_engine_suppliers:
+        return teams, drivers, start_year, events, circuits, title_sponsors, engine_suppliers
     if include_technical_directors:
         return teams, drivers, start_year, events, circuits, technical_directors
     if include_commercial_managers:
         return teams, drivers, start_year, events, circuits, commercial_managers
     if include_title_sponsors:
         return teams, drivers, start_year, events, circuits, title_sponsors
+    if include_engine_suppliers:
+        return teams, drivers, start_year, events, circuits, engine_suppliers
     return teams, drivers, start_year, events, circuits

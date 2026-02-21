@@ -35,7 +35,10 @@ def create_schema(conn):
             car_speed INTEGER DEFAULT 50,
             workforce INTEGER DEFAULT 0,
             title_sponsor_name TEXT,
-            title_sponsor_yearly INTEGER DEFAULT 0
+            title_sponsor_yearly INTEGER DEFAULT 0,
+            engine_supplier_name TEXT,
+            engine_supplier_deal TEXT,
+            engine_supplier_yearly_cost INTEGER DEFAULT 0
         )
     ''')
 
@@ -71,6 +74,17 @@ def create_schema(conn):
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             wealth INTEGER DEFAULT 0,
+            start_year INTEGER DEFAULT 0
+        )
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS engine_suppliers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            country TEXT,
+            resources INTEGER DEFAULT 0,
+            power INTEGER DEFAULT 0,
             start_year INTEGER DEFAULT 0
         )
     ''')
@@ -127,6 +141,12 @@ def create_schema(conn):
         c.execute("ALTER TABLE teams ADD COLUMN title_sponsor_name TEXT")
     if "title_sponsor_yearly" not in team_columns:
         c.execute("ALTER TABLE teams ADD COLUMN title_sponsor_yearly INTEGER DEFAULT 0")
+    if "engine_supplier_name" not in team_columns:
+        c.execute("ALTER TABLE teams ADD COLUMN engine_supplier_name TEXT")
+    if "engine_supplier_deal" not in team_columns:
+        c.execute("ALTER TABLE teams ADD COLUMN engine_supplier_deal TEXT")
+    if "engine_supplier_yearly_cost" not in team_columns:
+        c.execute("ALTER TABLE teams ADD COLUMN engine_supplier_yearly_cost INTEGER DEFAULT 0")
 
     c.execute("PRAGMA table_info(technical_directors)")
     td_columns = {row[1] for row in c.fetchall()}
@@ -164,6 +184,17 @@ def create_schema(conn):
         c.execute("ALTER TABLE title_sponsors ADD COLUMN wealth INTEGER DEFAULT 0")
     if "start_year" not in sponsor_columns:
         c.execute("ALTER TABLE title_sponsors ADD COLUMN start_year INTEGER DEFAULT 0")
+
+    c.execute("PRAGMA table_info(engine_suppliers)")
+    engine_columns = {row[1] for row in c.fetchall()}
+    if "country" not in engine_columns:
+        c.execute("ALTER TABLE engine_suppliers ADD COLUMN country TEXT")
+    if "resources" not in engine_columns:
+        c.execute("ALTER TABLE engine_suppliers ADD COLUMN resources INTEGER DEFAULT 0")
+    if "power" not in engine_columns:
+        c.execute("ALTER TABLE engine_suppliers ADD COLUMN power INTEGER DEFAULT 0")
+    if "start_year" not in engine_columns:
+        c.execute("ALTER TABLE engine_suppliers ADD COLUMN start_year INTEGER DEFAULT 0")
     
     conn.commit()
 
@@ -328,6 +359,19 @@ def seed_data(conn):
         "Tarnwell": ("PIKA", 4_000_000),
         "Marchetti": ("Tonometal", 4_400_000),
     }
+    team_engine_suppliers = {
+        "Warrick": ("Mechatron", "customer", 4_500_000),
+        "Ferano": ("Ferano", "works", 0),
+        "Benedetti": ("Mechatron", "customer", 4_500_000),
+        "McAlister": ("Marcado", "works", 0),
+        "Joyce": ("Hundo-Mondai", "partner", 0),
+        "Pascal": ("Pezhout", "works", 0),
+        "Schweizer": ("Ferano", "customer", 9_500_000),
+        "Swords": ("Hartek", "works", 0),
+        "Strathmore": ("Frost", "works", 0),
+        "Tarnwell": ("Frost", "customer", 7_500_000),
+        "Marchetti": ("Frost", "customer", 7_500_000),
+    }
     technical_directors_data = [
         (0, "Peter Heed", "United Kingdom", 52, 75, 5, 4_800_000, "Warrick"),
         (0, "Rob Brann", "United Kingdom", 48, 90, 3, 2_800_000, "Ferano"),
@@ -382,6 +426,15 @@ def seed_data(conn):
         (0, "HBRC", 58),
         (0, "PIKA", 28),
         (0, "Tonometal", 25),
+    ]
+    engine_suppliers_data = [
+        (0, "Ferano", "Italy", 90, 72),
+        (0, "Marcado", "Germany", 92, 80),
+        (0, "Mechatron", "France", 55, 60),
+        (0, "Hundo-Mondai", "Japan", 50, 48),
+        (0, "Pezhout", "France", 45, 40),
+        (0, "Hartek", "United Kingdom", 20, 30),
+        (0, "Frost", "USA", 65, 38),
     ]
     
     # ... (Drivers/Teams logic omitted for brevity, keeping existing structure via tool)    
@@ -472,6 +525,10 @@ def seed_data(conn):
             'UPDATE teams SET title_sponsor_name = ?, title_sponsor_yearly = ? WHERE name = ?',
             [(s[0], s[1], team_name) for team_name, s in team_title_sponsors.items()]
         )
+        c.executemany(
+            'UPDATE teams SET engine_supplier_name = ?, engine_supplier_deal = ?, engine_supplier_yearly_cost = ? WHERE name = ?',
+            [(s[0], s[1], s[2], team_name) for team_name, s in team_engine_suppliers.items()]
+        )
 
         c.execute('SELECT name, start_year FROM technical_directors')
         existing_td_keys = {(row[0], row[1]) for row in c.fetchall()}
@@ -518,6 +575,19 @@ def seed_data(conn):
         c.executemany(
             'UPDATE title_sponsors SET wealth = ? WHERE name = ? AND start_year = ?',
             [(s[2], s[1], s[0]) for s in title_sponsors_data],
+        )
+
+        c.execute('SELECT name, start_year FROM engine_suppliers')
+        existing_engine_keys = {(row[0], row[1]) for row in c.fetchall()}
+        engines_to_insert = [e for e in engine_suppliers_data if (e[1], e[0]) not in existing_engine_keys]
+        if engines_to_insert:
+            c.executemany(
+                'INSERT INTO engine_suppliers (start_year, name, country, resources, power) VALUES (?, ?, ?, ?, ?)',
+                engines_to_insert,
+            )
+        c.executemany(
+            'UPDATE engine_suppliers SET country = ?, resources = ?, power = ? WHERE name = ? AND start_year = ?',
+            [(e[2], e[3], e[4], e[1], e[0]) for e in engine_suppliers_data],
         )
         conn.commit()
         
@@ -606,6 +676,22 @@ def seed_data(conn):
         'UPDATE title_sponsors SET wealth = ? WHERE name = ? AND start_year = ?',
         [(s[2], s[1], s[0]) for s in title_sponsors_data],
     )
+    c.executemany(
+        'UPDATE teams SET engine_supplier_name = ?, engine_supplier_deal = ?, engine_supplier_yearly_cost = ? WHERE name = ?',
+        [(s[0], s[1], s[2], team_name) for team_name, s in team_engine_suppliers.items()]
+    )
+    c.execute('SELECT name, start_year FROM engine_suppliers')
+    existing_engine_keys = {(row[0], row[1]) for row in c.fetchall()}
+    engines_to_insert = [e for e in engine_suppliers_data if (e[1], e[0]) not in existing_engine_keys]
+    if engines_to_insert:
+        c.executemany(
+            'INSERT INTO engine_suppliers (start_year, name, country, resources, power) VALUES (?, ?, ?, ?, ?)',
+            engines_to_insert,
+        )
+    c.executemany(
+        'UPDATE engine_suppliers SET country = ?, resources = ?, power = ? WHERE name = ? AND start_year = ?',
+        [(e[2], e[3], e[4], e[1], e[0]) for e in engine_suppliers_data],
+    )
     conn.commit()
         
     if drivers_exist:
@@ -670,6 +756,10 @@ def seed_data(conn):
     c.executemany(
         'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed, workforce, title_sponsor_name, title_sponsor_yearly) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         teams_data_with_attrs
+    )
+    c.executemany(
+        'UPDATE teams SET engine_supplier_name = ?, engine_supplier_deal = ?, engine_supplier_yearly_cost = ? WHERE name = ?',
+        [(s[0], s[1], s[2], team_name) for team_name, s in team_engine_suppliers.items()]
     )
     
     # Metadata

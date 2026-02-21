@@ -37,11 +37,12 @@ def process_command(command):
     
     if cmd_type == 'load_roster':
         try:
-            teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors = load_roster(
+            teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors, engine_suppliers = load_roster(
                 year=0,
                 include_technical_directors=True,
                 include_commercial_managers=True,
                 include_title_sponsors=True,
+                include_engine_suppliers=True,
             ) # Load default
             calendar = Calendar(events=events, current_week=1) 
             CURRENT_STATE = GameState(
@@ -51,6 +52,7 @@ def process_command(command):
                 technical_directors=technical_directors,
                 commercial_managers=commercial_managers,
                 title_sponsors=title_sponsors,
+                engine_suppliers=engine_suppliers,
                 calendar=calendar,
                 circuits=circuits,
             )
@@ -72,11 +74,12 @@ def process_command(command):
         try:
             # 1. Ensure Roster is loaded
             if not CURRENT_STATE:
-                 teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors = load_roster(
+                 teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors, engine_suppliers = load_roster(
                      year=0,
                      include_technical_directors=True,
                      include_commercial_managers=True,
                      include_title_sponsors=True,
+                     include_engine_suppliers=True,
                  )
                  calendar = Calendar(events=events, current_week=1)
                  CURRENT_STATE = GameState(
@@ -86,6 +89,7 @@ def process_command(command):
                      technical_directors=technical_directors,
                      commercial_managers=commercial_managers,
                      title_sponsors=title_sponsors,
+                     engine_suppliers=engine_suppliers,
                      calendar=calendar,
                      circuits=circuits,
                  )
@@ -588,12 +592,17 @@ def process_command(command):
             if not CURRENT_STATE:
                 return {"status": "error", "message": "Game not started"}
 
+            engine_power_by_supplier = {
+                e.name: e.power for e in CURRENT_STATE.engine_suppliers
+            }
             teams_data = [
                 {
                     "id": t.id,
                     "name": t.name,
                     "country": t.country,
                     "car_speed": t.car_speed,
+                    "engine_supplier_name": t.engine_supplier_name,
+                    "engine_power": engine_power_by_supplier.get(t.engine_supplier_name, 0),
                 }
                 for t in CURRENT_STATE.teams
             ]

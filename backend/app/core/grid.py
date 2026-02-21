@@ -25,6 +25,7 @@ class GridManager:
         driver_lookup = {d.id: d for d in state.drivers}
         td_lookup = {td.id: td for td in state.technical_directors}
         cm_lookup = {cm.id: cm for cm in state.commercial_managers}
+        engine_country_by_name = {e.name: e.country for e in state.engine_suppliers}
 
         for team in state.teams:
             d1 = driver_lookup.get(team.driver1_id)
@@ -41,6 +42,10 @@ class GridManager:
                 "TechnicalDirectorCountry": td.country if td and td.country else "",
                 "CommercialManager": cm.name if cm else "VACANT",
                 "TitleSponsor": team.title_sponsor_name if getattr(team, "title_sponsor_name", None) else "VACANT",
+                "EngineSupplier": team.engine_supplier_name if getattr(team, "engine_supplier_name", None) else "VACANT",
+                "EngineSupplierCountry": engine_country_by_name.get(team.engine_supplier_name or "", ""),
+                "EngineSupplierDeal": team.engine_supplier_deal if getattr(team, "engine_supplier_deal", None) else "-",
+                "EngineSupplierYearlyCost": str(team.engine_supplier_yearly_cost if getattr(team, "engine_supplier_yearly_cost", None) is not None else 0),
             }
             data.append(row)
 
@@ -58,6 +63,7 @@ class GridManager:
         }
         td_lookup = {td.id: td for td in state.technical_directors}
         cm_lookup = {cm.id: cm for cm in state.commercial_managers}
+        engine_country_by_name = {e.name: e.country for e in state.engine_suppliers}
 
         for team in state.teams:
             d1 = projected_driver_lookup.get(team.driver1_id)
@@ -74,6 +80,10 @@ class GridManager:
                 "TechnicalDirectorCountry": td.country if td and td.country else "",
                 "CommercialManager": cm.name if cm else "VACANT",
                 "TitleSponsor": team.title_sponsor_name if getattr(team, "title_sponsor_name", None) else "VACANT",
+                "EngineSupplier": team.engine_supplier_name if getattr(team, "engine_supplier_name", None) else "VACANT",
+                "EngineSupplierCountry": engine_country_by_name.get(team.engine_supplier_name or "", ""),
+                "EngineSupplierDeal": team.engine_supplier_deal if getattr(team, "engine_supplier_deal", None) else "-",
+                "EngineSupplierYearlyCost": str(team.engine_supplier_yearly_cost if getattr(team, "engine_supplier_yearly_cost", None) is not None else 0),
             }
             data.append(row)
 

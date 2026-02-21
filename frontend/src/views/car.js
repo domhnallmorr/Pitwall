@@ -13,14 +13,14 @@ export default class CarView {
 		return Math.max(1, Math.ceil(clamped / 20));
 	}
 
-	renderSpeedBlocks(speed) {
-		const rating = this.getSpeedRating(speed);
+	renderRatingBlocks(value, label) {
+		const rating = this.getSpeedRating(value);
 		let blocks = '';
 		for (let i = 1; i <= 5; i += 1) {
 			const stateClass = i <= rating ? 'is-filled' : '';
 			blocks += `<span class="car-speed-block ${stateClass}" aria-hidden="true"></span>`;
 		}
-		return `<span class="car-speed-rating" role="img" aria-label="Car speed rating ${rating} out of 5">${blocks}</span>`;
+		return `<span class="car-speed-rating" role="img" aria-label="${label} rating ${rating} out of 5">${blocks}</span>`;
 	}
 
 	render(data) {
@@ -34,7 +34,8 @@ export default class CarView {
 				<td>${index + 1}</td>
 				<td>${team.name}</td>
 				<td>${team.country || '-'}</td>
-				<td>${this.renderSpeedBlocks(team.car_speed)}</td>
+				<td>${this.renderRatingBlocks(team.car_speed, 'Car speed')}</td>
+				<td>${this.renderRatingBlocks(team.engine_power || 0, 'Engine power')}</td>
 			`;
 			this.body.appendChild(row);
 		});

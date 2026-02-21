@@ -400,6 +400,18 @@ p {
   background: rgba(17, 34, 64, 0.48) !important;
 }
 
+#calendar-view {
+  background-image: linear-gradient(rgba(5, 14, 26, 0.78), rgba(5, 14, 26, 0.78)), url('assets/images/calendar_background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: -16px -16px 0;
+  height: calc(100vh - 150px);
+  overflow-y: auto;
+}
+
 .sponsor-label {
   display: inline-flex;
   align-items: center;
@@ -1091,6 +1103,17 @@ p {
 /* ============================
    Car View
    ============================ */
+
+#car-view {
+  background-image: linear-gradient(rgba(5, 14, 26, 0.68), rgba(5, 14, 26, 0.68)), url('assets/images/car_background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: -16px -16px 0;
+  min-height: calc(100vh - 150px);
+}
 
 .car-speed-rating {
   display: inline-flex;

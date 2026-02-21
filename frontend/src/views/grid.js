@@ -84,7 +84,8 @@ export default class GridView {
 	initModeToggle() {
 		if (!this.modeToggle) return;
 		this.modeToggle.addEventListener('change', () => {
-			this.mode = this.modeToggle.value === 'sponsors' ? 'sponsors' : 'staff';
+			const selected = this.modeToggle.value;
+			this.mode = selected === 'sponsors' || selected === 'suppliers' ? selected : 'staff';
 			this.renderYear(this.getActiveYear(), true);
 		});
 	}
@@ -128,10 +129,14 @@ export default class GridView {
 		if (!targetBody) return;
 		const data = this.yearData.get(targetYear) || [];
 
-		if (targetHead) {
-			targetHead.innerHTML = this.mode === 'sponsors'
-				? '<tr><th>Team</th><th>Title Sponsor</th></tr>'
-				: '<tr><th>Team</th><th>Driver 1</th><th>Driver 2</th><th>Technical Director</th><th>Commercial Manager</th></tr>';
+			if (targetHead) {
+			if (this.mode === 'sponsors') {
+				targetHead.innerHTML = '<tr><th>Team</th><th>Title Sponsor</th></tr>';
+			} else if (this.mode === 'suppliers') {
+				targetHead.innerHTML = '<tr><th>Team</th><th>Engine Supplier</th><th>Deal</th></tr>';
+			} else {
+				targetHead.innerHTML = '<tr><th>Team</th><th>Driver 1</th><th>Driver 2</th><th>Technical Director</th><th>Commercial Manager</th></tr>';
+			}
 		}
 
 		targetBody.innerHTML = ''; // Clear existing
@@ -142,6 +147,18 @@ export default class GridView {
 				tr.innerHTML = `
 					<td>${row.Team}</td>
 					<td>${this.renderSponsorCell(sponsorName)}</td>
+				`;
+			} else if (this.mode === 'suppliers') {
+				const supplierName = row.EngineSupplier || 'VACANT';
+				const supplierCountry = row.EngineSupplierCountry || '';
+				const supplierDealRaw = row.EngineSupplierDeal || '-';
+				const supplierDeal = supplierDealRaw === '-'
+					? supplierDealRaw
+					: supplierDealRaw.charAt(0).toUpperCase() + supplierDealRaw.slice(1).toLowerCase();
+				tr.innerHTML = `
+					<td>${row.Team}</td>
+					<td>${this.renderStaffCell(supplierCountry, supplierName)}</td>
+					<td>${supplierDeal}</td>
 				`;
 			} else {
 				const d1Name = row.Driver1 || 'Vacant';
