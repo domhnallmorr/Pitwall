@@ -82,3 +82,32 @@ def test_grid_next_year_projection_excludes_retiring_drivers():
     row = df[df["Team"] == "Team 1"].iloc[0]
     assert row["Driver1"] == "VACANT"
     assert row["Driver2"] == "Staying Driver"
+
+
+def test_grid_includes_engine_and_tyre_supplier_columns():
+    drivers = [
+        Driver(id=1, name="Driver A", age=20, country="UK", points=0),
+        Driver(id=2, name="Driver B", age=22, country="DE", points=0),
+    ]
+    teams = [
+        Team(
+            id=1,
+            name="Team 1",
+            country="UK",
+            driver1_id=1,
+            driver2_id=2,
+            engine_supplier_name="Mechatron",
+            engine_supplier_deal="customer",
+            tyre_supplier_name="Greatday",
+            tyre_supplier_deal="partner",
+        ),
+    ]
+    calendar = Calendar(events=[], current_week=1)
+    state = GameState(year=1998, teams=teams, drivers=drivers, calendar=calendar, circuits=[])
+
+    rows = GridManager().get_grid_records(state)
+    assert len(rows) == 1
+    assert rows[0]["EngineSupplier"] == "Mechatron"
+    assert rows[0]["EngineSupplierDeal"] == "customer"
+    assert rows[0]["TyreSupplier"] == "Greatday"
+    assert rows[0]["TyreSupplierDeal"] == "partner"

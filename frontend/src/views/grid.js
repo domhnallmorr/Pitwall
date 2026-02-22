@@ -133,7 +133,7 @@ export default class GridView {
 			if (this.mode === 'sponsors') {
 				targetHead.innerHTML = '<tr><th>Team</th><th>Title Sponsor</th></tr>';
 			} else if (this.mode === 'suppliers') {
-				targetHead.innerHTML = '<tr><th>Team</th><th>Engine Supplier</th><th>Deal</th></tr>';
+				targetHead.innerHTML = '<tr><th>Team</th><th>Engine Supplier</th><th>Engine Deal</th><th>Tyre Supplier</th><th>Tyre Deal</th></tr>';
 			} else {
 				targetHead.innerHTML = '<tr><th>Team</th><th>Driver 1</th><th>Driver 2</th><th>Technical Director</th><th>Commercial Manager</th></tr>';
 			}
@@ -149,16 +149,22 @@ export default class GridView {
 					<td>${this.renderSponsorCell(sponsorName)}</td>
 				`;
 			} else if (this.mode === 'suppliers') {
-				const supplierName = row.EngineSupplier || 'VACANT';
-				const supplierCountry = row.EngineSupplierCountry || '';
-				const supplierDealRaw = row.EngineSupplierDeal || '-';
-				const supplierDeal = supplierDealRaw === '-'
-					? supplierDealRaw
-					: supplierDealRaw.charAt(0).toUpperCase() + supplierDealRaw.slice(1).toLowerCase();
+				const engineSupplierName = row.EngineSupplier || 'VACANT';
+				const engineSupplierDealRaw = row.EngineSupplierDeal || '-';
+				const engineSupplierDeal = engineSupplierDealRaw === '-'
+					? engineSupplierDealRaw
+					: engineSupplierDealRaw.charAt(0).toUpperCase() + engineSupplierDealRaw.slice(1).toLowerCase();
+				const tyreSupplierName = row.TyreSupplier || 'VACANT';
+				const tyreSupplierDealRaw = row.TyreSupplierDeal || '-';
+				const tyreSupplierDeal = tyreSupplierDealRaw === '-'
+					? tyreSupplierDealRaw
+					: tyreSupplierDealRaw.charAt(0).toUpperCase() + tyreSupplierDealRaw.slice(1).toLowerCase();
 				tr.innerHTML = `
 					<td>${row.Team}</td>
-					<td>${this.renderStaffCell(supplierCountry, supplierName)}</td>
-					<td>${supplierDeal}</td>
+					<td>${this.renderSupplierCell(engineSupplierName)}</td>
+					<td>${engineSupplierDeal}</td>
+					<td>${this.renderSupplierCell(tyreSupplierName)}</td>
+					<td>${tyreSupplierDeal}</td>
 				`;
 			} else {
 				const d1Name = row.Driver1 || 'Vacant';
@@ -219,6 +225,27 @@ export default class GridView {
 			<span class="sponsor-label">
 				<img class="sponsor-logo" src="assets/sponsor_logos/${encodedOriginal}.png" alt="${name} logo"
 					onerror="if(!this.dataset.f1){this.dataset.f1='1';this.src='assets/sponsor_logos/${encodedLower}.png';}else if(!this.dataset.f2){this.dataset.f2='1';this.src='assets/sponsor_logos/${encodedUpper}.png';}else{this.style.display='none';}">
+				<span>${name}</span>
+			</span>
+		`;
+	}
+
+	renderSupplierCell(name) {
+		if (!name || name === 'VACANT' || name === 'Vacant') {
+			return 'VACANT';
+		}
+
+		const slug = name.toLowerCase().replace(/\s+/g, '-');
+		const fileNameBySlug = {
+			hartek: 'harteck',
+		};
+		const preferred = fileNameBySlug[slug] || slug;
+		const fallback = `${slug}.png`;
+
+		return `
+			<span class="supplier-label">
+				<img class="supplier-logo" src="assets/supplier_logos/${preferred}.png" alt="${name} logo"
+					onerror="if(!this.dataset.f1){this.dataset.f1='1';this.src='assets/supplier_logos/${fallback}';}else{this.style.display='none';}">
 				<span>${name}</span>
 			</span>
 		`;

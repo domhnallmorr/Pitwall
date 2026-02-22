@@ -427,6 +427,21 @@ p {
   padding: 2px;
 }
 
+.supplier-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.supplier-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px;
+}
+
 .finance-tab-enter {
   animation: gridTabEnter 0.24s ease;
 }
@@ -1237,6 +1252,14 @@ p {
 }
 
 #finance-sponsor-logo-wrap .sponsor-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+#finance-engine-supplier-logo-wrap .supplier-logo,
+#finance-tyre-supplier-logo-wrap .supplier-logo {
   width: 64px;
   height: 64px;
   border-radius: 8px;

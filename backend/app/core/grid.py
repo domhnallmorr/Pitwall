@@ -46,6 +46,9 @@ class GridManager:
                 "EngineSupplierCountry": engine_country_by_name.get(team.engine_supplier_name or "", ""),
                 "EngineSupplierDeal": team.engine_supplier_deal if getattr(team, "engine_supplier_deal", None) else "-",
                 "EngineSupplierYearlyCost": str(team.engine_supplier_yearly_cost if getattr(team, "engine_supplier_yearly_cost", None) is not None else 0),
+                "TyreSupplier": team.tyre_supplier_name if getattr(team, "tyre_supplier_name", None) else "VACANT",
+                "TyreSupplierDeal": team.tyre_supplier_deal if getattr(team, "tyre_supplier_deal", None) else "-",
+                "TyreSupplierYearlyCost": str(team.tyre_supplier_yearly_cost if getattr(team, "tyre_supplier_yearly_cost", None) is not None else 0),
             }
             data.append(row)
 
@@ -84,6 +87,9 @@ class GridManager:
                 "EngineSupplierCountry": engine_country_by_name.get(team.engine_supplier_name or "", ""),
                 "EngineSupplierDeal": team.engine_supplier_deal if getattr(team, "engine_supplier_deal", None) else "-",
                 "EngineSupplierYearlyCost": str(team.engine_supplier_yearly_cost if getattr(team, "engine_supplier_yearly_cost", None) is not None else 0),
+                "TyreSupplier": team.tyre_supplier_name if getattr(team, "tyre_supplier_name", None) else "VACANT",
+                "TyreSupplierDeal": team.tyre_supplier_deal if getattr(team, "tyre_supplier_deal", None) else "-",
+                "TyreSupplierYearlyCost": str(team.tyre_supplier_yearly_cost if getattr(team, "tyre_supplier_yearly_cost", None) is not None else 0),
             }
             data.append(row)
 

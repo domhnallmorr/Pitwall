@@ -105,14 +105,23 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     workforce_txs = [t for t in finance.transactions if t.category == TransactionCategory.WORKFORCE_WAGES]
     assert len(workforce_txs) == 1
     assert workforce_txs[0].amount < 0
+    engine_supplier_txs = [t for t in finance.transactions if t.category == TransactionCategory.ENGINE_SUPPLIER]
+    assert len(engine_supplier_txs) == 1
+    assert engine_supplier_txs[0].amount < 0
+    tyre_supplier_txs = [t for t in finance.transactions if t.category == TransactionCategory.TYRE_SUPPLIER]
+    assert len(tyre_supplier_txs) == 0  # Warrick has partner tyre deal in default data
     transport_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Transport Confirmed:")]
     assert len(transport_emails) >= 1
     sponsorship_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Sponsorship Payment Received:")]
     assert len(sponsorship_emails) >= 1
     payroll_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Workforce Payroll Processed:")]
     assert len(payroll_emails) >= 1
+    engine_supplier_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Engine Supplier Invoice:")]
+    assert len(engine_supplier_emails) >= 1
     finance_summary_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Race Finance Summary:")]
     assert len(finance_summary_emails) >= 1
+    assert "Engine supplier:" in finance_summary_emails[-1].body
+    assert "Tyre supplier:" in finance_summary_emails[-1].body
 
     finance_response = process_command({'type': 'get_finance'})
     assert finance_response['status'] == 'success'
@@ -120,7 +129,11 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     assert 'track_profit_loss' in finance_response['data']
     assert finance_response['data']['summary']['transport_total'] > 0
     assert finance_response['data']['summary']['workforce_total'] > 0
+    assert finance_response['data']['summary']['engine_supplier_total'] > 0
+    assert 'tyre_supplier_total' in finance_response['data']['summary']
     assert finance_response['data']['summary']['sponsorship_total'] > 0
+    assert finance_response['data']['engine_supplier']['name'] == 'Mechatron'
+    assert finance_response['data']['tyre_supplier']['name'] == 'Greatday'
 
     driver_response = process_command({'type': 'get_driver', 'name': 'John Newhouse'})
     assert driver_response['status'] == 'success'

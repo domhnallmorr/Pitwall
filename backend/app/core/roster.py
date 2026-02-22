@@ -9,6 +9,7 @@ from app.models.technical_director import TechnicalDirector
 from app.models.commercial_manager import CommercialManager
 from app.models.title_sponsor import TitleSponsor
 from app.models.engine_supplier import EngineSupplier
+from app.models.tyre_supplier import TyreSupplier
 
 
 def _resolve_start_year(cursor, year: int) -> int:
@@ -109,18 +110,8 @@ def load_roster(
     include_commercial_managers: bool = False,
     include_title_sponsors: bool = False,
     include_engine_suppliers: bool = False,
-) -> (
-    Tuple[List[Team], List[Driver], int, List[Event], List[Circuit]]
-    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector]]
-    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[CommercialManager]]
-    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TitleSponsor]]
-    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector], List[CommercialManager]]
-    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[CommercialManager], List[TitleSponsor]]
-    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector], List[TitleSponsor]]
-    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector], List[CommercialManager], List[TitleSponsor]]
-    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[EngineSupplier]]
-    | Tuple[List[Team], List[Driver], int, List[Event], List[Circuit], List[TechnicalDirector], List[CommercialManager], List[TitleSponsor], List[EngineSupplier]]
-):
+    include_tyre_suppliers: bool = False,
+) -> Tuple:
     """
     Loads teams, drivers, calendar, and circuits.
     Returns: (Teams, Drivers, StartYear, Events, Circuits)
@@ -178,6 +169,9 @@ def load_roster(
     has_engine_supplier_name = "engine_supplier_name" in team_columns
     has_engine_supplier_deal = "engine_supplier_deal" in team_columns
     has_engine_supplier_yearly_cost = "engine_supplier_yearly_cost" in team_columns
+    has_tyre_supplier_name = "tyre_supplier_name" in team_columns
+    has_tyre_supplier_deal = "tyre_supplier_deal" in team_columns
+    has_tyre_supplier_yearly_cost = "tyre_supplier_yearly_cost" in team_columns
     car_speed_expr = "car_speed" if has_car_speed else "50"
     workforce_expr = "workforce" if has_workforce else "0"
     title_sponsor_name_expr = "title_sponsor_name" if has_title_sponsor_name else "NULL"
@@ -185,11 +179,15 @@ def load_roster(
     engine_supplier_name_expr = "engine_supplier_name" if has_engine_supplier_name else "NULL"
     engine_supplier_deal_expr = "engine_supplier_deal" if has_engine_supplier_deal else "NULL"
     engine_supplier_yearly_cost_expr = "engine_supplier_yearly_cost" if has_engine_supplier_yearly_cost else "0"
+    tyre_supplier_name_expr = "tyre_supplier_name" if has_tyre_supplier_name else "NULL"
+    tyre_supplier_deal_expr = "tyre_supplier_deal" if has_tyre_supplier_deal else "NULL"
+    tyre_supplier_yearly_cost_expr = "tyre_supplier_yearly_cost" if has_tyre_supplier_yearly_cost else "0"
 
     c.execute(
         f'SELECT id, name, country, driver1_name, driver2_name, balance, facilities, {car_speed_expr} AS car_speed, {workforce_expr} AS workforce, '
         f'{title_sponsor_name_expr} AS title_sponsor_name, {title_sponsor_yearly_expr} AS title_sponsor_yearly, '
-        f'{engine_supplier_name_expr} AS engine_supplier_name, {engine_supplier_deal_expr} AS engine_supplier_deal, {engine_supplier_yearly_cost_expr} AS engine_supplier_yearly_cost '
+        f'{engine_supplier_name_expr} AS engine_supplier_name, {engine_supplier_deal_expr} AS engine_supplier_deal, {engine_supplier_yearly_cost_expr} AS engine_supplier_yearly_cost, '
+        f'{tyre_supplier_name_expr} AS tyre_supplier_name, {tyre_supplier_deal_expr} AS tyre_supplier_deal, {tyre_supplier_yearly_cost_expr} AS tyre_supplier_yearly_cost '
         'FROM teams WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
         (start_year,),
     )
@@ -202,6 +200,9 @@ def load_roster(
         engine_supplier_name = row[11] if row[11] is not None else None
         engine_supplier_deal = row[12] if row[12] is not None else None
         engine_supplier_yearly_cost = row[13] if row[13] is not None else 0
+        tyre_supplier_name = row[14] if row[14] is not None else None
+        tyre_supplier_deal = row[15] if row[15] is not None else None
+        tyre_supplier_yearly_cost = row[16] if row[16] is not None else 0
         t = Team(
             id=row[0],
             name=row[1],
@@ -215,6 +216,9 @@ def load_roster(
             engine_supplier_name=engine_supplier_name,
             engine_supplier_deal=engine_supplier_deal,
             engine_supplier_yearly_cost=engine_supplier_yearly_cost,
+            tyre_supplier_name=tyre_supplier_name,
+            tyre_supplier_deal=tyre_supplier_deal,
+            tyre_supplier_yearly_cost=tyre_supplier_yearly_cost,
         )
         
         # Link Drivers to Teams
@@ -348,6 +352,31 @@ def load_roster(
     except Exception as e:
         print(f"Error loading engine suppliers: {e}")
 
+    # 7b. Load Tyre Suppliers (optional).
+    tyre_suppliers: List[TyreSupplier] = []
+    try:
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tyre_suppliers'")
+        has_tyre_table = c.fetchone() is not None
+        if has_tyre_table and include_tyre_suppliers:
+            c.execute(
+                'SELECT id, name, country, wear, grip, start_year FROM tyre_suppliers '
+                'WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
+                (start_year,),
+            )
+            tyre_suppliers = [
+                TyreSupplier(
+                    id=row[0],
+                    name=row[1],
+                    country=row[2] if row[2] is not None else "",
+                    wear=row[3] if row[3] is not None else 0,
+                    grip=row[4] if row[4] is not None else 0,
+                    start_year=row[5] if row[5] is not None else 0,
+                )
+                for row in c.fetchall()
+            ]
+    except Exception as e:
+        print(f"Error loading tyre suppliers: {e}")
+
     # 8. Load Calendar
     try:
         c.execute('SELECT name, week, type FROM calendar WHERE year = ? ORDER BY week ASC', (start_year,))
@@ -377,34 +406,15 @@ def load_roster(
         circuits = []
 
     conn.close()
-    if include_technical_directors and include_commercial_managers and include_title_sponsors and include_engine_suppliers:
-        return teams, drivers, start_year, events, circuits, technical_directors, commercial_managers, title_sponsors, engine_suppliers
-    if include_technical_directors and include_commercial_managers and include_engine_suppliers:
-        return teams, drivers, start_year, events, circuits, technical_directors, commercial_managers, engine_suppliers
-    if include_technical_directors and include_title_sponsors and include_engine_suppliers:
-        return teams, drivers, start_year, events, circuits, technical_directors, title_sponsors, engine_suppliers
-    if include_commercial_managers and include_title_sponsors and include_engine_suppliers:
-        return teams, drivers, start_year, events, circuits, commercial_managers, title_sponsors, engine_suppliers
-    if include_technical_directors and include_commercial_managers and include_title_sponsors:
-        return teams, drivers, start_year, events, circuits, technical_directors, commercial_managers, title_sponsors
-    if include_technical_directors and include_commercial_managers:
-        return teams, drivers, start_year, events, circuits, technical_directors, commercial_managers
-    if include_technical_directors and include_engine_suppliers:
-        return teams, drivers, start_year, events, circuits, technical_directors, engine_suppliers
-    if include_commercial_managers and include_title_sponsors:
-        return teams, drivers, start_year, events, circuits, commercial_managers, title_sponsors
-    if include_commercial_managers and include_engine_suppliers:
-        return teams, drivers, start_year, events, circuits, commercial_managers, engine_suppliers
-    if include_technical_directors and include_title_sponsors:
-        return teams, drivers, start_year, events, circuits, technical_directors, title_sponsors
-    if include_title_sponsors and include_engine_suppliers:
-        return teams, drivers, start_year, events, circuits, title_sponsors, engine_suppliers
+    result = [teams, drivers, start_year, events, circuits]
     if include_technical_directors:
-        return teams, drivers, start_year, events, circuits, technical_directors
+        result.append(technical_directors)
     if include_commercial_managers:
-        return teams, drivers, start_year, events, circuits, commercial_managers
+        result.append(commercial_managers)
     if include_title_sponsors:
-        return teams, drivers, start_year, events, circuits, title_sponsors
+        result.append(title_sponsors)
     if include_engine_suppliers:
-        return teams, drivers, start_year, events, circuits, engine_suppliers
-    return teams, drivers, start_year, events, circuits
+        result.append(engine_suppliers)
+    if include_tyre_suppliers:
+        result.append(tyre_suppliers)
+    return tuple(result)

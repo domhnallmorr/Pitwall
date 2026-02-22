@@ -12,6 +12,8 @@ from app.core.transport import TransportManager
 from app.core.crash_damage import CrashDamageManager
 from app.core.driver_wages import DriverWageManager
 from app.core.workforce_costs import WorkforceCostManager
+from app.core.engine_supplier_costs import EngineSupplierCostManager
+from app.core.tyre_supplier_costs import TyreSupplierCostManager
 from app.core.finance_reporting import build_finance_report
 from app.core.save_manager import save_game, load_game as load_game_file, has_save
 from app.race.race_manager import RaceManager
@@ -37,12 +39,13 @@ def process_command(command):
     
     if cmd_type == 'load_roster':
         try:
-            teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors, engine_suppliers = load_roster(
+            teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors, engine_suppliers, tyre_suppliers = load_roster(
                 year=0,
                 include_technical_directors=True,
                 include_commercial_managers=True,
                 include_title_sponsors=True,
                 include_engine_suppliers=True,
+                include_tyre_suppliers=True,
             ) # Load default
             calendar = Calendar(events=events, current_week=1) 
             CURRENT_STATE = GameState(
@@ -53,6 +56,7 @@ def process_command(command):
                 commercial_managers=commercial_managers,
                 title_sponsors=title_sponsors,
                 engine_suppliers=engine_suppliers,
+                tyre_suppliers=tyre_suppliers,
                 calendar=calendar,
                 circuits=circuits,
             )
@@ -74,12 +78,13 @@ def process_command(command):
         try:
             # 1. Ensure Roster is loaded
             if not CURRENT_STATE:
-                 teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors, engine_suppliers = load_roster(
+                 teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors, engine_suppliers, tyre_suppliers = load_roster(
                      year=0,
                      include_technical_directors=True,
                      include_commercial_managers=True,
                      include_title_sponsors=True,
                      include_engine_suppliers=True,
+                     include_tyre_suppliers=True,
                  )
                  calendar = Calendar(events=events, current_week=1)
                  CURRENT_STATE = GameState(
@@ -90,6 +95,7 @@ def process_command(command):
                      commercial_managers=commercial_managers,
                      title_sponsors=title_sponsors,
                      engine_suppliers=engine_suppliers,
+                     tyre_suppliers=tyre_suppliers,
                      calendar=calendar,
                      circuits=circuits,
                  )
@@ -283,6 +289,16 @@ def process_command(command):
                 CURRENT_STATE,
                 current_event,
             )
+            engine_supplier_cost_manager = EngineSupplierCostManager()
+            engine_supplier_charge = engine_supplier_cost_manager.charge_for_event(
+                CURRENT_STATE,
+                current_event,
+            )
+            tyre_supplier_cost_manager = TyreSupplierCostManager()
+            tyre_supplier_charge = tyre_supplier_cost_manager.charge_for_event(
+                CURRENT_STATE,
+                current_event,
+            )
             transport_manager = TransportManager()
             transport_charge = transport_manager.charge_for_event(
                 CURRENT_STATE,
@@ -330,6 +346,32 @@ def process_command(command):
                     ),
                     category=EmailCategory.GENERAL,
                 )
+            if engine_supplier_charge:
+                CURRENT_STATE.add_email(
+                    sender="Procurement Department",
+                    subject=f"Engine Supplier Invoice: {engine_supplier_charge.event_name}",
+                    body=(
+                        f"Engine supplier race fee has been processed for {engine_supplier_charge.event_name}.\n\n"
+                        f"Supplier: {engine_supplier_charge.supplier_name}\n"
+                        f"Deal: {engine_supplier_charge.deal_type}\n"
+                        f"Cost this race: ${engine_supplier_charge.applied_cost:,}\n"
+                        f"Annual contract value: ${engine_supplier_charge.yearly_cost:,}"
+                    ),
+                    category=EmailCategory.GENERAL,
+                )
+            if tyre_supplier_charge:
+                CURRENT_STATE.add_email(
+                    sender="Procurement Department",
+                    subject=f"Tyre Supplier Invoice: {tyre_supplier_charge.event_name}",
+                    body=(
+                        f"Tyre supplier race fee has been processed for {tyre_supplier_charge.event_name}.\n\n"
+                        f"Supplier: {tyre_supplier_charge.supplier_name}\n"
+                        f"Deal: {tyre_supplier_charge.deal_type}\n"
+                        f"Cost this race: ${tyre_supplier_charge.applied_cost:,}\n"
+                        f"Annual contract value: ${tyre_supplier_charge.yearly_cost:,}"
+                    ),
+                    category=EmailCategory.GENERAL,
+                )
             if crash_damage_charges:
                 total_damage = sum(c.applied_cost for c in crash_damage_charges)
                 lines = "\n".join(
@@ -367,6 +409,8 @@ def process_command(command):
                 sponsorship_total = category_total(TransactionCategory.SPONSORSHIP)
                 driver_wage_total = category_total(TransactionCategory.DRIVER_WAGES)
                 workforce_total = category_total(TransactionCategory.WORKFORCE_WAGES)
+                engine_supplier_total = category_total(TransactionCategory.ENGINE_SUPPLIER)
+                tyre_supplier_total = category_total(TransactionCategory.TYRE_SUPPLIER)
                 transport_total = category_total(TransactionCategory.TRANSPORT)
                 crash_total = category_total(TransactionCategory.CRASH_DAMAGE)
 
@@ -379,6 +423,8 @@ def process_command(command):
                         f"Sponsorship: {'+' if sponsorship_total >= 0 else '-'}${abs(sponsorship_total):,}\n"
                         f"Driver wages: {'+' if driver_wage_total >= 0 else '-'}${abs(driver_wage_total):,}\n"
                         f"Workforce payroll: {'+' if workforce_total >= 0 else '-'}${abs(workforce_total):,}\n"
+                        f"Engine supplier: {'+' if engine_supplier_total >= 0 else '-'}${abs(engine_supplier_total):,}\n"
+                        f"Tyre supplier: {'+' if tyre_supplier_total >= 0 else '-'}${abs(tyre_supplier_total):,}\n"
                         f"Transport: {'+' if transport_total >= 0 else '-'}${abs(transport_total):,}\n"
                         f"Crash damage: {'+' if crash_total >= 0 else '-'}${abs(crash_total):,}\n\n"
                         f"Income: ${income_total:,}\n"
@@ -636,6 +682,26 @@ def process_command(command):
                 if t.category == TransactionCategory.SPONSORSHIP and t.year == CURRENT_STATE.year and t.amount > 0
             )
             sponsor_remaining = max(sponsor_yearly - sponsor_paid_so_far, 0) if sponsor_name else 0
+            race_count = CURRENT_STATE.finance.prize_money_total_races or max(
+                1, sum(1 for e in CURRENT_STATE.calendar.events if getattr(e.type, "value", e.type) == "RACE")
+            )
+            engine_supplier_name = player_team.engine_supplier_name if player_team else None
+            engine_supplier_yearly = player_team.engine_supplier_yearly_cost if player_team else 0
+            engine_supplier_installment = int(round(max(0, engine_supplier_yearly) / max(1, race_count))) if engine_supplier_name else 0
+            engine_supplier_paid_so_far = sum(
+                -t.amount for t in CURRENT_STATE.finance.transactions
+                if t.category == TransactionCategory.ENGINE_SUPPLIER and t.year == CURRENT_STATE.year and t.amount < 0
+            )
+            engine_supplier_remaining = max(engine_supplier_yearly - engine_supplier_paid_so_far, 0) if engine_supplier_name else 0
+
+            tyre_supplier_name = player_team.tyre_supplier_name if player_team else None
+            tyre_supplier_yearly = player_team.tyre_supplier_yearly_cost if player_team else 0
+            tyre_supplier_installment = int(round(max(0, tyre_supplier_yearly) / max(1, race_count))) if tyre_supplier_name else 0
+            tyre_supplier_paid_so_far = sum(
+                -t.amount for t in CURRENT_STATE.finance.transactions
+                if t.category == TransactionCategory.TYRE_SUPPLIER and t.year == CURRENT_STATE.year and t.amount < 0
+            )
+            tyre_supplier_remaining = max(tyre_supplier_yearly - tyre_supplier_paid_so_far, 0) if tyre_supplier_name else 0
             
             return {
                 "type": "finance_data",
@@ -658,6 +724,22 @@ def process_command(command):
                         "installment": sponsor_installment,
                         "paid_so_far": sponsor_paid_so_far,
                         "remaining": sponsor_remaining,
+                    },
+                    "engine_supplier": {
+                        "name": engine_supplier_name,
+                        "deal": player_team.engine_supplier_deal if player_team else None,
+                        "annual_value": engine_supplier_yearly,
+                        "installment": engine_supplier_installment,
+                        "paid_so_far": engine_supplier_paid_so_far,
+                        "remaining": engine_supplier_remaining,
+                    },
+                    "tyre_supplier": {
+                        "name": tyre_supplier_name,
+                        "deal": player_team.tyre_supplier_deal if player_team else None,
+                        "annual_value": tyre_supplier_yearly,
+                        "installment": tyre_supplier_installment,
+                        "paid_so_far": tyre_supplier_paid_so_far,
+                        "remaining": tyre_supplier_remaining,
                     },
                 }
             }

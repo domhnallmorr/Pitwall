@@ -6,6 +6,7 @@ from app.models.technical_director import TechnicalDirector
 from app.models.commercial_manager import CommercialManager
 from app.models.title_sponsor import TitleSponsor
 from app.models.engine_supplier import EngineSupplier
+from app.models.tyre_supplier import TyreSupplier
 from app.models.calendar import Calendar
 from app.models.circuit import Circuit
 from app.models.email import Email, EmailCategory
@@ -28,6 +29,7 @@ class GameState(BaseModel):
     commercial_managers: List[CommercialManager] = Field(default_factory=list)
     title_sponsors: List[TitleSponsor] = Field(default_factory=list)
     engine_suppliers: List[EngineSupplier] = Field(default_factory=list)
+    tyre_suppliers: List[TyreSupplier] = Field(default_factory=list)
     calendar: Calendar
     circuits: List[Circuit]
     player_team_id: int | None = None

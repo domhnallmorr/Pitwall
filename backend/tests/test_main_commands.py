@@ -10,7 +10,22 @@ from app.models.finance import TransactionCategory
 
 def create_state() -> GameState:
     teams = [
-        Team(id=1, name="Warrick", country="United Kingdom", driver1_id=1, driver2_id=2, car_speed=80),
+        Team(
+            id=1,
+            name="Warrick",
+            country="United Kingdom",
+            driver1_id=1,
+            driver2_id=2,
+            car_speed=80,
+            title_sponsor_name="Windale",
+            title_sponsor_yearly=32_500_000,
+            engine_supplier_name="Mechatron",
+            engine_supplier_deal="customer",
+            engine_supplier_yearly_cost=4_500_000,
+            tyre_supplier_name="Greatday",
+            tyre_supplier_deal="partner",
+            tyre_supplier_yearly_cost=0,
+        ),
         Team(id=2, name="Ferano", country="Italy", driver1_id=3, driver2_id=4, car_speed=84),
     ]
     drivers = [
@@ -117,8 +132,13 @@ def test_get_finance_returns_summary_and_track_profit_loss():
     assert "track_profit_loss" in result["data"]
     assert result["data"]["summary"]["transport_total"] == 200_000
     assert "workforce_total" in result["data"]["summary"]
+    assert "engine_supplier_total" in result["data"]["summary"]
+    assert "tyre_supplier_total" in result["data"]["summary"]
     assert "sponsorship_total" in result["data"]["summary"]
     assert len(result["data"]["track_profit_loss"]) == 1
+    assert result["data"]["sponsor"]["name"] == "Windale"
+    assert result["data"]["engine_supplier"]["name"] == "Mechatron"
+    assert result["data"]["tyre_supplier"]["name"] == "Greatday"
 
 
 def test_get_emails_and_read_email_updates_unread_count():

@@ -18,6 +18,8 @@ export default class FinanceView {
 		this.netPlEl = document.getElementById('finance-net-pl');
 		this.transportTotalEl = document.getElementById('finance-transport-total');
 		this.workforceTotalEl = document.getElementById('finance-workforce-total');
+		this.engineSupplierTotalEl = document.getElementById('finance-engine-supplier-total');
+		this.tyreSupplierTotalEl = document.getElementById('finance-tyre-supplier-total');
 		this.sponsorshipTotalEl = document.getElementById('finance-sponsorship-total');
 		this.prizeProgressEl = document.getElementById('finance-prize-progress');
 		this.sponsorNameEl = document.getElementById('finance-sponsor-name');
@@ -26,9 +28,41 @@ export default class FinanceView {
 		this.sponsorPaidEl = document.getElementById('finance-sponsor-paid');
 		this.sponsorRemainingEl = document.getElementById('finance-sponsor-remaining');
 		this.sponsorLogoWrap = document.getElementById('finance-sponsor-logo-wrap');
+		this.engineSupplierNameEl = document.getElementById('finance-engine-supplier-name');
+		this.engineSupplierDealEl = document.getElementById('finance-engine-supplier-deal');
+		this.engineSupplierAnnualEl = document.getElementById('finance-engine-supplier-annual');
+		this.engineSupplierInstallmentEl = document.getElementById('finance-engine-supplier-installment');
+		this.engineSupplierPaidEl = document.getElementById('finance-engine-supplier-paid');
+		this.engineSupplierRemainingEl = document.getElementById('finance-engine-supplier-remaining');
+		this.engineSupplierLogoWrap = document.getElementById('finance-engine-supplier-logo-wrap');
+		this.tyreSupplierNameEl = document.getElementById('finance-tyre-supplier-name');
+		this.tyreSupplierDealEl = document.getElementById('finance-tyre-supplier-deal');
+		this.tyreSupplierAnnualEl = document.getElementById('finance-tyre-supplier-annual');
+		this.tyreSupplierInstallmentEl = document.getElementById('finance-tyre-supplier-installment');
+		this.tyreSupplierPaidEl = document.getElementById('finance-tyre-supplier-paid');
+		this.tyreSupplierRemainingEl = document.getElementById('finance-tyre-supplier-remaining');
+		this.tyreSupplierLogoWrap = document.getElementById('finance-tyre-supplier-logo-wrap');
 		this.trackPlBody = document.getElementById('finance-track-pl-body');
 		this.tbody = document.getElementById('finance-transactions-body');
 		this.bindTabs();
+	}
+
+	setSupplierLogo(targetWrap, supplierName) {
+		if (!targetWrap) return;
+		if (!supplierName) {
+			targetWrap.innerHTML = '';
+			return;
+		}
+		const slug = supplierName.toLowerCase().replace(/\s+/g, '-');
+		const fileNameBySlug = {
+			hartek: 'harteck',
+		};
+		const preferred = fileNameBySlug[slug] || slug;
+		const fallback = `${slug}.png`;
+		targetWrap.innerHTML = `
+			<img class="supplier-logo" src="assets/supplier_logos/${preferred}.png" alt="${supplierName} logo"
+				onerror="if(!this.dataset.f1){this.dataset.f1='1';this.src='assets/supplier_logos/${fallback}';}else{this.style.display='none';}">
+		`;
 	}
 
 	bindTabs() {
@@ -86,11 +120,15 @@ export default class FinanceView {
 		const transportTotal = summary.transport_total || 0;
 		const workforceTotal = summary.workforce_total || 0;
 		const sponsorshipTotal = summary.sponsorship_total || 0;
+		const engineSupplierTotal = summary.engine_supplier_total || 0;
+		const tyreSupplierTotal = summary.tyre_supplier_total || 0;
 
 		if (this.incomeTotalEl) this.incomeTotalEl.textContent = '$' + incomeTotal.toLocaleString();
 		if (this.expenseTotalEl) this.expenseTotalEl.textContent = '$' + expenseTotal.toLocaleString();
 		if (this.transportTotalEl) this.transportTotalEl.textContent = '$' + transportTotal.toLocaleString();
 		if (this.workforceTotalEl) this.workforceTotalEl.textContent = '$' + workforceTotal.toLocaleString();
+		if (this.engineSupplierTotalEl) this.engineSupplierTotalEl.textContent = '$' + engineSupplierTotal.toLocaleString();
+		if (this.tyreSupplierTotalEl) this.tyreSupplierTotalEl.textContent = '$' + tyreSupplierTotal.toLocaleString();
 		if (this.sponsorshipTotalEl) this.sponsorshipTotalEl.textContent = '$' + sponsorshipTotal.toLocaleString();
 		if (this.netPlEl) {
 			const netFormatted = '$' + Math.abs(netPl).toLocaleString();
@@ -125,6 +163,38 @@ export default class FinanceView {
 				`;
 			}
 		}
+
+		const engineSupplier = data.engine_supplier || {};
+		const engineSupplierName = engineSupplier.name || 'Unassigned';
+		const engineSupplierDeal = engineSupplier.deal || '-';
+		const engineSupplierAnnual = engineSupplier.annual_value || 0;
+		const engineSupplierInstallment = engineSupplier.installment || 0;
+		const engineSupplierPaid = engineSupplier.paid_so_far || 0;
+		const engineSupplierRemaining = engineSupplier.remaining || 0;
+
+		if (this.engineSupplierNameEl) this.engineSupplierNameEl.textContent = engineSupplierName;
+		if (this.engineSupplierDealEl) this.engineSupplierDealEl.textContent = engineSupplierDeal;
+		if (this.engineSupplierAnnualEl) this.engineSupplierAnnualEl.textContent = '$' + engineSupplierAnnual.toLocaleString();
+		if (this.engineSupplierInstallmentEl) this.engineSupplierInstallmentEl.textContent = '$' + engineSupplierInstallment.toLocaleString();
+		if (this.engineSupplierPaidEl) this.engineSupplierPaidEl.textContent = '$' + engineSupplierPaid.toLocaleString();
+		if (this.engineSupplierRemainingEl) this.engineSupplierRemainingEl.textContent = '$' + engineSupplierRemaining.toLocaleString();
+		this.setSupplierLogo(this.engineSupplierLogoWrap, engineSupplier.name);
+
+		const tyreSupplier = data.tyre_supplier || {};
+		const tyreSupplierName = tyreSupplier.name || 'Unassigned';
+		const tyreSupplierDeal = tyreSupplier.deal || '-';
+		const tyreSupplierAnnual = tyreSupplier.annual_value || 0;
+		const tyreSupplierInstallment = tyreSupplier.installment || 0;
+		const tyreSupplierPaid = tyreSupplier.paid_so_far || 0;
+		const tyreSupplierRemaining = tyreSupplier.remaining || 0;
+
+		if (this.tyreSupplierNameEl) this.tyreSupplierNameEl.textContent = tyreSupplierName;
+		if (this.tyreSupplierDealEl) this.tyreSupplierDealEl.textContent = tyreSupplierDeal;
+		if (this.tyreSupplierAnnualEl) this.tyreSupplierAnnualEl.textContent = '$' + tyreSupplierAnnual.toLocaleString();
+		if (this.tyreSupplierInstallmentEl) this.tyreSupplierInstallmentEl.textContent = '$' + tyreSupplierInstallment.toLocaleString();
+		if (this.tyreSupplierPaidEl) this.tyreSupplierPaidEl.textContent = '$' + tyreSupplierPaid.toLocaleString();
+		if (this.tyreSupplierRemainingEl) this.tyreSupplierRemainingEl.textContent = '$' + tyreSupplierRemaining.toLocaleString();
+		this.setSupplierLogo(this.tyreSupplierLogoWrap, tyreSupplier.name);
 
 		// Track P/L table
 		if (this.trackPlBody) {

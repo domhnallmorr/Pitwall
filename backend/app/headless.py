@@ -20,12 +20,13 @@ def run_headless(num_seasons: int = 2):
     print(f"=== Headless Simulation: {num_seasons} Season(s) ===\n")
 
     # 1. Load roster
-    teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors, engine_suppliers = load_roster(
+    teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors, engine_suppliers, tyre_suppliers = load_roster(
         year=0,
         include_technical_directors=True,
         include_commercial_managers=True,
         include_title_sponsors=True,
         include_engine_suppliers=True,
+        include_tyre_suppliers=True,
     )
     calendar = Calendar(events=events, current_week=1)
     state = GameState(
@@ -36,6 +37,7 @@ def run_headless(num_seasons: int = 2):
         commercial_managers=commercial_managers,
         title_sponsors=title_sponsors,
         engine_suppliers=engine_suppliers,
+        tyre_suppliers=tyre_suppliers,
         calendar=calendar,
         circuits=circuits,
     )
