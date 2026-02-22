@@ -442,7 +442,7 @@ def seed_data(conn):
         (0, "Jace Whitman", 29, 70, 5, 360_000, "Warrick"),
         (0, "Silvano Domencari", 33, 90, 5, 560_000, "Ferano"),
         (0, "Dylan Warden", 29, 66, 1, 416_000, "Benedetti"),
-        (0, "Emre Sadi", 29, 82, 4, 512_000, "McAlister"),
+        (0, "Emre Sadi", 43, 82, 4, 512_000, "McAlister"),
         (0, "Iain Philbrook", 47, 92, 4, 464_000, "Joyce"),
         (0, "Yann Lamberti", 44, 55, 2, 320_000, "Pascal"),
         (0, "Felix Kessler", 43, 52, 3, 272_000, "Schweizer"),
