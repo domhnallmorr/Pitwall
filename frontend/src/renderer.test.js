@@ -53,8 +53,11 @@ describe('renderer smoke', () => {
 		document.body.innerHTML = `
 			<div id="title-screen"></div>
 			<div id="game-dashboard" style="display:none;"></div>
+			<div id="title-start-actions"></div>
 			<button id="start-career-btn"></button>
 			<button id="load-game-btn" disabled></button>
+			<div id="team-select-screen" style="display:none;"></div>
+			<div id="team-select-buttons"></div>
 			<div id="team-name"></div>
 			<div id="current-week"></div>
 			<div id="next-event"></div>
@@ -88,7 +91,12 @@ describe('renderer smoke', () => {
 		expect(apiMock.checkSave).toHaveBeenCalledTimes(1);
 
 		document.getElementById('start-career-btn').click();
+		expect(document.getElementById('team-select-screen').style.display).toBe('block');
+		const teamButtons = document.querySelectorAll('.team-select-btn');
+		expect(teamButtons.length).toBeGreaterThan(0);
+		teamButtons[0].click();
 		expect(apiMock.startCareer).toHaveBeenCalledTimes(1);
+		expect(apiMock.startCareer.mock.calls[0][0]).toBe('Warrick');
 
 		ipcHandler(JSON.stringify({ type: 'save_status', data: { has_save: true } }));
 		expect(document.getElementById('load-game-btn').disabled).toBe(false);

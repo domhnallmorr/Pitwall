@@ -44,7 +44,7 @@ def process_command(command):
         return response
 
     if cmd_type == 'start_career':
-        CURRENT_STATE, response = handle_start_career(CURRENT_STATE, logging)
+        CURRENT_STATE, response = handle_start_career(CURRENT_STATE, logging, team_name=command.get("team_name"))
         if response.get("status") == "success":
             save_game(CURRENT_STATE)
         return response

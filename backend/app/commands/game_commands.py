@@ -70,22 +70,23 @@ def handle_load_roster(logger: logging.Logger):
         return None, {"status": "error", "message": str(e)}
 
 
-def handle_start_career(state: GameState | None, logger: logging.Logger):
+def handle_start_career(state: GameState | None, logger: logging.Logger, team_name: str | None = None):
     try:
         current_state = state or load_default_state()
-        warrick_team = next((t for t in current_state.teams if t.name == "Warrick"), None)
-        if not warrick_team:
-            return current_state, {"status": "error", "message": "Team 'Warrick' not found in roster."}
+        selected_team_name = (team_name or "Warrick").strip()
+        selected_team = next((t for t in current_state.teams if t.name == selected_team_name), None)
+        if not selected_team:
+            return current_state, {"status": "error", "message": f"Team '{selected_team_name}' not found in roster."}
 
-        current_state.player_team_id = warrick_team.id
-        current_state.finance = Finance(balance=warrick_team.balance)
+        current_state.player_team_id = selected_team.id
+        current_state.finance = Finance(balance=selected_team.balance)
         PrizeMoneyManager().assign_initial_entitlement_from_roster_order(current_state)
 
         current_state.add_email(
             sender="Board of Directors",
             subject="Welcome to Pitwall",
             body=(
-                f"Welcome to {warrick_team.name}! As the new Team Principal, you have full control over the team's "
+                f"Welcome to {selected_team.name}! As the new Team Principal, you have full control over the team's "
                 "strategy, development, and driver lineup. We're counting on you to lead us to glory. Good luck!"
             ),
             category=EmailCategory.GENERAL,
@@ -106,7 +107,7 @@ def handle_start_career(state: GameState | None, logger: logging.Logger):
             "type": "game_started",
             "status": "success",
             "data": {
-                "team_name": warrick_team.name,
+                "team_name": selected_team.name,
                 "week_display": current_state.week_display,
                 "next_event_display": current_state.next_event_display,
                 "year": current_state.year,

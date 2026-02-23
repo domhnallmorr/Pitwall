@@ -44,6 +44,45 @@ body {
   width: 100%;
 }
 
+#team-select-screen {
+  max-width: 860px;
+  margin: 0 auto;
+  background: rgba(10, 25, 47, 0.74);
+  border: 1px solid rgba(100, 255, 218, 0.35);
+  border-radius: 12px;
+  padding: 24px 28px;
+  backdrop-filter: blur(4px);
+}
+
+.team-select-title {
+  margin-bottom: 16px;
+  font-size: 1.6rem;
+  letter-spacing: 1px;
+}
+
+.team-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.team-select-btn {
+  padding: 10px 14px;
+  font-size: 1rem;
+  border: 1px solid rgba(100, 255, 218, 0.35);
+  border-radius: 8px;
+  background: rgba(17, 34, 64, 0.8);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.team-select-btn:hover {
+  border-color: var(--accent-color);
+  background: rgba(35, 53, 84, 0.9);
+  color: var(--accent-color);
+}
+
 .btn-primary {
   padding: 15px 50px;
   font-size: 1.5rem;

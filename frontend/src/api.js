@@ -4,7 +4,9 @@
  */
 
 const API = {
-	startCareer: () => window.electronAPI.sendToPython({ type: 'start_career' }),
+	startCareer: (teamName) => window.electronAPI.sendToPython(
+		teamName ? { type: 'start_career', team_name: teamName } : { type: 'start_career' }
+	),
 	loadGame: () => window.electronAPI.sendToPython({ type: 'load_game' }),
 	checkSave: () => window.electronAPI.sendToPython({ type: 'check_save' }),
 	getGrid: (year) => window.electronAPI.sendToPython(

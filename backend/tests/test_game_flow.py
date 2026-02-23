@@ -60,6 +60,18 @@ def test_start_career_flow(mock_get_conn, test_db):
     assert app_main.CURRENT_STATE.finance.prize_money_entitlement == 33_000_000
     assert app_main.CURRENT_STATE.finance.prize_money_total_races > 0
 
+
+@patch('app.core.roster.get_connection')
+def test_start_career_flow_can_select_team(mock_get_conn, test_db):
+    mock_get_conn.return_value = test_db
+    app_main.CURRENT_STATE = None
+
+    response = process_command({'type': 'start_career', 'team_name': 'Ferano'})
+
+    assert response['status'] == 'success'
+    assert response['type'] == 'game_started'
+    assert response['data']['team_name'] == 'Ferano'
+
 @patch('app.core.retirement.random.random', return_value=0.0)
 @patch('app.core.roster.get_connection')
 def test_start_career_can_announce_donovan_final_season(mock_get_conn, mock_random, test_db):

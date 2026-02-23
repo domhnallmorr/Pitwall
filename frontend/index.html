@@ -12,8 +12,14 @@
   <!-- Title Screen -->
   <div class="title-screen" id="title-screen">
     <div class="title-content">
-      <button id="start-career-btn" class="btn-primary">Start Career</button>
-      <button id="load-game-btn" class="btn-primary btn-load" disabled>Load Game</button>
+      <div id="title-start-actions">
+        <button id="start-career-btn" class="btn-primary">Start Career</button>
+        <button id="load-game-btn" class="btn-primary btn-load" disabled>Load Game</button>
+      </div>
+      <div id="team-select-screen" style="display:none;">
+        <h2 class="team-select-title">Choose Your Team</h2>
+        <div id="team-select-buttons" class="team-select-grid"></div>
+      </div>
     </div>
   </div>
 

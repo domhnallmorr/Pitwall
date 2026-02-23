@@ -20,6 +20,9 @@ const titleScreen = document.getElementById('title-screen');
 const dashboard = document.getElementById('game-dashboard');
 const startBtn = document.getElementById('start-career-btn');
 const loadBtn = document.getElementById('load-game-btn');
+const titleStartActions = document.getElementById('title-start-actions');
+const teamSelectScreen = document.getElementById('team-select-screen');
+const teamSelectButtons = document.getElementById('team-select-buttons');
 
 // Dashboard Info
 const teamNameEl = document.getElementById('team-name');
@@ -38,6 +41,20 @@ let driverView;
 let carView;
 let financeView;
 let facilitiesView;
+
+const TEAM_OPTIONS = [
+	'Warrick',
+	'Ferano',
+	'Benedetti',
+	'McAlister',
+	'Joyce',
+	'Pascal',
+	'Schweizer',
+	'Swords',
+	'Strathmore',
+	'Tarnwell',
+	'Marchetti',
+];
 
 // --- Initialization ---
 
@@ -65,8 +82,7 @@ function init() {
 
 function setupEventListeners() {
 	startBtn.addEventListener('click', () => {
-		console.log("Starting Career...");
-		API.startCareer();
+		showTeamSelect();
 	});
 
 	loadBtn.addEventListener('click', () => {
@@ -222,6 +238,25 @@ function updateDashboard(data) {
 		API.getGrid(data.year);
 		API.getGrid(data.year + 1);
 	}
+}
+
+function showTeamSelect() {
+	if (titleStartActions) titleStartActions.style.display = 'none';
+	if (!teamSelectScreen || !teamSelectButtons) return;
+	teamSelectButtons.innerHTML = '';
+
+	TEAM_OPTIONS.forEach((teamName) => {
+		const btn = document.createElement('button');
+		btn.className = 'team-select-btn';
+		btn.textContent = teamName;
+		btn.addEventListener('click', () => {
+			console.log(`Starting Career as ${teamName}...`);
+			API.startCareer(teamName);
+		});
+		teamSelectButtons.appendChild(btn);
+	});
+
+	teamSelectScreen.style.display = 'block';
 }
 
 function refreshVisibleViews() {
