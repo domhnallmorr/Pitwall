@@ -11,6 +11,7 @@ from app.core.retirement import RetirementManager
 from app.core.roster import load_roster
 from app.core.sponsorships import SponsorshipManager
 from app.core.transport import TransportManager
+from app.core.transfers import TransferManager
 from app.core.tyre_supplier_costs import TyreSupplierCostManager
 from app.core.workforce_costs import WorkforceCostManager
 from app.models.calendar import Calendar
@@ -103,6 +104,7 @@ def handle_start_career(state: GameState | None, logger: logging.Logger, team_na
             )
 
         GridManager().capture_season_snapshot(current_state, year=current_state.year)
+        TransferManager().recompute_ai_signings(current_state)
         return current_state, {
             "type": "game_started",
             "status": "success",

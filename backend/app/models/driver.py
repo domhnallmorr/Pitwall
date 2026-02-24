@@ -13,6 +13,7 @@ class Driver(BaseModel):
     role: Optional[str] = None # Uses DriverRole enum string value
     points: int = 0
     wage: int = 0
+    contract_length: int = 2
     pay_driver: bool = False
     active: bool = True
     retirement_year: Optional[int] = None

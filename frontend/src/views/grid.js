@@ -170,8 +170,8 @@ export default class GridView {
 				const d1Name = row.Driver1 || 'Vacant';
 				const d2Name = row.Driver2 || 'Vacant';
 				const tdName = row.TechnicalDirector || 'VACANT';
-				const d1Country = this.driverCountryByName[d1Name] || '';
-				const d2Country = this.driverCountryByName[d2Name] || '';
+				const d1Country = row.Driver1Country || this.driverCountryByName[d1Name] || '';
+				const d2Country = row.Driver2Country || this.driverCountryByName[d2Name] || '';
 				const tdCountry = row.TechnicalDirectorCountry || '';
 				const cmName = row.CommercialManager || 'VACANT';
 				tr.innerHTML = `

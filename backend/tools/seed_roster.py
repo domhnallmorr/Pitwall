@@ -16,6 +16,7 @@ def create_schema(conn):
             start_year INTEGER DEFAULT 0,
             wage INTEGER DEFAULT 0,
             pay_driver INTEGER DEFAULT 0,
+            contract_length INTEGER DEFAULT 2,
             speed INTEGER DEFAULT 50,
             race_starts INTEGER DEFAULT 0,
             wins INTEGER DEFAULT 0
@@ -140,6 +141,8 @@ def create_schema(conn):
     driver_columns = {row[1] for row in c.fetchall()}
     if "speed" not in driver_columns:
         c.execute("ALTER TABLE drivers ADD COLUMN speed INTEGER DEFAULT 50")
+    if "contract_length" not in driver_columns:
+        c.execute("ALTER TABLE drivers ADD COLUMN contract_length INTEGER DEFAULT 2")
     if "race_starts" not in driver_columns:
         c.execute("ALTER TABLE drivers ADD COLUMN race_starts INTEGER DEFAULT 0")
     if "wins" not in driver_columns:
@@ -351,6 +354,30 @@ def seed_data(conn):
         "Nico Heidmann": 0,
         "Gustav Mazzane": 0,
     }
+    driver_contract_lengths = {
+        "John Newhouse": 1,
+        "Henrik Friedrich": 1,
+        "Marco Schneider": 4,
+        "Evan Irving": 2,
+        "Fabrizio Giorgetti": 2,
+        "Andreas Wurst": 2,
+        "Daniel Caldwell": 2,
+        "Mikko Hanninen": 2,
+        "Donovan Upland": 2,
+        "Roland Schneider": 1,
+        "Alexis Perrin": 2,
+        "Luca Treno": 2,
+        "Julien Alesso": 1,
+        "Jimmy Hobart": 1,
+        "Pablo Dinez": 1,
+        "Mikko Salmi": 1,
+        "Rodrigo Barros": 2,
+        "Lars Nielsen": 1,
+        "Roberto Rossi": 1,
+        "Toshiro Tanaka": 1,
+        "Kazuki Nakamura": 1,
+        "Eduardo Torres": 1,
+    }
     team_speeds = {
         "Warrick": 80,
         "Ferano": 84,
@@ -539,11 +566,11 @@ def seed_data(conn):
         if drivers_to_insert:
             print(f"Seeding {len(drivers_to_insert)} future driver(s)...")
             drivers_to_insert_with_attrs = [
-                (*d, driver_speeds.get(d[1], 50), driver_race_starts.get(d[1], 0), driver_wins.get(d[1], 0))
+                (*d, driver_contract_lengths.get(d[1], 0 if d[0] > 0 else 2), driver_speeds.get(d[1], 50), driver_race_starts.get(d[1], 0), driver_wins.get(d[1], 0))
                 for d in drivers_to_insert
             ]
             c.executemany(
-                'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, speed, race_starts, wins) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, contract_length, speed, race_starts, wins) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 drivers_to_insert_with_attrs
             )
             conn.commit()
@@ -560,6 +587,10 @@ def seed_data(conn):
         c.executemany(
             'UPDATE drivers SET wins = ? WHERE name = ?',
             [(wins, name) for name, wins in driver_wins.items()]
+        )
+        c.executemany(
+            'UPDATE drivers SET contract_length = ? WHERE name = ?',
+            [(length, name) for name, length in driver_contract_lengths.items()]
         )
         c.executemany(
             'UPDATE teams SET car_speed = ? WHERE name = ?',
@@ -807,11 +838,11 @@ def seed_data(conn):
     ]
 
     drivers_data_with_attrs = [
-        (*d, driver_speeds.get(d[1], 50), driver_race_starts.get(d[1], 0), driver_wins.get(d[1], 0))
+        (*d, driver_contract_lengths.get(d[1], 0 if d[0] > 0 else 2), driver_speeds.get(d[1], 50), driver_race_starts.get(d[1], 0), driver_wins.get(d[1], 0))
         for d in drivers_data
     ]
     c.executemany(
-        'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, speed, race_starts, wins) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, contract_length, speed, race_starts, wins) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         drivers_data_with_attrs
     )
 

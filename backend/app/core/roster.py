@@ -129,12 +129,14 @@ def load_roster(
     has_speed = "speed" in driver_columns
     has_race_starts = "race_starts" in driver_columns
     has_wins = "wins" in driver_columns
+    has_contract_length = "contract_length" in driver_columns
 
     speed_expr = "speed" if has_speed else "50"
     race_starts_expr = "race_starts" if has_race_starts else "0"
     wins_expr = "wins" if has_wins else "0"
+    contract_length_expr = "contract_length" if has_contract_length else "2"
     c.execute(
-        f'SELECT id, name, age, country, wage, pay_driver, {speed_expr} AS speed, {race_starts_expr} AS race_starts, {wins_expr} AS wins '
+        f'SELECT id, name, age, country, wage, pay_driver, {speed_expr} AS speed, {race_starts_expr} AS race_starts, {wins_expr} AS wins, {contract_length_expr} AS contract_length '
         'FROM drivers WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
         (start_year,),
     )
@@ -144,6 +146,7 @@ def load_roster(
         speed = row[6] if row[6] is not None else 50
         race_starts = row[7] if row[7] is not None else 0
         wins = row[8] if row[8] is not None else 0
+        contract_length = row[9] if row[9] is not None else 2
         d = Driver(
             id=row[0],
             name=row[1],
@@ -154,6 +157,7 @@ def load_roster(
             speed=speed,
             race_starts=race_starts,
             wins=wins,
+            contract_length=contract_length,
         )
         drivers.append(d)
         driver_map[d.name] = d

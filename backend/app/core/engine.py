@@ -2,6 +2,7 @@ from app.models.state import GameState
 from app.models.calendar import EventType
 from app.core.rollover import SeasonRolloverManager
 from app.core.transport import TransportManager
+from app.core.transfers import TransferManager
 from app.models.email import EmailCategory
 
 class GameEngine:
@@ -11,6 +12,7 @@ class GameEngine:
     def __init__(self):
         self.rollover_manager = SeasonRolloverManager()
         self.transport_manager = TransportManager()
+        self.transfer_manager = TransferManager()
 
     def advance_week(self, state: GameState) -> dict:
         """
@@ -24,6 +26,7 @@ class GameEngine:
 
         # Publish any scheduled announcements for this week.
         state.publish_queued_emails()
+        self.transfer_manager.publish_due_announcements(state)
 
         # Check for season end
         if state.calendar.season_over:

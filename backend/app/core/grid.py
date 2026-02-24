@@ -4,6 +4,16 @@ from typing import List
 from app.models.state import GameState
 
 class GridManager:
+    def _is_projected_driver_available(self, driver, current_year: int) -> bool:
+        if not driver or not driver.active:
+            return False
+        if driver.retirement_year is not None and driver.retirement_year <= current_year:
+            return False
+        # Transfer placeholder rule: one year left means seat is considered open for next season.
+        if getattr(driver, "contract_length", 2) == 1:
+            return False
+        return True
+
     def get_grid_records(self, state: GameState, year: int | None = None) -> List[dict]:
         """
         Returns grid records for a given year.
@@ -38,6 +48,8 @@ class GridManager:
                 "Country": team.country,
                 "Driver1": d1.name if d1 else "VACANT",
                 "Driver2": d2.name if d2 else "VACANT",
+                "Driver1Country": d1.country if d1 and d1.country else "",
+                "Driver2Country": d2.country if d2 and d2.country else "",
                 "TechnicalDirector": td.name if td else "VACANT",
                 "TechnicalDirectorCountry": td.country if td and td.country else "",
                 "CommercialManager": cm.name if cm else "VACANT",
@@ -60,17 +72,25 @@ class GridManager:
         Drivers marked to retire at end of current season are excluded from next-year seats.
         """
         data = []
-        projected_driver_lookup = {
-            d.id: d for d in state.drivers
-            if d.active and (d.retirement_year is None or d.retirement_year > state.year)
+        driver_lookup = {d.id: d for d in state.drivers}
+        announced_by_seat = {
+            (s.get("team_id"), s.get("seat")): s.get("driver_id")
+            for s in state.announced_ai_signings
+            if s.get("status") == "announced"
         }
         td_lookup = {td.id: td for td in state.technical_directors}
         cm_lookup = {cm.id: cm for cm in state.commercial_managers}
         engine_country_by_name = {e.name: e.country for e in state.engine_suppliers}
 
         for team in state.teams:
-            d1 = projected_driver_lookup.get(team.driver1_id)
-            d2 = projected_driver_lookup.get(team.driver2_id)
+            announced_d1_id = announced_by_seat.get((team.id, "driver1_id"))
+            announced_d2_id = announced_by_seat.get((team.id, "driver2_id"))
+            d1 = driver_lookup.get(announced_d1_id) if announced_d1_id else driver_lookup.get(team.driver1_id)
+            d2 = driver_lookup.get(announced_d2_id) if announced_d2_id else driver_lookup.get(team.driver2_id)
+            if not announced_d1_id:
+                d1 = d1 if self._is_projected_driver_available(d1, state.year) else None
+            if not announced_d2_id:
+                d2 = d2 if self._is_projected_driver_available(d2, state.year) else None
             td = td_lookup.get(team.technical_director_id)
             cm = cm_lookup.get(team.commercial_manager_id)
 
@@ -79,6 +99,8 @@ class GridManager:
                 "Country": team.country,
                 "Driver1": d1.name if d1 else "VACANT",
                 "Driver2": d2.name if d2 else "VACANT",
+                "Driver1Country": d1.country if d1 and d1.country else "",
+                "Driver2Country": d2.country if d2 and d2.country else "",
                 "TechnicalDirector": td.name if td else "VACANT",
                 "TechnicalDirectorCountry": td.country if td and td.country else "",
                 "CommercialManager": cm.name if cm else "VACANT",
