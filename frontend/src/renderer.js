@@ -78,6 +78,7 @@ function init() {
 		API.replaceDriver(outgoingDriverId, incomingDriverId);
 	});
 	carView = new CarView();
+	carView.setStartDevelopmentHandler((developmentType) => API.startCarDevelopment(developmentType));
 	financeView = new FinanceView();
 	facilitiesView = new FacilitiesView();
 	facilitiesView.setPreviewHandler((points, years) => API.previewFacilitiesUpgrade(points, years));
@@ -207,6 +208,12 @@ function setupIPC() {
 				driverView.render(parsed.data);
 			} else if (parsed.type === 'car_data') {
 				carView.render(parsed.data);
+			} else if (parsed.type === 'car_development_started') {
+				if (parsed.status === 'success') {
+					API.getCar();
+					API.getFinance();
+					API.getEmails();
+				}
 			} else if (parsed.type === 'finance_data') {
 				financeView.render(parsed.data);
 			} else if (parsed.type === 'facilities_data') {

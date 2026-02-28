@@ -28,6 +28,7 @@ const API = {
 	}),
 	getDriver: (name) => window.electronAPI.sendToPython({ type: 'get_driver', name }),
 	getCar: () => window.electronAPI.sendToPython({ type: 'get_car' }),
+	startCarDevelopment: (developmentType) => window.electronAPI.sendToPython({ type: 'start_car_development', development_type: developmentType }),
 	getFinance: () => window.electronAPI.sendToPython({ type: 'get_finance' }),
 	getFacilities: () => window.electronAPI.sendToPython({ type: 'get_facilities' }),
 	previewFacilitiesUpgrade: (points, years) => window.electronAPI.sendToPython({ type: 'preview_facilities_upgrade', points, years }),

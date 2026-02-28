@@ -21,6 +21,17 @@ class QueuedEmail(BaseModel):
     year: int
     category: EmailCategory = EmailCategory.GENERAL
 
+
+class PlayerCarDevelopment(BaseModel):
+    active: bool = False
+    development_type: str | None = None
+    total_weeks: int = 0
+    weeks_remaining: int = 0
+    speed_delta: int = 0
+    total_cost: int = 0
+    weekly_cost: int = 0
+    paid: int = 0
+
 class GameState(BaseModel):
     year: int
     teams: List[Team]
@@ -43,6 +54,8 @@ class GameState(BaseModel):
     latest_race_incidents: List[Dict[str, Any]] = Field(default_factory=list)
     planned_ai_signings: List[Dict[str, Any]] = Field(default_factory=list)
     announced_ai_signings: List[Dict[str, Any]] = Field(default_factory=list)
+    planned_ai_car_updates: List[Dict[str, Any]] = Field(default_factory=list)
+    player_car_development: PlayerCarDevelopment | None = None
 
     def add_email(self, sender: str, subject: str, body: str, 
                   category: EmailCategory = EmailCategory.GENERAL) -> Email:

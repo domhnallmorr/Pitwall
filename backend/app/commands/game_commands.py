@@ -3,11 +3,13 @@ import logging
 
 from app.core.crash_damage import CrashDamageManager
 from app.core.driver_wages import DriverWageManager
+from app.core.ai_car_development import AICarDevelopmentManager
 from app.core.engine_supplier_costs import EngineSupplierCostManager
 from app.core.finance_reporting import build_finance_report
 from app.core.facilities_upgrades import FacilitiesUpgradeManager
 from app.core.grid import GridManager
 from app.core.prize_money import PrizeMoneyManager
+from app.core.player_car_development import PlayerCarDevelopmentManager
 from app.core.retirement import RetirementManager
 from app.core.roster import load_roster
 from app.core.sponsorships import SponsorshipManager
@@ -106,6 +108,7 @@ def handle_start_career(state: GameState | None, logger: logging.Logger, team_na
 
         GridManager().capture_season_snapshot(current_state, year=current_state.year)
         TransferManager().recompute_ai_signings(current_state)
+        AICarDevelopmentManager().generate_for_season(current_state)
         return current_state, {
             "type": "game_started",
             "status": "success",
@@ -390,6 +393,32 @@ def handle_start_facilities_upgrade(state: GameState, logger: logging.Logger, po
     except Exception as e:
         logger.error(f"Error starting facilities upgrade: {e}")
         return {"type": "facilities_upgrade_started", "status": "error", "message": str(e)}
+
+
+def handle_start_car_development(state: GameState, logger: logging.Logger, development_type: str | None):
+    try:
+        if not development_type:
+            return {"type": "car_development_started", "status": "error", "message": "development_type is required"}
+        project = PlayerCarDevelopmentManager().start(state, development_type)
+        return {
+            "type": "car_development_started",
+            "status": "success",
+            "data": {
+                "active": project.active,
+                "development_type": project.development_type,
+                "total_weeks": project.total_weeks,
+                "weeks_remaining": project.weeks_remaining,
+                "speed_delta": project.speed_delta,
+                "total_cost": project.total_cost,
+                "weekly_cost": project.weekly_cost,
+                "paid": project.paid,
+            },
+        }
+    except ValueError as ve:
+        return {"type": "car_development_started", "status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error starting car development: {e}")
+        return {"type": "car_development_started", "status": "error", "message": str(e)}
 
 
 def build_finance_payload(state: GameState):

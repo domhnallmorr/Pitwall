@@ -8,6 +8,7 @@ from app.core.prize_money import PrizeMoneyManager
 from app.core.grid import GridManager
 from app.core.roster import load_roster
 from app.core.car_performance import CarPerformanceManager
+from app.core.ai_car_development import AICarDevelopmentManager
 from app.core.transfers import TransferManager
 from app.models.email import EmailCategory
 
@@ -24,6 +25,7 @@ class SeasonRolloverManager:
         self.prize_money_manager = PrizeMoneyManager()
         self.grid_manager = GridManager()
         self.car_performance_manager = CarPerformanceManager()
+        self.ai_car_development_manager = AICarDevelopmentManager()
         self.transfer_manager = TransferManager()
 
     def process_rollover(self, state: GameState) -> dict:
@@ -174,6 +176,7 @@ class SeasonRolloverManager:
         state.planned_ai_signings.clear()
         state.announced_ai_signings.clear()
         planned_transfers = self.transfer_manager.recompute_ai_signings(state)
+        planned_car_updates = self.ai_car_development_manager.generate_for_season(state)
 
         return {
             "old_year": old_year,
@@ -190,6 +193,7 @@ class SeasonRolloverManager:
             "next_season_prize_money": next_season_prize_money,
             "next_season_final_season_drivers": final_season_drivers,
             "planned_transfers": planned_transfers,
+            "planned_car_updates": planned_car_updates,
         }
 
     def _update_drivers(self, state: GameState):

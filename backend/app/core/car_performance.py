@@ -23,7 +23,7 @@ class CarPerformanceManager:
         random_element = random.randint(-30, 20)
         staff_speed = (max(0, workforce) * self.staff_coeff)
         base_speed = (staff_speed + max(0, facilities) + technical_director_skill + random_element) / 4
-        return int(max(1, min(100, round(base_speed))))
+        return int(max(1, round(base_speed)))
 
     def apply_for_new_season(self, state: GameState) -> list[dict]:
         updates: list[dict] = []

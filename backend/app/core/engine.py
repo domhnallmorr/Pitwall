@@ -3,6 +3,8 @@ from app.models.calendar import EventType
 from app.core.rollover import SeasonRolloverManager
 from app.core.transport import TransportManager
 from app.core.transfers import TransferManager
+from app.core.ai_car_development import AICarDevelopmentManager
+from app.core.player_car_development import PlayerCarDevelopmentManager
 from app.models.email import EmailCategory
 
 class GameEngine:
@@ -13,6 +15,8 @@ class GameEngine:
         self.rollover_manager = SeasonRolloverManager()
         self.transport_manager = TransportManager()
         self.transfer_manager = TransferManager()
+        self.ai_car_development_manager = AICarDevelopmentManager()
+        self.player_car_development_manager = PlayerCarDevelopmentManager()
 
     def advance_week(self, state: GameState) -> dict:
         """
@@ -27,6 +31,7 @@ class GameEngine:
         # Publish any scheduled announcements for this week.
         state.publish_queued_emails()
         self.transfer_manager.publish_due_announcements(state)
+        self.ai_car_development_manager.apply_for_week(state)
 
         # Check for season end
         if state.calendar.season_over:
@@ -90,5 +95,5 @@ class GameEngine:
         return self.get_week_summary(state)
 
     def _process_weekly_finances(self, state: GameState):
-        """Reserved for non-race recurring finances; driver/workforce costs are race-linked."""
-        return
+        """Process non-race recurring finances."""
+        self.player_car_development_manager.process_week(state)

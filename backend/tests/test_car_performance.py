@@ -24,10 +24,10 @@ def test_calculate_next_speed_clamps_to_minimum(mock_randint):
 
 
 @patch("app.core.car_performance.random.randint", return_value=20)
-def test_calculate_next_speed_clamps_to_maximum(mock_randint):
+def test_calculate_next_speed_allows_values_above_hundred(mock_randint):
     manager = CarPerformanceManager(staff_coeff=0.4)
     speed = manager.calculate_next_speed(workforce=500, facilities=100, technical_director_skill=100)
-    assert speed == 100
+    assert speed == 105
 
 
 @patch("app.core.car_performance.random.randint", return_value=0)

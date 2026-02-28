@@ -1,4 +1,5 @@
 from app.core.standings import StandingsManager
+from app.core.player_car_development import PlayerCarDevelopmentManager
 from app.models.state import GameState
 
 
@@ -131,6 +132,8 @@ def get_facilities_payload(state: GameState) -> dict:
 
 def get_car_payload(state: GameState) -> dict:
     engine_power_by_supplier = {e.name: e.power for e in state.engine_suppliers}
+    player_project = state.player_car_development
+    player_team = state.player_team
     return {
         "teams": [
             {
@@ -142,7 +145,33 @@ def get_car_payload(state: GameState) -> dict:
                 "engine_power": engine_power_by_supplier.get(t.engine_supplier_name, 0),
             }
             for t in state.teams
-        ]
+        ],
+        "development_catalog": PlayerCarDevelopmentManager().get_catalog(),
+        "player_team_name": player_team.name if player_team else None,
+        "player_car_speed": player_team.car_speed if player_team else 0,
+        "player_development": (
+            {
+                "active": player_project.active,
+                "development_type": player_project.development_type,
+                "total_weeks": player_project.total_weeks,
+                "weeks_remaining": player_project.weeks_remaining,
+                "speed_delta": player_project.speed_delta,
+                "total_cost": player_project.total_cost,
+                "weekly_cost": player_project.weekly_cost,
+                "paid": player_project.paid,
+            }
+            if player_project
+            else {
+                "active": False,
+                "development_type": None,
+                "total_weeks": 0,
+                "weeks_remaining": 0,
+                "speed_delta": 0,
+                "total_cost": 0,
+                "weekly_cost": 0,
+                "paid": 0,
+            }
+        ),
     }
 
 

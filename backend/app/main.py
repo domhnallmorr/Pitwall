@@ -10,6 +10,7 @@ from app.commands.game_commands import (
     handle_get_replacement_candidates,
     handle_load_roster,
     handle_replace_driver,
+    handle_start_car_development,
     handle_start_facilities_upgrade,
     handle_simulate_race,
     handle_start_career,
@@ -178,6 +179,14 @@ def process_command(command):
         if not CURRENT_STATE:
             return {"type": "facilities_upgrade_started", "status": "error", "message": "Game not started"}
         response = handle_start_facilities_upgrade(CURRENT_STATE, logging, command.get("points"), command.get("years"))
+        if response.get("status") == "success":
+            save_game(CURRENT_STATE)
+        return response
+
+    if cmd_type == 'start_car_development':
+        if not CURRENT_STATE:
+            return {"type": "car_development_started", "status": "error", "message": "Game not started"}
+        response = handle_start_car_development(CURRENT_STATE, logging, command.get("development_type"))
         if response.get("status") == "success":
             save_game(CURRENT_STATE)
         return response

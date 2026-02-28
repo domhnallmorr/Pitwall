@@ -252,20 +252,44 @@
           <div class="view-header">
             <h2>Car</h2>
           </div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Pos</th>
-                <th>Team</th>
-                <th>Country</th>
-                <th>Car Rating</th>
-                <th>Engine Rating</th>
-              </tr>
-            </thead>
-            <tbody id="car-table-body">
-              <!-- JS populated -->
-            </tbody>
-          </table>
+          <div class="tabs">
+            <button class="tab-btn car-tab-btn active" data-type="comparison">Comparison</button>
+            <button class="tab-btn car-tab-btn" data-type="development">Development</button>
+          </div>
+          <div id="car-content-comparison">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Pos</th>
+                  <th>Team</th>
+                  <th>Country</th>
+                  <th>Car Rating</th>
+                  <th>Engine Rating</th>
+                </tr>
+              </thead>
+              <tbody id="car-table-body">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+          <div id="car-content-development" style="display:none;">
+            <div id="car-development-current-speed" class="car-development-current-speed"></div>
+            <div id="car-development-status" class="car-development-status"></div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Duration</th>
+                  <th>Weekly Cost</th>
+                  <th>Speed Gain</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="car-development-table-body">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Finance View -->

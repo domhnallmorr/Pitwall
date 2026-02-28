@@ -85,6 +85,10 @@ def test_get_car_returns_team_car_speed_data():
     assert result["type"] == "car_data"
     assert len(result["data"]["teams"]) == 2
     assert result["data"]["teams"][0]["car_speed"] in {80, 84}
+    assert "development_catalog" in result["data"]
+    assert "player_development" in result["data"]
+    assert result["data"]["player_team_name"] == "Warrick"
+    assert result["data"]["player_car_speed"] == 80
 
 
 def test_unknown_command_returns_error():
@@ -232,5 +236,19 @@ def test_start_facilities_upgrade_sets_active_financing_and_blocks_second_upgrad
     assert facilities["data"]["upgrade_financing"]["active"] is True
 
     blocked = process_command({"type": "start_facilities_upgrade", "points": 20, "years": 1})
+    assert blocked["status"] == "error"
+    assert "already active" in blocked["message"]
+
+
+def test_start_car_development_creates_project_and_blocks_second_start():
+    app_main.CURRENT_STATE = create_state()
+
+    started = process_command({"type": "start_car_development", "development_type": "minor"})
+    assert started["status"] == "success"
+    assert started["type"] == "car_development_started"
+    assert started["data"]["development_type"] == "minor"
+    assert started["data"]["weekly_cost"] == 25_000
+
+    blocked = process_command({"type": "start_car_development", "development_type": "major"})
     assert blocked["status"] == "error"
     assert "already active" in blocked["message"]
