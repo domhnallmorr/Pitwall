@@ -104,7 +104,29 @@ def get_facilities_payload(state: GameState) -> dict:
     player_team = state.player_team
     if not player_team:
         raise ValueError("No player team assigned")
-    return {"team_name": player_team.name, "facilities": player_team.facilities}
+    return {
+        "team_name": player_team.name,
+        "facilities": player_team.facilities,
+        "upgrade_financing": {
+            "active": state.finance.facilities_upgrade_active,
+            "total_cost": state.finance.facilities_upgrade_total_cost,
+            "paid": state.finance.facilities_upgrade_paid,
+            "remaining": max(state.finance.facilities_upgrade_total_cost - state.finance.facilities_upgrade_paid, 0),
+            "races_paid": state.finance.facilities_upgrade_races_paid,
+            "total_races": state.finance.facilities_upgrade_total_races,
+            "years": state.finance.facilities_upgrade_years,
+            "points": state.finance.facilities_upgrade_points,
+        },
+        "teams": [
+            {
+                "id": t.id,
+                "name": t.name,
+                "country": t.country,
+                "facilities": t.facilities,
+            }
+            for t in state.teams
+        ],
+    }
 
 
 def get_car_payload(state: GameState) -> dict:

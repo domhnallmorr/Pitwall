@@ -52,6 +52,108 @@ def test_rollover_resets_calendar():
     assert len(state.events_processed) == 0
 
 
+@patch("app.core.rollover.random.random", return_value=1.0)
+def test_rollover_degrades_facilities_by_four_with_floor_one(mock_random):
+    teams = [
+        Team(id=1, name="Team A", country="UK", driver1_id=1, driver2_id=2, points=10, facilities=75),
+        Team(id=2, name="Team B", country="IT", driver1_id=3, driver2_id=4, points=8, facilities=3),
+    ]
+    drivers = [
+        Driver(id=1, name="A1", age=30, country="UK", team_id=1),
+        Driver(id=2, name="A2", age=31, country="UK", team_id=1),
+        Driver(id=3, name="B1", age=28, country="IT", team_id=2),
+        Driver(id=4, name="B2", age=27, country="IT", team_id=2),
+    ]
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        calendar=Calendar(events=[Event(name="Race 1", week=3, type=EventType.RACE)], current_week=3),
+        circuits=[],
+    )
+
+    result = SeasonRolloverManager().process_rollover(state)
+
+    team_a = next(t for t in state.teams if t.id == 1)
+    team_b = next(t for t in state.teams if t.id == 2)
+    assert team_a.facilities == 71
+    assert team_b.facilities == 1
+    assert any(u["team_id"] == 1 and u["old_facilities"] == 75 and u["new_facilities"] == 71 for u in result["facilities_updates"])
+
+
+@patch("app.core.rollover.random.randint", return_value=30)
+@patch("app.core.rollover.random.random", side_effect=[0.1, 0.9])
+def test_rollover_ai_facilities_upgrade_flat_chance_and_range(mock_random, mock_randint):
+    teams = [
+        Team(id=1, name="Player Team", country="UK", driver1_id=1, driver2_id=2, points=10, facilities=70),
+        Team(id=2, name="AI Team A", country="IT", driver1_id=3, driver2_id=4, points=8, facilities=60),
+        Team(id=3, name="AI Team B", country="FR", driver1_id=5, driver2_id=6, points=6, facilities=50),
+    ]
+    drivers = [
+        Driver(id=1, name="P1", age=30, country="UK", team_id=1),
+        Driver(id=2, name="P2", age=31, country="UK", team_id=1),
+        Driver(id=3, name="A1", age=28, country="IT", team_id=2),
+        Driver(id=4, name="A2", age=27, country="IT", team_id=2),
+        Driver(id=5, name="B1", age=29, country="FR", team_id=3),
+        Driver(id=6, name="B2", age=26, country="FR", team_id=3),
+    ]
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        calendar=Calendar(events=[Event(name="Race 1", week=3, type=EventType.RACE)], current_week=3),
+        circuits=[],
+        player_team_id=1,
+    )
+
+    manager = SeasonRolloverManager()
+    manager._degrade_facilities(state)
+    upgrades = manager._apply_ai_facilities_upgrades(state)
+
+    # Degrade first: 70->66, 60->56, 50->46
+    # Then only AI Team A upgrades (+30): 56->86
+    player = next(t for t in state.teams if t.id == 1)
+    ai_a = next(t for t in state.teams if t.id == 2)
+    ai_b = next(t for t in state.teams if t.id == 3)
+    assert player.facilities == 66
+    assert ai_a.facilities == 86
+    assert ai_b.facilities == 46
+    assert len(upgrades) == 1
+    assert upgrades[0]["team_id"] == 2
+    assert upgrades[0]["increase"] == 30
+
+
+@patch("app.core.rollover.random.randint", return_value=25)
+@patch("app.core.rollover.random.random", return_value=0.1)
+@patch("app.core.rollover.load_roster", return_value=([], [], 1999, [], []))
+def test_rollover_sends_facilities_upgrade_summary_email(mock_load_roster, mock_random, mock_randint):
+    teams = [
+        Team(id=1, name="Player Team", country="UK", driver1_id=1, driver2_id=2, points=10, facilities=70),
+        Team(id=2, name="AI Team A", country="IT", driver1_id=3, driver2_id=4, points=8, facilities=60),
+    ]
+    drivers = [
+        Driver(id=1, name="P1", age=30, country="UK", team_id=1),
+        Driver(id=2, name="P2", age=31, country="UK", team_id=1),
+        Driver(id=3, name="A1", age=28, country="IT", team_id=2),
+        Driver(id=4, name="A2", age=27, country="IT", team_id=2),
+    ]
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        calendar=Calendar(events=[Event(name="Race 1", week=3, type=EventType.RACE)], current_week=3),
+        circuits=[],
+        player_team_id=1,
+    )
+
+    SeasonRolloverManager().process_rollover(state)
+
+    email = next((e for e in state.emails if e.subject == "Facilities Development Update: 1999"), None)
+    assert email is not None
+    assert "AI Team A" in email.body
+    assert "56 -> 81 (+25)" in email.body
+
+
 def test_engine_triggers_rollover_after_last_event():
     state = create_end_of_season_state()
     engine = GameEngine()

@@ -6,9 +6,11 @@ from app.core.engine import GameEngine
 from app.core.save_manager import save_game, load_game as load_game_file, has_save
 from app.commands.game_commands import (
     build_finance_payload,
+    handle_facilities_upgrade_preview,
     handle_get_replacement_candidates,
     handle_load_roster,
     handle_replace_driver,
+    handle_start_facilities_upgrade,
     handle_simulate_race,
     handle_start_career,
 )
@@ -166,6 +168,19 @@ def process_command(command):
         if not CURRENT_STATE:
             return {"status": "error", "message": "Game not started"}
         return handle_get_replacement_candidates(CURRENT_STATE, logging, command.get("driver_id"))
+
+    if cmd_type == 'preview_facilities_upgrade':
+        if not CURRENT_STATE:
+            return {"type": "facilities_upgrade_preview", "status": "error", "message": "Game not started"}
+        return handle_facilities_upgrade_preview(CURRENT_STATE, logging, command.get("points"), command.get("years"))
+
+    if cmd_type == 'start_facilities_upgrade':
+        if not CURRENT_STATE:
+            return {"type": "facilities_upgrade_started", "status": "error", "message": "Game not started"}
+        response = handle_start_facilities_upgrade(CURRENT_STATE, logging, command.get("points"), command.get("years"))
+        if response.get("status") == "success":
+            save_game(CURRENT_STATE)
+        return response
 
     if cmd_type == 'check_save':
         return {

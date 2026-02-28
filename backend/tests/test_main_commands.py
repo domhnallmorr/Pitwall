@@ -184,3 +184,53 @@ def test_replace_driver_respects_contract_rule_and_signs_replacement():
     locked = process_command({"type": "replace_driver", "driver_id": 2})
     assert locked["status"] == "error"
     assert "2 or more years" in locked["message"]
+
+
+def test_get_facilities_returns_player_and_team_comparison_data():
+    state = create_state()
+    state.teams[0].facilities = 75
+    state.teams[1].facilities = 68
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "get_facilities"})
+
+    assert result["status"] == "success"
+    assert result["type"] == "facilities_data"
+    assert result["data"]["team_name"] == "Warrick"
+    assert result["data"]["facilities"] == 75
+    assert len(result["data"]["teams"]) == 2
+    assert any(t["name"] == "Ferano" and t["facilities"] == 68 for t in result["data"]["teams"])
+
+
+def test_preview_facilities_upgrade_returns_expected_payload():
+    state = create_state()
+    state.teams[0].facilities = 70
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "preview_facilities_upgrade", "points": 20, "years": 2})
+
+    assert result["status"] == "success"
+    assert result["type"] == "facilities_upgrade_preview"
+    assert result["data"]["current_facilities"] == 70
+    assert result["data"]["projected_facilities"] == 90
+    assert result["data"]["effective_points"] == 20
+    assert result["data"]["total_cost"] == 10_000_000
+
+
+def test_start_facilities_upgrade_sets_active_financing_and_blocks_second_upgrade():
+    state = create_state()
+    state.teams[0].facilities = 65
+    app_main.CURRENT_STATE = state
+
+    started = process_command({"type": "start_facilities_upgrade", "points": 20, "years": 1})
+    assert started["status"] == "success"
+    assert started["type"] == "facilities_upgrade_started"
+
+    facilities = process_command({"type": "get_facilities"})
+    assert facilities["status"] == "success"
+    assert facilities["data"]["facilities"] == 85
+    assert facilities["data"]["upgrade_financing"]["active"] is True
+
+    blocked = process_command({"type": "start_facilities_upgrade", "points": 20, "years": 1})
+    assert blocked["status"] == "error"
+    assert "already active" in blocked["message"]

@@ -80,6 +80,8 @@ function init() {
 	carView = new CarView();
 	financeView = new FinanceView();
 	facilitiesView = new FacilitiesView();
+	facilitiesView.setPreviewHandler((points, years) => API.previewFacilitiesUpgrade(points, years));
+	facilitiesView.setStartUpgradeHandler((points, years) => API.startFacilitiesUpgrade(points, years));
 	gridView.setYearRequestHandler((year) => API.getGrid(year));
 	gridView.setDriverSelectHandler((name) => openDriverProfile(name));
 	standingsView.setDriverSelectHandler((name) => openDriverProfile(name));
@@ -209,6 +211,17 @@ function setupIPC() {
 				financeView.render(parsed.data);
 			} else if (parsed.type === 'facilities_data') {
 				facilitiesView.render(parsed.data);
+			} else if (parsed.type === 'facilities_upgrade_preview') {
+				facilitiesView.renderPreview(parsed.data, parsed.status, parsed.message);
+			} else if (parsed.type === 'facilities_upgrade_started') {
+				if (parsed.status === 'success') {
+					facilitiesView.closeUpgradeModal();
+					API.getFacilities();
+					API.getFinance();
+					API.getEmails();
+				} else {
+					facilitiesView.renderPreview(null, 'error', parsed.message || 'Unable to start facilities upgrade');
+				}
 			} else if (parsed.type === 'status') {
 				console.log("Status:", parsed.message);
 			}
@@ -308,6 +321,11 @@ function refreshVisibleViews() {
 	const financeEl = document.getElementById('finance-view');
 	if (financeEl && financeEl.style.display !== 'none') {
 		API.getFinance();
+	}
+
+	const facilitiesEl = document.getElementById('facilities-view');
+	if (facilitiesEl && facilitiesEl.style.display !== 'none') {
+		API.getFacilities();
 	}
 }
 

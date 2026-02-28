@@ -1,3 +1,5 @@
+import random
+
 from app.models.state import GameState
 from app.core.standings import StandingsManager
 from app.core.retirement import RetirementManager
@@ -65,22 +67,45 @@ class SeasonRolloverManager:
         # 7. Update drivers (age, etc.)
         self._update_drivers(state)
 
-        # 8. Load new seasonal driver entrants into free-agent pool
+        # 8. Degrade facilities to reflect aging infrastructure.
+        facilities_updates = self._degrade_facilities(state)
+
+        # 9. AI teams may invest in facilities upgrades for the new season.
+        ai_facilities_upgrades = self._apply_ai_facilities_upgrades(state)
+        if ai_facilities_upgrades:
+            lines = [
+                f"- {u['team_name']}: {u['old_facilities']} -> {u['new_facilities']} (+{u['increase']})"
+                for u in ai_facilities_upgrades
+            ]
+            body = (
+                f"The following AI teams upgraded facilities for {state.year}:\n\n"
+                + "\n".join(lines)
+            )
+        else:
+            body = f"No AI teams upgraded facilities for {state.year}."
+        state.add_email(
+            sender="Competition Office",
+            subject=f"Facilities Development Update: {state.year}",
+            body=body,
+            category=EmailCategory.SEASON,
+        )
+
+        # 10. Load new seasonal driver entrants into free-agent pool
         new_entrants = self._add_new_season_drivers(state)
 
-        # 9. Apply contract expiry and all announced transfer deals for the season that just ended.
+        # 11. Apply contract expiry and all announced transfer deals for the season that just ended.
         transfer_outcome = self.transfer_manager.apply_new_season_transfers(state, announced_year=old_year)
 
-        # 10. Fill any remaining vacancies from free agents
+        # 12. Fill any remaining vacancies from free agents
         signings = self.recruitment_manager.fill_vacancies(state)
 
-        # 11. Recalculate all team car performance for the new season.
+        # 13. Recalculate all team car performance for the new season.
         car_speed_updates = self.car_performance_manager.apply_for_new_season(state)
 
-        # 12. Snapshot the new season grid after retirements/signings
+        # 14. Snapshot the new season grid after retirements/signings
         self.grid_manager.capture_season_snapshot(state, year=state.year)
 
-        # 13. Generate New Season email
+        # 15. Generate New Season email
         champion = final_drivers[0]["name"] if final_drivers else "Unknown"
         state.add_email(
             sender="Board of Directors",
@@ -89,7 +114,7 @@ class SeasonRolloverManager:
             category=EmailCategory.SEASON
         )
 
-        # 14. Notify player about confirmed retirements from last season
+        # 16. Notify player about confirmed retirements from last season
         if retired_drivers:
             retired_lines = [f"- {d['name']} ({d['team_name']})" for d in retired_drivers]
             state.add_email(
@@ -102,7 +127,7 @@ class SeasonRolloverManager:
                 category=EmailCategory.SEASON
             )
 
-        # 15. Notify player about new season entrants
+        # 17. Notify player about new season entrants
         if new_entrants:
             entrant_lines = [f"- {d['name']} ({d['country']})" for d in new_entrants]
             state.add_email(
@@ -115,7 +140,7 @@ class SeasonRolloverManager:
                 category=EmailCategory.SEASON
             )
 
-        # 16. Queue and publish Week 1 signing announcements
+        # 18. Queue and publish Week 1 signing announcements
         if signings:
             signing_lines = [f"- {s['team_name']}: {s['driver_name']} ({s['seat']})" for s in signings]
             state.queue_email(
@@ -131,7 +156,7 @@ class SeasonRolloverManager:
             )
             state.publish_queued_emails(week=1, year=state.year)
 
-        # 17. Plan and announce final seasons for the new year
+        # 19. Plan and announce final seasons for the new year
         final_season_drivers = self.retirement_manager.mark_final_season_drivers(state)
         if final_season_drivers:
             lines = [f"- {d['name']} ({d['team_name']}), age {d['age']}" for d in final_season_drivers]
@@ -145,7 +170,7 @@ class SeasonRolloverManager:
                 category=EmailCategory.SEASON
             )
 
-        # 18. Reset transfer planning for the new season and generate fresh AI plans.
+        # 20. Reset transfer planning for the new season and generate fresh AI plans.
         state.planned_ai_signings.clear()
         state.announced_ai_signings.clear()
         planned_transfers = self.transfer_manager.recompute_ai_signings(state)
@@ -156,6 +181,8 @@ class SeasonRolloverManager:
             "final_driver_standings": final_drivers,
             "final_constructor_standings": final_constructors,
             "retired_drivers": retired_drivers,
+            "facilities_updates": facilities_updates,
+            "ai_facilities_upgrades": ai_facilities_upgrades,
             "new_entrants": new_entrants,
             "transfer_outcome": transfer_outcome,
             "signings": signings,
@@ -174,6 +201,42 @@ class SeasonRolloverManager:
         for driver in state.drivers:
             if driver.active:
                 driver.age += 1
+
+    def _degrade_facilities(self, state: GameState) -> list[dict]:
+        updates = []
+        for team in state.teams:
+            old_value = team.facilities if team.facilities is not None else 0
+            team.facilities = max(1, old_value - 4)
+            updates.append(
+                {
+                    "team_id": team.id,
+                    "team_name": team.name,
+                    "old_facilities": old_value,
+                    "new_facilities": team.facilities,
+                }
+            )
+        return updates
+
+    def _apply_ai_facilities_upgrades(self, state: GameState) -> list[dict]:
+        updates = []
+        for team in state.teams:
+            if state.player_team_id is not None and team.id == state.player_team_id:
+                continue
+            if random.random() >= 0.2:
+                continue
+            old_value = team.facilities if team.facilities is not None else 0
+            increase = random.randint(20, 40)
+            team.facilities = min(100, old_value + increase)
+            updates.append(
+                {
+                    "team_id": team.id,
+                    "team_name": team.name,
+                    "old_facilities": old_value,
+                    "increase": increase,
+                    "new_facilities": team.facilities,
+                }
+            )
+        return updates
 
     def _add_new_season_drivers(self, state: GameState) -> list[dict]:
         """Load and append drivers whose start_year matches the new season."""

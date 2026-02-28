@@ -36,6 +36,13 @@ class Finance(BaseModel):
     prize_money_paid: int = 0
     prize_money_races_paid: int = 0
     prize_money_total_races: int = 0
+    facilities_upgrade_active: bool = False
+    facilities_upgrade_total_cost: int = 0
+    facilities_upgrade_paid: int = 0
+    facilities_upgrade_total_races: int = 0
+    facilities_upgrade_races_paid: int = 0
+    facilities_upgrade_years: int = 0
+    facilities_upgrade_points: int = 0
 
     def add_transaction(self, week: int, year: int, amount: int,
                         category: TransactionCategory, description: str,

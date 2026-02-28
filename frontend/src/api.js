@@ -30,6 +30,8 @@ const API = {
 	getCar: () => window.electronAPI.sendToPython({ type: 'get_car' }),
 	getFinance: () => window.electronAPI.sendToPython({ type: 'get_finance' }),
 	getFacilities: () => window.electronAPI.sendToPython({ type: 'get_facilities' }),
+	previewFacilitiesUpgrade: (points, years) => window.electronAPI.sendToPython({ type: 'preview_facilities_upgrade', points, years }),
+	startFacilitiesUpgrade: (points, years) => window.electronAPI.sendToPython({ type: 'start_facilities_upgrade', points, years }),
 	ping: () => window.electronAPI.sendToPython({ type: 'ping' }),
 	loadRoster: () => window.electronAPI.sendToPython({ type: 'load_roster' }),
 

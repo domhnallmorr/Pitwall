@@ -425,6 +425,29 @@
           <div id="facilities-container"></div>
         </div>
 
+        <div id="facilities-upgrade-modal" class="modal-overlay" style="display:none;">
+          <div class="modal-content facilities-upgrade-modal-content">
+            <h2>Upgrade Facilities</h2>
+            <div class="facilities-upgrade-controls">
+              <label for="facilities-upgrade-points">Upgrade Amount: <span id="facilities-upgrade-points-value">20</span></label>
+              <input id="facilities-upgrade-points" type="range" min="20" max="40" value="20" step="1">
+              <label for="facilities-upgrade-years">Repayment Period</label>
+              <select id="facilities-upgrade-years">
+                <option value="1">1 year</option>
+                <option value="2">2 years</option>
+                <option value="3">3 years</option>
+              </select>
+            </div>
+            <div id="facilities-upgrade-preview" class="facilities-upgrade-preview">
+              Loading preview...
+            </div>
+            <div class="modal-actions">
+              <button id="facilities-upgrade-cancel-btn" class="btn-secondary">Cancel</button>
+              <button id="facilities-upgrade-confirm-btn" class="btn-primary">Confirm Upgrade</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Standings View -->
         <div id="standings-view" class="view-section" style="display: none;">
           <div class="tabs">

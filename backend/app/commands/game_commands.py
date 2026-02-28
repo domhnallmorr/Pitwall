@@ -5,6 +5,7 @@ from app.core.crash_damage import CrashDamageManager
 from app.core.driver_wages import DriverWageManager
 from app.core.engine_supplier_costs import EngineSupplierCostManager
 from app.core.finance_reporting import build_finance_report
+from app.core.facilities_upgrades import FacilitiesUpgradeManager
 from app.core.grid import GridManager
 from app.core.prize_money import PrizeMoneyManager
 from app.core.retirement import RetirementManager
@@ -136,6 +137,7 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
         tyre_supplier_charge = TyreSupplierCostManager().charge_for_event(state, current_event)
         transport_charge = TransportManager().charge_for_event(state, current_event, attended=True)
         crash_damage_charges = CrashDamageManager().charge_for_race(state, race_result, current_event)
+        facilities_upgrade_charge = FacilitiesUpgradeManager().charge_for_event(state, current_event)
 
         if transport_charge:
             state.add_email(
@@ -206,6 +208,18 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
                 body=f"The following crash repair work has been logged:\n\n{lines}\n\nTotal repair cost: ${total_damage:,}",
                 category=EmailCategory.GENERAL,
             )
+        if facilities_upgrade_charge:
+            state.add_email(
+                sender="Infrastructure Department",
+                subject=f"Facilities Upgrade Installment: {facilities_upgrade_charge.event_name}",
+                body=(
+                    f"A facilities upgrade installment has been processed.\n\n"
+                    f"Cost this race: ${facilities_upgrade_charge.applied_cost:,}\n"
+                    f"Remaining balance: ${facilities_upgrade_charge.remaining_cost:,}\n"
+                    f"Installments paid: {facilities_upgrade_charge.races_paid}/{facilities_upgrade_charge.total_races}"
+                ),
+                category=EmailCategory.GENERAL,
+            )
 
         race_transactions = [
             t for t in state.finance.transactions
@@ -227,6 +241,7 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
             tyre_supplier_total = category_total(TransactionCategory.TYRE_SUPPLIER)
             transport_total = category_total(TransactionCategory.TRANSPORT)
             crash_total = category_total(TransactionCategory.CRASH_DAMAGE)
+            facilities_total = category_total(TransactionCategory.FACILITIES)
             state.add_email(
                 sender="Finance Department",
                 subject=f"Race Finance Summary: {event_name}",
@@ -240,6 +255,7 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
                     f"Tyre supplier: {'+' if tyre_supplier_total >= 0 else '-'}${abs(tyre_supplier_total):,}\n"
                     f"Transport: {'+' if transport_total >= 0 else '-'}${abs(transport_total):,}\n"
                     f"Crash damage: {'+' if crash_total >= 0 else '-'}${abs(crash_total):,}\n\n"
+                    f"Facilities financing: {'+' if facilities_total >= 0 else '-'}${abs(facilities_total):,}\n\n"
                     f"Income: ${income_total:,}\nExpenses: ${expense_total:,}\nNet: {'+' if net_total >= 0 else '-'}${abs(net_total):,}"
                 ),
                 category=EmailCategory.GENERAL,
@@ -326,6 +342,56 @@ def handle_get_replacement_candidates(state: GameState, logger: logging.Logger, 
         return {"status": "error", "message": str(e)}
 
 
+def handle_facilities_upgrade_preview(state: GameState, logger: logging.Logger, points: int | None, years: int | None):
+    try:
+        if points is None or years is None:
+            return {"type": "facilities_upgrade_preview", "status": "error", "message": "points and years are required"}
+        preview = FacilitiesUpgradeManager().preview(state, int(points), int(years))
+        return {
+            "type": "facilities_upgrade_preview",
+            "status": "success",
+            "data": {
+                "requested_points": preview.requested_points,
+                "effective_points": preview.effective_points,
+                "years": preview.years,
+                "total_races": preview.total_races,
+                "total_cost": preview.total_cost,
+                "per_race_payment": preview.per_race_payment,
+                "current_facilities": preview.current_facilities,
+                "projected_facilities": preview.projected_facilities,
+            },
+        }
+    except ValueError as ve:
+        return {"type": "facilities_upgrade_preview", "status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error previewing facilities upgrade: {e}")
+        return {"type": "facilities_upgrade_preview", "status": "error", "message": str(e)}
+
+
+def handle_start_facilities_upgrade(state: GameState, logger: logging.Logger, points: int | None, years: int | None):
+    try:
+        if points is None or years is None:
+            return {"type": "facilities_upgrade_started", "status": "error", "message": "points and years are required"}
+        preview = FacilitiesUpgradeManager().start_upgrade(state, int(points), int(years))
+        return {
+            "type": "facilities_upgrade_started",
+            "status": "success",
+            "data": {
+                "effective_points": preview.effective_points,
+                "years": preview.years,
+                "total_races": preview.total_races,
+                "total_cost": preview.total_cost,
+                "per_race_payment": preview.per_race_payment,
+                "projected_facilities": preview.projected_facilities,
+            },
+        }
+    except ValueError as ve:
+        return {"type": "facilities_upgrade_started", "status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error starting facilities upgrade: {e}")
+        return {"type": "facilities_upgrade_started", "status": "error", "message": str(e)}
+
+
 def build_finance_payload(state: GameState):
     transactions = [t.model_dump() for t in state.finance.transactions]
     report = build_finance_report(state)
@@ -361,6 +427,10 @@ def build_finance_payload(state: GameState):
         if t.category == TransactionCategory.TYRE_SUPPLIER and t.year == state.year and t.amount < 0
     )
     tyre_supplier_remaining = max(tyre_supplier_yearly - tyre_supplier_paid_so_far, 0) if tyre_supplier_name else 0
+    facilities_upgrade_paid = sum(
+        -t.amount for t in state.finance.transactions
+        if t.category == TransactionCategory.FACILITIES and t.amount < 0
+    )
 
     return {
         "balance": state.finance.balance,
@@ -394,5 +464,16 @@ def build_finance_payload(state: GameState):
             "installment": tyre_supplier_installment,
             "paid_so_far": tyre_supplier_paid_so_far,
             "remaining": tyre_supplier_remaining,
+        },
+        "facilities_upgrade": {
+            "active": state.finance.facilities_upgrade_active,
+            "total_cost": state.finance.facilities_upgrade_total_cost,
+            "paid_so_far": state.finance.facilities_upgrade_paid,
+            "remaining": max(state.finance.facilities_upgrade_total_cost - state.finance.facilities_upgrade_paid, 0),
+            "races_paid": state.finance.facilities_upgrade_races_paid,
+            "total_races": state.finance.facilities_upgrade_total_races,
+            "years": state.finance.facilities_upgrade_years,
+            "points": state.finance.facilities_upgrade_points,
+            "historical_paid_total": facilities_upgrade_paid,
         },
     }
