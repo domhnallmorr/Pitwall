@@ -20,6 +20,12 @@ const API = {
 	getEmails: () => window.electronAPI.sendToPython({ type: 'get_emails' }),
 	readEmail: (emailId) => window.electronAPI.sendToPython({ type: 'read_email', email_id: emailId }),
 	getStaff: () => window.electronAPI.sendToPython({ type: 'get_staff' }),
+	getReplacementCandidates: (driverId) => window.electronAPI.sendToPython({ type: 'get_replacement_candidates', driver_id: driverId }),
+	replaceDriver: (driverId, incomingDriverId) => window.electronAPI.sendToPython({
+		type: 'replace_driver',
+		driver_id: driverId,
+		incoming_driver_id: incomingDriverId
+	}),
 	getDriver: (name) => window.electronAPI.sendToPython({ type: 'get_driver', name }),
 	getCar: () => window.electronAPI.sendToPython({ type: 'get_car' }),
 	getFinance: () => window.electronAPI.sendToPython({ type: 'get_finance' }),

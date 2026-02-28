@@ -1,6 +1,7 @@
 import random
 from typing import Any, Dict, List
 
+from app.models.enums import DriverRole
 from app.models.email import EmailCategory
 from app.models.state import GameState
 
@@ -102,6 +103,157 @@ class TransferManager:
         ]
         return published
 
+    def sign_player_replacement(
+        self,
+        state: GameState,
+        outgoing_driver_id: int,
+        incoming_driver_id: int | None = None,
+    ) -> Dict[str, Any]:
+        player_team = state.player_team
+        if player_team is None:
+            raise ValueError("No player team assigned")
+
+        seat, seat_label, outgoing = self._get_player_seat_and_driver(state, outgoing_driver_id, player_team.id)
+        if seat is None or outgoing is None:
+            raise ValueError("Driver is not in a player team race seat")
+        if outgoing.contract_length >= 2:
+            raise ValueError("Driver has 2 or more years remaining on contract")
+
+        announced = list(state.announced_ai_signings)
+        announced_by_seat = {(s["team_id"], s["seat"]): s for s in announced}
+        blocked_drivers = {s["driver_id"] for s in announced}
+        # Player can replace an existing player signing for the same seat.
+        existing = announced_by_seat.get((player_team.id, seat))
+        if existing:
+            announced.remove(existing)
+            blocked_drivers.discard(existing["driver_id"])
+
+        candidates = self.get_player_replacement_candidates(state, outgoing_driver_id)
+        if not candidates:
+            raise ValueError("No available drivers for replacement")
+        if incoming_driver_id is not None:
+            signed_driver = next((d for d in candidates if d.id == incoming_driver_id), None)
+            if signed_driver is None:
+                raise ValueError("Selected driver is not available for replacement")
+        else:
+            signed_driver = random.choice(candidates)
+        signing = {
+            "team_id": player_team.id,
+            "team_name": player_team.name,
+            "seat": seat,
+            "seat_label": seat_label,
+            "driver_id": signed_driver.id,
+            "driver_name": signed_driver.name,
+            "announce_week": state.calendar.current_week,
+            "announce_year": state.year,
+            "status": "announced",
+            "origin": "player",
+        }
+        announced.append(signing)
+        state.announced_ai_signings = announced
+        # Recompute AI plans around player's confirmed choice.
+        self.recompute_ai_signings(state)
+
+        state.add_email(
+            sender="Driver Market Desk",
+            subject=f"Driver Signed: {signed_driver.name}",
+            body=(
+                f"You have signed {signed_driver.name} for next season ({state.year + 1}) "
+                f"as {seat_label}, replacing {outgoing.name}."
+            ),
+            category=EmailCategory.SEASON,
+        )
+        return signing
+
+    def get_player_replacement_candidates(self, state: GameState, outgoing_driver_id: int) -> List[Any]:
+        player_team = state.player_team
+        if player_team is None:
+            raise ValueError("No player team assigned")
+        seat, _, outgoing = self._get_player_seat_and_driver(state, outgoing_driver_id, player_team.id)
+        if seat is None or outgoing is None:
+            raise ValueError("Driver is not in a player team race seat")
+        if outgoing.contract_length >= 2:
+            raise ValueError("Driver has 2 or more years remaining on contract")
+
+        announced = list(state.announced_ai_signings)
+        blocked_drivers = {s["driver_id"] for s in announced if s["team_id"] != player_team.id}
+        return [
+            d for d in self._get_available_next_season_drivers(state, blocked_drivers)
+            if d.id != outgoing_driver_id
+        ]
+
+    def apply_new_season_transfers(self, state: GameState, announced_year: int) -> Dict[str, Any]:
+        """
+        Apply contract rollover and announced transfer deals at season transition.
+        Returns a summary of expiries and applied deals.
+        """
+        drivers_by_id = {d.id: d for d in state.drivers}
+        teams_by_id = {t.id: t for t in state.teams}
+        expiring_leavers: List[Dict[str, Any]] = []
+        applied_signings: List[Dict[str, Any]] = []
+
+        # 1. Resolve contract rollover first.
+        for team in state.teams:
+            for seat in ("driver1_id", "driver2_id"):
+                driver_id = getattr(team, seat)
+                driver = drivers_by_id.get(driver_id)
+                if driver is None or not driver.active:
+                    continue
+                if driver.contract_length > 1:
+                    driver.contract_length -= 1
+                    continue
+
+                # Contract expired (1 year left) or already at 0.
+                setattr(team, seat, None)
+                driver.team_id = None
+                driver.role = None
+                driver.contract_length = 0
+                expiring_leavers.append(
+                    {"driver_id": driver.id, "driver_name": driver.name, "team_id": team.id, "team_name": team.name}
+                )
+
+        # 2. Apply announced deals for this transfer year.
+        due_signings = [
+            s for s in state.announced_ai_signings
+            if s.get("status") == "announced" and s.get("announce_year") == announced_year
+        ]
+        due_signings.sort(key=lambda s: (s.get("team_id", 0), s.get("seat", "")))
+
+        for signing in due_signings:
+            team = teams_by_id.get(signing.get("team_id"))
+            seat = signing.get("seat")
+            incoming = drivers_by_id.get(signing.get("driver_id"))
+            if team is None or seat not in {"driver1_id", "driver2_id"} or incoming is None or not incoming.active:
+                continue
+
+            # Evict any current occupant from this seat.
+            current_id = getattr(team, seat)
+            current_driver = drivers_by_id.get(current_id)
+            if current_driver and current_driver.id != incoming.id:
+                current_driver.team_id = None
+                current_driver.role = None
+                current_driver.contract_length = 0
+
+            setattr(team, seat, incoming.id)
+            incoming.team_id = team.id
+            incoming.role = DriverRole.DRIVER_1 if seat == "driver1_id" else DriverRole.DRIVER_2
+            # Keep it simple for now: fresh signing receives a default 2-year deal.
+            incoming.contract_length = 2
+            applied_signings.append(
+                {
+                    "team_id": team.id,
+                    "team_name": team.name,
+                    "seat": seat,
+                    "driver_id": incoming.id,
+                    "driver_name": incoming.name,
+                }
+            )
+
+        return {
+            "expiring_leavers": expiring_leavers,
+            "applied_signings": applied_signings,
+        }
+
     def _get_ai_vacancies_for_next_season(
         self,
         state: GameState,
@@ -151,3 +303,11 @@ class TransferManager:
         if getattr(driver, "contract_length", 2) == 1:
             return False
         return True
+
+    def _get_player_seat_and_driver(self, state: GameState, driver_id: int, player_team_id: int):
+        by_id = {d.id: d for d in state.drivers}
+        if driver_id == next((t.driver1_id for t in state.teams if t.id == player_team_id), None):
+            return "driver1_id", "Driver 1", by_id.get(driver_id)
+        if driver_id == next((t.driver2_id for t in state.teams if t.id == player_team_id), None):
+            return "driver2_id", "Driver 2", by_id.get(driver_id)
+        return None, None, None

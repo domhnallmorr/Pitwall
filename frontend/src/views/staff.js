@@ -14,7 +14,12 @@ export default class StaffView {
 		this.managementContainer = document.getElementById('staff-management-container');
 		this.workforceSummary = document.getElementById('staff-workforce-summary');
 		this.workforceTableBody = document.getElementById('staff-workforce-table-body');
+		this.onReplaceDriver = null;
 		this.bindTabs();
+	}
+
+	setReplaceDriverHandler(handler) {
+		this.onReplaceDriver = handler;
 	}
 
 	bindTabs() {
@@ -202,10 +207,30 @@ export default class StaffView {
 						<span class="staff-detail-label">Wage</span>
 						<span class="staff-detail-value">${wageDisplay}</span>
 					</div>
+					<div class="staff-detail-row">
+						<span class="staff-detail-label">Contract</span>
+						<span class="staff-detail-value">${driver.contract_length} year(s)</span>
+					</div>
+					<div class="staff-detail-row">
+						<span class="staff-detail-value">
+							<button class="staff-replace-btn" data-driver-id="${driver.id}" ${driver.contract_length >= 2 ? 'disabled' : ''}>
+								Replace
+							</button>
+						</span>
+					</div>
 				</div>
 			`;
 
 			this.container.appendChild(card);
+		});
+
+		this.container.querySelectorAll('.staff-replace-btn').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				if (!this.onReplaceDriver) return;
+				const driverId = Number(btn.getAttribute('data-driver-id'));
+				if (!Number.isFinite(driverId)) return;
+				this.onReplaceDriver(driverId);
+			});
 		});
 
 		if (drivers.length === 0) {

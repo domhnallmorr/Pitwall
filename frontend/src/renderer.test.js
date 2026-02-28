@@ -13,6 +13,7 @@ const { apiMock } = vi.hoisted(() => {
 		simulateRace: vi.fn(),
 		getEmails: vi.fn(),
 		getStaff: vi.fn(),
+		getReplacementCandidates: vi.fn(),
 		getDriver: vi.fn(),
 		getCar: vi.fn(),
 		getFinance: vi.fn(),
@@ -40,8 +41,9 @@ vi.mock('./views/grid.js', () => ({
 vi.mock('./views/standings.js', () => ({ default: class { setDriverSelectHandler() {} render() {} } }));
 vi.mock('./views/calendar.js', () => ({ default: class { render() {} } }));
 vi.mock('./views/email.js', () => ({ default: class { render() {} updateUnreadBadge() {} } }));
-vi.mock('./views/staff.js', () => ({ default: class { render() {} } }));
+vi.mock('./views/staff.js', () => ({ default: class { setReplaceDriverHandler() {} render() {} } }));
 vi.mock('./views/driver.js', () => ({ default: class { constructor() { this.currentDriverName = null; } render() {} } }));
+vi.mock('./views/driver_market.js', () => ({ default: class { setBackHandler() {} setSignHandler() {} render() {} } }));
 vi.mock('./views/car.js', () => ({ default: class { render() {} } }));
 vi.mock('./views/finance.js', () => ({ default: class { render() {} } }));
 vi.mock('./views/facilities.js', () => ({ default: class { render() {} } }));

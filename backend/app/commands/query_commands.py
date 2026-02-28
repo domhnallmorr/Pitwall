@@ -25,6 +25,7 @@ def get_staff_payload(state: GameState) -> dict:
 
     team_drivers = [
         {
+            "id": d.id,
             "name": d.name,
             "age": d.age,
             "country": d.country,
@@ -32,6 +33,7 @@ def get_staff_payload(state: GameState) -> dict:
             "points": d.points,
             "wage": d.wage,
             "pay_driver": d.pay_driver,
+            "contract_length": d.contract_length,
         }
         for d in state.drivers
         if d.team_id == player_team.id

@@ -11,6 +11,7 @@ import CalendarView from './views/calendar.js';
 import EmailView from './views/email.js';
 import StaffView from './views/staff.js';
 import DriverView from './views/driver.js';
+import DriverMarketView from './views/driver_market.js';
 import CarView from './views/car.js';
 import FinanceView from './views/finance.js';
 import FacilitiesView from './views/facilities.js';
@@ -38,6 +39,7 @@ let calendarView;
 let emailView;
 let staffView;
 let driverView;
+let driverMarketView;
 let carView;
 let financeView;
 let facilitiesView;
@@ -65,7 +67,16 @@ function init() {
 	calendarView = new CalendarView();
 	emailView = new EmailView();
 	staffView = new StaffView();
+	staffView.setReplaceDriverHandler((driverId) => API.getReplacementCandidates(driverId));
 	driverView = new DriverView();
+	driverMarketView = new DriverMarketView();
+	driverMarketView.setBackHandler(() => {
+		if (navigation) navigation.showView('staff');
+		API.getStaff();
+	});
+	driverMarketView.setSignHandler((outgoingDriverId, incomingDriverId) => {
+		API.replaceDriver(outgoingDriverId, incomingDriverId);
+	});
 	carView = new CarView();
 	financeView = new FinanceView();
 	facilitiesView = new FacilitiesView();
@@ -181,6 +192,15 @@ function setupIPC() {
 				emailView.updateUnreadBadge(parsed.data.unread_count);
 			} else if (parsed.type === 'staff_data') {
 				staffView.render(parsed.data);
+			} else if (parsed.type === 'replacement_candidates') {
+				driverMarketView.render(parsed.data);
+				if (navigation) navigation.showView('driver-market');
+			} else if (parsed.type === 'driver_replaced') {
+				if (navigation) navigation.showView('staff');
+				API.getStaff();
+				API.getGrid(gridView.getActiveYear());
+				API.getGrid(gridView.baseYear + 1);
+				API.getEmails();
 			} else if (parsed.type === 'driver_data') {
 				driverView.render(parsed.data);
 			} else if (parsed.type === 'car_data') {

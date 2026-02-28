@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 import StaffView from './staff.js';
 
@@ -51,5 +51,29 @@ describe('StaffView', () => {
 		expect(document.getElementById('staff-content-management').style.display).toBe('block');
 		expect(document.getElementById('staff-management-container').innerHTML).toContain('Peter Heed');
 		expect(document.getElementById('staff-management-container').innerHTML).toContain('Jace Whitman');
+	});
+
+	it('renders replace buttons and disables when contract is 2+ years', () => {
+		const onReplace = vi.fn();
+		staffView.setReplaceDriverHandler(onReplace);
+		staffView.render({
+			team_name: 'Warrick',
+			player_workforce: 250,
+			teams: [{ name: 'Warrick', country: 'United Kingdom', workforce: 250 }],
+			drivers: [
+				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, wage: 1000, pay_driver: false, contract_length: 2 },
+				{ id: 2, name: 'Driver B', age: 24, country: 'DE', speed: 70, wage: 1000, pay_driver: false, contract_length: 1 },
+			],
+			technical_director: null,
+			commercial_manager: null,
+		});
+
+		const buttons = document.querySelectorAll('.staff-replace-btn');
+		expect(buttons.length).toBe(2);
+		expect(buttons[0].disabled).toBe(true);
+		expect(buttons[1].disabled).toBe(false);
+
+		buttons[1].click();
+		expect(onReplace).toHaveBeenCalledWith(2);
 	});
 });

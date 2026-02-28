@@ -263,6 +263,69 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
         return state, {"status": "error", "message": str(e)}
 
 
+def handle_replace_driver(
+    state: GameState,
+    logger: logging.Logger,
+    driver_id: int | None,
+    incoming_driver_id: int | None = None,
+):
+    try:
+        if driver_id is None:
+            return state, {"status": "error", "message": "Driver id is required"}
+        signing = TransferManager().sign_player_replacement(
+            state,
+            outgoing_driver_id=int(driver_id),
+            incoming_driver_id=int(incoming_driver_id) if incoming_driver_id is not None else None,
+        )
+        return state, {
+            "type": "driver_replaced",
+            "status": "success",
+            "data": signing,
+        }
+    except ValueError as ve:
+        return state, {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error replacing driver: {e}")
+        return state, {"status": "error", "message": str(e)}
+
+
+def handle_get_replacement_candidates(state: GameState, logger: logging.Logger, driver_id: int | None):
+    try:
+        if driver_id is None:
+            return {"status": "error", "message": "Driver id is required"}
+
+        outgoing = next((d for d in state.drivers if d.id == int(driver_id)), None)
+        if outgoing is None:
+            return {"status": "error", "message": "Driver not found"}
+
+        candidates = TransferManager().get_player_replacement_candidates(state, int(driver_id))
+        payload = {
+            "outgoing_driver": {
+                "id": outgoing.id,
+                "name": outgoing.name,
+                "contract_length": outgoing.contract_length,
+            },
+            "candidates": [
+                {
+                    "id": d.id,
+                    "name": d.name,
+                    "age": d.age,
+                    "country": d.country,
+                    "speed": d.speed,
+                    "wage": d.wage,
+                    "pay_driver": d.pay_driver,
+                }
+                for d in candidates
+            ],
+        }
+        return {"type": "replacement_candidates", "status": "success", "data": payload}
+    except ValueError as ve:
+        return {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error loading replacement candidates: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 def build_finance_payload(state: GameState):
     transactions = [t.model_dump() for t in state.finance.transactions]
     report = build_finance_report(state)

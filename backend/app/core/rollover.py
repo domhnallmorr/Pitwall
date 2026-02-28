@@ -68,16 +68,19 @@ class SeasonRolloverManager:
         # 8. Load new seasonal driver entrants into free-agent pool
         new_entrants = self._add_new_season_drivers(state)
 
-        # 9. Fill vacancies from free agents
+        # 9. Apply contract expiry and all announced transfer deals for the season that just ended.
+        transfer_outcome = self.transfer_manager.apply_new_season_transfers(state, announced_year=old_year)
+
+        # 10. Fill any remaining vacancies from free agents
         signings = self.recruitment_manager.fill_vacancies(state)
 
-        # 10. Recalculate all team car performance for the new season.
+        # 11. Recalculate all team car performance for the new season.
         car_speed_updates = self.car_performance_manager.apply_for_new_season(state)
 
-        # 11. Snapshot the new season grid after retirements/signings
+        # 12. Snapshot the new season grid after retirements/signings
         self.grid_manager.capture_season_snapshot(state, year=state.year)
 
-        # 12. Generate New Season email
+        # 13. Generate New Season email
         champion = final_drivers[0]["name"] if final_drivers else "Unknown"
         state.add_email(
             sender="Board of Directors",
@@ -86,7 +89,7 @@ class SeasonRolloverManager:
             category=EmailCategory.SEASON
         )
 
-        # 13. Notify player about confirmed retirements from last season
+        # 14. Notify player about confirmed retirements from last season
         if retired_drivers:
             retired_lines = [f"- {d['name']} ({d['team_name']})" for d in retired_drivers]
             state.add_email(
@@ -99,7 +102,7 @@ class SeasonRolloverManager:
                 category=EmailCategory.SEASON
             )
 
-        # 14. Notify player about new season entrants
+        # 15. Notify player about new season entrants
         if new_entrants:
             entrant_lines = [f"- {d['name']} ({d['country']})" for d in new_entrants]
             state.add_email(
@@ -112,7 +115,7 @@ class SeasonRolloverManager:
                 category=EmailCategory.SEASON
             )
 
-        # 15. Queue and publish Week 1 signing announcements
+        # 16. Queue and publish Week 1 signing announcements
         if signings:
             signing_lines = [f"- {s['team_name']}: {s['driver_name']} ({s['seat']})" for s in signings]
             state.queue_email(
@@ -128,7 +131,7 @@ class SeasonRolloverManager:
             )
             state.publish_queued_emails(week=1, year=state.year)
 
-        # 16. Plan and announce final seasons for the new year
+        # 17. Plan and announce final seasons for the new year
         final_season_drivers = self.retirement_manager.mark_final_season_drivers(state)
         if final_season_drivers:
             lines = [f"- {d['name']} ({d['team_name']}), age {d['age']}" for d in final_season_drivers]
@@ -142,7 +145,7 @@ class SeasonRolloverManager:
                 category=EmailCategory.SEASON
             )
 
-        # 17. Reset transfer planning for the new season and generate fresh AI plans.
+        # 18. Reset transfer planning for the new season and generate fresh AI plans.
         state.planned_ai_signings.clear()
         state.announced_ai_signings.clear()
         planned_transfers = self.transfer_manager.recompute_ai_signings(state)
@@ -154,6 +157,7 @@ class SeasonRolloverManager:
             "final_constructor_standings": final_constructors,
             "retired_drivers": retired_drivers,
             "new_entrants": new_entrants,
+            "transfer_outcome": transfer_outcome,
             "signings": signings,
             "car_speed_updates": car_speed_updates,
             "next_season_prize_money": next_season_prize_money,

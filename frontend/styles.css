@@ -1031,6 +1031,43 @@ p {
   font-weight: 600;
 }
 
+.staff-replace-btn {
+  border: 1px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.18);
+  color: #dbeafe;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.staff-replace-btn:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+.staff-replace-btn:disabled {
+  border-color: #4b5563;
+  background: rgba(75, 85, 99, 0.2);
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.driver-market-sign-btn {
+  border: 1px solid #22c55e;
+  background: rgba(34, 197, 94, 0.18);
+  color: #dcfce7;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.driver-market-sign-btn:hover {
+  background: rgba(34, 197, 94, 0.3);
+}
+
 .driver-link {
   background: none;
   border: none;

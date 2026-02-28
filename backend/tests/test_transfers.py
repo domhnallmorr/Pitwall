@@ -134,3 +134,72 @@ def test_recompute_ai_signings_announce_after_first_race(mock_choice, mock_shuff
 
     assert len(planned) == 1
     assert planned[0]["announce_week"] >= 11
+
+
+@patch("app.core.transfers.random.choice", side_effect=lambda choices: choices[0])
+def test_player_replacement_signing_updates_announced_and_replans_ai(mock_choice):
+    state = create_transfer_state()
+
+    signing = TransferManager().sign_player_replacement(state, outgoing_driver_id=1)
+
+    assert signing["team_id"] == 1
+    assert signing["seat"] == "driver1_id"
+    assert signing["status"] == "announced"
+    assert len(state.announced_ai_signings) == 1
+    assert any(s["team_id"] == 2 for s in state.planned_ai_signings)
+    assert any(e.subject.startswith("Driver Signed:") for e in state.emails)
+
+
+def test_player_replacement_rejects_driver_with_two_or_more_years():
+    state = create_transfer_state()
+
+    try:
+        TransferManager().sign_player_replacement(state, outgoing_driver_id=2)
+        assert False, "Expected ValueError"
+    except ValueError as ve:
+        assert "2 or more years" in str(ve)
+
+
+def test_apply_new_season_transfers_moves_announced_driver_and_sets_contract():
+    state = create_transfer_state()
+    state.announced_ai_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "driver1_id",
+            "seat_label": "Driver 1",
+            "driver_id": 5,
+            "driver_name": "Free Agent",
+            "announce_week": 20,
+            "announce_year": 1998,
+            "status": "announced",
+        }
+    ]
+
+    outcome = TransferManager().apply_new_season_transfers(state, announced_year=1998)
+
+    ai_team = next(t for t in state.teams if t.id == 2)
+    free_agent = next(d for d in state.drivers if d.id == 5)
+    outgoing = next(d for d in state.drivers if d.id == 3)
+    assert ai_team.driver1_id == 5
+    assert free_agent.team_id == 2
+    assert free_agent.contract_length == 2
+    assert outgoing.team_id is None
+    assert any(s["driver_id"] == 5 for s in outcome["applied_signings"])
+
+
+def test_apply_new_season_transfers_expiring_driver_without_deal_becomes_free_agent():
+    state = create_transfer_state()
+    state.announced_ai_signings = []
+
+    outcome = TransferManager().apply_new_season_transfers(state, announced_year=1998)
+
+    ai_team = next(t for t in state.teams if t.id == 2)
+    expiring = next(d for d in state.drivers if d.id == 3)
+    secure = next(d for d in state.drivers if d.id == 4)
+    assert ai_team.driver1_id is None
+    assert expiring.team_id is None
+    assert expiring.contract_length == 0
+    assert secure.team_id == 2
+    assert secure.contract_length == 1
+    assert any(l["driver_id"] == 3 for l in outcome["expiring_leavers"])

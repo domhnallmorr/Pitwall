@@ -15,6 +15,7 @@ export default class Navigation {
 			'grid': document.getElementById('grid-view'),
 			'staff': document.getElementById('staff-view'),
 			'driver': document.getElementById('driver-view'),
+			'driver-market': document.getElementById('driver-market-view'),
 			'car': document.getElementById('car-view'),
 			'finance': document.getElementById('finance-view'),
 			'facilities': document.getElementById('facilities-view'),
@@ -83,7 +84,7 @@ export default class Navigation {
 	}
 
 	showView(viewName) {
-		Object.values(this.views).forEach(v => v.style.display = 'none');
+		Object.values(this.views).filter(Boolean).forEach((v) => { v.style.display = 'none'; });
 		if (this.views[viewName]) {
 			this.views[viewName].style.display = 'block';
 		}

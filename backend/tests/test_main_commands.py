@@ -158,3 +158,29 @@ def test_get_emails_and_read_email_updates_unread_count():
     assert read_result["status"] == "success"
     assert read_result["type"] == "email_read"
     assert read_result["data"]["unread_count"] == 0
+
+
+def test_replace_driver_respects_contract_rule_and_signs_replacement():
+    state = create_state()
+    # Make driver 1 replaceable; keep driver 2 locked.
+    state.drivers[0].contract_length = 1
+    state.drivers[1].contract_length = 2
+    # Provide a candidate free agent for random replacement.
+    state.drivers.append(
+        Driver(id=99, name="Free Agent", age=24, country="Germany", team_id=None, contract_length=0, wage=0)
+    )
+    app_main.CURRENT_STATE = state
+
+    candidates = process_command({"type": "get_replacement_candidates", "driver_id": 1})
+    assert candidates["status"] == "success"
+    assert any(d["id"] == 99 for d in candidates["data"]["candidates"])
+
+    success = process_command({"type": "replace_driver", "driver_id": 1, "incoming_driver_id": 99})
+    assert success["status"] == "success"
+    assert success["type"] == "driver_replaced"
+    assert success["data"]["team_id"] == 1
+    assert success["data"]["driver_id"] == 99
+
+    locked = process_command({"type": "replace_driver", "driver_id": 2})
+    assert locked["status"] == "error"
+    assert "2 or more years" in locked["message"]
