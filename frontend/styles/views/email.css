@@ -1,0 +1,138 @@
+﻿/* ================================
+   EMAIL VIEW
+   ================================ */
+
+.email-container {
+  display: flex;
+  height: calc(100vh - 160px);
+  border: 1px solid #233554;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.email-list {
+  width: 320px;
+  min-width: 280px;
+  border-right: 1px solid #233554;
+  overflow-y: auto;
+  background: rgba(10, 25, 47, 0.5);
+}
+
+.email-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(35, 53, 84, 0.5);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.email-item:hover {
+  background: rgba(35, 53, 84, 0.4);
+}
+
+.email-item.selected {
+  background: rgba(59, 130, 246, 0.15);
+  border-left: 3px solid #3b82f6;
+}
+
+.email-item.unread {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.email-item.unread .email-item-sender,
+.email-item.unread .email-item-subject {
+  font-weight: 700;
+  color: #e0e6ed;
+}
+
+.email-item-sender {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.email-item-subject {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.email-item-meta {
+  font-size: 0.7rem;
+  color: #475569;
+}
+
+/* Detail Pane */
+.email-detail {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+  background: rgba(5, 14, 26, 0.3);
+}
+
+.email-detail-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #475569;
+  font-size: 1rem;
+  font-style: italic;
+}
+
+.email-detail-header {
+  border-bottom: 1px solid #233554;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.email-detail-subject {
+  font-size: 1.3rem;
+  color: #e0e6ed;
+  margin: 0 0 8px 0;
+}
+
+.email-detail-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.email-detail-sender {
+  font-size: 0.85rem;
+  color: #3b82f6;
+}
+
+.email-detail-date {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.email-detail-body {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  line-height: 1.7;
+}
+
+/* Badges */
+.unread-badge,
+.sidebar-badge {
+  display: inline-block;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.sidebar-badge {
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  margin-left: 4px;
+}
+
+

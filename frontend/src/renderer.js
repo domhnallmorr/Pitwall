@@ -15,6 +15,7 @@ import DriverMarketView from './views/driver_market.js';
 import CarView from './views/car.js';
 import FinanceView from './views/finance.js';
 import FacilitiesView from './views/facilities.js';
+import { renderLayoutPartials } from './layout/partials.js';
 
 // Elements
 const titleScreen = document.getElementById('title-screen');
@@ -61,6 +62,8 @@ const TEAM_OPTIONS = [
 // --- Initialization ---
 
 function init() {
+	renderLayoutPartials();
+
 	navigation = new Navigation();
 	gridView = new GridView();
 	standingsView = new StandingsView();

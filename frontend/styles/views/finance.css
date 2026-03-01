@@ -1,0 +1,155 @@
+﻿/* ============================
+   Finance View
+   ============================ */
+
+#finance-view {
+  background-image: linear-gradient(rgba(5, 14, 26, 0.78), rgba(5, 14, 26, 0.78)), url('../../assets/images/finance_background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: -16px -16px 0;
+  height: calc(100vh - 150px);
+  overflow-y: auto;
+}
+
+.finance-summary {
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.finance-balance-card {
+  background: rgba(10, 25, 47, 0.82);
+  border: 1px solid #233554;
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+
+.finance-balance-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.finance-balance-amount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #22c55e;
+}
+
+.finance-negative {
+  color: #ef4444;
+}
+
+.finance-section-title {
+  font-size: 1rem;
+  color: var(--text-color);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.finance-transactions {
+  margin-top: 16px;
+}
+
+.finance-track-pl {
+  margin-top: 20px;
+}
+
+.finance-prize-progress {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.finance-sponsor-card {
+  margin-top: 14px;
+  background: rgba(10, 25, 47, 0.82);
+  border: 1px solid #233554;
+  border-radius: 12px;
+  padding: 18px 22px;
+}
+
+#finance-view .data-table {
+  background: rgba(8, 20, 38, 0.58);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#finance-view .data-table th {
+  background: rgba(8, 20, 38, 0.72);
+}
+
+#finance-view .data-table td {
+  background: rgba(8, 20, 38, 0.5);
+}
+
+#finance-view .data-table tr:nth-child(even) td {
+  background: rgba(8, 20, 38, 0.58);
+}
+
+.finance-sponsor-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+#finance-sponsor-logo-wrap .sponsor-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+#finance-engine-supplier-logo-wrap .supplier-logo,
+#finance-tyre-supplier-logo-wrap .supplier-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.finance-sponsor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px 16px;
+}
+
+.finance-sponsor-grid > div > div {
+  color: #cbd5e1;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.finance-amount-positive {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.finance-amount-negative {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.finance-category-badge {
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.finance-category-transport {
+  background: rgba(249, 115, 22, 0.16);
+  color: #fb923c;
+}
+
+

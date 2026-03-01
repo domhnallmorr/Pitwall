@@ -1,0 +1,51 @@
+﻿/* ============================
+   Car View
+   ============================ */
+
+#car-view {
+  background-image: linear-gradient(rgba(5, 14, 26, 0.68), rgba(5, 14, 26, 0.68)), url('../../assets/images/car_background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: -16px -16px 0;
+  height: calc(100vh - 150px);
+  overflow-y: auto;
+}
+
+.car-speed-rating {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.car-speed-block {
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid #3a4f74;
+  background: rgba(58, 79, 116, 0.25);
+}
+
+.car-speed-block.is-filled {
+  border-color: #64ffda;
+  background: linear-gradient(90deg, #64ffda, #31d0ad);
+}
+
+.car-development-status {
+  margin-bottom: 12px;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.car-development-current-speed {
+  margin-bottom: 10px;
+  color: #dbeafe;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+

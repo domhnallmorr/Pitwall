@@ -1,0 +1,321 @@
+﻿/* ================================
+   STAFF VIEW
+   ================================ */
+
+.staff-drivers-container {
+  display: flex;
+  gap: 24px;
+  padding: 10px 0;
+}
+
+.staff-management-container {
+  display: flex;
+  gap: 24px;
+  padding: 10px 0;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.staff-management-container .staff-driver-card {
+  min-width: 320px;
+}
+
+.staff-workforce-summary {
+  margin: 12px 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e0e6ed;
+}
+
+.staff-driver-card {
+  flex: 1;
+  background: rgba(10, 25, 47, 0.6);
+  border: 1px solid #233554;
+  border-radius: 10px;
+  padding: 28px;
+  transition: border-color 0.2s;
+}
+
+.staff-driver-card:hover {
+  border-color: #3b82f6;
+}
+
+.staff-card-role {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #3b82f6;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.staff-card-portrait {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.staff-card-portrait img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #233554;
+}
+
+.staff-card-name {
+  font-size: 1.4rem;
+  color: #e0e6ed;
+  margin: 0 0 20px 0;
+  font-weight: 700;
+}
+
+.staff-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.staff-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(35, 53, 84, 0.4);
+}
+
+.staff-detail-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.staff-detail-value {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.staff-speed-rating {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.staff-speed-block {
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid #3a4f74;
+  background: rgba(58, 79, 116, 0.25);
+}
+
+.staff-speed-block.is-filled {
+  border-color: #64ffda;
+  background: linear-gradient(90deg, #64ffda, #31d0ad);
+}
+
+.staff-workforce-rating {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.staff-workforce-block {
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid #3a4f74;
+  background: rgba(58, 79, 116, 0.25);
+}
+
+.staff-workforce-block.is-filled {
+  border-color: #64ffda;
+  background: linear-gradient(90deg, #64ffda, #31d0ad);
+}
+
+.staff-skill-rating {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.staff-skill-block {
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid #3a4f74;
+  background: rgba(58, 79, 116, 0.25);
+}
+
+.staff-skill-block.is-filled {
+  border-color: #64ffda;
+  background: linear-gradient(90deg, #64ffda, #31d0ad);
+}
+
+.staff-pay-driver {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.staff-replace-btn {
+  border: 1px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.18);
+  color: #dbeafe;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.staff-replace-btn:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+.staff-replace-btn:disabled {
+  border-color: #4b5563;
+  background: rgba(75, 85, 99, 0.2);
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.driver-market-sign-btn {
+  border: 1px solid #22c55e;
+  background: rgba(34, 197, 94, 0.18);
+  color: #dcfce7;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.driver-market-sign-btn:hover {
+  background: rgba(34, 197, 94, 0.3);
+}
+
+.driver-link {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.driver-link:hover {
+  color: var(--accent-color);
+  text-decoration: underline;
+}
+
+.driver-profile-container {
+  max-width: 520px;
+}
+
+#driver-view {
+  background-image: linear-gradient(rgba(5, 14, 26, 0.7), rgba(5, 14, 26, 0.7)), url('../../assets/images/driver_background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: -16px -16px 0;
+  min-height: calc(100vh - 150px);
+}
+
+.driver-profile-card {
+  margin-top: 8px;
+}
+
+.driver-season-results-container {
+  margin-top: 22px;
+  width: 100%;
+}
+
+.driver-speed-rating {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.driver-speed-block {
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid #3a4f74;
+  background: rgba(58, 79, 116, 0.25);
+}
+
+.driver-speed-block.is-filled {
+  border-color: #64ffda;
+  background: linear-gradient(90deg, #64ffda, #31d0ad);
+}
+
+.driver-season-results {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #233554;
+  border-radius: 10px;
+  background: rgba(10, 25, 47, 0.45);
+  transition: border-color 0.2s;
+}
+
+.driver-season-results:hover {
+  border-color: #3b82f6;
+}
+
+.driver-season-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+
+.driver-season-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 6px;
+  table-layout: fixed;
+}
+
+.driver-season-flag-cell,
+.driver-season-pos-cell {
+  text-align: center;
+  padding: 6px 4px;
+  border: 1px solid rgba(35, 53, 84, 0.6);
+  border-radius: 6px;
+  background: rgba(10, 25, 47, 0.35);
+}
+
+.driver-season-pos-cell {
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.driver-season-pos-cell.is-gold {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.55);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.driver-season-pos-cell.is-silver {
+  color: #d1d5db;
+  border-color: rgba(209, 213, 219, 0.55);
+  background: rgba(209, 213, 219, 0.12);
+}
+
+.driver-season-pos-cell.is-bronze {
+  color: #d97706;
+  border-color: rgba(217, 119, 6, 0.55);
+  background: rgba(217, 119, 6, 0.12);
+}
+
+.driver-season-empty {
+  margin-top: 16px;
+  color: #64748b;
+}
+
+
