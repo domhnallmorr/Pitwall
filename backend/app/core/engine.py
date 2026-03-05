@@ -5,6 +5,7 @@ from app.core.transport import TransportManager
 from app.core.transfers import TransferManager
 from app.core.ai_car_development import AICarDevelopmentManager
 from app.core.player_car_development import PlayerCarDevelopmentManager
+from app.core.testing import TestSessionManager
 from app.models.email import EmailCategory
 
 class GameEngine:
@@ -17,6 +18,7 @@ class GameEngine:
         self.transfer_manager = TransferManager()
         self.ai_car_development_manager = AICarDevelopmentManager()
         self.player_car_development_manager = PlayerCarDevelopmentManager()
+        self.test_session_manager = TestSessionManager()
 
     def advance_week(self, state: GameState) -> dict:
         """
@@ -68,7 +70,7 @@ class GameEngine:
             "balance": state.finance.balance
         }
 
-    def handle_event_action(self, state: GameState, action: str) -> dict:
+    def handle_event_action(self, state: GameState, action: str, test_kms: int | None = None) -> dict:
         """
         Handles actions like 'skip' or 'attend' for the current event.
         Returns the updated week summary.
@@ -89,6 +91,13 @@ class GameEngine:
                             f"Cost: ${charge.applied_cost:,}"
                         ),
                         category=EmailCategory.GENERAL,
+                    )
+                if event.type == EventType.TEST:
+                    self.test_session_manager.process_test_session(
+                        state,
+                        event,
+                        player_attended=attended,
+                        player_kms=int(test_kms or 0),
                     )
                 state.events_processed.append(event_id)
 

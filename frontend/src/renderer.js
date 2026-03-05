@@ -82,6 +82,7 @@ function init() {
 	});
 	carView = new CarView();
 	carView.setStartDevelopmentHandler((developmentType) => API.startCarDevelopment(developmentType));
+	carView.setRepairWearHandler((wearPoints) => API.repairCarWear(wearPoints));
 	financeView = new FinanceView();
 	facilitiesView = new FacilitiesView();
 	facilitiesView.setPreviewHandler((points, years) => API.previewFacilitiesUpgrade(points, years));
@@ -114,7 +115,21 @@ function setupEventListeners() {
 	// Advance Button
 	const advanceBtn = document.getElementById('advance-btn');
 	const testModal = document.getElementById('test-session-modal');
+	const testKmModal = document.getElementById('test-km-modal');
 	const testNoBtn = document.getElementById('test-no-btn');
+	const testYesBtn = document.getElementById('test-yes-btn');
+	const testKmInput = document.getElementById('test-km-input');
+	const testKmValue = document.getElementById('test-km-value');
+	const testKmCost = document.getElementById('test-km-cost');
+	const testKmCancelBtn = document.getElementById('test-km-cancel-btn');
+	const testKmConfirmBtn = document.getElementById('test-km-confirm-btn');
+
+	const updateTestKmPreview = () => {
+		if (!testKmInput || !testKmValue || !testKmCost) return;
+		const kms = Number(testKmInput.value || 0);
+		testKmValue.textContent = kms.toLocaleString();
+		testKmCost.textContent = `$${(kms * 1400).toLocaleString()}`;
+	};
 
 	if (advanceBtn) {
 		advanceBtn.addEventListener('click', () => {
@@ -135,6 +150,33 @@ function setupEventListeners() {
 		testNoBtn.addEventListener('click', () => {
 			testModal.style.display = 'none';
 			API.skipEvent(); // Skip test, stay in week, update button
+		});
+	}
+
+	if (testYesBtn) {
+		testYesBtn.addEventListener('click', () => {
+			testModal.style.display = 'none';
+			if (testKmModal) testKmModal.style.display = 'flex';
+			updateTestKmPreview();
+		});
+	}
+
+	if (testKmInput) {
+		testKmInput.addEventListener('input', updateTestKmPreview);
+	}
+
+	if (testKmCancelBtn) {
+		testKmCancelBtn.addEventListener('click', () => {
+			if (testKmModal) testKmModal.style.display = 'none';
+			if (testModal) testModal.style.display = 'flex';
+		});
+	}
+
+	if (testKmConfirmBtn) {
+		testKmConfirmBtn.addEventListener('click', () => {
+			const kms = Number(testKmInput?.value || 0);
+			if (testKmModal) testKmModal.style.display = 'none';
+			API.attendTest(kms);
 		});
 	}
 
@@ -212,6 +254,12 @@ function setupIPC() {
 			} else if (parsed.type === 'car_data') {
 				carView.render(parsed.data);
 			} else if (parsed.type === 'car_development_started') {
+				if (parsed.status === 'success') {
+					API.getCar();
+					API.getFinance();
+					API.getEmails();
+				}
+			} else if (parsed.type === 'car_wear_repaired') {
 				if (parsed.status === 'success') {
 					API.getCar();
 					API.getFinance();
@@ -382,11 +430,18 @@ function renderRaceResults(data) {
 	tbody.innerHTML = '';
 	data.results.forEach(r => {
 		const positionLabel = Number.isInteger(r.position) ? r.position : (r.status || 'DNF');
+		let statusLabel = 'Finished';
+		if (!Number.isInteger(r.position)) {
+			if (r.crash_out) statusLabel = 'Crash';
+			else if (r.mechanical_out) statusLabel = 'Mechanical';
+			else statusLabel = r.status || 'DNF';
+		}
 		const row = document.createElement('tr');
 		row.innerHTML = `
 			<td>${positionLabel}</td>
 			<td>${r.driver_name}</td>
 			<td>${r.team_name}</td>
+			<td>${statusLabel}</td>
 			<td>${r.points > 0 ? r.points : '-'}</td>
 		`;
 		tbody.appendChild(row);

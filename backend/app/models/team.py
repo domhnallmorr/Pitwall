@@ -22,3 +22,4 @@ class Team(BaseModel):
     points: int = 0
     balance: int = 0
     facilities: int = 0
+    car_wear: int = 0

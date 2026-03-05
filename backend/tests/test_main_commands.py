@@ -17,6 +17,7 @@ def create_state() -> GameState:
             driver1_id=1,
             driver2_id=2,
             car_speed=80,
+            workforce=250,
             title_sponsor_name="Windale",
             title_sponsor_yearly=32_500_000,
             engine_supplier_name="Mechatron",
@@ -89,6 +90,8 @@ def test_get_car_returns_team_car_speed_data():
     assert "player_development" in result["data"]
     assert result["data"]["player_team_name"] == "Warrick"
     assert result["data"]["player_car_speed"] == 80
+    assert "player_car_wear" in result["data"]
+    assert "player_mechanical_fail_probability" in result["data"]
 
 
 def test_unknown_command_returns_error():
@@ -252,3 +255,31 @@ def test_start_car_development_creates_project_and_blocks_second_start():
     blocked = process_command({"type": "start_car_development", "development_type": "major"})
     assert blocked["status"] == "error"
     assert "already active" in blocked["message"]
+
+
+def test_attend_test_command_applies_testing_cost():
+    state = create_state()
+    state.calendar = Calendar(events=[Event(name="Barcelona Test", week=11, type=EventType.TEST)], current_week=11)
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "attend_test", "kms": 900})
+    assert result["status"] == "success"
+    assert result["type"] == "week_advanced"
+    txs = [t for t in state.finance.transactions if t.category == TransactionCategory.TESTING]
+    assert len(txs) == 1
+    assert txs[0].amount == -1_260_000
+
+
+def test_repair_car_wear_reduces_wear_and_records_cost():
+    state = create_state()
+    state.teams[0].car_wear = 25
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "repair_car_wear", "wear_points": 10})
+    assert result["status"] == "success"
+    assert result["type"] == "car_wear_repaired"
+    assert result["data"]["cost"] == 32_000
+    assert state.teams[0].car_wear == 15
+    txs = [t for t in state.finance.transactions if t.category == TransactionCategory.MAINTENANCE]
+    assert len(txs) == 1
+    assert txs[0].amount == -32_000

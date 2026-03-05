@@ -6,6 +6,11 @@ from app.race.stats_manager import DriverStatsManager
 # 1998 F1 Points System: 10-6-4-3-2-1
 POINTS_TABLE = {1: 10, 2: 6, 3: 4, 4: 3, 5: 2, 6: 1}
 MAX_CRASH_OUTS = 5
+PLAYER_RACE_WEAR_INCREASE = 8
+PLAYER_FAILURE_PROB_PER_WEAR = 0.002
+PLAYER_MAX_FAILURE_PROBABILITY = 0.35
+AI_MECHANICAL_FAILURE_PROBABILITY = 0.05
+MAX_CAR_WEAR = 100
 
 
 class RaceManager:
@@ -50,6 +55,16 @@ class RaceManager:
             return 0
         return random.randint(0, min(MAX_CRASH_OUTS, participant_count - 1))
 
+    def _mechanical_failure_probability(self, state: GameState, team_id: int, team_lookup: Dict[int, Any]) -> float:
+        # Keep deterministic legacy behavior in tests/headless states without a player team selected.
+        if state.player_team_id is None:
+            return 0.0
+        if team_id == state.player_team_id:
+            player_team = team_lookup.get(team_id)
+            wear = max(0, int(getattr(player_team, "car_wear", 0) or 0))
+            return min(PLAYER_MAX_FAILURE_PROBABILITY, wear * PLAYER_FAILURE_PROB_PER_WEAR)
+        return AI_MECHANICAL_FAILURE_PROBABILITY
+
     def simulate_race(self, state: GameState) -> Dict[str, Any]:
         """
         Simulates a race with a random result.
@@ -79,11 +94,34 @@ class RaceManager:
         crashed_participants = random.sample(participants, crash_count) if crash_count > 0 else []
         crashed_driver_ids = {entry["driver_id"] for entry in crashed_participants}
 
-        # 3. Weighted random result for classified finishers.
-        finishers = [p for p in participants if p["driver_id"] not in crashed_driver_ids]
+        # Player wear increases every race weekend and drives player mechanical risk.
+        if state.player_team_id is not None and state.player_team_id in team_lookup:
+            player_team = team_lookup[state.player_team_id]
+            current_wear = max(0, int(getattr(player_team, "car_wear", 0) or 0))
+            player_team.car_wear = min(MAX_CAR_WEAR, current_wear + PLAYER_RACE_WEAR_INCREASE)
+
+        # 3. Mechanical failures for non-crashed participants.
+        finishers = []
+        mechanical_participants = []
+        for entry in participants:
+            if entry["driver_id"] in crashed_driver_ids:
+                continue
+            fail_prob = self._mechanical_failure_probability(state, entry["team_id"], team_lookup)
+            if random.random() < fail_prob:
+                mechanical_participants.append(entry)
+            else:
+                finishers.append(entry)
+
+        # Ensure at least one classified finisher.
+        if not finishers and mechanical_participants:
+            rescued = random.choice(mechanical_participants)
+            mechanical_participants.remove(rescued)
+            finishers.append(rescued)
+
+        # 4. Weighted random result for classified finishers.
         finishers = self._weighted_finish_order(finishers)
 
-        # 4. Assign positions and points
+        # 5. Assign positions and points
         results = []
         for pos, entry in enumerate(finishers, start=1):
             pts = POINTS_TABLE.get(pos, 0)
@@ -96,6 +134,7 @@ class RaceManager:
                 "points": pts,
                 "status": "FINISHED",
                 "crash_out": False,
+                "mechanical_out": False,
             })
 
         # Add DNFs to results for incident tracking and UI display.
@@ -109,9 +148,23 @@ class RaceManager:
                 "points": 0,
                 "status": "DNF",
                 "crash_out": True,
+                "mechanical_out": False,
             })
 
-        # 5. Apply points to GameState
+        for entry in mechanical_participants:
+            results.append({
+                "position": None,
+                "driver_name": entry["driver_name"],
+                "driver_id": entry["driver_id"],
+                "team_name": entry["team_name"],
+                "team_id": entry["team_id"],
+                "points": 0,
+                "status": "DNF",
+                "crash_out": False,
+                "mechanical_out": True,
+            })
+
+        # 6. Apply points to GameState
         for r in results:
             if r["points"] > 0:
                 # Update driver points
@@ -122,17 +175,17 @@ class RaceManager:
                 team = team_lookup[r["team_id"]]
                 team.points += r["points"]
 
-        # 6. Apply career stats (starts, wins, etc.).
+        # 7. Apply career stats (starts, wins, etc.).
         self.stats_manager.apply_race_results(state, results)
 
-        # 7. Mark event as processed
+        # 8. Mark event as processed
         event = state.calendar.current_event
         if event:
             event_id = f"{event.week}_{event.name}"
             if event_id not in state.events_processed:
                 state.events_processed.append(event_id)
 
-        # 8. Get event name for display
+        # 9. Get event name for display
         event_name = ""
         if event:
             event_name = event.name
@@ -146,10 +199,20 @@ class RaceManager:
             }
             for entry in crashed_participants
         ]
+        mechanical_outs = [
+            {
+                "driver_id": entry["driver_id"],
+                "driver_name": entry["driver_name"],
+                "team_id": entry["team_id"],
+                "team_name": entry["team_name"],
+            }
+            for entry in mechanical_participants
+        ]
         state.latest_race_incidents = crash_outs
 
         return {
             "event_name": event_name,
             "results": results,
             "crash_outs": crash_outs,
+            "mechanical_outs": mechanical_outs,
         }

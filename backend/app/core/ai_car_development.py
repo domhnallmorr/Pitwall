@@ -6,6 +6,12 @@ from app.models.state import GameState
 
 
 class AICarDevelopmentManager:
+    MAX_WORKFORCE = 250
+    BASE_DEVELOPMENT_WEEKS = {
+        "minor": 4,
+        "medium": 7,
+        "major": 10,
+    }
     UPDATE_DELTAS = {
         "minor": 1,
         "medium": 3,
@@ -15,6 +21,17 @@ class AICarDevelopmentManager:
 
     def _race_weeks(self, state: GameState) -> list[int]:
         return sorted({e.week for e in state.calendar.events if e.type == EventType.RACE})
+
+    def _workforce_time_multiplier(self, workforce: int) -> float:
+        bounded_workforce = max(0, min(int(workforce or 0), self.MAX_WORKFORCE))
+        normalized = bounded_workforce / self.MAX_WORKFORCE
+        # 250 staff => 1.0x base time, 0 staff => 2.0x base time.
+        return 2.0 - normalized
+
+    def _development_weeks_for_team(self, update_type: str, workforce: int) -> int:
+        base_weeks = self.BASE_DEVELOPMENT_WEEKS[update_type]
+        scaled = int(round(base_weeks * self._workforce_time_multiplier(workforce)))
+        return max(base_weeks, min(base_weeks * 2, scaled))
 
     def _pick_spread_weeks(self, weeks: list[int], count: int) -> list[int]:
         if count <= 0 or not weeks:
@@ -42,6 +59,10 @@ class AICarDevelopmentManager:
         race_weeks = self._race_weeks(state)
         eligible_weeks = race_weeks[1:]  # no updates before/at opening race
         planned: list[dict] = []
+        if race_weeks:
+            first_race_week = race_weeks[0]
+        else:
+            first_race_week = 1
 
         for team in state.teams:
             if state.player_team_id is not None and team.id == state.player_team_id:
@@ -50,26 +71,45 @@ class AICarDevelopmentManager:
                 continue
 
             target_updates = min(random.randint(2, 6), len(eligible_weeks))
-            selected_weeks = self._pick_spread_weeks(eligible_weeks, target_updates)
+            min_gap = max(1, round(len(eligible_weeks) / (target_updates + 1)))
+            selected_weeks: list[int] = []
 
-            for week in selected_weeks:
+            for _ in range(target_updates):
                 update_type = random.choices(
                     ["minor", "medium", "major"],
                     weights=self.UPDATE_WEIGHTS,
                     k=1,
                 )[0]
+                development_weeks = self._development_weeks_for_team(update_type, team.workforce)
+                earliest_completion_week = max(first_race_week + 1, 1 + development_weeks)
+                candidate_weeks = [w for w in eligible_weeks if w >= earliest_completion_week]
+                gap_candidates = [
+                    w
+                    for w in candidate_weeks
+                    if all(abs(w - selected) >= min_gap for selected in selected_weeks)
+                ]
+                pool = gap_candidates if gap_candidates else candidate_weeks
+                if not pool:
+                    continue
+
+                week = random.choice(pool)
+                selected_weeks.append(week)
+                start_week = max(1, week - development_weeks)
                 planned.append(
                     {
                         "year": state.year,
                         "team_id": team.id,
                         "team_name": team.name,
+                        "start_week": start_week,
                         "week": week,
+                        "development_weeks": development_weeks,
                         "update_type": update_type,
                         "delta": self.UPDATE_DELTAS[update_type],
                         "applied": False,
                     }
                 )
 
+        planned.sort(key=lambda item: (item["week"], item["team_name"]))
         state.planned_ai_car_updates = planned
         return planned
 

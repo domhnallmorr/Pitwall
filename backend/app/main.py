@@ -8,6 +8,7 @@ from app.commands.game_commands import (
     build_finance_payload,
     handle_facilities_upgrade_preview,
     handle_get_replacement_candidates,
+    handle_repair_car_wear,
     handle_load_roster,
     handle_replace_driver,
     handle_start_car_development,
@@ -144,6 +145,25 @@ def process_command(command):
             logging.error(f"Error skipping event: {e}")
             return {"status": "error", "message": str(e)}
 
+    if cmd_type == 'attend_test':
+        try:
+            if not CURRENT_STATE:
+                return {"status": "error", "message": "Game not started"}
+
+            engine = GameEngine()
+            summary = engine.handle_event_action(CURRENT_STATE, "attend", test_kms=command.get("kms"))
+
+            save_game(CURRENT_STATE)
+
+            return {
+                "type": "week_advanced",
+                "status": "success",
+                "data": summary
+            }
+        except Exception as e:
+            logging.error(f"Error attending test: {e}")
+            return {"status": "error", "message": str(e)}
+
     if cmd_type == 'simulate_race':
         if not CURRENT_STATE:
             return {"status": "error", "message": "Game not started"}
@@ -187,6 +207,14 @@ def process_command(command):
         if not CURRENT_STATE:
             return {"type": "car_development_started", "status": "error", "message": "Game not started"}
         response = handle_start_car_development(CURRENT_STATE, logging, command.get("development_type"))
+        if response.get("status") == "success":
+            save_game(CURRENT_STATE)
+        return response
+
+    if cmd_type == 'repair_car_wear':
+        if not CURRENT_STATE:
+            return {"type": "car_wear_repaired", "status": "error", "message": "Game not started"}
+        response = handle_repair_car_wear(CURRENT_STATE, logging, command.get("wear_points"))
         if response.get("status") == "success":
             save_game(CURRENT_STATE)
         return response

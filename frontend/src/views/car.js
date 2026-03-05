@@ -10,14 +10,26 @@ export default class CarView {
 		this.devStatus = document.getElementById('car-development-status');
 		this.comparisonContent = document.getElementById('car-content-comparison');
 		this.developmentContent = document.getElementById('car-content-development');
+		this.garageContent = document.getElementById('car-content-garage');
+		this.garageWear = document.getElementById('car-garage-wear');
+		this.garageRisk = document.getElementById('car-garage-risk');
+		this.garageRepairSlider = document.getElementById('car-garage-repair-slider');
+		this.garageRepairValue = document.getElementById('car-garage-repair-value');
+		this.garageRepairCost = document.getElementById('car-garage-repair-cost');
+		this.garageRepairBtn = document.getElementById('car-garage-repair-btn');
 		this.tabButtons = document.querySelectorAll('.car-tab-btn');
 		this.onStartDevelopment = null;
+		this.onRepairWear = null;
 		this.activeTab = 'comparison';
 		this.bindTabs();
 	}
 
 	setStartDevelopmentHandler(handler) {
 		this.onStartDevelopment = handler;
+	}
+
+	setRepairWearHandler(handler) {
+		this.onRepairWear = handler;
 	}
 
 	bindTabs() {
@@ -37,6 +49,9 @@ export default class CarView {
 		}
 		if (this.developmentContent) {
 			this.developmentContent.style.display = tab === 'development' ? 'block' : 'none';
+		}
+		if (this.garageContent) {
+			this.garageContent.style.display = tab === 'garage' ? 'block' : 'none';
 		}
 	}
 
@@ -111,6 +126,40 @@ export default class CarView {
 				this.onStartDevelopment(type);
 			});
 		});
+
+		if (this.garageWear) {
+			const wear = Number(data?.player_car_wear || 0);
+			this.garageWear.textContent = `Wear: ${wear}`;
+		}
+		if (this.garageRisk) {
+			const risk = Number(data?.player_mechanical_fail_probability || 0);
+			this.garageRisk.textContent = `Mechanical failure risk (per race): ${Math.round(risk * 100)}%`;
+		}
+		const wear = Number(data?.player_car_wear || 0);
+		if (this.garageRepairSlider) {
+			this.garageRepairSlider.max = String(Math.max(0, wear));
+			this.garageRepairSlider.value = String(Math.min(Number(this.garageRepairSlider.value || 0), wear));
+		}
+		const selectedRepair = Number(this.garageRepairSlider?.value || 0);
+		if (this.garageRepairValue) this.garageRepairValue.textContent = String(selectedRepair);
+		if (this.garageRepairCost) this.garageRepairCost.textContent = `$${(selectedRepair * 3200).toLocaleString()}`;
+		if (this.garageRepairBtn) this.garageRepairBtn.disabled = wear <= 0 || selectedRepair <= 0;
+
+		if (this.garageRepairSlider) {
+			this.garageRepairSlider.oninput = () => {
+				const value = Number(this.garageRepairSlider.value || 0);
+				if (this.garageRepairValue) this.garageRepairValue.textContent = String(value);
+				if (this.garageRepairCost) this.garageRepairCost.textContent = `$${(value * 3200).toLocaleString()}`;
+				if (this.garageRepairBtn) this.garageRepairBtn.disabled = wear <= 0 || value <= 0;
+			};
+		}
+		if (this.garageRepairBtn) {
+			this.garageRepairBtn.onclick = () => {
+				if (!this.onRepairWear) return;
+				const value = Number(this.garageRepairSlider?.value || 0);
+				if (value > 0) this.onRepairWear(value);
+			};
+		}
 
 		this.setActiveTab(this.activeTab);
 	}

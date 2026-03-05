@@ -15,6 +15,7 @@ from app.commands.finance_commands import build_finance_payload
 from app.commands.race_commands import handle_simulate_race
 from app.commands.staff_commands import (
     handle_get_replacement_candidates,
+    handle_repair_car_wear,
     handle_replace_driver,
     handle_start_car_development,
 )

@@ -14,19 +14,30 @@ class DevelopmentSpec:
 
 
 class PlayerCarDevelopmentManager:
+    MAX_WORKFORCE = 250
     SPECS = {
         "minor": DevelopmentSpec(key="minor", weeks=4, total_cost=100_000, speed_delta=1),
         "medium": DevelopmentSpec(key="medium", weeks=7, total_cost=750_000, speed_delta=3),
         "major": DevelopmentSpec(key="major", weeks=10, total_cost=1_500_000, speed_delta=5),
     }
 
-    def get_catalog(self) -> list[dict]:
+    def _workforce_time_multiplier(self, workforce: int) -> float:
+        bounded_workforce = max(0, min(int(workforce or 0), self.MAX_WORKFORCE))
+        normalized = bounded_workforce / self.MAX_WORKFORCE
+        # 250 staff => 1.0x base time, 0 staff => 2.0x base time.
+        return 2.0 - normalized
+
+    def _weeks_for_workforce(self, base_weeks: int, workforce: int) -> int:
+        scaled = int(round(base_weeks * self._workforce_time_multiplier(workforce)))
+        return max(base_weeks, min(base_weeks * 2, scaled))
+
+    def get_catalog(self, workforce: int = MAX_WORKFORCE) -> list[dict]:
         return [
             {
                 "type": spec.key,
-                "weeks": spec.weeks,
+                "weeks": self._weeks_for_workforce(spec.weeks, workforce),
                 "total_cost": spec.total_cost,
-                "weekly_cost": int(round(spec.total_cost / spec.weeks)),
+                "weekly_cost": int(round(spec.total_cost / self._weeks_for_workforce(spec.weeks, workforce))),
                 "speed_delta": spec.speed_delta,
             }
             for spec in self.SPECS.values()
@@ -44,12 +55,13 @@ class PlayerCarDevelopmentManager:
         if not team:
             raise ValueError("No player team assigned")
 
-        weekly_cost = int(round(spec.total_cost / spec.weeks))
+        duration_weeks = self._weeks_for_workforce(spec.weeks, team.workforce)
+        weekly_cost = int(round(spec.total_cost / duration_weeks))
         state.player_car_development = PlayerCarDevelopment(
             active=True,
             development_type=spec.key,
-            total_weeks=spec.weeks,
-            weeks_remaining=spec.weeks,
+            total_weeks=duration_weeks,
+            weeks_remaining=duration_weeks,
             speed_delta=spec.speed_delta,
             total_cost=spec.total_cost,
             weekly_cost=weekly_cost,
@@ -62,7 +74,7 @@ class PlayerCarDevelopmentManager:
             body=(
                 f"Development program initiated.\n\n"
                 f"Type: {spec.key.title()}\n"
-                f"Duration: {spec.weeks} weeks\n"
+                f"Duration: {duration_weeks} weeks\n"
                 f"Expected speed gain: +{spec.speed_delta}\n"
                 f"Total cost: ${spec.total_cost:,}\n"
                 f"Weekly cost: ${weekly_cost:,}"

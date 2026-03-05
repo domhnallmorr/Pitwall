@@ -404,6 +404,19 @@ def seed_data(conn):
         "Tarnwell": 105,
         "Marchetti": 90,
     }
+    team_balances = {
+        "Warrick": 4_700_000,
+        "Ferano": 5_600_000,
+        "Benedetti": 3_800_000,
+        "McAlister": 5_300_000,
+        "Joyce": 2_877_500,
+        "Pascal": 3_200_000,
+        "Schweizer": 2_600_000,
+        "Swords": 1_600_000,
+        "Strathmore": 1_700_000,
+        "Tarnwell": 660_000,
+        "Marchetti": 890_000,
+    }
     team_title_sponsors = {
         "Warrick": ("Windale", 32_500_000),
         "Ferano": ("Marbano", 31_500_000),
@@ -599,6 +612,10 @@ def seed_data(conn):
         c.executemany(
             'UPDATE teams SET workforce = ? WHERE name = ?',
             [(workforce, name) for name, workforce in team_workforce.items()]
+        )
+        c.executemany(
+            'UPDATE teams SET balance = ? WHERE name = ? AND start_year = 0',
+            [(balance, name) for name, balance in team_balances.items()]
         )
         c.executemany(
             'UPDATE teams SET title_sponsor_name = ?, title_sponsor_yearly = ? WHERE name = ?',
@@ -847,17 +864,17 @@ def seed_data(conn):
     )
 
     teams_data = [
-        (0, "Warrick", "United Kingdom", "John Newhouse", "Henrik Friedrich", 47000000, 75),
-        (0, "Ferano", "Italy", "Marco Schneider", "Evan Irving", 56000000, 70),
-        (0, "Benedetti", "Italy", "Fabrizio Giorgetti", "Andreas Wurst", 38000000, 70),
-        (0, "McAlister", "United Kingdom", "Mikko Hanninen", "Daniel Caldwell", 53000000, 85),
-        (0, "Joyce", "Ireland", "Donovan Upland", "Roland Schneider", 28775000, 60),
-        (0, "Pascal", "France", "Alexis Perrin", "Luca Treno", 32000000, 55),
-        (0, "Schweizer", "Switzerland", "Julien Alesso", "Jimmy Hobart", 26000000, 75),
-        (0, "Swords", "United Kingdom", "Pablo Dinez", "Mikko Salmi", 16000000, 40),
-        (0, "Strathmore", "United Kingdom", "Rodrigo Barros", "Lars Nielsen", 17000000, 60),
-        (0, "Tarnwell", "United Kingdom", "Roberto Rossi", "Toshiro Tanaka", 6600000, 35),
-        (0, "Marchetti", "Italy", "Kazuki Nakamura", "Eduardo Torres", 8900000, 18),
+        (0, "Warrick", "United Kingdom", "John Newhouse", "Henrik Friedrich", 4_700_000, 75),
+        (0, "Ferano", "Italy", "Marco Schneider", "Evan Irving", 5_600_000, 70),
+        (0, "Benedetti", "Italy", "Fabrizio Giorgetti", "Andreas Wurst", 3_800_000, 70),
+        (0, "McAlister", "United Kingdom", "Mikko Hanninen", "Daniel Caldwell", 5_300_000, 85),
+        (0, "Joyce", "Ireland", "Donovan Upland", "Roland Schneider", 2_877_500, 60),
+        (0, "Pascal", "France", "Alexis Perrin", "Luca Treno", 3_200_000, 55),
+        (0, "Schweizer", "Switzerland", "Julien Alesso", "Jimmy Hobart", 2_600_000, 75),
+        (0, "Swords", "United Kingdom", "Pablo Dinez", "Mikko Salmi", 1_600_000, 40),
+        (0, "Strathmore", "United Kingdom", "Rodrigo Barros", "Lars Nielsen", 1_700_000, 60),
+        (0, "Tarnwell", "United Kingdom", "Roberto Rossi", "Toshiro Tanaka", 660_000, 35),
+        (0, "Marchetti", "Italy", "Kazuki Nakamura", "Eduardo Torres", 890_000, 18),
     ]
 
     teams_data_with_attrs = [(*t, team_speeds.get(t[1], 50), team_workforce.get(t[1], 0)) for t in teams_data]

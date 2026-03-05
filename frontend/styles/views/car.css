@@ -48,4 +48,39 @@
   gap: 10px;
 }
 
+.car-garage-card {
+  margin-top: 12px;
+  max-width: 560px;
+  background: rgba(10, 25, 47, 0.72);
+  border: 1px solid #233554;
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+.car-garage-card h3 {
+  margin: 0 0 12px;
+  color: #e0e6ed;
+  font-size: 1.1rem;
+}
+
+.car-garage-line {
+  color: #cbd5e1;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.car-garage-repair {
+  margin-top: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.car-garage-note {
+  margin-top: 10px;
+  color: #94a3b8;
+  max-width: none;
+}
+
 

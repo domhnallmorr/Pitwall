@@ -166,3 +166,31 @@ def test_simulate_race_can_include_crash_outs_and_marks_dnf():
     assert all(r["points"] == 0 for r in crash_results)
     assert len(result["crash_outs"]) == 2
     assert len(state.latest_race_incidents) == 2
+
+
+def test_simulate_race_can_include_mechanical_outs_with_player_team():
+    state = create_race_state()
+    state.player_team_id = 1
+    manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
+    manager._weighted_finish_order = lambda participants: participants
+    random.seed(1)
+
+    original_random = random.random
+    values = iter([
+        0.0,  # player driver 1 fails mechanically (wear-based chance > 0)
+        0.99, # player driver 2 survives
+        0.0,  # AI driver 1 fails mechanically (flat AI chance)
+        0.99, # AI driver 2 survives
+    ])
+    random.random = lambda: next(values)
+    try:
+        result = manager.simulate_race(state)
+    finally:
+        random.random = original_random
+
+    assert state.teams[0].car_wear == 8
+    mechanical_results = [r for r in result["results"] if r.get("mechanical_out")]
+    assert len(mechanical_results) == 2
+    assert all(r["status"] == "DNF" for r in mechanical_results)
+    assert len(result["mechanical_outs"]) == 2

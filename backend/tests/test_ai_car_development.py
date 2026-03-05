@@ -10,9 +10,9 @@ def create_state() -> GameState:
     return GameState(
         year=1998,
         teams=[
-            Team(id=1, name="Player Team", country="United Kingdom", car_speed=80),
-            Team(id=2, name="AI Team A", country="Italy", car_speed=60),
-            Team(id=3, name="AI Team B", country="France", car_speed=98),
+            Team(id=1, name="Player Team", country="United Kingdom", car_speed=80, workforce=250),
+            Team(id=2, name="AI Team A", country="Italy", car_speed=60, workforce=250),
+            Team(id=3, name="AI Team B", country="France", car_speed=98, workforce=250),
         ],
         drivers=[],
         calendar=Calendar(
@@ -38,8 +38,10 @@ def test_generate_for_season_plans_ai_only_and_skips_first_race(mock_choices, mo
 
     assert planned == state.planned_ai_car_updates
     assert all(p["team_id"] in {2, 3} for p in planned)
-    assert all(p["week"] in {4, 6, 8, 10} for p in planned)
+    assert all(p["week"] in {8, 10} for p in planned)
     assert all(p["update_type"] == "medium" and p["delta"] == 3 for p in planned)
+    assert all(p["development_weeks"] == 7 for p in planned)
+    assert all(p["start_week"] == p["week"] - p["development_weeks"] for p in planned)
     assert len([p for p in planned if p["team_id"] == 2]) == 2
     assert len([p for p in planned if p["team_id"] == 3]) == 2
 
@@ -81,3 +83,21 @@ def test_apply_for_week_updates_speed_and_sends_email():
     assert email is not None
     assert "AI Team A: Minor (+1) 60 -> 61" in email.body
     assert "AI Team B: Major (+5) 98 -> 103" in email.body
+
+
+@patch("app.core.ai_car_development.random.randint", return_value=1)
+@patch("app.core.ai_car_development.random.choices", return_value=["minor"])
+def test_generate_for_season_delays_low_workforce_updates(mock_choices, mock_randint):
+    state = create_state()
+    team_a = next(t for t in state.teams if t.id == 2)
+    team_b = next(t for t in state.teams if t.id == 3)
+    team_a.workforce = 250
+    team_b.workforce = 0
+
+    planned = AICarDevelopmentManager().generate_for_season(state)
+    by_team = {p["team_id"]: p for p in planned}
+
+    assert by_team[2]["development_weeks"] == 4
+    assert by_team[3]["development_weeks"] == 8
+    assert by_team[2]["week"] >= 6
+    assert by_team[3]["week"] >= 9

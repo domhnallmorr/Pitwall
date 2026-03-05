@@ -255,6 +255,7 @@
           <div class="tabs">
             <button class="tab-btn car-tab-btn active" data-type="comparison">Comparison</button>
             <button class="tab-btn car-tab-btn" data-type="development">Development</button>
+            <button class="tab-btn car-tab-btn" data-type="garage">Garage</button>
           </div>
           <div id="car-content-comparison">
             <table class="data-table">
@@ -289,6 +290,22 @@
                 <!-- JS populated -->
               </tbody>
             </table>
+          </div>
+          <div id="car-content-garage" style="display:none;">
+            <div class="car-garage-card">
+              <h3>Reliability</h3>
+              <div id="car-garage-wear" class="car-garage-line">Wear: 0</div>
+              <div id="car-garage-risk" class="car-garage-line">Mechanical failure risk: 0%</div>
+              <div class="car-garage-repair">
+                <label for="car-garage-repair-slider">Repair amount: <span id="car-garage-repair-value">0</span></label>
+                <input id="car-garage-repair-slider" type="range" min="0" max="0" value="0" step="1">
+                <div class="car-garage-line">Estimated repair cost: <strong id="car-garage-repair-cost">$0</strong></div>
+                <button id="car-garage-repair-btn" class="btn-secondary">Repair Wear</button>
+              </div>
+              <p class="car-garage-note">
+                Future modules: crash damage state, spare parts inventory, and chassis management.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -438,6 +455,7 @@
               <th>Pos</th>
               <th>Driver</th>
               <th>Team</th>
+              <th>Status</th>
               <th>Points</th>
             </tr>
           </thead>
@@ -459,7 +477,23 @@
       <p>A test session is scheduled. Do you want to attend?</p>
       <div class="modal-actions">
         <button id="test-no-btn" class="btn-secondary">No (Skip)</button>
-        <!-- <button id="test-yes-btn" class="btn-primary">Yes (Attend)</button> -->
+        <button id="test-yes-btn" class="btn-primary">Yes (Attend)</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="test-km-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2>Test Running Plan</h2>
+      <p>Select how many kilometers to run.</p>
+      <div class="facilities-upgrade-controls">
+        <label for="test-km-input">KM: <span id="test-km-value">800</span></label>
+        <input id="test-km-input" type="range" min="0" max="2000" value="800" step="50">
+        <div>Estimated cost: <strong id="test-km-cost">$1,120,000</strong></div>
+      </div>
+      <div class="modal-actions">
+        <button id="test-km-cancel-btn" class="btn-secondary">Back</button>
+        <button id="test-km-confirm-btn" class="btn-primary">Confirm Plan</button>
       </div>
     </div>
   </div>

@@ -103,6 +103,8 @@ class SeasonRolloverManager:
 
         # 13. Recalculate all team car performance for the new season.
         car_speed_updates = self.car_performance_manager.apply_for_new_season(state)
+        if state.player_team:
+            state.player_team.car_wear = 0
 
         # 14. Snapshot the new season grid after retirements/signings
         self.grid_manager.capture_season_snapshot(state, year=state.year)

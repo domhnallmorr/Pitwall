@@ -134,6 +134,8 @@ def get_car_payload(state: GameState) -> dict:
     engine_power_by_supplier = {e.name: e.power for e in state.engine_suppliers}
     player_project = state.player_car_development
     player_team = state.player_team
+    player_wear = int(player_team.car_wear) if player_team else 0
+    player_mech_fail_probability = min(0.35, max(0.0, player_wear * 0.002))
     return {
         "teams": [
             {
@@ -146,9 +148,13 @@ def get_car_payload(state: GameState) -> dict:
             }
             for t in state.teams
         ],
-        "development_catalog": PlayerCarDevelopmentManager().get_catalog(),
+        "development_catalog": PlayerCarDevelopmentManager().get_catalog(
+            workforce=player_team.workforce if player_team else 250
+        ),
         "player_team_name": player_team.name if player_team else None,
         "player_car_speed": player_team.car_speed if player_team else 0,
+        "player_car_wear": player_wear,
+        "player_mechanical_fail_probability": player_mech_fail_probability,
         "player_development": (
             {
                 "active": player_project.active,
