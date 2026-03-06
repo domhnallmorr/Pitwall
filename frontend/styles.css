@@ -1,8 +1,8 @@
-﻿@import url('./styles/base.css');
+@import url('./styles/base.css');
+@import url('./styles/views/shared_layout.css');
+@import url('./styles/views/grid_calendar.css');
 @import url('./styles/views/email.css');
 @import url('./styles/views/staff_driver.css');
 @import url('./styles/views/car.css');
 @import url('./styles/views/finance.css');
 @import url('./styles/views/facilities.css');
-
-
