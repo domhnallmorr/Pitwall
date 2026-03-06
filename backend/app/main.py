@@ -15,6 +15,7 @@ from app.commands.game_commands import (
     handle_start_facilities_upgrade,
     handle_simulate_race,
     handle_start_career,
+    handle_update_workforce,
 )
 from app.commands.query_commands import (
     get_car_payload,
@@ -215,6 +216,14 @@ def process_command(command):
         if not CURRENT_STATE:
             return {"type": "car_wear_repaired", "status": "error", "message": "Game not started"}
         response = handle_repair_car_wear(CURRENT_STATE, logging, command.get("wear_points"))
+        if response.get("status") == "success":
+            save_game(CURRENT_STATE)
+        return response
+
+    if cmd_type == 'update_workforce':
+        if not CURRENT_STATE:
+            return {"type": "workforce_updated", "status": "error", "message": "Game not started"}
+        response = handle_update_workforce(CURRENT_STATE, logging, command.get("workforce"))
         if response.get("status") == "success":
             save_game(CURRENT_STATE)
         return response

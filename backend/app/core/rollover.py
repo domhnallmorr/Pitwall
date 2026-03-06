@@ -27,6 +27,8 @@ class SeasonRolloverManager:
         self.car_performance_manager = CarPerformanceManager()
         self.ai_car_development_manager = AICarDevelopmentManager()
         self.transfer_manager = TransferManager()
+        self.ai_workforce_min = 90
+        self.ai_workforce_max = 250
 
     def process_rollover(self, state: GameState) -> dict:
         """
@@ -92,24 +94,44 @@ class SeasonRolloverManager:
             category=EmailCategory.SEASON,
         )
 
-        # 10. Load new seasonal driver entrants into free-agent pool
+        # 10. Update AI workforce counts for the new season.
+        ai_workforce_updates = self._update_ai_workforce(state)
+        if ai_workforce_updates:
+            lines = [
+                f"- {u['team_name']}: {u['old_workforce']} -> {u['new_workforce']} ({u['delta']:+})"
+                for u in ai_workforce_updates
+            ]
+            workforce_body = (
+                f"The following AI teams adjusted workforce for {state.year}:\n\n"
+                + "\n".join(lines)
+            )
+        else:
+            workforce_body = f"No AI teams changed workforce for {state.year}."
+        state.add_email(
+            sender="Competition Office",
+            subject=f"AI Workforce Update: {state.year}",
+            body=workforce_body,
+            category=EmailCategory.SEASON,
+        )
+
+        # 11. Load new seasonal driver entrants into free-agent pool
         new_entrants = self._add_new_season_drivers(state)
 
-        # 11. Apply contract expiry and all announced transfer deals for the season that just ended.
+        # 12. Apply contract expiry and all announced transfer deals for the season that just ended.
         transfer_outcome = self.transfer_manager.apply_new_season_transfers(state, announced_year=old_year)
 
-        # 12. Fill any remaining vacancies from free agents
+        # 13. Fill any remaining vacancies from free agents
         signings = self.recruitment_manager.fill_vacancies(state)
 
-        # 13. Recalculate all team car performance for the new season.
+        # 14. Recalculate all team car performance for the new season.
         car_speed_updates = self.car_performance_manager.apply_for_new_season(state)
         if state.player_team:
             state.player_team.car_wear = 0
 
-        # 14. Snapshot the new season grid after retirements/signings
+        # 15. Snapshot the new season grid after retirements/signings
         self.grid_manager.capture_season_snapshot(state, year=state.year)
 
-        # 15. Generate New Season email
+        # 16. Generate New Season email
         champion = final_drivers[0]["name"] if final_drivers else "Unknown"
         state.add_email(
             sender="Board of Directors",
@@ -118,7 +140,7 @@ class SeasonRolloverManager:
             category=EmailCategory.SEASON
         )
 
-        # 16. Notify player about confirmed retirements from last season
+        # 17. Notify player about confirmed retirements from last season
         if retired_drivers:
             retired_lines = [f"- {d['name']} ({d['team_name']})" for d in retired_drivers]
             state.add_email(
@@ -131,7 +153,7 @@ class SeasonRolloverManager:
                 category=EmailCategory.SEASON
             )
 
-        # 17. Notify player about new season entrants
+        # 18. Notify player about new season entrants
         if new_entrants:
             entrant_lines = [f"- {d['name']} ({d['country']})" for d in new_entrants]
             state.add_email(
@@ -144,7 +166,7 @@ class SeasonRolloverManager:
                 category=EmailCategory.SEASON
             )
 
-        # 18. Queue and publish Week 1 signing announcements
+        # 19. Queue and publish Week 1 signing announcements
         if signings:
             signing_lines = [f"- {s['team_name']}: {s['driver_name']} ({s['seat']})" for s in signings]
             state.queue_email(
@@ -160,7 +182,7 @@ class SeasonRolloverManager:
             )
             state.publish_queued_emails(week=1, year=state.year)
 
-        # 19. Plan and announce final seasons for the new year
+        # 20. Plan and announce final seasons for the new year
         final_season_drivers = self.retirement_manager.mark_final_season_drivers(state)
         if final_season_drivers:
             lines = [f"- {d['name']} ({d['team_name']}), age {d['age']}" for d in final_season_drivers]
@@ -174,7 +196,7 @@ class SeasonRolloverManager:
                 category=EmailCategory.SEASON
             )
 
-        # 20. Reset transfer planning for the new season and generate fresh AI plans.
+        # 21. Reset transfer planning for the new season and generate fresh AI plans.
         state.planned_ai_signings.clear()
         state.announced_ai_signings.clear()
         planned_transfers = self.transfer_manager.recompute_ai_signings(state)
@@ -188,6 +210,7 @@ class SeasonRolloverManager:
             "retired_drivers": retired_drivers,
             "facilities_updates": facilities_updates,
             "ai_facilities_upgrades": ai_facilities_upgrades,
+            "ai_workforce_updates": ai_workforce_updates,
             "new_entrants": new_entrants,
             "transfer_outcome": transfer_outcome,
             "signings": signings,
@@ -242,6 +265,45 @@ class SeasonRolloverManager:
                     "new_facilities": team.facilities,
                 }
             )
+        return updates
+
+    def _update_ai_workforce(self, state: GameState) -> list[dict]:
+        updates = []
+        for team in state.teams:
+            if state.player_team_id is not None and team.id == state.player_team_id:
+                continue
+
+            old_workforce = int(team.workforce if team.workforce is not None else self.ai_workforce_min)
+            # Keep AI workforce in the configured operating window each offseason.
+            bounded_old = min(self.ai_workforce_max, max(self.ai_workforce_min, old_workforce))
+
+            trend = random.choices(
+                ["increase", "decrease", "flat"],
+                weights=[0.45, 0.25, 0.30],
+                k=1,
+            )[0]
+
+            delta = 0
+            if trend == "increase":
+                delta = random.choice([3, 5, 7, 10, 12, 15])
+            elif trend == "decrease":
+                delta = -random.choice([3, 5, 7, 9, 12])
+
+            new_workforce = min(self.ai_workforce_max, max(self.ai_workforce_min, bounded_old + delta))
+            applied_delta = new_workforce - bounded_old
+            team.workforce = new_workforce
+
+            if applied_delta != 0:
+                updates.append(
+                    {
+                        "team_id": team.id,
+                        "team_name": team.name,
+                        "old_workforce": bounded_old,
+                        "new_workforce": new_workforce,
+                        "delta": applied_delta,
+                    }
+                )
+
         return updates
 
     def _add_new_season_drivers(self, state: GameState) -> list[dict]:

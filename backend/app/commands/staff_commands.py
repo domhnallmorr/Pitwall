@@ -2,6 +2,8 @@ import logging
 
 from app.core.player_car_development import PlayerCarDevelopmentManager
 from app.core.transfers import TransferManager
+from app.core.workforce_costs import WorkforceCostManager
+from app.models.calendar import EventType
 from app.models.email import EmailCategory
 from app.models.finance import TransactionCategory
 from app.models.state import GameState
@@ -146,3 +148,57 @@ def handle_repair_car_wear(state: GameState, logger: logging.Logger, wear_points
     except Exception as e:
         logger.error(f"Error repairing car wear: {e}")
         return {"type": "car_wear_repaired", "status": "error", "message": str(e)}
+
+
+def handle_update_workforce(state: GameState, logger: logging.Logger, workforce: int | None):
+    try:
+        team = state.player_team
+        if not team:
+            return {"type": "workforce_updated", "status": "error", "message": "No player team assigned"}
+        if workforce is None:
+            return {"type": "workforce_updated", "status": "error", "message": "workforce is required"}
+
+        requested = int(workforce)
+        if requested < 0 or requested > 250:
+            return {"type": "workforce_updated", "status": "error", "message": "Workforce must be between 0 and 250"}
+
+        previous = int(getattr(team, "workforce", 0) or 0)
+        team.workforce = requested
+
+        manager = WorkforceCostManager()
+        races_in_season = max(1, sum(1 for e in state.calendar.events if e.type == EventType.RACE))
+        projected_race_cost = manager.calculate_race_cost(team.workforce, races_in_season)
+        annual_payroll = max(0, team.workforce) * manager.annual_avg_wage
+        delta = team.workforce - previous
+
+        state.add_email(
+            sender="Human Resources",
+            subject="Workforce Updated",
+            body=(
+                f"Workforce has been updated.\n\n"
+                f"Previous staff count: {previous}\n"
+                f"New staff count: {team.workforce}\n"
+                f"Change: {delta:+}\n"
+                f"Projected payroll per race: ${projected_race_cost:,}\n"
+                f"Projected annual payroll: ${annual_payroll:,}"
+            ),
+            category=EmailCategory.GENERAL,
+        )
+
+        return {
+            "type": "workforce_updated",
+            "status": "success",
+            "data": {
+                "team_name": team.name,
+                "previous_workforce": previous,
+                "new_workforce": team.workforce,
+                "delta": delta,
+                "annual_avg_wage": manager.annual_avg_wage,
+                "projected_race_cost": projected_race_cost,
+                "projected_annual_payroll": annual_payroll,
+                "races_in_season": races_in_season,
+            },
+        }
+    except Exception as e:
+        logger.error(f"Error updating workforce: {e}")
+        return {"type": "workforce_updated", "status": "error", "message": str(e)}

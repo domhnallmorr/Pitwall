@@ -21,6 +21,7 @@ const API = {
 	getEmails: () => window.electronAPI.sendToPython({ type: 'get_emails' }),
 	readEmail: (emailId) => window.electronAPI.sendToPython({ type: 'read_email', email_id: emailId }),
 	getStaff: () => window.electronAPI.sendToPython({ type: 'get_staff' }),
+	updateWorkforce: (workforce) => window.electronAPI.sendToPython({ type: 'update_workforce', workforce }),
 	getReplacementCandidates: (driverId) => window.electronAPI.sendToPython({ type: 'get_replacement_candidates', driver_id: driverId }),
 	replaceDriver: (driverId, incomingDriverId) => window.electronAPI.sendToPython({
 		type: 'replace_driver',

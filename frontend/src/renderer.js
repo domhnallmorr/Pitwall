@@ -71,6 +71,7 @@ function init() {
 	emailView = new EmailView();
 	staffView = new StaffView();
 	staffView.setReplaceDriverHandler((driverId) => API.getReplacementCandidates(driverId));
+	staffView.setUpdateWorkforceHandler((workforce) => API.updateWorkforce(workforce));
 	driverView = new DriverView();
 	driverMarketView = new DriverMarketView();
 	driverMarketView.setBackHandler(() => {
@@ -240,6 +241,13 @@ function setupIPC() {
 				emailView.updateUnreadBadge(parsed.data.unread_count);
 			} else if (parsed.type === 'staff_data') {
 				staffView.render(parsed.data);
+			} else if (parsed.type === 'workforce_updated') {
+				if (parsed.status === 'success') {
+					API.getStaff();
+					API.getFinance();
+					API.getCar();
+					API.getEmails();
+				}
 			} else if (parsed.type === 'replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');

@@ -13,13 +13,33 @@ export default class StaffView {
 		this.managementContent = document.getElementById('staff-content-management');
 		this.managementContainer = document.getElementById('staff-management-container');
 		this.workforceSummary = document.getElementById('staff-workforce-summary');
+		this.workforceEditor = document.getElementById('staff-workforce-editor');
+		this.workforceInput = document.getElementById('staff-workforce-input');
+		this.workforceApplyBtn = document.getElementById('staff-workforce-apply-btn');
+		this.workforcePayroll = document.getElementById('staff-workforce-payroll');
 		this.workforceTableBody = document.getElementById('staff-workforce-table-body');
 		this.onReplaceDriver = null;
+		this.onUpdateWorkforce = null;
 		this.bindTabs();
+		this.bindWorkforceEditor();
 	}
 
 	setReplaceDriverHandler(handler) {
 		this.onReplaceDriver = handler;
+	}
+
+	setUpdateWorkforceHandler(handler) {
+		this.onUpdateWorkforce = handler;
+	}
+
+	bindWorkforceEditor() {
+		if (!this.workforceApplyBtn || !this.workforceInput) return;
+		this.workforceApplyBtn.addEventListener('click', () => {
+			if (!this.onUpdateWorkforce) return;
+			const value = Number(this.workforceInput.value);
+			if (!Number.isFinite(value)) return;
+			this.onUpdateWorkforce(value);
+		});
 	}
 
 	bindTabs() {
@@ -93,9 +113,20 @@ export default class StaffView {
 		const teams = (data?.teams || []).slice().sort((a, b) => (b.workforce ?? 0) - (a.workforce ?? 0));
 		const playerTeamName = data?.team_name || 'Your team';
 		const playerWorkforce = Number(data?.player_workforce) || 0;
+		const maxAllowed = Number(data?.workforce_limits?.max) || 250;
 		const maxWorkforce = teams.length > 0 ? Math.max(...teams.map((t) => Number(t.workforce) || 0)) : 1;
+		const perRacePayroll = Number(data?.projected_workforce_race_cost) || 0;
+		const annualPayroll = Number(data?.projected_workforce_annual_cost) || 0;
+		const racesInSeason = Number(data?.races_in_season) || 0;
 
 		this.workforceSummary.textContent = `${playerTeamName} workforce: ${playerWorkforce.toLocaleString()} staff`;
+		if (this.workforceInput) {
+			this.workforceInput.value = String(playerWorkforce);
+			this.workforceInput.max = String(maxAllowed);
+		}
+		if (this.workforcePayroll) {
+			this.workforcePayroll.textContent = `Projected payroll: $${perRacePayroll.toLocaleString()} per race (${racesInSeason} races), $${annualPayroll.toLocaleString()} per year`;
+		}
 		this.workforceTableBody.innerHTML = '';
 
 		teams.forEach((team, index) => {

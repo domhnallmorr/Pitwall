@@ -154,6 +154,75 @@ def test_rollover_sends_facilities_upgrade_summary_email(mock_load_roster, mock_
     assert "56 -> 81 (+25)" in email.body
 
 
+@patch("app.core.rollover.random.choice", side_effect=[15, 12, 12])
+@patch("app.core.rollover.random.choices", side_effect=[["increase"], ["decrease"], ["decrease"]])
+def test_update_ai_workforce_applies_bounds_and_skips_player(mock_choices, mock_choice):
+    teams = [
+        Team(id=1, name="Player Team", country="UK", workforce=200),
+        Team(id=2, name="AI Team A", country="IT", workforce=240),
+        Team(id=3, name="AI Team B", country="FR", workforce=95),
+        Team(id=4, name="AI Team C", country="DE", workforce=90),
+    ]
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=[],
+        calendar=Calendar(events=[Event(name="Race 1", week=3, type=EventType.RACE)], current_week=3),
+        circuits=[],
+        player_team_id=1,
+    )
+
+    updates = SeasonRolloverManager()._update_ai_workforce(state)
+
+    player = next(t for t in state.teams if t.id == 1)
+    ai_a = next(t for t in state.teams if t.id == 2)
+    ai_b = next(t for t in state.teams if t.id == 3)
+    ai_c = next(t for t in state.teams if t.id == 4)
+    assert player.workforce == 200
+    assert ai_a.workforce == 250  # 240 + 15 -> capped
+    assert ai_b.workforce == 90   # 95 - 12 -> floored
+    assert ai_c.workforce == 90   # stays at min
+    assert len(updates) == 2
+    assert any(u["team_id"] == 2 and u["old_workforce"] == 240 and u["new_workforce"] == 250 for u in updates)
+    assert any(u["team_id"] == 3 and u["old_workforce"] == 95 and u["new_workforce"] == 90 for u in updates)
+
+
+@patch.object(SeasonRolloverManager, "_update_ai_workforce", return_value=[{
+    "team_id": 2,
+    "team_name": "AI Team A",
+    "old_workforce": 120,
+    "new_workforce": 130,
+    "delta": 10,
+}])
+@patch("app.core.rollover.load_roster", return_value=([], [], 1999, [], []))
+def test_rollover_sends_ai_workforce_summary_email(mock_load_roster, mock_workforce_update):
+    teams = [
+        Team(id=1, name="Player Team", country="UK", driver1_id=1, driver2_id=2, points=10, facilities=70, workforce=200),
+        Team(id=2, name="AI Team A", country="IT", driver1_id=3, driver2_id=4, points=8, facilities=60, workforce=120),
+    ]
+    drivers = [
+        Driver(id=1, name="P1", age=30, country="UK", team_id=1),
+        Driver(id=2, name="P2", age=31, country="UK", team_id=1),
+        Driver(id=3, name="A1", age=28, country="IT", team_id=2),
+        Driver(id=4, name="A2", age=27, country="IT", team_id=2),
+    ]
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        calendar=Calendar(events=[Event(name="Race 1", week=3, type=EventType.RACE)], current_week=3),
+        circuits=[],
+        player_team_id=1,
+    )
+
+    result = SeasonRolloverManager().process_rollover(state)
+
+    assert any(u["team_id"] == 2 for u in result["ai_workforce_updates"])
+    email = next((e for e in state.emails if e.subject == "AI Workforce Update: 1999"), None)
+    assert email is not None
+    assert "AI Team A: 120 -> 130 (+10)" in email.body
+
+
 def test_engine_triggers_rollover_after_last_event():
     state = create_end_of_season_state()
     engine = GameEngine()

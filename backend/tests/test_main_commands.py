@@ -283,3 +283,58 @@ def test_repair_car_wear_reduces_wear_and_records_cost():
     txs = [t for t in state.finance.transactions if t.category == TransactionCategory.MAINTENANCE]
     assert len(txs) == 1
     assert txs[0].amount == -32_000
+
+
+def test_update_workforce_updates_player_team_and_returns_cost_projection():
+    state = create_state()
+    state.teams[0].workforce = 150
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "update_workforce", "workforce": 200})
+
+    assert result["status"] == "success"
+    assert result["type"] == "workforce_updated"
+    assert result["data"]["previous_workforce"] == 150
+    assert result["data"]["new_workforce"] == 200
+    assert result["data"]["projected_race_cost"] > 0
+    assert state.teams[0].workforce == 200
+
+
+def test_update_workforce_rejects_values_above_cap():
+    state = create_state()
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "update_workforce", "workforce": 251})
+
+    assert result["status"] == "error"
+    assert "between 0 and 250" in result["message"]
+
+
+def test_update_workforce_requires_workforce_value():
+    state = create_state()
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "update_workforce"})
+
+    assert result["status"] == "error"
+    assert "workforce is required" in result["message"]
+
+
+def test_update_workforce_rejects_negative_values():
+    state = create_state()
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "update_workforce", "workforce": -1})
+
+    assert result["status"] == "error"
+    assert "between 0 and 250" in result["message"]
+
+
+def test_update_workforce_fails_when_game_not_started():
+    app_main.CURRENT_STATE = None
+
+    result = process_command({"type": "update_workforce", "workforce": 120})
+
+    assert result["status"] == "error"
+    assert result["type"] == "workforce_updated"
+    assert "Game not started" in result["message"]

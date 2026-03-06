@@ -18,6 +18,7 @@ from app.commands.staff_commands import (
     handle_repair_car_wear,
     handle_replace_driver,
     handle_start_car_development,
+    handle_update_workforce,
 )
 from app.models.calendar import Calendar
 from app.models.email import EmailCategory

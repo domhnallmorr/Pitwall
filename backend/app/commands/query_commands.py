@@ -1,5 +1,7 @@
 from app.core.standings import StandingsManager
 from app.core.player_car_development import PlayerCarDevelopmentManager
+from app.core.workforce_costs import WorkforceCostManager
+from app.models.calendar import EventType
 from app.models.state import GameState
 
 
@@ -41,6 +43,10 @@ def get_staff_payload(state: GameState) -> dict:
     ]
     team_td = next((td for td in state.technical_directors if td.team_id == player_team.id), None)
     team_cm = next((cm for cm in state.commercial_managers if cm.team_id == player_team.id), None)
+    workforce_manager = WorkforceCostManager()
+    races_in_season = max(1, sum(1 for e in state.calendar.events if e.type == EventType.RACE))
+    projected_race_payroll = workforce_manager.calculate_race_cost(player_team.workforce, races_in_season)
+    projected_annual_payroll = max(0, int(player_team.workforce or 0)) * workforce_manager.annual_avg_wage
 
     return {
         "team_name": player_team.name,
@@ -71,6 +77,11 @@ def get_staff_payload(state: GameState) -> dict:
             else None
         ),
         "player_workforce": player_team.workforce,
+        "workforce_limits": {"min": 0, "max": 250},
+        "annual_avg_wage": workforce_manager.annual_avg_wage,
+        "projected_workforce_race_cost": projected_race_payroll,
+        "projected_workforce_annual_cost": projected_annual_payroll,
+        "races_in_season": races_in_season,
         "teams": [
             {"id": t.id, "name": t.name, "country": t.country, "workforce": t.workforce}
             for t in state.teams

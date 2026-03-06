@@ -15,6 +15,10 @@ describe('StaffView', () => {
 			<button class="staff-tab-btn" data-type="management">Management</button>
 			<div id="staff-drivers-container"></div>
 			<div id="staff-workforce-summary"></div>
+			<div id="staff-workforce-editor"></div>
+			<input id="staff-workforce-input" type="number" />
+			<button id="staff-workforce-apply-btn">Update</button>
+			<div id="staff-workforce-payroll"></div>
 			<table><tbody id="staff-workforce-table-body"></tbody></table>
 			<div id="staff-management-container"></div>
 		`);
@@ -75,5 +79,30 @@ describe('StaffView', () => {
 
 		buttons[1].click();
 		expect(onReplace).toHaveBeenCalledWith(2);
+	});
+
+	it('calls workforce update handler with selected value', () => {
+		const onUpdate = vi.fn();
+		staffView.setUpdateWorkforceHandler(onUpdate);
+		staffView.render({
+			team_name: 'Warrick',
+			player_workforce: 200,
+			workforce_limits: { min: 0, max: 250 },
+			projected_workforce_race_cost: 320000,
+			projected_workforce_annual_cost: 5600000,
+			races_in_season: 17,
+			teams: [{ name: 'Warrick', country: 'United Kingdom', workforce: 200 }],
+			drivers: [],
+			technical_director: null,
+			commercial_manager: null,
+		});
+
+		const input = document.getElementById('staff-workforce-input');
+		const apply = document.getElementById('staff-workforce-apply-btn');
+		input.value = '215';
+		apply.click();
+
+		expect(onUpdate).toHaveBeenCalledWith(215);
+		expect(document.getElementById('staff-workforce-payroll').textContent).toContain('Projected payroll');
 	});
 });
