@@ -207,6 +207,8 @@ def create_schema(conn):
 
     c.execute("PRAGMA table_info(commercial_managers)")
     cm_columns = {row[1] for row in c.fetchall()}
+    if "country" not in cm_columns:
+        c.execute("ALTER TABLE commercial_managers ADD COLUMN country TEXT")
     if "skill" not in cm_columns:
         c.execute("ALTER TABLE commercial_managers ADD COLUMN skill INTEGER DEFAULT 50")
     if "age" not in cm_columns:

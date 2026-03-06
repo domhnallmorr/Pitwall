@@ -26,6 +26,7 @@ def test_load_commercial_managers_assigns_team_ids(mock_get_conn):
     gaston = next(cm for cm in commercial_managers if cm.name == "Gaston Seville")
     warrick = next(t for t in teams if t.name == "Warrick")
     assert jace.team_id == warrick.id
+    assert jace.country == "United Kingdom"
     assert warrick.commercial_manager_id == jace.id
     assert gaston.team_id is None
 
@@ -56,3 +57,4 @@ def test_get_staff_includes_team_commercial_manager(mock_get_conn):
     assert staff["status"] == "success"
     assert staff["data"]["commercial_manager"] is not None
     assert staff["data"]["commercial_manager"]["name"] == "Jace Whitman"
+    assert staff["data"]["commercial_manager"]["country"] == "United Kingdom"

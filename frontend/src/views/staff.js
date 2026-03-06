@@ -191,7 +191,7 @@ export default class StaffView {
 
 		this.managementContainer.innerHTML = `
 			${renderCard(td, 'Technical Director', true)}
-			${renderCard(cm, 'Commercial Manager')}
+			${renderCard(cm, 'Commercial Manager', true)}
 		`;
 	}
 

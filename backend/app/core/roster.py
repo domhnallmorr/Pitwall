@@ -78,7 +78,7 @@ def load_commercial_managers(year: int = 0, teams: List[Team] | None = None) -> 
         return []
 
     c.execute(
-        'SELECT id, name, age, skill, contract_length, salary, team_name '
+        'SELECT id, name, country, age, skill, contract_length, salary, team_name '
         'FROM commercial_managers WHERE start_year = ? OR start_year = 0 ORDER BY id ASC',
         (start_year,),
     )
@@ -86,15 +86,16 @@ def load_commercial_managers(year: int = 0, teams: List[Team] | None = None) -> 
     team_by_name = {t.name: t for t in teams} if teams else {}
     commercial_managers: List[CommercialManager] = []
     for row in c.fetchall():
-        team_name = row[6]
+        team_name = row[7]
         team = team_by_name.get(team_name) if team_name else None
         manager = CommercialManager(
             id=row[0],
             name=row[1],
-            age=row[2],
-            skill=row[3],
-            contract_length=row[4] if row[4] is not None else 0,
-            salary=row[5] if row[5] is not None else 0,
+            country=row[2],
+            age=row[3],
+            skill=row[4],
+            contract_length=row[5] if row[5] is not None else 0,
+            salary=row[6] if row[6] is not None else 0,
             team_id=team.id if team else None,
         )
         if team:
@@ -283,13 +284,13 @@ def load_roster(
         has_cm_table = c.fetchone() is not None
         if has_cm_table:
             c.execute(
-                'SELECT id, name, age, skill, contract_length, salary, team_name '
+                'SELECT id, name, country, age, skill, contract_length, salary, team_name '
                 'FROM commercial_managers WHERE start_year = ? OR start_year = 0',
                 (start_year,),
             )
             cm_rows = c.fetchall()
             team_by_name = {t.name: t for t in teams}
-            for cm_id, cm_name, cm_age, cm_skill, cm_contract_length, cm_salary, team_name in cm_rows:
+            for cm_id, cm_name, cm_country, cm_age, cm_skill, cm_contract_length, cm_salary, team_name in cm_rows:
                 team = team_by_name.get(team_name)
                 if team:
                     team.commercial_manager_id = cm_id
@@ -298,6 +299,7 @@ def load_roster(
                         CommercialManager(
                             id=cm_id,
                             name=cm_name,
+                            country=cm_country,
                             age=cm_age,
                             skill=cm_skill,
                             contract_length=cm_contract_length if cm_contract_length is not None else 0,

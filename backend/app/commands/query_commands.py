@@ -68,6 +68,7 @@ def get_staff_payload(state: GameState) -> dict:
             {
                 "id": team_cm.id,
                 "name": team_cm.name,
+                "country": team_cm.country,
                 "age": team_cm.age,
                 "skill": team_cm.skill,
                 "contract_length": team_cm.contract_length,

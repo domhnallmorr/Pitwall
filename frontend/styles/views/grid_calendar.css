@@ -48,7 +48,7 @@
 }
 
 #grid-view {
-  background-image: linear-gradient(rgba(5, 14, 26, 0.62), rgba(5, 14, 26, 0.62)), url('../assets/images/grid_background.png');
+  background-image: linear-gradient(rgba(5, 14, 26, 0.62), rgba(5, 14, 26, 0.62)), url('../../assets/images/grid_background.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -81,7 +81,19 @@
 }
 
 #calendar-view {
-  background-image: linear-gradient(rgba(5, 14, 26, 0.78), rgba(5, 14, 26, 0.78)), url('../assets/images/calendar_background.png');
+  background-image: linear-gradient(rgba(5, 14, 26, 0.78), rgba(5, 14, 26, 0.78)), url('../../assets/images/calendar_background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: -16px -16px 0;
+  height: calc(100vh - 150px);
+  overflow-y: auto;
+}
+
+#standings-view {
+  background-image: linear-gradient(rgba(5, 14, 26, 0.74), rgba(5, 14, 26, 0.74)), url('../../assets/images/standings_background.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

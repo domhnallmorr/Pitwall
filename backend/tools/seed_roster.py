@@ -1,30 +1,56 @@
 import sqlite3
 import os
 
-from seed_payloads import (
-    CALENDAR_EVENTS_BASE,
-    CALENDAR_EVENTS_EXTRA_TESTS,
-    COMMERCIAL_MANAGERS_DATA,
-    DRIVER_CONTRACT_LENGTHS,
-    DRIVER_RACE_STARTS,
-    DRIVER_SPEEDS,
-    DRIVER_WINS,
-    DRIVERS_DATA,
-    ENGINE_SUPPLIERS_DATA,
-    FUTURE_DRIVERS_DATA,
-    REQUIRED_CIRCUITS,
-    TECHNICAL_DIRECTORS_DATA,
-    TEAMS_DATA,
-    TEAM_BALANCES,
-    TEAM_ENGINE_SUPPLIERS,
-    TEAM_SPEEDS,
-    TEAM_TITLE_SPONSORS,
-    TEAM_TYRE_SUPPLIERS,
-    TEAM_WORKFORCE,
-    TITLE_SPONSORS_DATA,
-    TYRE_SUPPLIERS_DATA,
-)
-from seed_schema import init_db
+try:
+    from tools.seed_payloads import (
+        CALENDAR_EVENTS_BASE,
+        CALENDAR_EVENTS_EXTRA_TESTS,
+        COMMERCIAL_MANAGERS_DATA,
+        DRIVER_CONTRACT_LENGTHS,
+        DRIVER_RACE_STARTS,
+        DRIVER_SPEEDS,
+        DRIVER_WINS,
+        DRIVERS_DATA,
+        ENGINE_SUPPLIERS_DATA,
+        FUTURE_DRIVERS_DATA,
+        REQUIRED_CIRCUITS,
+        TECHNICAL_DIRECTORS_DATA,
+        TEAMS_DATA,
+        TEAM_BALANCES,
+        TEAM_ENGINE_SUPPLIERS,
+        TEAM_SPEEDS,
+        TEAM_TITLE_SPONSORS,
+        TEAM_TYRE_SUPPLIERS,
+        TEAM_WORKFORCE,
+        TITLE_SPONSORS_DATA,
+        TYRE_SUPPLIERS_DATA,
+    )
+    from tools.seed_schema import create_schema, init_db
+except ModuleNotFoundError:
+    from seed_payloads import (  # type: ignore
+        CALENDAR_EVENTS_BASE,
+        CALENDAR_EVENTS_EXTRA_TESTS,
+        COMMERCIAL_MANAGERS_DATA,
+        DRIVER_CONTRACT_LENGTHS,
+        DRIVER_RACE_STARTS,
+        DRIVER_SPEEDS,
+        DRIVER_WINS,
+        DRIVERS_DATA,
+        ENGINE_SUPPLIERS_DATA,
+        FUTURE_DRIVERS_DATA,
+        REQUIRED_CIRCUITS,
+        TECHNICAL_DIRECTORS_DATA,
+        TEAMS_DATA,
+        TEAM_BALANCES,
+        TEAM_ENGINE_SUPPLIERS,
+        TEAM_SPEEDS,
+        TEAM_TITLE_SPONSORS,
+        TEAM_TYRE_SUPPLIERS,
+        TEAM_WORKFORCE,
+        TITLE_SPONSORS_DATA,
+        TYRE_SUPPLIERS_DATA,
+    )
+    from seed_schema import create_schema, init_db  # type: ignore
 
 DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'roster.db')
 
@@ -131,14 +157,14 @@ def seed_data(conn):
         cms_to_insert = [cm for cm in COMMERCIAL_MANAGERS_DATA if (cm[1], cm[0]) not in existing_cm_keys]
         if cms_to_insert:
             c.executemany(
-                'INSERT INTO commercial_managers (start_year, name, age, skill, contract_length, salary, team_name) '
-                'VALUES (?, ?, ?, ?, ?, ?, ?)',
+                'INSERT INTO commercial_managers (start_year, name, country, age, skill, contract_length, salary, team_name) '
+                'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                 cms_to_insert,
             )
 
         c.executemany(
-            'UPDATE commercial_managers SET age = ?, skill = ?, contract_length = ?, salary = ?, team_name = ? WHERE name = ? AND start_year = ?',
-            [(cm[2], cm[3], cm[4], cm[5], cm[6], cm[1], cm[0]) for cm in COMMERCIAL_MANAGERS_DATA],
+            'UPDATE commercial_managers SET country = ?, age = ?, skill = ?, contract_length = ?, salary = ?, team_name = ? WHERE name = ? AND start_year = ?',
+            [(cm[2], cm[3], cm[4], cm[5], cm[6], cm[7], cm[1], cm[0]) for cm in COMMERCIAL_MANAGERS_DATA],
         )
 
         c.execute('SELECT name, start_year FROM title_sponsors')
@@ -217,12 +243,12 @@ def seed_data(conn):
     cms_to_insert = [cm for cm in COMMERCIAL_MANAGERS_DATA if (cm[1], cm[0]) not in existing_cm_keys]
     if cms_to_insert:
         c.executemany(
-            'INSERT INTO commercial_managers (start_year, name, age, skill, contract_length, salary, team_name) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO commercial_managers (start_year, name, country, age, skill, contract_length, salary, team_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
             cms_to_insert,
         )
     c.executemany(
-        'UPDATE commercial_managers SET age = ?, skill = ?, contract_length = ?, salary = ?, team_name = ? WHERE name = ? AND start_year = ?',
-        [(cm[2], cm[3], cm[4], cm[5], cm[6], cm[1], cm[0]) for cm in COMMERCIAL_MANAGERS_DATA],
+        'UPDATE commercial_managers SET country = ?, age = ?, skill = ?, contract_length = ?, salary = ?, team_name = ? WHERE name = ? AND start_year = ?',
+        [(cm[2], cm[3], cm[4], cm[5], cm[6], cm[7], cm[1], cm[0]) for cm in COMMERCIAL_MANAGERS_DATA],
     )
     c.execute('SELECT name, start_year FROM title_sponsors')
     existing_sponsor_keys = {(row[0], row[1]) for row in c.fetchall()}
