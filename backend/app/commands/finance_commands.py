@@ -58,6 +58,15 @@ def build_finance_payload(state: GameState):
         if t.category == TransactionCategory.TYRE_SUPPLIER and t.year == state.year and t.amount < 0
     )
     tyre_supplier_remaining = max(tyre_supplier_yearly - tyre_supplier_paid_so_far, 0) if tyre_supplier_name else 0
+
+    fuel_supplier_name = player_team.fuel_supplier_name if player_team else None
+    fuel_supplier_yearly = player_team.fuel_supplier_yearly_cost if player_team else 0
+    fuel_supplier_installment = int(round(abs(fuel_supplier_yearly) / max(1, race_count))) if fuel_supplier_name else 0
+    fuel_supplier_paid_so_far = sum(
+        abs(t.amount) for t in state.finance.transactions
+        if t.category == TransactionCategory.FUEL_SUPPLIER and t.year == state.year
+    )
+    fuel_supplier_remaining = max(abs(fuel_supplier_yearly) - fuel_supplier_paid_so_far, 0) if fuel_supplier_name else 0
     facilities_upgrade_paid = sum(
         -t.amount for t in state.finance.transactions
         if t.category == TransactionCategory.FACILITIES and t.amount < 0
@@ -101,6 +110,15 @@ def build_finance_payload(state: GameState):
             "installment": tyre_supplier_installment,
             "paid_so_far": tyre_supplier_paid_so_far,
             "remaining": tyre_supplier_remaining,
+        },
+        "fuel_supplier": {
+            "name": fuel_supplier_name,
+            "deal": player_team.fuel_supplier_deal if player_team else None,
+            "annual_value": fuel_supplier_yearly,
+            "installment": fuel_supplier_installment,
+            "paid_so_far": fuel_supplier_paid_so_far,
+            "remaining": fuel_supplier_remaining,
+            "direction": "income" if fuel_supplier_yearly < 0 else "expense",
         },
         "facilities_upgrade": {
             "active": state.finance.facilities_upgrade_active,

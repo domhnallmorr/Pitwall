@@ -29,6 +29,9 @@ def create_state() -> GameState:
             tyre_supplier_name="Greatday",
             tyre_supplier_deal="partner",
             tyre_supplier_yearly_cost=0,
+            fuel_supplier_name="Brasoil",
+            fuel_supplier_deal="partner",
+            fuel_supplier_yearly_cost=150_000,
         ),
         Team(id=2, name="Ferano", country="Italy", driver1_id=3, driver2_id=4, car_speed=84),
     ]
@@ -148,12 +151,14 @@ def test_get_finance_returns_summary_and_track_profit_loss():
     assert "workforce_total" in result["data"]["summary"]
     assert "engine_supplier_total" in result["data"]["summary"]
     assert "tyre_supplier_total" in result["data"]["summary"]
+    assert "fuel_supplier_total" in result["data"]["summary"]
     assert "sponsorship_total" in result["data"]["summary"]
     assert len(result["data"]["track_profit_loss"]) == 1
     assert result["data"]["sponsor"]["name"] == "Windale"
     assert result["data"]["other_sponsorship"]["annual_value"] == 9_500_000
     assert result["data"]["engine_supplier"]["name"] == "Mechatron"
     assert result["data"]["tyre_supplier"]["name"] == "Greatday"
+    assert result["data"]["fuel_supplier"]["name"] == "Brasoil"
 
 
 def test_get_emails_and_read_email_updates_unread_count():
@@ -173,6 +178,23 @@ def test_get_emails_and_read_email_updates_unread_count():
     assert read_result["status"] == "success"
     assert read_result["type"] == "email_read"
     assert read_result["data"]["unread_count"] == 0
+
+
+def test_email_inbox_is_capped_and_oldest_messages_are_pruned():
+    state = create_state()
+    cap = state.MAX_EMAILS
+
+    for i in range(cap + 5):
+        state.add_email(sender="System", subject=f"Msg {i}", body="x")
+
+    app_main.CURRENT_STATE = state
+    emails_result = process_command({"type": "get_emails"})
+
+    assert emails_result["status"] == "success"
+    assert len(emails_result["data"]["emails"]) == cap
+    subjects = [e["subject"] for e in emails_result["data"]["emails"]]
+    assert "Msg 0" not in subjects
+    assert f"Msg {cap + 4}" in subjects
 
 
 def test_replace_driver_respects_contract_rule_and_signs_replacement():

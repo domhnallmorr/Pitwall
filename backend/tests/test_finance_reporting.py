@@ -66,6 +66,7 @@ def test_build_finance_report_summarizes_and_groups_by_track():
     assert report["summary"]["workforce_total"] == 120_000
     assert report["summary"]["engine_supplier_total"] == 0
     assert report["summary"]["tyre_supplier_total"] == 0
+    assert report["summary"]["fuel_supplier_total"] == 0
     assert report["summary"]["sponsorship_total"] == 500_000
 
     assert len(report["track_profit_loss"]) == 1

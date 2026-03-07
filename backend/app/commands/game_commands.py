@@ -41,6 +41,7 @@ def load_default_state() -> GameState:
         title_sponsors,
         engine_suppliers,
         tyre_suppliers,
+        fuel_suppliers,
     ) = load_roster(
         year=0,
         include_technical_directors=True,
@@ -48,6 +49,7 @@ def load_default_state() -> GameState:
         include_title_sponsors=True,
         include_engine_suppliers=True,
         include_tyre_suppliers=True,
+        include_fuel_suppliers=True,
     )
     calendar = Calendar(events=events, current_week=1)
     return GameState(
@@ -59,6 +61,7 @@ def load_default_state() -> GameState:
         title_sponsors=title_sponsors,
         engine_suppliers=engine_suppliers,
         tyre_suppliers=tyre_suppliers,
+        fuel_suppliers=fuel_suppliers,
         calendar=calendar,
         circuits=circuits,
     )

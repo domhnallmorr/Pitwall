@@ -1,0 +1,35 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { renderLayoutPartials } from './partials.js';
+
+describe('layout partials', () => {
+	beforeEach(() => {
+		document.body.innerHTML = `
+			<div id="finance-summary"></div>
+			<div id="finance-supplier-sections"></div>
+		`;
+	});
+
+	it('renders finance cards and supplier sections in expected order', () => {
+		renderLayoutPartials();
+
+		const summary = document.getElementById('finance-summary');
+		const supplierSections = document.getElementById('finance-supplier-sections');
+		expect(summary.querySelectorAll('.finance-balance-card').length).toBeGreaterThan(5);
+		expect(document.getElementById('finance-fuel-supplier-total')).toBeTruthy();
+
+		const cards = [...supplierSections.querySelectorAll('.finance-sponsor-card')];
+		const titles = cards.map((card) => card.querySelector('.finance-balance-label')?.textContent?.trim());
+		expect(titles).toEqual([
+			'Title Sponsor',
+			'Other Sponsorship',
+			'Engine Supplier',
+			'Tyre Supplier',
+			'Fuel Supplier',
+		]);
+	});
+
+	it('is safe when containers are missing', () => {
+		document.body.innerHTML = `<div id="unrelated"></div>`;
+		expect(() => renderLayoutPartials()).not.toThrow();
+	});
+});

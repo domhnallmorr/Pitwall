@@ -14,6 +14,7 @@ function renderFinanceSummaryCards() {
 		{ label: 'Workforce Costs', id: 'finance-workforce-total', className: 'finance-balance-amount finance-negative', defaultValue: '$0' },
 		{ label: 'Engine Supplier Costs', id: 'finance-engine-supplier-total', className: 'finance-balance-amount finance-negative', defaultValue: '$0' },
 		{ label: 'Tyre Supplier Costs', id: 'finance-tyre-supplier-total', className: 'finance-balance-amount finance-negative', defaultValue: '$0' },
+		{ label: 'Fuel Supplier Net', id: 'finance-fuel-supplier-total', className: 'finance-balance-amount', defaultValue: '$0' },
 		{ label: 'Sponsorship Income', id: 'finance-sponsorship-total', className: 'finance-balance-amount', defaultValue: '$0' },
 	];
 
@@ -44,6 +45,19 @@ function renderFinanceSupplierSections() {
 			],
 		},
 		{
+			cardId: 'finance-other-sponsorship-card',
+			logoWrapId: 'finance-other-sponsorship-logo-wrap',
+			title: 'Other Sponsorship',
+			nameId: 'finance-other-sponsorship-name',
+			nameDefault: 'Minor Sponsors',
+			rows: [
+				{ label: 'Annual Value', id: 'finance-other-sponsorship-annual', defaultValue: '$0' },
+				{ label: 'Per Race', id: 'finance-other-sponsorship-installment', defaultValue: '$0' },
+				{ label: 'Paid So Far', id: 'finance-other-sponsorship-paid', defaultValue: '$0' },
+				{ label: 'Remaining', id: 'finance-other-sponsorship-remaining', defaultValue: '$0' },
+			],
+		},
+		{
 			cardId: 'finance-engine-supplier-card',
 			logoWrapId: 'finance-engine-supplier-logo-wrap',
 			title: 'Engine Supplier',
@@ -58,19 +72,6 @@ function renderFinanceSupplierSections() {
 			],
 		},
 		{
-			cardId: 'finance-other-sponsorship-card',
-			logoWrapId: 'finance-other-sponsorship-logo-wrap',
-			title: 'Other Sponsorship',
-			nameId: 'finance-other-sponsorship-name',
-			nameDefault: 'Minor Sponsors',
-			rows: [
-				{ label: 'Annual Value', id: 'finance-other-sponsorship-annual', defaultValue: '$0' },
-				{ label: 'Per Race', id: 'finance-other-sponsorship-installment', defaultValue: '$0' },
-				{ label: 'Paid So Far', id: 'finance-other-sponsorship-paid', defaultValue: '$0' },
-				{ label: 'Remaining', id: 'finance-other-sponsorship-remaining', defaultValue: '$0' },
-			],
-		},
-		{
 			cardId: 'finance-tyre-supplier-card',
 			logoWrapId: 'finance-tyre-supplier-logo-wrap',
 			title: 'Tyre Supplier',
@@ -82,6 +83,20 @@ function renderFinanceSupplierSections() {
 				{ label: 'Per Race', id: 'finance-tyre-supplier-installment', defaultValue: '$0' },
 				{ label: 'Paid So Far', id: 'finance-tyre-supplier-paid', defaultValue: '$0' },
 				{ label: 'Remaining', id: 'finance-tyre-supplier-remaining', defaultValue: '$0' },
+			],
+		},
+		{
+			cardId: 'finance-fuel-supplier-card',
+			logoWrapId: 'finance-fuel-supplier-logo-wrap',
+			title: 'Fuel Supplier',
+			nameId: 'finance-fuel-supplier-name',
+			nameDefault: 'Unassigned',
+			rows: [
+				{ label: 'Deal', id: 'finance-fuel-supplier-deal', defaultValue: '-' },
+				{ label: 'Annual Net', id: 'finance-fuel-supplier-annual', defaultValue: '$0' },
+				{ label: 'Per Race', id: 'finance-fuel-supplier-installment', defaultValue: '$0' },
+				{ label: 'Paid/Received', id: 'finance-fuel-supplier-paid', defaultValue: '$0' },
+				{ label: 'Remaining', id: 'finance-fuel-supplier-remaining', defaultValue: '$0' },
 			],
 		},
 	];

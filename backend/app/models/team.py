@@ -16,6 +16,9 @@ class Team(BaseModel):
     tyre_supplier_name: str | None = None
     tyre_supplier_deal: str | None = None
     tyre_supplier_yearly_cost: int = 0
+    fuel_supplier_name: str | None = None
+    fuel_supplier_deal: str | None = None
+    fuel_supplier_yearly_cost: int = 0
     technical_director_id: Optional[int] = None
     commercial_manager_id: Optional[int] = None
     driver1_id: Optional[int] = None

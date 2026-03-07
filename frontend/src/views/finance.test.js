@@ -7,6 +7,14 @@ describe('FinanceView', () => {
 
 	beforeEach(() => {
 		const dom = new JSDOM(`
+			<div id="finance-view">
+				<button class="finance-tab-btn active" data-type="main"></button>
+				<button class="finance-tab-btn" data-type="tracker"></button>
+				<button class="finance-tab-btn" data-type="log"></button>
+			</div>
+			<div id="finance-content-main"></div>
+			<div id="finance-content-tracker" style="display:none;"></div>
+			<div id="finance-content-log" style="display:none;"></div>
 			<div id="finance-balance-value"></div>
 			<div id="finance-prize-entitlement"></div>
 			<div id="finance-prize-paid"></div>
@@ -18,6 +26,7 @@ describe('FinanceView', () => {
 			<div id="finance-workforce-total"></div>
 			<div id="finance-engine-supplier-total"></div>
 			<div id="finance-tyre-supplier-total"></div>
+			<div id="finance-fuel-supplier-total"></div>
 			<div id="finance-sponsorship-total"></div>
 			<div id="finance-prize-progress"></div>
 			<div id="finance-sponsor-name"></div>
@@ -46,6 +55,13 @@ describe('FinanceView', () => {
 			<div id="finance-tyre-supplier-paid"></div>
 			<div id="finance-tyre-supplier-remaining"></div>
 			<div id="finance-tyre-supplier-logo-wrap"></div>
+			<div id="finance-fuel-supplier-name"></div>
+			<div id="finance-fuel-supplier-deal"></div>
+			<div id="finance-fuel-supplier-annual"></div>
+			<div id="finance-fuel-supplier-installment"></div>
+			<div id="finance-fuel-supplier-paid"></div>
+			<div id="finance-fuel-supplier-remaining"></div>
+			<div id="finance-fuel-supplier-logo-wrap"></div>
 			<table><tbody id="finance-track-pl-body"></tbody></table>
 			<table><tbody id="finance-transactions-body"></tbody></table>
 		`)
@@ -70,6 +86,7 @@ describe('FinanceView', () => {
 				workforce_total: 700,
 				engine_supplier_total: 281250,
 				tyre_supplier_total: 0,
+				fuel_supplier_total: -75000,
 				sponsorship_total: 900
 			},
 			sponsor: {
@@ -101,6 +118,15 @@ describe('FinanceView', () => {
 				paid_so_far: 0,
 				remaining: 0,
 			},
+			fuel_supplier: {
+				name: 'Brasoil',
+				deal: 'partner',
+				annual_value: 150000,
+				installment: 9375,
+				paid_so_far: 9375,
+				remaining: 140625,
+				direction: 'expense',
+			},
 			track_profit_loss: [
 				{ track: 'Albert Park', country: 'Australia', income: 5000, expense: 400, net: 4600 }
 			],
@@ -114,17 +140,57 @@ describe('FinanceView', () => {
 		expect(document.getElementById('finance-workforce-total').textContent).toBe('$700')
 		expect(document.getElementById('finance-engine-supplier-total').textContent).toBe('$281,250')
 		expect(document.getElementById('finance-tyre-supplier-total').textContent).toBe('$0')
+		expect(document.getElementById('finance-fuel-supplier-total').textContent).toBe('-$75,000')
 		expect(document.getElementById('finance-sponsorship-total').textContent).toBe('$900')
 		expect(document.getElementById('finance-sponsor-name').textContent).toBe('Windale')
 		expect(document.getElementById('finance-other-sponsorship-annual').textContent).toBe('$9,500,000')
 		expect(document.getElementById('finance-engine-supplier-name').textContent).toBe('Mechatron')
 		expect(document.getElementById('finance-engine-supplier-deal').textContent).toBe('customer')
 		expect(document.getElementById('finance-tyre-supplier-name').textContent).toBe('Greatday')
+		expect(document.getElementById('finance-fuel-supplier-name').textContent).toBe('Brasoil')
+		expect(document.getElementById('finance-fuel-supplier-annual').textContent).toBe('-$150,000')
 		const trackRows = document.querySelectorAll('#finance-track-pl-body tr')
 		expect(trackRows.length).toBe(1)
 		expect(trackRows[0].innerHTML).toContain('Albert Park')
 		const txRows = document.querySelectorAll('#finance-transactions-body tr')
 		expect(txRows.length).toBe(1)
 		expect(txRows[0].innerHTML).toContain('Transport')
+	})
+
+	it('handles tab switching, empty states, and logo reset branches', () => {
+		financeView.render({
+			balance: -100,
+			summary: {
+				income_total: 0,
+				expense_total: 0,
+				net_profit_loss: -100,
+				transport_total: 0,
+				workforce_total: 0,
+				engine_supplier_total: 0,
+				tyre_supplier_total: 0,
+				fuel_supplier_total: 10,
+				sponsorship_total: 0
+			},
+			sponsor: { name: null, annual_value: 0, installment: 0, paid_so_far: 0, remaining: 0 },
+			other_sponsorship: { annual_value: 0, installment: 0, paid_so_far: 0, remaining: 0 },
+			engine_supplier: { name: null, deal: '-', annual_value: 0, installment: 0, paid_so_far: 0, remaining: 0 },
+			tyre_supplier: { name: null, deal: '-', annual_value: 0, installment: 0, paid_so_far: 0, remaining: 0 },
+			fuel_supplier: { name: null, deal: '-', annual_value: -1000, installment: 50, paid_so_far: 0, remaining: 950, direction: 'income' },
+			track_profit_loss: [],
+			transactions: []
+		})
+
+		expect(document.getElementById('finance-balance-value').textContent).toBe('-$100')
+		expect(document.getElementById('finance-fuel-supplier-total').textContent).toBe('+$10')
+		expect(document.getElementById('finance-fuel-supplier-installment').textContent).toBe('+$50')
+		expect(document.getElementById('finance-track-pl-body').textContent).toContain('No track-linked finance yet')
+		expect(document.getElementById('finance-transactions-body').textContent).toContain('No transactions yet')
+		expect(document.getElementById('finance-sponsor-logo-wrap').innerHTML).toBe('')
+		expect(document.getElementById('finance-engine-supplier-logo-wrap').innerHTML).toBe('')
+
+		const trackerBtn = document.querySelector('.finance-tab-btn[data-type="tracker"]')
+		trackerBtn.click()
+		expect(document.getElementById('finance-content-main').style.display).toBe('none')
+		expect(document.getElementById('finance-content-tracker').style.display).toBe('block')
 	})
 })

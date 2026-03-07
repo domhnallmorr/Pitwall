@@ -12,6 +12,7 @@ class TransactionCategory(str, Enum):
     SPONSORSHIP = "sponsorship"
     ENGINE_SUPPLIER = "engine_supplier"
     TYRE_SUPPLIER = "tyre_supplier"
+    FUEL_SUPPLIER = "fuel_supplier"
     TRANSFER_FEE = "transfer_fee"
     DEVELOPMENT = "development"
     TESTING = "testing"

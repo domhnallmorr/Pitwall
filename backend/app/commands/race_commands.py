@@ -4,6 +4,7 @@ from app.core.crash_damage import CrashDamageManager
 from app.core.driver_wages import DriverWageManager
 from app.core.engine_supplier_costs import EngineSupplierCostManager
 from app.core.facilities_upgrades import FacilitiesUpgradeManager
+from app.core.fuel_supplier_costs import FuelSupplierCostManager
 from app.core.prize_money import PrizeMoneyManager
 from app.core.sponsorships import SponsorshipManager
 from app.core.transport import TransportManager
@@ -27,6 +28,7 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
         workforce_charge = WorkforceCostManager().charge_for_event(state, current_event)
         engine_supplier_charge = EngineSupplierCostManager().charge_for_event(state, current_event)
         tyre_supplier_charge = TyreSupplierCostManager().charge_for_event(state, current_event)
+        fuel_supplier_charge = FuelSupplierCostManager().charge_for_event(state, current_event)
         transport_charge = TransportManager().charge_for_event(state, current_event, attended=True)
         crash_damage_charges = CrashDamageManager().charge_for_race(state, race_result, current_event)
         facilities_upgrade_charge = FacilitiesUpgradeManager().charge_for_event(state, current_event)
@@ -94,6 +96,20 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
                 ),
                 category=EmailCategory.GENERAL,
             )
+        if fuel_supplier_charge:
+            is_income = fuel_supplier_charge.applied_amount > 0
+            state.add_email(
+                sender="Procurement Department",
+                subject=f"Fuel Supplier Settlement: {fuel_supplier_charge.event_name}",
+                body=(
+                    f"Fuel supplier settlement has been processed for {fuel_supplier_charge.event_name}.\n\n"
+                    f"Supplier: {fuel_supplier_charge.supplier_name}\n"
+                    f"Deal: {fuel_supplier_charge.deal_type}\n"
+                    f"This race: {'+' if is_income else '-'}${abs(fuel_supplier_charge.applied_amount):,}\n"
+                    f"Annual contract value: {'+' if fuel_supplier_charge.yearly_cost < 0 else '-'}${abs(fuel_supplier_charge.yearly_cost):,}"
+                ),
+                category=EmailCategory.GENERAL,
+            )
         if crash_damage_charges:
             total_damage = sum(c.applied_cost for c in crash_damage_charges)
             lines = "\n".join(f"- {c.driver_name}: {c.tier.title()} damage (${c.applied_cost:,})" for c in crash_damage_charges)
@@ -134,6 +150,7 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
             workforce_total = category_total(TransactionCategory.WORKFORCE_WAGES)
             engine_supplier_total = category_total(TransactionCategory.ENGINE_SUPPLIER)
             tyre_supplier_total = category_total(TransactionCategory.TYRE_SUPPLIER)
+            fuel_supplier_total = category_total(TransactionCategory.FUEL_SUPPLIER)
             transport_total = category_total(TransactionCategory.TRANSPORT)
             crash_total = category_total(TransactionCategory.CRASH_DAMAGE)
             facilities_total = category_total(TransactionCategory.FACILITIES)
@@ -148,6 +165,7 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
                     f"Workforce payroll: {'+' if workforce_total >= 0 else '-'}${abs(workforce_total):,}\n"
                     f"Engine supplier: {'+' if engine_supplier_total >= 0 else '-'}${abs(engine_supplier_total):,}\n"
                     f"Tyre supplier: {'+' if tyre_supplier_total >= 0 else '-'}${abs(tyre_supplier_total):,}\n"
+                    f"Fuel supplier: {'+' if fuel_supplier_total >= 0 else '-'}${abs(fuel_supplier_total):,}\n"
                     f"Transport: {'+' if transport_total >= 0 else '-'}${abs(transport_total):,}\n"
                     f"Crash damage: {'+' if crash_total >= 0 else '-'}${abs(crash_total):,}\n\n"
                     f"Facilities financing: {'+' if facilities_total >= 0 else '-'}${abs(facilities_total):,}\n\n"

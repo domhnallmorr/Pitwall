@@ -20,6 +20,7 @@ export default class FinanceView {
 		this.workforceTotalEl = document.getElementById('finance-workforce-total');
 		this.engineSupplierTotalEl = document.getElementById('finance-engine-supplier-total');
 		this.tyreSupplierTotalEl = document.getElementById('finance-tyre-supplier-total');
+		this.fuelSupplierTotalEl = document.getElementById('finance-fuel-supplier-total');
 		this.sponsorshipTotalEl = document.getElementById('finance-sponsorship-total');
 		this.prizeProgressEl = document.getElementById('finance-prize-progress');
 		this.sponsorNameEl = document.getElementById('finance-sponsor-name');
@@ -48,6 +49,13 @@ export default class FinanceView {
 		this.tyreSupplierPaidEl = document.getElementById('finance-tyre-supplier-paid');
 		this.tyreSupplierRemainingEl = document.getElementById('finance-tyre-supplier-remaining');
 		this.tyreSupplierLogoWrap = document.getElementById('finance-tyre-supplier-logo-wrap');
+		this.fuelSupplierNameEl = document.getElementById('finance-fuel-supplier-name');
+		this.fuelSupplierDealEl = document.getElementById('finance-fuel-supplier-deal');
+		this.fuelSupplierAnnualEl = document.getElementById('finance-fuel-supplier-annual');
+		this.fuelSupplierInstallmentEl = document.getElementById('finance-fuel-supplier-installment');
+		this.fuelSupplierPaidEl = document.getElementById('finance-fuel-supplier-paid');
+		this.fuelSupplierRemainingEl = document.getElementById('finance-fuel-supplier-remaining');
+		this.fuelSupplierLogoWrap = document.getElementById('finance-fuel-supplier-logo-wrap');
 		this.trackPlBody = document.getElementById('finance-track-pl-body');
 		this.tbody = document.getElementById('finance-transactions-body');
 		this.bindTabs();
@@ -128,6 +136,7 @@ export default class FinanceView {
 		const sponsorshipTotal = summary.sponsorship_total || 0;
 		const engineSupplierTotal = summary.engine_supplier_total || 0;
 		const tyreSupplierTotal = summary.tyre_supplier_total || 0;
+		const fuelSupplierTotal = summary.fuel_supplier_total || 0;
 
 		if (this.incomeTotalEl) this.incomeTotalEl.textContent = '$' + incomeTotal.toLocaleString();
 		if (this.expenseTotalEl) this.expenseTotalEl.textContent = '$' + expenseTotal.toLocaleString();
@@ -135,6 +144,13 @@ export default class FinanceView {
 		if (this.workforceTotalEl) this.workforceTotalEl.textContent = '$' + workforceTotal.toLocaleString();
 		if (this.engineSupplierTotalEl) this.engineSupplierTotalEl.textContent = '$' + engineSupplierTotal.toLocaleString();
 		if (this.tyreSupplierTotalEl) this.tyreSupplierTotalEl.textContent = '$' + tyreSupplierTotal.toLocaleString();
+		if (this.fuelSupplierTotalEl) {
+			const absFuelTotal = '$' + Math.abs(fuelSupplierTotal).toLocaleString();
+			this.fuelSupplierTotalEl.textContent = fuelSupplierTotal >= 0 ? '+' + absFuelTotal : '-' + absFuelTotal;
+			this.fuelSupplierTotalEl.className = fuelSupplierTotal >= 0
+				? 'finance-balance-amount'
+				: 'finance-balance-amount finance-negative';
+		}
 		if (this.sponsorshipTotalEl) this.sponsorshipTotalEl.textContent = '$' + sponsorshipTotal.toLocaleString();
 		if (this.netPlEl) {
 			const netFormatted = '$' + Math.abs(netPl).toLocaleString();
@@ -214,6 +230,24 @@ export default class FinanceView {
 		if (this.tyreSupplierPaidEl) this.tyreSupplierPaidEl.textContent = '$' + tyreSupplierPaid.toLocaleString();
 		if (this.tyreSupplierRemainingEl) this.tyreSupplierRemainingEl.textContent = '$' + tyreSupplierRemaining.toLocaleString();
 		this.setSupplierLogo(this.tyreSupplierLogoWrap, tyreSupplier.name);
+
+		const fuelSupplier = data.fuel_supplier || {};
+		const fuelSupplierName = fuelSupplier.name || 'Unassigned';
+		const fuelSupplierDeal = fuelSupplier.deal || '-';
+		const fuelSupplierAnnual = fuelSupplier.annual_value || 0;
+		const fuelSupplierInstallment = fuelSupplier.installment || 0;
+		const fuelSupplierPaid = fuelSupplier.paid_so_far || 0;
+		const fuelSupplierRemaining = fuelSupplier.remaining || 0;
+		const fuelDirection = fuelSupplier.direction || (fuelSupplierAnnual < 0 ? 'income' : 'expense');
+		const annualSign = fuelSupplierAnnual < 0 ? '+' : '-';
+
+		if (this.fuelSupplierNameEl) this.fuelSupplierNameEl.textContent = fuelSupplierName;
+		if (this.fuelSupplierDealEl) this.fuelSupplierDealEl.textContent = fuelSupplierDeal;
+		if (this.fuelSupplierAnnualEl) this.fuelSupplierAnnualEl.textContent = `${annualSign}$${Math.abs(fuelSupplierAnnual).toLocaleString()}`;
+		if (this.fuelSupplierInstallmentEl) this.fuelSupplierInstallmentEl.textContent = `${fuelDirection === 'income' ? '+' : '-'}$${fuelSupplierInstallment.toLocaleString()}`;
+		if (this.fuelSupplierPaidEl) this.fuelSupplierPaidEl.textContent = '$' + fuelSupplierPaid.toLocaleString();
+		if (this.fuelSupplierRemainingEl) this.fuelSupplierRemainingEl.textContent = '$' + fuelSupplierRemaining.toLocaleString();
+		this.setSupplierLogo(this.fuelSupplierLogoWrap, fuelSupplier.name);
 
 		// Track P/L table
 		if (this.trackPlBody) {

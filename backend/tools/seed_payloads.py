@@ -238,6 +238,20 @@ TEAM_TYRE_SUPPLIERS = {
     "Marchetti": ("Spanrock", "customer", 450_000),
 }
 
+TEAM_FUEL_SUPPLIERS = {
+    "Warrick": ("Brasoil", "partner", 150_000),
+    "Ferano": ("Shale", "works", -3_000_000),
+    "Benedetti": ("Egip", "partner", -260_000),
+    "McAlister": ("Mobile", "works", -3_000_000),
+    "Joyce": ("Ralsul", "partner", -240_000),
+    "Pascal": ("Tonal", "partner", -280_000),
+    "Schweizer": ("Shale", "customer", 350_000),
+    "Swords": ("Imp", "partner", -220_000),
+    "Strathmore": ("Texcor", "partner", -260_000),
+    "Tarnwell": ("Imp", "customer", 200_000),
+    "Marchetti": ("Imp", "customer", 200_000),
+}
+
 TECHNICAL_DIRECTORS_DATA = [
     (0, "Peter Heed", "United Kingdom", 52, 75, 5, 4_800_000, "Warrick"),
     (0, "Rob Brann", "United Kingdom", 48, 90, 3, 2_800_000, "Ferano"),
@@ -309,6 +323,17 @@ ENGINE_SUPPLIERS_DATA = [
 TYRE_SUPPLIERS_DATA = [
     (0, "Greatday", "USA", 60, 80),
     (0, "Spanrock", "Japan", 80, 70),
+]
+
+FUEL_SUPPLIERS_DATA = [
+    (0, "Shale", "United Kingdom", 5, 4),
+    (0, "Mobile", "USA", 5, 3),
+    (0, "Texcor", "USA", 4, 3),
+    (0, "Tonal", "France", 5, 3),
+    (0, "Egip", "Italy", 3, 3),
+    (0, "Ralsul", "Spain", 3, 2),
+    (0, "Brasoil", "Brazil", 2, 1),
+    (0, "Imp", "France", 1, 5),
 ]
 
 REQUIRED_CIRCUITS = [

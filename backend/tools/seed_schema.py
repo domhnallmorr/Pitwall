@@ -45,7 +45,10 @@ def create_schema(conn):
             engine_supplier_yearly_cost INTEGER DEFAULT 0,
             tyre_supplier_name TEXT,
             tyre_supplier_deal TEXT,
-            tyre_supplier_yearly_cost INTEGER DEFAULT 0
+            tyre_supplier_yearly_cost INTEGER DEFAULT 0,
+            fuel_supplier_name TEXT,
+            fuel_supplier_deal TEXT,
+            fuel_supplier_yearly_cost INTEGER DEFAULT 0
         )
     '''
     )
@@ -113,6 +116,19 @@ def create_schema(conn):
             country TEXT,
             wear INTEGER DEFAULT 0,
             grip INTEGER DEFAULT 0,
+            start_year INTEGER DEFAULT 0
+        )
+    '''
+    )
+
+    c.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS fuel_suppliers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            country TEXT,
+            resources INTEGER DEFAULT 0,
+            r_and_d INTEGER DEFAULT 0,
             start_year INTEGER DEFAULT 0
         )
     '''
@@ -192,6 +208,12 @@ def create_schema(conn):
         c.execute("ALTER TABLE teams ADD COLUMN tyre_supplier_deal TEXT")
     if "tyre_supplier_yearly_cost" not in team_columns:
         c.execute("ALTER TABLE teams ADD COLUMN tyre_supplier_yearly_cost INTEGER DEFAULT 0")
+    if "fuel_supplier_name" not in team_columns:
+        c.execute("ALTER TABLE teams ADD COLUMN fuel_supplier_name TEXT")
+    if "fuel_supplier_deal" not in team_columns:
+        c.execute("ALTER TABLE teams ADD COLUMN fuel_supplier_deal TEXT")
+    if "fuel_supplier_yearly_cost" not in team_columns:
+        c.execute("ALTER TABLE teams ADD COLUMN fuel_supplier_yearly_cost INTEGER DEFAULT 0")
 
     c.execute("PRAGMA table_info(technical_directors)")
     td_columns = {row[1] for row in c.fetchall()}
@@ -253,6 +275,17 @@ def create_schema(conn):
         c.execute("ALTER TABLE tyre_suppliers ADD COLUMN grip INTEGER DEFAULT 0")
     if "start_year" not in tyre_columns:
         c.execute("ALTER TABLE tyre_suppliers ADD COLUMN start_year INTEGER DEFAULT 0")
+
+    c.execute("PRAGMA table_info(fuel_suppliers)")
+    fuel_columns = {row[1] for row in c.fetchall()}
+    if "country" not in fuel_columns:
+        c.execute("ALTER TABLE fuel_suppliers ADD COLUMN country TEXT")
+    if "resources" not in fuel_columns:
+        c.execute("ALTER TABLE fuel_suppliers ADD COLUMN resources INTEGER DEFAULT 0")
+    if "r_and_d" not in fuel_columns:
+        c.execute("ALTER TABLE fuel_suppliers ADD COLUMN r_and_d INTEGER DEFAULT 0")
+    if "start_year" not in fuel_columns:
+        c.execute("ALTER TABLE fuel_suppliers ADD COLUMN start_year INTEGER DEFAULT 0")
 
     conn.commit()
 

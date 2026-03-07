@@ -108,7 +108,8 @@
 }
 
 #finance-engine-supplier-logo-wrap .supplier-logo,
-#finance-tyre-supplier-logo-wrap .supplier-logo {
+#finance-tyre-supplier-logo-wrap .supplier-logo,
+#finance-fuel-supplier-logo-wrap .supplier-logo {
   width: 64px;
   height: 64px;
   border-radius: 8px;

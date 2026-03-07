@@ -15,6 +15,7 @@ def build_finance_report(state: GameState) -> dict[str, Any]:
     workforce_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.WORKFORCE_WAGES and t.amount < 0)
     engine_supplier_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.ENGINE_SUPPLIER and t.amount < 0)
     tyre_supplier_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.TYRE_SUPPLIER and t.amount < 0)
+    fuel_supplier_total = sum(t.amount for t in transactions if t.category == TransactionCategory.FUEL_SUPPLIER)
     facilities_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.FACILITIES and t.amount < 0)
     sponsorship_total = sum(t.amount for t in transactions if t.category == TransactionCategory.SPONSORSHIP and t.amount > 0)
 
@@ -47,6 +48,7 @@ def build_finance_report(state: GameState) -> dict[str, Any]:
             "workforce_total": workforce_total,
             "engine_supplier_total": engine_supplier_total,
             "tyre_supplier_total": tyre_supplier_total,
+            "fuel_supplier_total": fuel_supplier_total,
             "facilities_total": facilities_total,
             "sponsorship_total": sponsorship_total,
         },

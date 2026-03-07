@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from typing import List, Dict, Any, ClassVar
 from app.models.driver import Driver
 from app.models.team import Team
 from app.models.technical_director import TechnicalDirector
@@ -7,6 +7,7 @@ from app.models.commercial_manager import CommercialManager
 from app.models.title_sponsor import TitleSponsor
 from app.models.engine_supplier import EngineSupplier
 from app.models.tyre_supplier import TyreSupplier
+from app.models.fuel_supplier import FuelSupplier
 from app.models.calendar import Calendar
 from app.models.circuit import Circuit
 from app.models.email import Email, EmailCategory
@@ -33,6 +34,7 @@ class PlayerCarDevelopment(BaseModel):
     paid: int = 0
 
 class GameState(BaseModel):
+    MAX_EMAILS: ClassVar[int] = 250
     year: int
     teams: List[Team]
     drivers: List[Driver]
@@ -41,6 +43,7 @@ class GameState(BaseModel):
     title_sponsors: List[TitleSponsor] = Field(default_factory=list)
     engine_suppliers: List[EngineSupplier] = Field(default_factory=list)
     tyre_suppliers: List[TyreSupplier] = Field(default_factory=list)
+    fuel_suppliers: List[FuelSupplier] = Field(default_factory=list)
     calendar: Calendar
     circuits: List[Circuit]
     player_team_id: int | None = None
@@ -72,6 +75,8 @@ class GameState(BaseModel):
             category=category
         )
         self.emails.append(email)
+        if len(self.emails) > self.MAX_EMAILS:
+            self.emails = self.emails[-self.MAX_EMAILS:]
         self.next_email_id += 1
         return email
 

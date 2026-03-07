@@ -12,6 +12,7 @@ try:
         DRIVER_WINS,
         DRIVERS_DATA,
         ENGINE_SUPPLIERS_DATA,
+        FUEL_SUPPLIERS_DATA,
         FUTURE_DRIVERS_DATA,
         REQUIRED_CIRCUITS,
         TECHNICAL_DIRECTORS_DATA,
@@ -22,6 +23,7 @@ try:
         TEAM_SPEEDS,
         TEAM_TITLE_SPONSORS,
         TEAM_TYRE_SUPPLIERS,
+        TEAM_FUEL_SUPPLIERS,
         TEAM_WORKFORCE,
         TITLE_SPONSORS_DATA,
         TYRE_SUPPLIERS_DATA,
@@ -38,6 +40,7 @@ except ModuleNotFoundError:
         DRIVER_WINS,
         DRIVERS_DATA,
         ENGINE_SUPPLIERS_DATA,
+        FUEL_SUPPLIERS_DATA,
         FUTURE_DRIVERS_DATA,
         REQUIRED_CIRCUITS,
         TECHNICAL_DIRECTORS_DATA,
@@ -48,6 +51,7 @@ except ModuleNotFoundError:
         TEAM_SPEEDS,
         TEAM_TITLE_SPONSORS,
         TEAM_TYRE_SUPPLIERS,
+        TEAM_FUEL_SUPPLIERS,
         TEAM_WORKFORCE,
         TITLE_SPONSORS_DATA,
         TYRE_SUPPLIERS_DATA,
@@ -142,6 +146,10 @@ def seed_data(conn):
             'UPDATE teams SET tyre_supplier_name = ?, tyre_supplier_deal = ?, tyre_supplier_yearly_cost = ? WHERE name = ?',
             [(s[0], s[1], s[2], team_name) for team_name, s in TEAM_TYRE_SUPPLIERS.items()]
         )
+        c.executemany(
+            'UPDATE teams SET fuel_supplier_name = ?, fuel_supplier_deal = ?, fuel_supplier_yearly_cost = ? WHERE name = ?',
+            [(s[0], s[1], s[2], team_name) for team_name, s in TEAM_FUEL_SUPPLIERS.items()]
+        )
 
         c.execute('SELECT name, start_year FROM technical_directors')
         existing_td_keys = {(row[0], row[1]) for row in c.fetchall()}
@@ -215,6 +223,18 @@ def seed_data(conn):
             'UPDATE tyre_suppliers SET country = ?, wear = ?, grip = ? WHERE name = ? AND start_year = ?',
             [(t[2], t[3], t[4], t[1], t[0]) for t in TYRE_SUPPLIERS_DATA],
         )
+        c.execute('SELECT name, start_year FROM fuel_suppliers')
+        existing_fuel_keys = {(row[0], row[1]) for row in c.fetchall()}
+        fuels_to_insert = [f for f in FUEL_SUPPLIERS_DATA if (f[1], f[0]) not in existing_fuel_keys]
+        if fuels_to_insert:
+            c.executemany(
+                'INSERT INTO fuel_suppliers (start_year, name, country, resources, r_and_d) VALUES (?, ?, ?, ?, ?)',
+                fuels_to_insert,
+            )
+        c.executemany(
+            'UPDATE fuel_suppliers SET country = ?, resources = ?, r_and_d = ? WHERE name = ? AND start_year = ?',
+            [(f[2], f[3], f[4], f[1], f[0]) for f in FUEL_SUPPLIERS_DATA],
+        )
         conn.commit()
         
     # Check if Calendar exists
@@ -284,6 +304,10 @@ def seed_data(conn):
         'UPDATE teams SET tyre_supplier_name = ?, tyre_supplier_deal = ?, tyre_supplier_yearly_cost = ? WHERE name = ?',
         [(s[0], s[1], s[2], team_name) for team_name, s in TEAM_TYRE_SUPPLIERS.items()]
     )
+    c.executemany(
+        'UPDATE teams SET fuel_supplier_name = ?, fuel_supplier_deal = ?, fuel_supplier_yearly_cost = ? WHERE name = ?',
+        [(s[0], s[1], s[2], team_name) for team_name, s in TEAM_FUEL_SUPPLIERS.items()]
+    )
     c.execute('SELECT name, start_year FROM engine_suppliers')
     existing_engine_keys = {(row[0], row[1]) for row in c.fetchall()}
     engines_to_insert = [e for e in ENGINE_SUPPLIERS_DATA if (e[1], e[0]) not in existing_engine_keys]
@@ -307,6 +331,18 @@ def seed_data(conn):
     c.executemany(
         'UPDATE tyre_suppliers SET country = ?, wear = ?, grip = ? WHERE name = ? AND start_year = ?',
         [(t[2], t[3], t[4], t[1], t[0]) for t in TYRE_SUPPLIERS_DATA],
+    )
+    c.execute('SELECT name, start_year FROM fuel_suppliers')
+    existing_fuel_keys = {(row[0], row[1]) for row in c.fetchall()}
+    fuels_to_insert = [f for f in FUEL_SUPPLIERS_DATA if (f[1], f[0]) not in existing_fuel_keys]
+    if fuels_to_insert:
+        c.executemany(
+            'INSERT INTO fuel_suppliers (start_year, name, country, resources, r_and_d) VALUES (?, ?, ?, ?, ?)',
+            fuels_to_insert,
+        )
+    c.executemany(
+        'UPDATE fuel_suppliers SET country = ?, resources = ?, r_and_d = ? WHERE name = ? AND start_year = ?',
+        [(f[2], f[3], f[4], f[1], f[0]) for f in FUEL_SUPPLIERS_DATA],
     )
     conn.commit()
         
@@ -347,6 +383,10 @@ def seed_data(conn):
     c.executemany(
         'UPDATE teams SET tyre_supplier_name = ?, tyre_supplier_deal = ?, tyre_supplier_yearly_cost = ? WHERE name = ?',
         [(s[0], s[1], s[2], team_name) for team_name, s in TEAM_TYRE_SUPPLIERS.items()]
+    )
+    c.executemany(
+        'UPDATE teams SET fuel_supplier_name = ?, fuel_supplier_deal = ?, fuel_supplier_yearly_cost = ? WHERE name = ?',
+        [(s[0], s[1], s[2], team_name) for team_name, s in TEAM_FUEL_SUPPLIERS.items()]
     )
     
     # Metadata
