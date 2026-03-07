@@ -325,3 +325,17 @@ def test_apply_new_season_cm_transfers_moves_announced_manager_and_sets_contract
     assert incoming.contract_length == 2
     assert outgoing.team_id is None
     assert any(s["manager_id"] == 3 for s in outcome["applied_signings"])
+
+
+@patch("app.core.management_transfers.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfers.random.randint", return_value=6)
+@patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])
+def test_recompute_ai_cm_signings_excludes_retired_managers(mock_choice, mock_randint, mock_shuffle):
+    state = create_transfer_state()
+    retired = next(m for m in state.commercial_managers if m.id == 3)
+    retired.active = False
+
+    planned = CommercialManagerTransferManager().recompute_ai_signings(state)
+
+    assert len(planned) == 1
+    assert planned[0]["manager_id"] == 2

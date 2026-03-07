@@ -116,7 +116,7 @@ class CommercialManagerTransferManager:
         for signing in due_signings:
             team = teams_by_id.get(signing.get("team_id"))
             incoming = managers_by_id.get(signing.get("manager_id"))
-            if team is None or incoming is None:
+            if team is None or incoming is None or not getattr(incoming, "active", True):
                 continue
 
             current_id = team.commercial_manager_id
@@ -154,6 +154,8 @@ class CommercialManagerTransferManager:
         outgoing = next((m for m in state.commercial_managers if m.id == outgoing_manager_id), None)
         if outgoing is None:
             raise ValueError("Commercial manager not found")
+        if not getattr(outgoing, "active", True):
+            raise ValueError("Commercial manager is retired")
         if outgoing.contract_length >= 2:
             raise ValueError("Commercial manager has 2 or more years remaining on contract")
 
@@ -213,6 +215,8 @@ class CommercialManagerTransferManager:
         outgoing = next((m for m in state.commercial_managers if m.id == outgoing_manager_id), None)
         if outgoing is None:
             raise ValueError("Commercial manager not found")
+        if not getattr(outgoing, "active", True):
+            raise ValueError("Commercial manager is retired")
         if outgoing.contract_length >= 2:
             raise ValueError("Commercial manager has 2 or more years remaining on contract")
 
@@ -252,9 +256,13 @@ class CommercialManagerTransferManager:
         for manager in state.commercial_managers:
             if manager.id in blocked_managers:
                 continue
+            if not getattr(manager, "active", True):
+                continue
             if manager.team_id is None or manager.contract_length == 1:
                 available.append(manager)
         return available
 
     def _is_manager_retained_next_season(self, manager: Any) -> bool:
+        if not getattr(manager, "active", True):
+            return False
         return getattr(manager, "contract_length", 0) != 1

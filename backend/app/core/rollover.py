@@ -3,6 +3,7 @@ import random
 from app.models.state import GameState
 from app.core.standings import StandingsManager
 from app.core.retirement import RetirementManager
+from app.core.management_retirement import CommercialManagerRetirementManager
 from app.core.recruitment import RecruitmentManager
 from app.core.prize_money import PrizeMoneyManager
 from app.core.grid import GridManager
@@ -22,6 +23,7 @@ class SeasonRolloverManager:
 
     def __init__(self):
         self.retirement_manager = RetirementManager()
+        self.cm_retirement_manager = CommercialManagerRetirementManager()
         self.recruitment_manager = RecruitmentManager()
         self.prize_money_manager = PrizeMoneyManager()
         self.grid_manager = GridManager()
@@ -57,6 +59,7 @@ class SeasonRolloverManager:
 
         # 2. Retire drivers whose final season just ended
         retired_drivers = self.retirement_manager.retire_due_drivers(state, old_year)
+        retired_commercial_managers = self.cm_retirement_manager.retire_due_managers(state, old_year)
 
         # 3. Increment year
         state.year += 1
@@ -157,6 +160,18 @@ class SeasonRolloverManager:
                 category=EmailCategory.SEASON
             )
 
+        if retired_commercial_managers:
+            retired_lines = [f"- {m['name']} ({m['team_name']})" for m in retired_commercial_managers]
+            state.add_email(
+                sender="Competition Office",
+                subject=f"Management Retirements Confirmed: End of {old_year}",
+                body=(
+                    f"The following commercial managers retired after the {old_year} season:\n\n"
+                    + "\n".join(retired_lines)
+                ),
+                category=EmailCategory.SEASON,
+            )
+
         # 18. Notify player about new season entrants
         if new_entrants:
             entrant_lines = [f"- {d['name']} ({d['country']})" for d in new_entrants]
@@ -215,6 +230,7 @@ class SeasonRolloverManager:
             "final_driver_standings": final_drivers,
             "final_constructor_standings": final_constructors,
             "retired_drivers": retired_drivers,
+            "retired_commercial_managers": retired_commercial_managers,
             "facilities_updates": facilities_updates,
             "ai_facilities_upgrades": ai_facilities_upgrades,
             "ai_workforce_updates": ai_workforce_updates,
@@ -253,6 +269,8 @@ class SeasonRolloverManager:
         expired_commercial_managers = []
 
         for director in state.technical_directors:
+            if not getattr(director, "active", True):
+                continue
             director.age += 1
             if director.team_id is None:
                 continue
@@ -270,6 +288,8 @@ class SeasonRolloverManager:
             director.contract_length = 0
 
         for manager in state.commercial_managers:
+            if not getattr(manager, "active", True):
+                continue
             manager.age += 1
             if manager.team_id is None:
                 continue

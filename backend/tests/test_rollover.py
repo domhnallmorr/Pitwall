@@ -355,6 +355,43 @@ def test_rollover_updates_next_season_prize_money_from_constructor_position(mock
     assert state.finance.prize_money_races_paid == 0
 
 
+@patch("app.core.management_retirement.random.random", return_value=0.0)
+@patch("app.core.rollover.load_roster", return_value=([], [], 1999, [], []))
+def test_rollover_retires_eligible_commercial_manager(mock_load_roster, mock_cm_random):
+    teams = [
+        Team(id=1, name="Team A", country="UK", driver1_id=1, driver2_id=2, commercial_manager_id=20, points=50),
+    ]
+    drivers = [
+        Driver(id=1, name="Driver A1", age=30, country="UK", team_id=1, role="DRIVER_1", points=30),
+        Driver(id=2, name="Driver A2", age=29, country="FR", team_id=1, role="DRIVER_2", points=20),
+    ]
+    commercial_managers = [
+        CommercialManager(id=20, name="CM Veteran", country="UK", age=52, skill=70, contract_length=3, salary=100_000, team_id=1),
+    ]
+    events = [Event(name="Race 2", week=3, type=EventType.RACE)]
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        commercial_managers=commercial_managers,
+        calendar=Calendar(events=events, current_week=3),
+        circuits=[],
+        events_processed=["3_Race 2"],
+    )
+
+    result = SeasonRolloverManager().process_rollover(state)
+
+    manager = state.commercial_managers[0]
+    assert manager.active is False
+    assert manager.team_id is None
+    assert manager.retired_year == 1998
+    assert state.teams[0].commercial_manager_id is None
+    assert any(m["name"] == "CM Veteran" for m in result["retired_commercial_managers"])
+    email = next((e for e in state.emails if e.subject == "Management Retirements Confirmed: End of 1998"), None)
+    assert email is not None
+    assert "CM Veteran" in email.body
+
+
 @patch('app.core.rollover.load_roster', return_value=([], [], 1999, [], []))
 @patch('app.core.retirement.random.random', return_value=1.0)
 def test_rollover_retires_due_driver_and_vacates_seat(mock_random, mock_load_roster):
