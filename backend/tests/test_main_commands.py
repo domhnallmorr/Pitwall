@@ -4,6 +4,7 @@ from app.models.state import GameState
 from app.models.calendar import Calendar, Event, EventType
 from app.models.team import Team
 from app.models.driver import Driver
+from app.models.commercial_manager import CommercialManager
 from app.models.circuit import Circuit
 from app.models.finance import TransactionCategory
 
@@ -16,6 +17,7 @@ def create_state() -> GameState:
             country="United Kingdom",
             driver1_id=1,
             driver2_id=2,
+            commercial_manager_id=11,
             car_speed=80,
             workforce=250,
             title_sponsor_name="Windale",
@@ -54,6 +56,10 @@ def create_state() -> GameState:
         year=1998,
         teams=teams,
         drivers=drivers,
+        commercial_managers=[
+            CommercialManager(id=11, name="Jace Whitman", country="United Kingdom", age=29, skill=70, contract_length=1, salary=360_000, team_id=1),
+            CommercialManager(id=12, name="Free Manager", country="Germany", age=43, skill=66, contract_length=0, salary=0, team_id=None),
+        ],
         calendar=calendar,
         circuits=circuits,
         player_team_id=1,
@@ -191,6 +197,28 @@ def test_replace_driver_respects_contract_rule_and_signs_replacement():
     assert success["data"]["driver_id"] == 99
 
     locked = process_command({"type": "replace_driver", "driver_id": 2})
+    assert locked["status"] == "error"
+    assert "2 or more years" in locked["message"]
+
+
+def test_replace_commercial_manager_respects_contract_rule_and_signs_replacement():
+    state = create_state()
+    app_main.CURRENT_STATE = state
+
+    candidates = process_command({"type": "get_manager_replacement_candidates", "manager_id": 11})
+    assert candidates["status"] == "success"
+    assert any(m["id"] == 12 for m in candidates["data"]["candidates"])
+
+    success = process_command({"type": "replace_commercial_manager", "manager_id": 11, "incoming_manager_id": 12})
+    assert success["status"] == "success"
+    assert success["type"] == "commercial_manager_replaced"
+    assert success["data"]["team_id"] == 1
+    assert success["data"]["manager_id"] == 12
+
+    # Lock the currently assigned manager and verify replacement is blocked.
+    manager = next(m for m in app_main.CURRENT_STATE.commercial_managers if m.id == 11)
+    manager.contract_length = 2
+    locked = process_command({"type": "replace_commercial_manager", "manager_id": 11})
     assert locked["status"] == "error"
     assert "2 or more years" in locked["message"]
 

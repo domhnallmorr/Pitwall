@@ -19,6 +19,7 @@ export default class StaffView {
 		this.workforcePayroll = document.getElementById('staff-workforce-payroll');
 		this.workforceTableBody = document.getElementById('staff-workforce-table-body');
 		this.onReplaceDriver = null;
+		this.onReplaceCommercialManager = null;
 		this.onUpdateWorkforce = null;
 		this.bindTabs();
 		this.bindWorkforceEditor();
@@ -26,6 +27,10 @@ export default class StaffView {
 
 	setReplaceDriverHandler(handler) {
 		this.onReplaceDriver = handler;
+	}
+
+	setReplaceCommercialManagerHandler(handler) {
+		this.onReplaceCommercialManager = handler;
 	}
 
 	setUpdateWorkforceHandler(handler) {
@@ -150,7 +155,7 @@ export default class StaffView {
 			return;
 		}
 
-		const renderCard = (member, roleLabel, showCountry = false) => {
+		const renderCard = (member, roleLabel, showCountry = false, showReplace = false) => {
 			if (!member) return '';
 			const portraitFile = encodeURIComponent((member.name || '').toLowerCase() + '.png');
 			const absSalary = Math.abs(member.salary || 0);
@@ -184,6 +189,14 @@ export default class StaffView {
 							<span class="staff-detail-label">Salary</span>
 							<span class="staff-detail-value">${salaryFormatted}</span>
 						</div>
+						${showReplace ? `
+						<div class="staff-detail-row">
+							<span class="staff-detail-value">
+								<button class="staff-replace-btn staff-replace-manager-btn" data-manager-id="${member.id}" ${member.contract_length >= 2 ? 'disabled' : ''}>
+									Replace
+								</button>
+							</span>
+						</div>` : ''}
 					</div>
 				</div>
 			`;
@@ -191,8 +204,17 @@ export default class StaffView {
 
 		this.managementContainer.innerHTML = `
 			${renderCard(td, 'Technical Director', true)}
-			${renderCard(cm, 'Commercial Manager', true)}
+			${renderCard(cm, 'Commercial Manager', true, true)}
 		`;
+
+		this.managementContainer.querySelectorAll('.staff-replace-manager-btn').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				if (!this.onReplaceCommercialManager) return;
+				const managerId = Number(btn.getAttribute('data-manager-id'));
+				if (!Number.isFinite(managerId)) return;
+				this.onReplaceCommercialManager(managerId);
+			});
+		});
 	}
 
 	render(data) {

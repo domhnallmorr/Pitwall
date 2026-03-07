@@ -81,6 +81,7 @@ function init() {
 	emailView = new EmailView();
 	staffView = new StaffView();
 	staffView.setReplaceDriverHandler((driverId) => API.getReplacementCandidates(driverId));
+	staffView.setReplaceCommercialManagerHandler((managerId) => API.getManagerReplacementCandidates(managerId));
 	staffView.setUpdateWorkforceHandler((workforce) => API.updateWorkforce(workforce));
 	driverView = new DriverView();
 	driverMarketView = new DriverMarketView();
@@ -88,8 +89,12 @@ function init() {
 		if (navigation) navigation.showView('staff');
 		API.getStaff();
 	});
-	driverMarketView.setSignHandler((outgoingDriverId, incomingDriverId) => {
-		API.replaceDriver(outgoingDriverId, incomingDriverId);
+	driverMarketView.setSignHandler((outgoingId, incomingId, marketType = 'driver') => {
+		if (marketType === 'commercial_manager') {
+			API.replaceCommercialManager(outgoingId, incomingId);
+			return;
+		}
+		API.replaceDriver(outgoingId, incomingId);
 	});
 	carView = new CarView();
 	carView.setStartDevelopmentHandler((developmentType) => API.startCarDevelopment(developmentType));
@@ -296,7 +301,16 @@ function setupIPC() {
 			} else if (parsed.type === 'replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
+			} else if (parsed.type === 'manager_replacement_candidates') {
+				driverMarketView.render(parsed.data);
+				if (navigation) navigation.showView('driver-market');
 			} else if (parsed.type === 'driver_replaced') {
+				if (navigation) navigation.showView('staff');
+				API.getStaff();
+				API.getGrid(gridView.getActiveYear());
+				API.getGrid(gridView.baseYear + 1);
+				API.getEmails();
+			} else if (parsed.type === 'commercial_manager_replaced') {
 				if (navigation) navigation.showView('staff');
 				API.getStaff();
 				API.getGrid(gridView.getActiveYear());

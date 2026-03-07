@@ -28,6 +28,6 @@ describe('DriverMarketView', () => {
 		const btn = document.querySelector('.driver-market-sign-btn');
 		expect(btn).not.toBeNull();
 		btn.click();
-		expect(onSign).toHaveBeenCalledWith(1, 99);
+		expect(onSign).toHaveBeenCalledWith(1, 99, 'driver');
 	});
 });

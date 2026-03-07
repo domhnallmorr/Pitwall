@@ -1,6 +1,7 @@
 import logging
 
 from app.core.player_car_development import PlayerCarDevelopmentManager
+from app.core.management_transfers import CommercialManagerTransferManager
 from app.core.transfers import TransferManager
 from app.core.workforce_costs import WorkforceCostManager
 from app.models.calendar import EventType
@@ -69,6 +70,69 @@ def handle_get_replacement_candidates(state: GameState, logger: logging.Logger, 
         return {"status": "error", "message": str(ve)}
     except Exception as e:
         logger.error(f"Error loading replacement candidates: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def handle_replace_commercial_manager(
+    state: GameState,
+    logger: logging.Logger,
+    manager_id: int | None,
+    incoming_manager_id: int | None = None,
+):
+    try:
+        if manager_id is None:
+            return state, {"status": "error", "message": "Commercial manager id is required"}
+        signing = CommercialManagerTransferManager().sign_player_replacement(
+            state,
+            outgoing_manager_id=int(manager_id),
+            incoming_manager_id=int(incoming_manager_id) if incoming_manager_id is not None else None,
+        )
+        return state, {
+            "type": "commercial_manager_replaced",
+            "status": "success",
+            "data": signing,
+        }
+    except ValueError as ve:
+        return state, {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error replacing commercial manager: {e}")
+        return state, {"status": "error", "message": str(e)}
+
+
+def handle_get_manager_replacement_candidates(state: GameState, logger: logging.Logger, manager_id: int | None):
+    try:
+        if manager_id is None:
+            return {"status": "error", "message": "Commercial manager id is required"}
+
+        outgoing = next((m for m in state.commercial_managers if m.id == int(manager_id)), None)
+        if outgoing is None:
+            return {"status": "error", "message": "Commercial manager not found"}
+
+        candidates = CommercialManagerTransferManager().get_player_replacement_candidates(state, int(manager_id))
+        payload = {
+            "market_type": "commercial_manager",
+            "outgoing_manager": {
+                "id": outgoing.id,
+                "name": outgoing.name,
+                "contract_length": outgoing.contract_length,
+            },
+            "candidates": [
+                {
+                    "id": m.id,
+                    "name": m.name,
+                    "age": m.age,
+                    "country": m.country,
+                    "skill": m.skill,
+                    "salary": m.salary,
+                }
+                for m in candidates
+            ],
+        }
+        return {"type": "manager_replacement_candidates", "status": "success", "data": payload}
+    except ValueError as ve:
+        return {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error loading commercial manager replacement candidates: {e}")
         return {"status": "error", "message": str(e)}
 
 

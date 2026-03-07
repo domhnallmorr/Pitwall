@@ -139,6 +139,91 @@ class CommercialManagerTransferManager:
 
         return {"applied_signings": applied_signings}
 
+    def sign_player_replacement(
+        self,
+        state: GameState,
+        outgoing_manager_id: int,
+        incoming_manager_id: int | None = None,
+    ) -> Dict[str, Any]:
+        player_team = state.player_team
+        if player_team is None:
+            raise ValueError("No player team assigned")
+        if player_team.commercial_manager_id != outgoing_manager_id:
+            raise ValueError("Commercial manager is not assigned to the player team")
+
+        outgoing = next((m for m in state.commercial_managers if m.id == outgoing_manager_id), None)
+        if outgoing is None:
+            raise ValueError("Commercial manager not found")
+        if outgoing.contract_length >= 2:
+            raise ValueError("Commercial manager has 2 or more years remaining on contract")
+
+        announced = list(state.announced_ai_cm_signings)
+        blocked_managers = {s["manager_id"] for s in announced if s["team_id"] != player_team.id}
+
+        # Allow replacing any previously announced player signing for this seat.
+        existing = next((s for s in announced if s["team_id"] == player_team.id), None)
+        if existing:
+            announced.remove(existing)
+            blocked_managers.discard(existing["manager_id"])
+
+        candidates = self.get_player_replacement_candidates(state, outgoing_manager_id)
+        if not candidates:
+            raise ValueError("No available commercial managers for replacement")
+        if incoming_manager_id is not None:
+            signed_manager = next((m for m in candidates if m.id == incoming_manager_id), None)
+            if signed_manager is None:
+                raise ValueError("Selected commercial manager is not available for replacement")
+        else:
+            signed_manager = random.choice(candidates)
+
+        signing = {
+            "team_id": player_team.id,
+            "team_name": player_team.name,
+            "seat": "commercial_manager_id",
+            "seat_label": "Commercial Manager",
+            "manager_id": signed_manager.id,
+            "manager_name": signed_manager.name,
+            "announce_week": state.calendar.current_week,
+            "announce_year": state.year,
+            "status": "announced",
+            "origin": "player",
+        }
+        announced.append(signing)
+        state.announced_ai_cm_signings = announced
+        self.recompute_ai_signings(state)
+
+        state.add_email(
+            sender="Management Market Desk",
+            subject=f"Commercial Manager Signed: {signed_manager.name}",
+            body=(
+                f"You have signed {signed_manager.name} for next season ({state.year + 1}) "
+                f"as Commercial Manager, replacing {outgoing.name}."
+            ),
+            category=EmailCategory.SEASON,
+        )
+        return signing
+
+    def get_player_replacement_candidates(self, state: GameState, outgoing_manager_id: int) -> List[Any]:
+        player_team = state.player_team
+        if player_team is None:
+            raise ValueError("No player team assigned")
+        if player_team.commercial_manager_id != outgoing_manager_id:
+            raise ValueError("Commercial manager is not assigned to the player team")
+
+        outgoing = next((m for m in state.commercial_managers if m.id == outgoing_manager_id), None)
+        if outgoing is None:
+            raise ValueError("Commercial manager not found")
+        if outgoing.contract_length >= 2:
+            raise ValueError("Commercial manager has 2 or more years remaining on contract")
+
+        announced = list(state.announced_ai_cm_signings)
+        blocked_managers = {s["manager_id"] for s in announced if s["team_id"] != player_team.id}
+        return [
+            m
+            for m in self._get_available_next_season_managers(state, blocked_managers)
+            if m.id != outgoing_manager_id
+        ]
+
     def _get_ai_vacancies_for_next_season(
         self,
         state: GameState,
@@ -173,4 +258,3 @@ class CommercialManagerTransferManager:
 
     def _is_manager_retained_next_season(self, manager: Any) -> bool:
         return getattr(manager, "contract_length", 0) != 1
-

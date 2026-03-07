@@ -5,8 +5,11 @@ export default class DriverMarketView {
 		this.view = document.getElementById('driver-market-view');
 		this.title = document.getElementById('driver-market-title');
 		this.tableBody = document.getElementById('driver-market-table-body');
+		this.headRow = document.querySelector('#driver-market-view thead tr');
 		this.backBtn = document.getElementById('driver-market-back-btn');
 		this.outgoingDriver = null;
+		this.outgoingManager = null;
+		this.marketType = 'driver';
 		this.onSign = null;
 		this.onBack = null;
 		this.bind();
@@ -30,40 +33,83 @@ export default class DriverMarketView {
 
 	render(payload) {
 		if (!this.tableBody || !this.title) return;
+		this.marketType = payload?.market_type === 'commercial_manager' ? 'commercial_manager' : 'driver';
 		this.outgoingDriver = payload?.outgoing_driver || null;
-		const outgoingName = this.outgoingDriver?.name || 'Driver';
+		this.outgoingManager = payload?.outgoing_manager || null;
+		const outgoingName = this.marketType === 'commercial_manager'
+			? (this.outgoingManager?.name || 'Commercial Manager')
+			: (this.outgoingDriver?.name || 'Driver');
 		this.title.textContent = `Replace ${outgoingName}`;
+		if (this.headRow) {
+			if (this.marketType === 'commercial_manager') {
+				this.headRow.innerHTML = `
+					<th>Name</th>
+					<th>Age</th>
+					<th>Country</th>
+					<th>Skill</th>
+					<th>Salary</th>
+					<th>Action</th>
+				`;
+			} else {
+				this.headRow.innerHTML = `
+					<th>Driver</th>
+					<th>Age</th>
+					<th>Country</th>
+					<th>Speed</th>
+					<th>Wage</th>
+					<th>Action</th>
+				`;
+			}
+		}
 
 		const candidates = payload?.candidates || [];
 		this.tableBody.innerHTML = '';
 		if (!candidates.length) {
 			const row = document.createElement('tr');
-			row.innerHTML = '<td colspan="6">No available free agents</td>';
+			row.innerHTML = '<td colspan="6">No available candidates</td>';
 			this.tableBody.appendChild(row);
 			return;
 		}
 
-		candidates.forEach((driver) => {
+		candidates.forEach((candidate) => {
 			const tr = document.createElement('tr');
-			const absWage = Math.abs(driver.wage || 0);
-			const wageText = `$${absWage.toLocaleString()}${driver.pay_driver ? ' (Pay Driver)' : ''}`;
-			tr.innerHTML = `
-				<td>${driver.name}</td>
-				<td>${driver.age}</td>
-				<td>${renderFlagLabel(driver.country, driver.country)}</td>
-				<td>${driver.speed}</td>
-				<td>${wageText}</td>
-				<td><button class="driver-market-sign-btn" data-driver-id="${driver.id}">Sign</button></td>
-			`;
+			if (this.marketType === 'commercial_manager') {
+				const absSalary = Math.abs(candidate.salary || 0);
+				tr.innerHTML = `
+					<td>${candidate.name}</td>
+					<td>${candidate.age}</td>
+					<td>${renderFlagLabel(candidate.country, candidate.country)}</td>
+					<td>${candidate.skill}</td>
+					<td>$${absSalary.toLocaleString()}</td>
+					<td><button class="driver-market-sign-btn" data-driver-id="${candidate.id}">Sign</button></td>
+				`;
+			} else {
+				const absWage = Math.abs(candidate.wage || 0);
+				const wageText = `$${absWage.toLocaleString()}${candidate.pay_driver ? ' (Pay Driver)' : ''}`;
+				tr.innerHTML = `
+					<td>${candidate.name}</td>
+					<td>${candidate.age}</td>
+					<td>${renderFlagLabel(candidate.country, candidate.country)}</td>
+					<td>${candidate.speed}</td>
+					<td>${wageText}</td>
+					<td><button class="driver-market-sign-btn" data-driver-id="${candidate.id}">Sign</button></td>
+				`;
+			}
 			this.tableBody.appendChild(tr);
 		});
 
 		this.tableBody.querySelectorAll('.driver-market-sign-btn').forEach((btn) => {
 			btn.addEventListener('click', () => {
-				if (!this.onSign || !this.outgoingDriver) return;
+				if (!this.onSign) return;
 				const incomingId = Number(btn.getAttribute('data-driver-id'));
 				if (!Number.isFinite(incomingId)) return;
-				this.onSign(this.outgoingDriver.id, incomingId);
+				if (this.marketType === 'commercial_manager') {
+					if (!this.outgoingManager) return;
+					this.onSign(this.outgoingManager.id, incomingId, this.marketType);
+				} else {
+					if (!this.outgoingDriver) return;
+					this.onSign(this.outgoingDriver.id, incomingId, this.marketType);
+				}
 			});
 		});
 	}
