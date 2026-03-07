@@ -38,5 +38,7 @@ def test_team_records_include_seeded_title_sponsor_deals(mock_get_conn):
 
     assert warrick.title_sponsor_name == "Windale"
     assert warrick.title_sponsor_yearly == 32_500_000
+    assert warrick.other_sponsorship_yearly == 9_500_000
     assert swords.title_sponsor_name == "Dasko"
     assert swords.title_sponsor_yearly == 5_200_000
+    assert swords.other_sponsorship_yearly == 18_000_000

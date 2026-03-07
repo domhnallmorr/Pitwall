@@ -7,6 +7,7 @@ from app.core.prize_money import PrizeMoneyManager
 from app.core.retirement import RetirementManager
 from app.core.roster import load_roster
 from app.core.transfers import TransferManager
+from app.core.management_transfers import CommercialManagerTransferManager
 from app.commands.facilities_commands import (
     handle_facilities_upgrade_preview,
     handle_start_facilities_upgrade,
@@ -110,6 +111,7 @@ def handle_start_career(state: GameState | None, logger: logging.Logger, team_na
 
         GridManager().capture_season_snapshot(current_state, year=current_state.year)
         TransferManager().recompute_ai_signings(current_state)
+        CommercialManagerTransferManager().recompute_ai_signings(current_state)
         AICarDevelopmentManager().generate_for_season(current_state)
         return current_state, {
             "type": "game_started",

@@ -3,6 +3,7 @@ from app.core.grid import GridManager
 from app.models.state import GameState
 from app.models.driver import Driver
 from app.models.team import Team
+from app.models.commercial_manager import CommercialManager
 from app.models.calendar import Calendar
 
 def create_mock_state():
@@ -100,6 +101,32 @@ def test_grid_next_year_projection_marks_one_year_contract_as_vacant():
     row = df[df["Team"] == "Team 1"].iloc[0]
     assert row["Driver1"] == "VACANT"
     assert row["Driver2"] == "Secure Driver"
+
+
+def test_grid_next_year_projection_marks_expiring_commercial_manager_as_vacant():
+    drivers = [
+        Driver(id=1, name="Driver One", age=29, country="UK", points=0, team_id=1, contract_length=3),
+        Driver(id=2, name="Driver Two", age=24, country="DE", points=0, team_id=1, contract_length=3),
+    ]
+    teams = [
+        Team(id=1, name="Team 1", country="UK", driver1_id=1, driver2_id=2, points=0, commercial_manager_id=10),
+    ]
+    commercial_managers = [
+        CommercialManager(id=10, name="CM Expiring", country="UK", age=40, skill=70, contract_length=1, salary=100_000, team_id=1),
+    ]
+    calendar = Calendar(events=[], current_week=1)
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        calendar=calendar,
+        circuits=[],
+        commercial_managers=commercial_managers,
+    )
+
+    df = GridManager().get_grid_dataframe(state, year=1999)
+    row = df[df["Team"] == "Team 1"].iloc[0]
+    assert row["CommercialManager"] == "VACANT"
 
 
 def test_grid_includes_engine_and_tyre_supplier_columns():

@@ -40,9 +40,9 @@ describe('GridView', () => {
 
 		// Check second row content
 		const cells2 = rows[1].querySelectorAll('td');
-		expect(cells2[2].textContent.trim()).toBe('VACANT');
-		expect(cells2[3].textContent.trim()).toBe('VACANT');
-		expect(cells2[4].textContent.trim()).toBe('VACANT');
+		expect(cells2[2].textContent.trim()).toBe('');
+		expect(cells2[3].textContent.trim()).toBe('');
+		expect(cells2[4].textContent.trim()).toBe('');
 	});
 
 	it('handles empty data', () => {

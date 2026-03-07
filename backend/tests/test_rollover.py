@@ -4,6 +4,8 @@ from app.models.state import GameState
 from app.models.calendar import Calendar, Event, EventType
 from app.models.driver import Driver
 from app.models.team import Team
+from app.models.technical_director import TechnicalDirector
+from app.models.commercial_manager import CommercialManager
 from unittest.mock import patch
 from app.models.enums import DriverRole
 
@@ -255,6 +257,70 @@ def test_rollover_increments_driver_ages(mock_load_roster):
 
     for i, driver in enumerate(state.drivers):
         assert driver.age == original_ages[i] + 1
+
+
+@patch('app.core.rollover.load_roster', return_value=([], [], 1999, [], []))
+def test_rollover_updates_management_age_and_contracts(mock_load_roster):
+    teams = [
+        Team(
+            id=1,
+            name="Team A",
+            country="UK",
+            driver1_id=1,
+            driver2_id=2,
+            technical_director_id=10,
+            commercial_manager_id=20,
+        ),
+    ]
+    drivers = [
+        Driver(id=1, name="Driver A1", age=25, country="UK", team_id=1),
+        Driver(id=2, name="Driver A2", age=28, country="FR", team_id=1),
+    ]
+    technical_directors = [
+        TechnicalDirector(id=10, name="TD Expiring", country="UK", age=50, skill=80, contract_length=1, salary=1, team_id=1),
+        TechnicalDirector(id=11, name="TD Secure", country="DE", age=45, skill=70, contract_length=3, salary=1, team_id=None),
+    ]
+    commercial_managers = [
+        CommercialManager(id=20, name="CM Expiring", country="UK", age=40, skill=75, contract_length=1, salary=1, team_id=1),
+        CommercialManager(id=21, name="CM Secure", country="IT", age=35, skill=60, contract_length=3, salary=1, team_id=None),
+    ]
+    events = [Event(name="Race 2", week=3, type=EventType.RACE)]
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        technical_directors=technical_directors,
+        commercial_managers=commercial_managers,
+        calendar=Calendar(events=events, current_week=3),
+        circuits=[],
+        events_processed=["3_Race 2"],
+    )
+
+    result = SeasonRolloverManager().process_rollover(state)
+
+    td_expiring = next(td for td in state.technical_directors if td.id == 10)
+    td_secure = next(td for td in state.technical_directors if td.id == 11)
+    cm_expiring = next(cm for cm in state.commercial_managers if cm.id == 20)
+    cm_secure = next(cm for cm in state.commercial_managers if cm.id == 21)
+    team = state.teams[0]
+
+    assert td_expiring.age == 51
+    assert td_expiring.contract_length == 0
+    assert td_expiring.team_id is None
+    assert team.technical_director_id is None
+
+    assert cm_expiring.age == 41
+    assert cm_expiring.contract_length == 0
+    assert cm_expiring.team_id is None
+    assert team.commercial_manager_id is None
+
+    assert td_secure.age == 46
+    assert td_secure.contract_length == 3  # unassigned staff do not decrement
+    assert cm_secure.age == 36
+    assert cm_secure.contract_length == 3  # unassigned staff do not decrement
+
+    assert any(x["name"] == "TD Expiring" for x in result["management_updates"]["expired_technical_directors"])
+    assert any(x["name"] == "CM Expiring" for x in result["management_updates"]["expired_commercial_managers"])
 
 
 @patch('app.core.retirement.random.random', return_value=1.0)

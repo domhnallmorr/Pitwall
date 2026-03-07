@@ -10,17 +10,36 @@ def build_finance_payload(state: GameState):
     player_team = state.player_team
     sponsor_name = player_team.title_sponsor_name if player_team else None
     sponsor_yearly = player_team.title_sponsor_yearly if player_team else 0
-    sponsor_installment = SponsorshipManager().calculate_race_installment(
-        sponsor_yearly, state.finance.prize_money_total_races or 0
-    ) if sponsor_name else 0
-    sponsor_paid_so_far = sum(
-        t.amount for t in state.finance.transactions
-        if t.category == TransactionCategory.SPONSORSHIP and t.year == state.year and t.amount > 0
-    )
-    sponsor_remaining = max(sponsor_yearly - sponsor_paid_so_far, 0) if sponsor_name else 0
+    other_sponsorship_yearly = player_team.other_sponsorship_yearly if player_team else 0
     race_count = state.finance.prize_money_total_races or max(
         1, sum(1 for e in state.calendar.events if getattr(e.type, "value", e.type) == "RACE")
     )
+    sponsor_installment = SponsorshipManager().calculate_race_installment(
+        sponsor_yearly, race_count
+    ) if sponsor_name else 0
+    other_sponsorship_installment = SponsorshipManager().calculate_race_installment(
+        other_sponsorship_yearly, race_count
+    ) if other_sponsorship_yearly > 0 else 0
+    sponsor_paid_so_far = sum(
+        t.amount for t in state.finance.transactions
+        if (
+            t.category == TransactionCategory.SPONSORSHIP
+            and t.year == state.year
+            and t.amount > 0
+            and str(t.description).startswith("Title sponsor installment:")
+        )
+    )
+    other_sponsorship_paid_so_far = sum(
+        t.amount for t in state.finance.transactions
+        if (
+            t.category == TransactionCategory.SPONSORSHIP
+            and t.year == state.year
+            and t.amount > 0
+            and str(t.description).startswith("Other sponsorship installment")
+        )
+    )
+    sponsor_remaining = max(sponsor_yearly - sponsor_paid_so_far, 0) if sponsor_name else 0
+    other_sponsorship_remaining = max(other_sponsorship_yearly - other_sponsorship_paid_so_far, 0)
 
     engine_supplier_name = player_team.engine_supplier_name if player_team else None
     engine_supplier_yearly = player_team.engine_supplier_yearly_cost if player_team else 0
@@ -60,6 +79,12 @@ def build_finance_payload(state: GameState):
             "installment": sponsor_installment,
             "paid_so_far": sponsor_paid_so_far,
             "remaining": sponsor_remaining,
+        },
+        "other_sponsorship": {
+            "annual_value": other_sponsorship_yearly,
+            "installment": other_sponsorship_installment,
+            "paid_so_far": other_sponsorship_paid_so_far,
+            "remaining": other_sponsorship_remaining,
         },
         "engine_supplier": {
             "name": engine_supplier_name,

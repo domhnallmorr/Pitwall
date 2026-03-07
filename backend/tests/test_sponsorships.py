@@ -21,6 +21,7 @@ def create_state() -> GameState:
                 country="United Kingdom",
                 title_sponsor_name="Windale",
                 title_sponsor_yearly=32_500_000,
+                other_sponsorship_yearly=9_500_000,
                 driver1_id=1,
                 driver2_id=2,
             )
@@ -59,7 +60,7 @@ def test_apply_for_event_posts_sponsorship_income_transaction():
     charge = manager.apply_for_event(state, state.calendar.current_event)
 
     assert charge is not None
-    assert charge.sponsor_name == "Windale"
+    assert charge.title_sponsor_name == "Windale"
     txs = [t for t in state.finance.transactions if t.category == TransactionCategory.SPONSORSHIP]
-    assert len(txs) == 1
-    assert txs[0].amount > 0
+    assert len(txs) == 2
+    assert all(t.amount > 0 for t in txs)

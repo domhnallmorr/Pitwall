@@ -47,9 +47,12 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
                 sender="Commercial Department",
                 subject=f"Sponsorship Payment Received: {sponsorship_charge.event_name}",
                 body=(
-                    f"Title sponsor installment received from {sponsorship_charge.sponsor_name}.\n\n"
-                    f"Amount: ${sponsorship_charge.applied_income:,}\n"
-                    f"Annual deal value: ${sponsorship_charge.yearly_value:,}"
+                    f"Commercial income received for {sponsorship_charge.event_name}.\n\n"
+                    f"Title sponsor ({sponsorship_charge.title_sponsor_name}): ${sponsorship_charge.title_income:,}\n"
+                    f"Other sponsorship: ${sponsorship_charge.other_income:,}\n"
+                    f"Total this race: ${sponsorship_charge.applied_income:,}\n\n"
+                    f"Title annual value: ${sponsorship_charge.title_yearly_value:,}\n"
+                    f"Other annual value: ${sponsorship_charge.other_yearly_value:,}"
                 ),
                 category=EmailCategory.GENERAL,
             )

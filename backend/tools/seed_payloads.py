@@ -196,6 +196,20 @@ TEAM_TITLE_SPONSORS = {
     "Marchetti": ("Tonometal", 4_400_000),
 }
 
+TEAM_OTHER_SPONSORSHIP = {
+    "Warrick": 9_500_000,
+    "Ferano": 12_500_000,
+    "Benedetti": 10_500_000,
+    "McAlister": 14_000_000,
+    "Joyce": 9_500_000,
+    "Pascal": 7_000_000,
+    "Schweizer": 12_500_000,
+    "Swords": 18_000_000,
+    "Strathmore": 16_200_000,
+    "Tarnwell": 2_800_000,
+    "Marchetti": 8_600_000,
+}
+
 TEAM_ENGINE_SUPPLIERS = {
     "Warrick": ("Mechatron", "customer", 4_500_000),
     "Ferano": ("Ferano", "works", 0),

@@ -58,6 +58,19 @@ function renderFinanceSupplierSections() {
 			],
 		},
 		{
+			cardId: 'finance-other-sponsorship-card',
+			logoWrapId: 'finance-other-sponsorship-logo-wrap',
+			title: 'Other Sponsorship',
+			nameId: 'finance-other-sponsorship-name',
+			nameDefault: 'Minor Sponsors',
+			rows: [
+				{ label: 'Annual Value', id: 'finance-other-sponsorship-annual', defaultValue: '$0' },
+				{ label: 'Per Race', id: 'finance-other-sponsorship-installment', defaultValue: '$0' },
+				{ label: 'Paid So Far', id: 'finance-other-sponsorship-paid', defaultValue: '$0' },
+				{ label: 'Remaining', id: 'finance-other-sponsorship-remaining', defaultValue: '$0' },
+			],
+		},
+		{
 			cardId: 'finance-tyre-supplier-card',
 			logoWrapId: 'finance-tyre-supplier-logo-wrap',
 			title: 'Tyre Supplier',

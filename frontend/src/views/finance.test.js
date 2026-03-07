@@ -26,6 +26,12 @@ describe('FinanceView', () => {
 			<div id="finance-sponsor-paid"></div>
 			<div id="finance-sponsor-remaining"></div>
 			<div id="finance-sponsor-logo-wrap"></div>
+			<div id="finance-other-sponsorship-name"></div>
+			<div id="finance-other-sponsorship-annual"></div>
+			<div id="finance-other-sponsorship-installment"></div>
+			<div id="finance-other-sponsorship-paid"></div>
+			<div id="finance-other-sponsorship-remaining"></div>
+			<div id="finance-other-sponsorship-logo-wrap"></div>
 			<div id="finance-engine-supplier-name"></div>
 			<div id="finance-engine-supplier-deal"></div>
 			<div id="finance-engine-supplier-annual"></div>
@@ -73,6 +79,12 @@ describe('FinanceView', () => {
 				paid_so_far: 2031250,
 				remaining: 30468750,
 			},
+			other_sponsorship: {
+				annual_value: 9500000,
+				installment: 593750,
+				paid_so_far: 593750,
+				remaining: 8906250,
+			},
 			engine_supplier: {
 				name: 'Mechatron',
 				deal: 'customer',
@@ -104,6 +116,7 @@ describe('FinanceView', () => {
 		expect(document.getElementById('finance-tyre-supplier-total').textContent).toBe('$0')
 		expect(document.getElementById('finance-sponsorship-total').textContent).toBe('$900')
 		expect(document.getElementById('finance-sponsor-name').textContent).toBe('Windale')
+		expect(document.getElementById('finance-other-sponsorship-annual').textContent).toBe('$9,500,000')
 		expect(document.getElementById('finance-engine-supplier-name').textContent).toBe('Mechatron')
 		expect(document.getElementById('finance-engine-supplier-deal').textContent).toBe('customer')
 		expect(document.getElementById('finance-tyre-supplier-name').textContent).toBe('Greatday')

@@ -14,6 +14,14 @@ class GridManager:
             return False
         return True
 
+    def _is_projected_commercial_manager_available(self, manager) -> bool:
+        if not manager:
+            return False
+        # One year remaining means seat is treated as open for next season display.
+        if getattr(manager, "contract_length", 0) == 1:
+            return False
+        return True
+
     def get_grid_records(self, state: GameState, year: int | None = None) -> List[dict]:
         """
         Returns grid records for a given year.
@@ -54,6 +62,7 @@ class GridManager:
                 "TechnicalDirectorCountry": td.country if td and td.country else "",
                 "CommercialManager": cm.name if cm else "VACANT",
                 "TitleSponsor": team.title_sponsor_name if getattr(team, "title_sponsor_name", None) else "VACANT",
+                "OtherSponsorshipYearly": str(team.other_sponsorship_yearly if getattr(team, "other_sponsorship_yearly", None) is not None else 0),
                 "EngineSupplier": team.engine_supplier_name if getattr(team, "engine_supplier_name", None) else "VACANT",
                 "EngineSupplierCountry": engine_country_by_name.get(team.engine_supplier_name or "", ""),
                 "EngineSupplierDeal": team.engine_supplier_deal if getattr(team, "engine_supplier_deal", None) else "-",
@@ -78,6 +87,11 @@ class GridManager:
             for s in state.announced_ai_signings
             if s.get("status") == "announced"
         }
+        announced_cm_by_team = {
+            s.get("team_id"): s.get("manager_id")
+            for s in state.announced_ai_cm_signings
+            if s.get("status") == "announced"
+        }
         td_lookup = {td.id: td for td in state.technical_directors}
         cm_lookup = {cm.id: cm for cm in state.commercial_managers}
         engine_country_by_name = {e.name: e.country for e in state.engine_suppliers}
@@ -92,7 +106,10 @@ class GridManager:
             if not announced_d2_id:
                 d2 = d2 if self._is_projected_driver_available(d2, state.year) else None
             td = td_lookup.get(team.technical_director_id)
-            cm = cm_lookup.get(team.commercial_manager_id)
+            announced_cm_id = announced_cm_by_team.get(team.id)
+            cm = cm_lookup.get(announced_cm_id) if announced_cm_id else cm_lookup.get(team.commercial_manager_id)
+            if not announced_cm_id:
+                cm = cm if self._is_projected_commercial_manager_available(cm) else None
 
             row = {
                 "Team": team.name,
@@ -105,6 +122,7 @@ class GridManager:
                 "TechnicalDirectorCountry": td.country if td and td.country else "",
                 "CommercialManager": cm.name if cm else "VACANT",
                 "TitleSponsor": team.title_sponsor_name if getattr(team, "title_sponsor_name", None) else "VACANT",
+                "OtherSponsorshipYearly": str(team.other_sponsorship_yearly if getattr(team, "other_sponsorship_yearly", None) is not None else 0),
                 "EngineSupplier": team.engine_supplier_name if getattr(team, "engine_supplier_name", None) else "VACANT",
                 "EngineSupplierCountry": engine_country_by_name.get(team.engine_supplier_name or "", ""),
                 "EngineSupplierDeal": team.engine_supplier_deal if getattr(team, "engine_supplier_deal", None) else "-",

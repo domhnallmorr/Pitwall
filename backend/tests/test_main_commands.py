@@ -20,6 +20,7 @@ def create_state() -> GameState:
             workforce=250,
             title_sponsor_name="Windale",
             title_sponsor_yearly=32_500_000,
+            other_sponsorship_yearly=9_500_000,
             engine_supplier_name="Mechatron",
             engine_supplier_deal="customer",
             engine_supplier_yearly_cost=4_500_000,
@@ -144,6 +145,7 @@ def test_get_finance_returns_summary_and_track_profit_loss():
     assert "sponsorship_total" in result["data"]["summary"]
     assert len(result["data"]["track_profit_loss"]) == 1
     assert result["data"]["sponsor"]["name"] == "Windale"
+    assert result["data"]["other_sponsorship"]["annual_value"] == 9_500_000
     assert result["data"]["engine_supplier"]["name"] == "Mechatron"
     assert result["data"]["tyre_supplier"]["name"] == "Greatday"
 

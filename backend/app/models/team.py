@@ -9,6 +9,7 @@ class Team(BaseModel):
     workforce: int = 0
     title_sponsor_name: str | None = None
     title_sponsor_yearly: int = 0
+    other_sponsorship_yearly: int = 0
     engine_supplier_name: str | None = None
     engine_supplier_deal: str | None = None
     engine_supplier_yearly_cost: int = 0

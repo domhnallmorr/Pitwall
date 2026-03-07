@@ -131,7 +131,7 @@ export default class GridView {
 
 			if (targetHead) {
 			if (this.mode === 'sponsors') {
-				targetHead.innerHTML = '<tr><th>Team</th><th>Title Sponsor</th></tr>';
+				targetHead.innerHTML = '<tr><th>Team</th><th>Title Sponsor</th><th>Other Sponsorship</th></tr>';
 			} else if (this.mode === 'suppliers') {
 				targetHead.innerHTML = '<tr><th>Team</th><th>Engine Supplier</th><th>Engine Deal</th><th>Tyre Supplier</th><th>Tyre Deal</th></tr>';
 			} else {
@@ -143,18 +143,20 @@ export default class GridView {
 		data.forEach(row => {
 			const tr = document.createElement('tr');
 			if (this.mode === 'sponsors') {
-				const sponsorName = row.TitleSponsor || 'VACANT';
+				const sponsorName = row.TitleSponsor || '';
+				const otherSponsorship = Number(row.OtherSponsorshipYearly || 0);
 				tr.innerHTML = `
 					<td>${row.Team}</td>
 					<td>${this.renderSponsorCell(sponsorName)}</td>
+					<td>$${otherSponsorship.toLocaleString()}</td>
 				`;
 			} else if (this.mode === 'suppliers') {
-				const engineSupplierName = row.EngineSupplier || 'VACANT';
+				const engineSupplierName = row.EngineSupplier || '';
 				const engineSupplierDealRaw = row.EngineSupplierDeal || '-';
 				const engineSupplierDeal = engineSupplierDealRaw === '-'
 					? engineSupplierDealRaw
 					: engineSupplierDealRaw.charAt(0).toUpperCase() + engineSupplierDealRaw.slice(1).toLowerCase();
-				const tyreSupplierName = row.TyreSupplier || 'VACANT';
+				const tyreSupplierName = row.TyreSupplier || '';
 				const tyreSupplierDealRaw = row.TyreSupplierDeal || '-';
 				const tyreSupplierDeal = tyreSupplierDealRaw === '-'
 					? tyreSupplierDealRaw
@@ -167,13 +169,13 @@ export default class GridView {
 					<td>${tyreSupplierDeal}</td>
 				`;
 			} else {
-				const d1Name = row.Driver1 || 'Vacant';
-				const d2Name = row.Driver2 || 'Vacant';
-				const tdName = row.TechnicalDirector || 'VACANT';
+				const d1Name = row.Driver1 || '';
+				const d2Name = row.Driver2 || '';
+				const tdName = row.TechnicalDirector || '';
 				const d1Country = row.Driver1Country || this.driverCountryByName[d1Name] || '';
 				const d2Country = row.Driver2Country || this.driverCountryByName[d2Name] || '';
 				const tdCountry = row.TechnicalDirectorCountry || '';
-				const cmName = row.CommercialManager || 'VACANT';
+				const cmName = row.CommercialManager || '';
 				tr.innerHTML = `
 	                <td>${row.Team}</td>
 	                <td>${this.renderDriverCell(d1Country, d1Name)}</td>
@@ -200,23 +202,27 @@ export default class GridView {
 		}
 	}
 
+	isVacant(name) {
+		return !name || name === 'VACANT' || name === 'Vacant';
+	}
+
 	renderDriverCell(country, name) {
-		if (!name || name === 'VACANT' || name === 'Vacant') {
-			return name || 'VACANT';
+		if (this.isVacant(name)) {
+			return '';
 		}
 		return `<button class="driver-link" data-driver-name="${name}">${renderFlagLabel(country, name)}</button>`;
 	}
 
 	renderStaffCell(country, name) {
-		if (!name || name === 'VACANT' || name === 'Vacant') {
-			return name || 'VACANT';
+		if (this.isVacant(name)) {
+			return '';
 		}
 		return renderFlagLabel(country, name);
 	}
 
 	renderSponsorCell(name) {
-		if (!name || name === 'VACANT' || name === 'Vacant') {
-			return 'VACANT';
+		if (this.isVacant(name)) {
+			return '';
 		}
 		const encodedOriginal = encodeURIComponent(name);
 		const encodedLower = encodeURIComponent(name.toLowerCase());
@@ -231,8 +237,8 @@ export default class GridView {
 	}
 
 	renderSupplierCell(name) {
-		if (!name || name === 'VACANT' || name === 'Vacant') {
-			return 'VACANT';
+		if (this.isVacant(name)) {
+			return '';
 		}
 
 		const slug = name.toLowerCase().replace(/\s+/g, '-');

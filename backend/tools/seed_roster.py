@@ -18,6 +18,7 @@ try:
         TEAMS_DATA,
         TEAM_BALANCES,
         TEAM_ENGINE_SUPPLIERS,
+        TEAM_OTHER_SPONSORSHIP,
         TEAM_SPEEDS,
         TEAM_TITLE_SPONSORS,
         TEAM_TYRE_SUPPLIERS,
@@ -43,6 +44,7 @@ except ModuleNotFoundError:
         TEAMS_DATA,
         TEAM_BALANCES,
         TEAM_ENGINE_SUPPLIERS,
+        TEAM_OTHER_SPONSORSHIP,
         TEAM_SPEEDS,
         TEAM_TITLE_SPONSORS,
         TEAM_TYRE_SUPPLIERS,
@@ -127,6 +129,10 @@ def seed_data(conn):
         c.executemany(
             'UPDATE teams SET title_sponsor_name = ?, title_sponsor_yearly = ? WHERE name = ?',
             [(s[0], s[1], team_name) for team_name, s in TEAM_TITLE_SPONSORS.items()]
+        )
+        c.executemany(
+            'UPDATE teams SET other_sponsorship_yearly = ? WHERE name = ?',
+            [(amount, name) for name, amount in TEAM_OTHER_SPONSORSHIP.items()]
         )
         c.executemany(
             'UPDATE teams SET engine_supplier_name = ?, engine_supplier_deal = ?, engine_supplier_yearly_cost = ? WHERE name = ?',
@@ -263,6 +269,14 @@ def seed_data(conn):
         [(s[2], s[1], s[0]) for s in TITLE_SPONSORS_DATA],
     )
     c.executemany(
+        'UPDATE teams SET title_sponsor_name = ?, title_sponsor_yearly = ? WHERE name = ?',
+        [(s[0], s[1], team_name) for team_name, s in TEAM_TITLE_SPONSORS.items()]
+    )
+    c.executemany(
+        'UPDATE teams SET other_sponsorship_yearly = ? WHERE name = ?',
+        [(amount, name) for name, amount in TEAM_OTHER_SPONSORSHIP.items()]
+    )
+    c.executemany(
         'UPDATE teams SET engine_supplier_name = ?, engine_supplier_deal = ?, engine_supplier_yearly_cost = ? WHERE name = ?',
         [(s[0], s[1], s[2], team_name) for team_name, s in TEAM_ENGINE_SUPPLIERS.items()]
     )
@@ -314,11 +328,16 @@ def seed_data(conn):
 
     teams_data_with_attrs = [(*t, TEAM_SPEEDS.get(t[1], 50), TEAM_WORKFORCE.get(t[1], 0)) for t in teams_data]
     teams_data_with_attrs = [
-        (*row, TEAM_TITLE_SPONSORS.get(row[1], (None, 0))[0], TEAM_TITLE_SPONSORS.get(row[1], (None, 0))[1])
+        (
+            *row,
+            TEAM_TITLE_SPONSORS.get(row[1], (None, 0))[0],
+            TEAM_TITLE_SPONSORS.get(row[1], (None, 0))[1],
+            TEAM_OTHER_SPONSORSHIP.get(row[1], 0),
+        )
         for row in teams_data_with_attrs
     ]
     c.executemany(
-        'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed, workforce, title_sponsor_name, title_sponsor_yearly) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed, workforce, title_sponsor_name, title_sponsor_yearly, other_sponsorship_yearly) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         teams_data_with_attrs
     )
     c.executemany(

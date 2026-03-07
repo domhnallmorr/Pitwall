@@ -28,6 +28,12 @@ export default class FinanceView {
 		this.sponsorPaidEl = document.getElementById('finance-sponsor-paid');
 		this.sponsorRemainingEl = document.getElementById('finance-sponsor-remaining');
 		this.sponsorLogoWrap = document.getElementById('finance-sponsor-logo-wrap');
+		this.otherSponsorshipNameEl = document.getElementById('finance-other-sponsorship-name');
+		this.otherSponsorshipAnnualEl = document.getElementById('finance-other-sponsorship-annual');
+		this.otherSponsorshipInstallmentEl = document.getElementById('finance-other-sponsorship-installment');
+		this.otherSponsorshipPaidEl = document.getElementById('finance-other-sponsorship-paid');
+		this.otherSponsorshipRemainingEl = document.getElementById('finance-other-sponsorship-remaining');
+		this.otherSponsorshipLogoWrap = document.getElementById('finance-other-sponsorship-logo-wrap');
 		this.engineSupplierNameEl = document.getElementById('finance-engine-supplier-name');
 		this.engineSupplierDealEl = document.getElementById('finance-engine-supplier-deal');
 		this.engineSupplierAnnualEl = document.getElementById('finance-engine-supplier-annual');
@@ -163,6 +169,19 @@ export default class FinanceView {
 				`;
 			}
 		}
+
+		const otherSponsorship = data.other_sponsorship || {};
+		const otherAnnual = otherSponsorship.annual_value || 0;
+		const otherInstallment = otherSponsorship.installment || 0;
+		const otherPaid = otherSponsorship.paid_so_far || 0;
+		const otherRemaining = otherSponsorship.remaining || 0;
+
+		if (this.otherSponsorshipNameEl) this.otherSponsorshipNameEl.textContent = 'Minor Sponsors';
+		if (this.otherSponsorshipAnnualEl) this.otherSponsorshipAnnualEl.textContent = '$' + otherAnnual.toLocaleString();
+		if (this.otherSponsorshipInstallmentEl) this.otherSponsorshipInstallmentEl.textContent = '$' + otherInstallment.toLocaleString();
+		if (this.otherSponsorshipPaidEl) this.otherSponsorshipPaidEl.textContent = '$' + otherPaid.toLocaleString();
+		if (this.otherSponsorshipRemainingEl) this.otherSponsorshipRemainingEl.textContent = '$' + otherRemaining.toLocaleString();
+		if (this.otherSponsorshipLogoWrap) this.otherSponsorshipLogoWrap.innerHTML = '';
 
 		const engineSupplier = data.engine_supplier || {};
 		const engineSupplierName = engineSupplier.name || 'Unassigned';

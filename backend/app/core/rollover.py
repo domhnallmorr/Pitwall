@@ -10,6 +10,7 @@ from app.core.roster import load_roster
 from app.core.car_performance import CarPerformanceManager
 from app.core.ai_car_development import AICarDevelopmentManager
 from app.core.transfers import TransferManager
+from app.core.management_transfers import CommercialManagerTransferManager
 from app.models.email import EmailCategory
 
 
@@ -27,6 +28,7 @@ class SeasonRolloverManager:
         self.car_performance_manager = CarPerformanceManager()
         self.ai_car_development_manager = AICarDevelopmentManager()
         self.transfer_manager = TransferManager()
+        self.cm_transfer_manager = CommercialManagerTransferManager()
         self.ai_workforce_min = 90
         self.ai_workforce_max = 250
 
@@ -70,6 +72,7 @@ class SeasonRolloverManager:
 
         # 7. Update drivers (age, etc.)
         self._update_drivers(state)
+        management_updates = self._update_management_staff(state)
 
         # 8. Degrade facilities to reflect aging infrastructure.
         facilities_updates = self._degrade_facilities(state)
@@ -119,6 +122,7 @@ class SeasonRolloverManager:
 
         # 12. Apply contract expiry and all announced transfer deals for the season that just ended.
         transfer_outcome = self.transfer_manager.apply_new_season_transfers(state, announced_year=old_year)
+        management_transfer_outcome = self.cm_transfer_manager.apply_new_season_transfers(state, announced_year=old_year)
 
         # 13. Fill any remaining vacancies from free agents
         signings = self.recruitment_manager.fill_vacancies(state)
@@ -199,7 +203,10 @@ class SeasonRolloverManager:
         # 21. Reset transfer planning for the new season and generate fresh AI plans.
         state.planned_ai_signings.clear()
         state.announced_ai_signings.clear()
+        state.planned_ai_cm_signings.clear()
+        state.announced_ai_cm_signings.clear()
         planned_transfers = self.transfer_manager.recompute_ai_signings(state)
+        planned_management_transfers = self.cm_transfer_manager.recompute_ai_signings(state)
         planned_car_updates = self.ai_car_development_manager.generate_for_season(state)
 
         return {
@@ -212,12 +219,15 @@ class SeasonRolloverManager:
             "ai_facilities_upgrades": ai_facilities_upgrades,
             "ai_workforce_updates": ai_workforce_updates,
             "new_entrants": new_entrants,
+            "management_updates": management_updates,
             "transfer_outcome": transfer_outcome,
+            "management_transfer_outcome": management_transfer_outcome,
             "signings": signings,
             "car_speed_updates": car_speed_updates,
             "next_season_prize_money": next_season_prize_money,
             "next_season_final_season_drivers": final_season_drivers,
             "planned_transfers": planned_transfers,
+            "planned_management_transfers": planned_management_transfers,
             "planned_car_updates": planned_car_updates,
         }
 
@@ -230,6 +240,56 @@ class SeasonRolloverManager:
         for driver in state.drivers:
             if driver.active:
                 driver.age += 1
+
+    def _update_management_staff(self, state: GameState) -> dict:
+        """
+        End-of-season updates for technical directors and commercial managers.
+        - Age increments by 1 for all management staff.
+        - Team-assigned contracts decrement by 1.
+        - Expired contracts vacate the role on the team.
+        """
+        teams_by_id = {team.id: team for team in state.teams}
+        expired_technical_directors = []
+        expired_commercial_managers = []
+
+        for director in state.technical_directors:
+            director.age += 1
+            if director.team_id is None:
+                continue
+            if director.contract_length > 1:
+                director.contract_length -= 1
+                continue
+
+            team = teams_by_id.get(director.team_id)
+            if team and team.technical_director_id == director.id:
+                team.technical_director_id = None
+            expired_technical_directors.append(
+                {"id": director.id, "name": director.name, "team_id": director.team_id, "team_name": team.name if team else None}
+            )
+            director.team_id = None
+            director.contract_length = 0
+
+        for manager in state.commercial_managers:
+            manager.age += 1
+            if manager.team_id is None:
+                continue
+            if manager.contract_length > 1:
+                manager.contract_length -= 1
+                continue
+
+            team = teams_by_id.get(manager.team_id)
+            if team and team.commercial_manager_id == manager.id:
+                team.commercial_manager_id = None
+            expired_commercial_managers.append(
+                {"id": manager.id, "name": manager.name, "team_id": manager.team_id, "team_name": team.name if team else None}
+            )
+            manager.team_id = None
+            manager.contract_length = 0
+
+        return {
+            "expired_technical_directors": expired_technical_directors,
+            "expired_commercial_managers": expired_commercial_managers,
+        }
 
     def _degrade_facilities(self, state: GameState) -> list[dict]:
         updates = []

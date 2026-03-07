@@ -106,8 +106,8 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     assert finance.prize_money_paid > 0
     assert finance.balance != starting_balance
     sponsorship_txs = [t for t in finance.transactions if t.category == TransactionCategory.SPONSORSHIP]
-    assert len(sponsorship_txs) == 1
-    assert sponsorship_txs[0].amount > 0
+    assert len(sponsorship_txs) == 2
+    assert all(t.amount > 0 for t in sponsorship_txs)
     transport_txs = [t for t in finance.transactions if t.category == TransactionCategory.TRANSPORT]
     assert len(transport_txs) == 1
     assert transport_txs[0].amount < 0
