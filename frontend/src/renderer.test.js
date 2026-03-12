@@ -117,6 +117,28 @@ describe('renderer smoke', () => {
 			<div id="race-view" style="display:none;"></div>
 			<div id="race-event-name"></div>
 			<div id="race-week-display"></div>
+			<div id="race-lap-counter"></div>
+			<div id="race-leader-display"></div>
+			<div id="race-fastest-lap-display"></div>
+			<div id="race-latest-commentary"></div>
+			<div id="race-commentary-log"></div>
+			<button id="race-tab-timing" class="race-tab-btn active" data-race-tab="timing"></button>
+			<button id="race-tab-chart" class="race-tab-btn" data-race-tab="chart"></button>
+			<button id="race-tab-laptimes" class="race-tab-btn" data-race-tab="laptimes"></button>
+			<div id="race-panel-timing"></div>
+			<div id="race-panel-chart" style="display:none;"></div>
+			<div id="race-panel-laptimes" style="display:none;"></div>
+			<div id="race-lap-chart-legend"></div>
+			<svg id="race-lap-chart-svg"></svg>
+			<select id="race-laptime-driver-1"></select>
+			<select id="race-laptime-driver-2"></select>
+			<select id="race-laptime-driver-3"></select>
+			<select id="race-laptime-driver-4"></select>
+			<div id="race-laptime-legend"></div>
+			<svg id="race-laptime-svg"></svg>
+			<button id="race-pause-btn"></button>
+			<button id="race-prev-lap-btn"></button>
+			<button id="race-next-lap-btn"></button>
 			<div id="race-results-container" style="display:none;"></div>
 			<table><tbody id="race-results-body"></tbody></table>
 			<div id="home-view" style="display:none;"></div>
@@ -181,6 +203,7 @@ describe('renderer smoke', () => {
 	});
 
 	it('handles key IPC update branches end-to-end', async () => {
+		vi.useFakeTimers();
 		let ipcHandler = null;
 		apiMock.onData.mockImplementation((cb) => { ipcHandler = cb; });
 
@@ -222,6 +245,30 @@ describe('renderer smoke', () => {
 			type: 'race_result',
 			status: 'success',
 			data: {
+				total_laps: 2,
+				lap_history: [
+					{
+						lap: 1,
+						order: [
+							{ driver_id: 1, position: 1, driver_name: 'A', team_name: 'T1', last_lap_ms: 83000, best_lap_ms: 83000, gap_display: 'LEADER', status: 'RUNNING' },
+							{ driver_id: 2, position: 2, driver_name: 'B', team_name: 'T2', last_lap_ms: 83500, best_lap_ms: 83500, gap_display: '+0.500s', status: 'RUNNING' },
+							{ driver_id: 3, position: 3, driver_name: 'C', team_name: 'T3', last_lap_ms: 84000, best_lap_ms: 84000, gap_display: '+1.000s', status: 'RUNNING' },
+						],
+						events: [{ type: 'fastest_lap', lap: 1, driver_name: 'A', lap_time_ms: 83000 }],
+					},
+					{
+						lap: 2,
+						order: [
+							{ driver_id: 1, position: 1, driver_name: 'A', team_name: 'T1', last_lap_ms: 83200, best_lap_ms: 83000, gap_display: 'LEADER', status: 'FINISHED' },
+							{ driver_id: 2, position: 2, driver_name: 'B', team_name: 'T2', last_lap_ms: 84000, best_lap_ms: 83500, gap_display: '+1 Lap', status: 'FINISHED' },
+							{ driver_id: 3, position: 3, driver_name: 'C', team_name: 'T3', last_lap_ms: null, best_lap_ms: 84000, gap_display: '+1 Lap', status: 'DNF' },
+						],
+						events: [
+							{ type: 'pit_stop', lap: 2, driver_id: 2, driver_name: 'B', stop_number: 1, fuel_added_kg: 20.0 },
+							{ type: 'position_change', lap: 2, driver_name: 'B', to_position: 2 },
+						],
+					},
+				],
 				results: [
 					{ position: 1, driver_name: 'A', team_name: 'T1', points: 10 },
 					{ status: 'DNF', crash_out: true, mechanical_out: false, driver_name: 'B', team_name: 'T2', points: 0 },
@@ -229,7 +276,29 @@ describe('renderer smoke', () => {
 				],
 			},
 		}));
+		await vi.advanceTimersByTimeAsync(950);
 		expect(document.getElementById('race-results-body').children.length).toBe(3);
+		expect(document.getElementById('race-lap-counter').textContent).toBe('2 / 2');
+		expect(document.getElementById('race-leader-display').textContent).toContain('A');
+		expect(document.getElementById('race-fastest-lap-display').textContent).toContain('A');
+		expect(document.getElementById('race-latest-commentary').textContent).toContain('Lap 2');
+		expect(document.getElementById('race-latest-commentary').textContent).toContain('moves up to P2');
+		expect(document.getElementById('race-commentary-log').textContent).toContain('fastest lap');
+		expect(document.getElementById('race-commentary-log').textContent).toContain('pits for fuel');
+		expect(document.getElementById('race-results-body').children[1].children[3].textContent).toBe('1');
+		expect(document.querySelectorAll('#race-lap-chart-svg .race-lap-chart-line').length).toBe(3);
+		expect(document.getElementById('race-lap-chart-legend').children.length).toBe(3);
+		expect(document.querySelectorAll('#race-laptime-svg .race-lap-chart-line').length).toBe(3);
+		expect(document.getElementById('race-laptime-legend').children.length).toBe(3);
+		expect(document.querySelectorAll('#race-laptime-svg .race-laptime-pit-marker').length).toBe(1);
+		expect(document.getElementById('race-laptime-legend').textContent).toContain('square = pit lap');
+		expect(document.getElementById('race-laptime-driver-1').value).toBe('1');
+		document.getElementById('race-tab-chart').click();
+		expect(document.getElementById('race-panel-chart').style.display).toBe('');
+		expect(document.getElementById('race-panel-timing').style.display).toBe('none');
+		document.getElementById('race-tab-laptimes').click();
+		expect(document.getElementById('race-panel-laptimes').style.display).toBe('');
+		expect(document.getElementById('race-panel-chart').style.display).toBe('none');
 		expect(apiMock.getFinance).toHaveBeenCalled();
 
 		ipcHandler(JSON.stringify({ type: 'car_development_started', status: 'success' }));
@@ -247,6 +316,52 @@ describe('renderer smoke', () => {
 			message: 'Unable to start',
 		}));
 		expect(facilitiesFns.renderPreview).toHaveBeenCalled();
+		vi.useRealTimers();
+	});
+
+	it('pauses and resumes race autoplay', async () => {
+		vi.useFakeTimers();
+		let ipcHandler = null;
+		apiMock.onData.mockImplementation((cb) => { ipcHandler = cb; });
+
+		await import('./renderer.js');
+
+		ipcHandler(JSON.stringify({
+			type: 'race_result',
+			status: 'success',
+			data: {
+				total_laps: 3,
+				lap_history: [
+					{
+						lap: 1,
+						order: [{ driver_id: 1, position: 1, driver_name: 'A', team_name: 'T1', last_lap_ms: 83000, best_lap_ms: 83000, gap_display: 'LEADER', status: 'RUNNING' }],
+						events: [],
+					},
+					{
+						lap: 2,
+						order: [{ driver_id: 1, position: 1, driver_name: 'A', team_name: 'T1', last_lap_ms: 83100, best_lap_ms: 83000, gap_display: 'LEADER', status: 'RUNNING' }],
+						events: [],
+					},
+					{
+						lap: 3,
+						order: [{ driver_id: 1, position: 1, driver_name: 'A', team_name: 'T1', last_lap_ms: 83200, best_lap_ms: 83000, gap_display: 'LEADER', status: 'FINISHED' }],
+						events: [],
+					},
+				],
+				results: [{ position: 1, driver_name: 'A', team_name: 'T1', points: 10 }],
+			},
+		}));
+
+		expect(document.getElementById('race-lap-counter').textContent).toBe('1 / 3');
+		document.getElementById('race-pause-btn').click();
+		expect(document.getElementById('race-pause-btn').textContent).toBe('Resume');
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(document.getElementById('race-lap-counter').textContent).toBe('1 / 3');
+		document.getElementById('race-pause-btn').click();
+		expect(document.getElementById('race-pause-btn').textContent).toBe('Pause');
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(document.getElementById('race-lap-counter').textContent).toBe('3 / 3');
+		vi.useRealTimers();
 	});
 
 	it('runs test/race control interactions and debug/load buttons', async () => {
@@ -312,6 +427,9 @@ describe('renderer smoke', () => {
 		expect(simulateBtn.textContent).toBe('SIMULATE RACE');
 		expect(simulateBtn.style.display).toBe('');
 		expect(document.getElementById('race-results-container').style.display).toBe('none');
+		expect(document.getElementById('race-commentary-log').textContent).toBe('');
+		expect(document.getElementById('race-lap-counter').textContent).toBe('0 / 0');
+		expect(document.getElementById('race-latest-commentary').textContent).toBe('Awaiting lights out.');
 
 		simulateBtn.click();
 		expect(apiMock.simulateRace).toHaveBeenCalledTimes(1);

@@ -208,7 +208,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   padding: 50px;
 }
 
@@ -243,4 +243,204 @@
 .race-results-table {
   max-width: 700px;
   margin: 20px auto;
+}
+
+.race-tab-bar {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 24px;
+}
+
+.race-tab-btn {
+  min-width: 140px;
+}
+
+.race-summary-bar {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.race-summary-block {
+  background: rgba(10, 25, 47, 0.92);
+  border: 1px solid rgba(100, 255, 218, 0.16);
+  border-radius: 10px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.race-summary-label {
+  color: #8892b0;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 1.3px;
+}
+
+.race-playback-controls {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.race-playback-controls .btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.race-live-layout {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+  gap: 24px;
+  margin-top: 18px;
+}
+
+.race-latest-commentary {
+  width: 100%;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: rgba(100, 255, 218, 0.08);
+  border: 1px solid rgba(100, 255, 218, 0.16);
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.race-timing-panel,
+.race-commentary-panel,
+.race-lap-chart-panel {
+  background: rgba(10, 25, 47, 0.92);
+  border: 1px solid rgba(100, 255, 218, 0.12);
+  border-radius: 14px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+}
+
+.race-timing-panel h2,
+.race-commentary-panel h2,
+.race-lap-chart-panel h2 {
+  margin-bottom: 14px;
+}
+
+.race-timing-panel .race-results-table {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.race-commentary-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+.race-commentary-item {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(17, 34, 64, 0.82);
+  border: 1px solid rgba(136, 146, 176, 0.14);
+  color: var(--text-color);
+  line-height: 1.45;
+}
+
+.race-lap-chart-wrap {
+  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.race-laptime-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.race-laptime-controls select {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 9px;
+  border: 1px solid rgba(100, 255, 218, 0.2);
+  background: rgba(17, 34, 64, 0.88);
+  color: var(--text-color);
+  font: inherit;
+}
+
+.race-lap-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.race-lap-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.race-lap-chart-legend-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
+}
+
+.race-lap-chart-svg {
+  width: 100%;
+  min-width: 720px;
+  height: 520px;
+  background: linear-gradient(180deg, rgba(17, 34, 64, 0.72) 0%, rgba(10, 25, 47, 0.92) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(100, 255, 218, 0.08);
+}
+
+.race-lap-chart-line {
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.08));
+}
+
+.race-lap-chart-point {
+  stroke: rgba(5, 14, 26, 0.85);
+  stroke-width: 2;
+}
+
+@media (max-width: 960px) {
+  .race-body {
+    padding: 32px 18px;
+  }
+
+  .race-header {
+    padding: 24px 18px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .race-summary-bar,
+  .race-live-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .race-playback-controls {
+    justify-content: stretch;
+  }
+
+  .race-laptime-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .race-playback-controls .btn-secondary {
+    flex: 1;
+  }
 }

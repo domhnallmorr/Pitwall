@@ -454,21 +454,86 @@
       </div>
 
       <div id="race-results-container" style="display: none;">
-        <h2>Race Results</h2>
-        <table class="data-table race-results-table">
-          <thead>
-            <tr>
-              <th>Pos</th>
-              <th>Driver</th>
-              <th>Team</th>
-              <th>Status</th>
-              <th>Points</th>
-            </tr>
-          </thead>
-          <tbody id="race-results-body">
-            <!-- JS populated -->
-          </tbody>
-        </table>
+        <div class="race-tab-bar">
+          <button id="race-tab-timing" class="tab-btn race-tab-btn active" data-race-tab="timing">Timing</button>
+          <button id="race-tab-chart" class="tab-btn race-tab-btn" data-race-tab="chart">Lap Chart</button>
+          <button id="race-tab-laptimes" class="tab-btn race-tab-btn" data-race-tab="laptimes">Laptimes</button>
+        </div>
+
+        <div id="race-panel-timing" class="race-tab-panel">
+          <div class="race-summary-bar">
+            <div class="race-summary-block">
+              <span class="race-summary-label">Lap</span>
+              <strong id="race-lap-counter">0 / 0</strong>
+            </div>
+            <div class="race-summary-block">
+              <span class="race-summary-label">Leader</span>
+              <strong id="race-leader-display">-</strong>
+            </div>
+            <div class="race-summary-block">
+              <span class="race-summary-label">Fastest Lap</span>
+              <strong id="race-fastest-lap-display">-</strong>
+            </div>
+          </div>
+          <div class="race-playback-controls">
+            <button id="race-pause-btn" class="btn-secondary">Pause</button>
+            <button id="race-prev-lap-btn" class="btn-secondary">Previous Lap</button>
+            <button id="race-next-lap-btn" class="btn-secondary">Next Lap</button>
+          </div>
+          <div id="race-latest-commentary" class="race-latest-commentary">Awaiting lights out.</div>
+          <div class="race-live-layout">
+            <div class="race-timing-panel">
+              <h2>Timing Screen</h2>
+              <table class="data-table race-results-table">
+                <thead>
+                  <tr>
+                    <th>Pos</th>
+                    <th>Driver</th>
+                    <th>Team</th>
+                    <th>Stops</th>
+                    <th>Last</th>
+                    <th>Best</th>
+                    <th>Gap</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="race-results-body">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+            <div class="race-commentary-panel">
+              <h2>Commentary</h2>
+              <div id="race-commentary-log" class="race-commentary-log"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="race-panel-chart" class="race-tab-panel" style="display: none;">
+          <div class="race-lap-chart-panel">
+            <h2>Lap Chart</h2>
+            <div class="race-lap-chart-wrap">
+              <div id="race-lap-chart-legend" class="race-lap-chart-legend"></div>
+              <svg id="race-lap-chart-svg" class="race-lap-chart-svg" viewBox="0 0 900 520" preserveAspectRatio="none"></svg>
+            </div>
+          </div>
+        </div>
+
+        <div id="race-panel-laptimes" class="race-tab-panel" style="display: none;">
+          <div class="race-lap-chart-panel">
+            <h2>Laptime Comparison</h2>
+            <div class="race-laptime-controls">
+              <select id="race-laptime-driver-1"></select>
+              <select id="race-laptime-driver-2"></select>
+              <select id="race-laptime-driver-3"></select>
+              <select id="race-laptime-driver-4"></select>
+            </div>
+            <div class="race-lap-chart-wrap">
+              <div id="race-laptime-legend" class="race-lap-chart-legend"></div>
+              <svg id="race-laptime-svg" class="race-lap-chart-svg" viewBox="0 0 900 520" preserveAspectRatio="none"></svg>
+            </div>
+          </div>
+        </div>
         <div class="race-controls" style="margin-top: 30px;">
           <button id="return-dashboard-btn" class="btn-advance">RETURN TO DASHBOARD</button>
         </div>

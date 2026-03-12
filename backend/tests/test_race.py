@@ -1,10 +1,11 @@
-import pytest
 import random
-from app.race.race_manager import RaceManager, POINTS_TABLE
-from app.models.state import GameState
+
 from app.models.calendar import Calendar, Event, EventType
+from app.models.circuit import Circuit
 from app.models.driver import Driver
+from app.models.state import GameState
 from app.models.team import Team
+from app.race.race_manager import RaceManager
 
 
 def create_race_state():
@@ -21,16 +22,33 @@ def create_race_state():
     ]
     event = Event(name="Test GP", week=1, type=EventType.RACE)
     calendar = Calendar(events=[event], current_week=1)
-    return GameState(year=1998, teams=teams, drivers=drivers, calendar=calendar, circuits=[])
+    circuits = [
+        Circuit(
+            id=1,
+            name="Test GP",
+            country="Nowhere",
+            location="Testville",
+            laps=12,
+            base_laptime_ms=84_000,
+            length_km=4.2,
+            overtaking_delta=1.2,
+            power_factor=1.0,
+        )
+    ]
+    return GameState(year=1998, teams=teams, drivers=drivers, calendar=calendar, circuits=circuits)
 
 
-def test_simulate_race_returns_all_drivers():
+def test_simulate_race_returns_all_drivers_and_lap_history():
     state = create_race_state()
     manager = RaceManager()
     manager._pick_crash_count = lambda _: 0
     result = manager.simulate_race(state)
 
     assert len(result["results"]) == 4
+    assert result["total_laps"] == 12
+    assert len(result["lap_history"]) == 12
+    assert result["lap_history"][0]["lap"] == 1
+    assert len(result["lap_history"][0]["order"]) == 4
     positions = [r["position"] for r in result["results"]]
     assert positions == [1, 2, 3, 4]
 
@@ -39,14 +57,12 @@ def test_simulate_race_awards_points():
     state = create_race_state()
     manager = RaceManager()
     manager._pick_crash_count = lambda _: 0
-    result = manager.simulate_race(state)
+    manager.simulate_race(state)
 
-    # Total points awarded should equal sum of top positions available
-    # With 4 drivers: P1=10, P2=6, P3=4, P4=3 = 23
     total_driver_points = sum(d.points for d in state.drivers)
     total_team_points = sum(t.points for t in state.teams)
 
-    assert total_driver_points == 23  # 10+6+4+3
+    assert total_driver_points == 23
     assert total_team_points == 23
 
 
@@ -79,9 +95,9 @@ def test_simulate_race_increments_race_starts_for_participants():
     result = manager.simulate_race(state)
     participant_ids = {r["driver_id"] for r in result["results"]}
 
-    for d in state.drivers:
-        expected = before[d.id] + (1 if d.id in participant_ids else 0)
-        assert d.race_starts == expected
+    for driver in state.drivers:
+        expected = before[driver.id] + (1 if driver.id in participant_ids else 0)
+        assert driver.race_starts == expected
 
 
 def test_simulate_race_increments_wins_for_winner_only():
@@ -93,9 +109,9 @@ def test_simulate_race_increments_wins_for_winner_only():
     result = manager.simulate_race(state)
     winner_id = result["results"][0]["driver_id"]
 
-    for d in state.drivers:
-        expected = before[d.id] + (1 if d.id == winner_id else 0)
-        assert d.wins == expected
+    for driver in state.drivers:
+        expected = before[driver.id] + (1 if driver.id == winner_id else 0)
+        assert driver.wins == expected
 
 
 def test_simulate_race_records_driver_season_results():
@@ -132,11 +148,8 @@ def test_simulate_race_weighting_favors_faster_driver_and_car():
 
     for _ in range(runs):
         state = create_race_state()
-        # Strong favorite: Driver A1 in a fast car.
         state.drivers[0].speed = 100
         state.teams[0].car_speed = 95
-
-        # Keep everyone else slower.
         state.drivers[1].speed = 25
         state.drivers[2].speed = 30
         state.drivers[3].speed = 20
@@ -147,7 +160,7 @@ def test_simulate_race_weighting_favors_faster_driver_and_car():
         if result["results"][0]["driver_id"] == 1:
             wins_for_fastest += 1
 
-    assert wins_for_fastest > 120
+    assert wins_for_fastest > 150
 
 
 def test_simulate_race_can_include_crash_outs_and_marks_dnf():
@@ -157,7 +170,7 @@ def test_simulate_race_can_include_crash_outs_and_marks_dnf():
 
     result = manager.simulate_race(state)
 
-    crash_results = [r for r in result["results"] if r.get("status") == "DNF"]
+    crash_results = [r for r in result["results"] if r.get("crash_out")]
     finished_results = [r for r in result["results"] if r.get("status") == "FINISHED"]
 
     assert len(crash_results) == 2
@@ -173,15 +186,14 @@ def test_simulate_race_can_include_mechanical_outs_with_player_team():
     state.player_team_id = 1
     manager = RaceManager()
     manager._pick_crash_count = lambda _: 0
-    manager._weighted_finish_order = lambda participants: participants
     random.seed(1)
 
     original_random = random.random
     values = iter([
-        0.0,  # player driver 1 fails mechanically (wear-based chance > 0)
-        0.99, # player driver 2 survives
-        0.0,  # AI driver 1 fails mechanically (flat AI chance)
-        0.99, # AI driver 2 survives
+        0.0,
+        0.99,
+        0.0,
+        0.99,
     ])
     random.random = lambda: next(values)
     try:
@@ -194,3 +206,246 @@ def test_simulate_race_can_include_mechanical_outs_with_player_team():
     assert len(mechanical_results) == 2
     assert all(r["status"] == "DNF" for r in mechanical_results)
     assert len(result["mechanical_outs"]) == 2
+
+
+def test_simulate_race_marks_lapped_cars_on_timing_screen():
+    state = create_race_state()
+    state.circuits[0].laps = 40
+    state.drivers[0].speed = 100
+    state.teams[0].car_speed = 100
+    state.drivers[3].speed = 5
+    state.teams[1].car_speed = 5
+    manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
+
+    result = manager.simulate_race(state)
+    final_order = result["lap_history"][-1]["order"]
+
+    assert any(row["gap_display"].endswith("Lap") or row["gap_display"].endswith("Laps") for row in final_order[1:])
+
+
+def test_simulate_race_keeps_second_place_on_time_gap_early_in_race():
+    state = create_race_state()
+    manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
+
+    result = manager.simulate_race(state)
+    lap_two_order = result["lap_history"][1]["order"]
+
+    assert lap_two_order[1]["gap_display"].endswith('s')
+
+
+def test_heavier_fuel_load_makes_lap_time_slower():
+    state = create_race_state()
+    manager = RaceManager()
+    circuit = state.circuits[0]
+    entrant = {
+        "performance_weight": 50,
+        "car_speed": 50,
+        "fuel_kg": 100.0,
+        "stint_laps": 0,
+    }
+
+    original_randint = random.randint
+    random.randint = lambda a, b: 0
+    try:
+        heavy = manager._lap_time_ms(entrant, circuit)
+        entrant["fuel_kg"] = 30.0
+        light = manager._lap_time_ms(entrant, circuit)
+    finally:
+        random.randint = original_randint
+
+    assert heavy > light
+
+
+def test_tyre_wear_makes_lap_time_slower():
+    state = create_race_state()
+    manager = RaceManager()
+    circuit = state.circuits[0]
+    entrant = {
+        "performance_weight": 50,
+        "car_speed": 50,
+        "fuel_kg": 0.0,
+        "stint_laps": 0,
+    }
+
+    original_randint = random.randint
+    random.randint = lambda a, b: 0
+    try:
+        fresh = manager._lap_time_ms(entrant, circuit)
+        entrant["stint_laps"] = 12
+        worn = manager._lap_time_ms(entrant, circuit)
+    finally:
+        random.randint = original_randint
+
+    assert worn > fresh
+
+
+def test_assign_strategy_generates_valid_pit_windows():
+    state = create_race_state()
+    manager = RaceManager()
+    circuit = state.circuits[0]
+    entrant = {"driver_id": 1}
+
+    for _ in range(25):
+        manager._assign_fuel_strategy(entrant, circuit)
+        stops = entrant["planned_pit_laps"]
+        assert entrant["planned_stops"] in (1, 2, 3)
+        assert len(stops) == entrant["planned_stops"]
+        assert stops == sorted(stops)
+        assert all(1 < lap < circuit.laps - 1 for lap in stops)
+
+
+def test_simulate_race_emits_pit_stop_events():
+    state = create_race_state()
+    manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
+
+    original_assign = manager._assign_fuel_strategy
+
+    def forced_strategy(entrant, circuit):
+        original_assign(entrant, circuit)
+        entrant["planned_stops"] = 1
+        entrant["planned_pit_laps"] = [4]
+        entrant["completed_stops"] = 0
+        entrant["fuel_kg"] = manager._fuel_for_stint(circuit, 4)
+
+    manager._assign_fuel_strategy = forced_strategy
+    result = manager.simulate_race(state)
+
+    pit_events = [
+        event
+        for lap in result["lap_history"]
+        for event in lap.get("events", [])
+        if event.get("type") == "pit_stop"
+    ]
+
+    assert len(pit_events) == 4
+    assert all(event["lap"] == 4 for event in pit_events)
+
+
+def test_pit_stop_resets_tyre_wear_for_next_lap():
+    state = create_race_state()
+    state.circuits[0].laps = 6
+    manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
+
+    original_assign = manager._assign_fuel_strategy
+
+    def forced_strategy(entrant, circuit):
+        original_assign(entrant, circuit)
+        entrant["planned_stops"] = 1
+        entrant["planned_pit_laps"] = [4]
+        entrant["completed_stops"] = 0
+        entrant["fuel_kg"] = 0
+        entrant["stint_laps"] = 0
+
+    manager._assign_fuel_strategy = forced_strategy
+    original_randint = random.randint
+    random.randint = lambda a, b: 0
+    try:
+        result = manager.simulate_race(state)
+    finally:
+        manager._assign_fuel_strategy = original_assign
+        random.randint = original_randint
+
+    driver_one_rows = [
+        next(row for row in lap["order"] if row["driver_id"] == 1)
+        for lap in result["lap_history"]
+    ]
+    lap4 = next(row for row in driver_one_rows if row["laps_completed"] == 4)
+    lap5 = next(row for row in driver_one_rows if row["laps_completed"] == 5)
+
+    assert lap4["last_lap_ms"] > lap5["last_lap_ms"]
+
+
+def test_dirty_air_penalty_applies_within_threshold():
+    manager = RaceManager()
+    assert manager._dirty_air_penalty_ms(1_200, same_lap=True) == 500
+    assert manager._dirty_air_penalty_ms(1_500, same_lap=True) == 500
+    assert manager._dirty_air_penalty_ms(1_501, same_lap=True) == 0
+
+
+def test_dirty_air_penalty_does_not_apply_off_lap():
+    manager = RaceManager()
+    assert manager._dirty_air_penalty_ms(500, same_lap=False) == 0
+
+
+def test_overtake_attempt_requires_track_delta():
+    manager = RaceManager()
+    assert manager._should_attempt_pass(1_999, 2_000) is False
+    assert manager._should_attempt_pass(2_000, 2_000) is True
+
+
+def test_overtake_success_uses_roll():
+    manager = RaceManager()
+    original_randint = random.randint
+    try:
+        random.randint = lambda a, b: 200
+        assert manager._pass_succeeds() is True
+        random.randint = lambda a, b: 950
+        assert manager._pass_succeeds() is False
+    finally:
+        random.randint = original_randint
+
+
+def test_simulate_race_emits_overtake_event_when_pass_succeeds():
+    state = create_race_state()
+    state.circuits[0].overtaking_delta = 0
+    manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
+
+    original_success = manager._pass_succeeds
+    original_lap_time = manager._lap_time_ms
+    original_assign = manager._assign_fuel_strategy
+    original_grid = manager._grid_score
+
+    def forced_success():
+        return True
+
+    lap_times = {
+        1: [83_500, 84_500],
+        2: [84_500, 83_000],
+        3: [84_000, 84_000],
+        4: [84_000, 84_000],
+    }
+
+    def forced_lap_time(entrant, circuit):
+        sequence = lap_times.get(entrant["driver_id"], [84_000])
+        index = entrant.get("laps_completed", 0)
+        return sequence[min(index, len(sequence) - 1)]
+
+    def forced_strategy(entrant, circuit):
+        entrant["planned_stops"] = 0
+        entrant["planned_pit_laps"] = []
+        entrant["completed_stops"] = 0
+        entrant["fuel_kg"] = 0
+
+    def forced_grid(entrant):
+        return {
+            1: 1000,
+            2: 900,
+            3: 800,
+            4: 700,
+        }[entrant["driver_id"]]
+
+    manager._pass_succeeds = forced_success
+    manager._lap_time_ms = forced_lap_time
+    manager._assign_fuel_strategy = forced_strategy
+    manager._grid_score = forced_grid
+    try:
+        result = manager.simulate_race(state)
+    finally:
+        manager._pass_succeeds = original_success
+        manager._lap_time_ms = original_lap_time
+        manager._assign_fuel_strategy = original_assign
+        manager._grid_score = original_grid
+
+    overtake_events = [
+        event
+        for lap in result["lap_history"]
+        for event in lap.get("events", [])
+        if event.get("type") == "position_change"
+    ]
+    assert len(overtake_events) > 0
+    assert result["lap_history"][1]["order"][0]["driver_id"] == 2
