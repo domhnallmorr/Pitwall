@@ -28,6 +28,7 @@ function stopRaceAutoplay() {
 function activateRaceTab(tabName = 'timing') {
 	const tabButtons = document.querySelectorAll('.race-tab-btn');
 	const timingPanel = document.getElementById('race-panel-timing');
+	const commentaryPanel = document.getElementById('race-panel-commentary');
 	const chartPanel = document.getElementById('race-panel-chart');
 	const laptimesPanel = document.getElementById('race-panel-laptimes');
 
@@ -35,6 +36,7 @@ function activateRaceTab(tabName = 'timing') {
 		button.classList.toggle('active', button.dataset.raceTab === tabName);
 	});
 	if (timingPanel) timingPanel.style.display = tabName === 'timing' ? '' : 'none';
+	if (commentaryPanel) commentaryPanel.style.display = tabName === 'commentary' ? '' : 'none';
 	if (chartPanel) chartPanel.style.display = tabName === 'chart' ? '' : 'none';
 	if (laptimesPanel) laptimesPanel.style.display = tabName === 'laptimes' ? '' : 'none';
 }
@@ -180,6 +182,9 @@ function buildCommentaryLine(event, timingRows) {
 	if (event.type === 'position_change') {
 		return `Lap ${event.lap}: ${event.driver_name} moves up to P${event.to_position}.`;
 	}
+	if (event.type === 'lead_change') {
+		return `Lap ${event.lap}: ${event.driver_name} takes the lead.`;
+	}
 	if (event.type === 'pit_stop') {
 		return `Lap ${event.lap}: ${event.driver_name} pits for fuel, stop ${event.stop_number}.`;
 	}
@@ -189,9 +194,7 @@ function buildCommentaryLine(event, timingRows) {
 	if (event.type === 'retirement') {
 		return `Lap ${event.lap}: ${event.driver_name} retires with a ${event.reason}.`;
 	}
-	const leader = timingRows?.[0];
-	if (!leader) return null;
-	return `Lap ${event.lap}: ${leader.driver_name} leads the field.`;
+	return null;
 }
 
 function buildPitStopCounts(lapHistory, lapNumber) {
@@ -629,25 +632,31 @@ function renderLapSnapshot(data, lapIndex) {
 
 	if (commentaryLog) {
 		const lines = [];
+		let previousLeaderId = null;
 		for (const lap of lapHistory.slice(0, snapshot.lap)) {
-			if (!Array.isArray(lap.events) || !lap.events.length) {
-				const fallback = buildCommentaryLine({ lap: lap.lap }, lap.order);
-				if (fallback) lines.push(fallback);
-				continue;
+			const currentLeader = Array.isArray(lap.order) ? lap.order[0] : null;
+			if (currentLeader && previousLeaderId !== null && currentLeader.driver_id !== previousLeaderId) {
+				const line = buildCommentaryLine({
+					type: 'lead_change',
+					lap: lap.lap,
+					driver_name: currentLeader.driver_name,
+				}, lap.order);
+				if (line) lines.push(line);
 			}
-			lap.events.forEach((event) => {
+			(Array.isArray(lap.events) ? lap.events : []).forEach((event) => {
 				const line = buildCommentaryLine(event, lap.order);
 				if (line) lines.push(line);
 			});
+			if (currentLeader) previousLeaderId = currentLeader.driver_id;
 		}
 		commentaryLog.innerHTML = '';
-		lines.slice(-12).forEach((line) => {
+		lines.forEach((line) => {
 			const item = document.createElement('div');
 			item.className = 'race-commentary-item';
 			item.textContent = line;
 			commentaryLog.appendChild(item);
 		});
-		if (latestCommentary) latestCommentary.textContent = lines.at(-1) || `Lap ${snapshot.lap}: ${leader?.driver_name || 'Race'} leads.`;
+		if (latestCommentary) latestCommentary.textContent = lines.at(-1) || 'Awaiting the next flashpoint.';
 	}
 
 	if (prevBtn) prevBtn.disabled = snapshot.lap <= 1;
@@ -710,6 +719,7 @@ export function renderRaceResults(data) {
 	const nextBtn = document.getElementById('race-next-lap-btn');
 	const pauseBtn = document.getElementById('race-pause-btn');
 	const timingTab = document.getElementById('race-tab-timing');
+	const commentaryTab = document.getElementById('race-tab-commentary');
 	const chartTab = document.getElementById('race-tab-chart');
 	const laptimesTab = document.getElementById('race-tab-laptimes');
 
@@ -743,6 +753,7 @@ export function renderRaceResults(data) {
 		renderLapChart(data);
 		renderLaptimeChart(data);
 		if (timingTab) timingTab.onclick = () => activateRaceTab('timing');
+		if (commentaryTab) commentaryTab.onclick = () => activateRaceTab('commentary');
 		if (chartTab) chartTab.onclick = () => activateRaceTab('chart');
 		if (laptimesTab) laptimesTab.onclick = () => activateRaceTab('laptimes');
 		if (prevBtn) prevBtn.onclick = () => {

@@ -123,9 +123,11 @@ describe('renderer smoke', () => {
 			<div id="race-latest-commentary"></div>
 			<div id="race-commentary-log"></div>
 			<button id="race-tab-timing" class="race-tab-btn active" data-race-tab="timing"></button>
+			<button id="race-tab-commentary" class="race-tab-btn" data-race-tab="commentary"></button>
 			<button id="race-tab-chart" class="race-tab-btn" data-race-tab="chart"></button>
 			<button id="race-tab-laptimes" class="race-tab-btn" data-race-tab="laptimes"></button>
 			<div id="race-panel-timing"></div>
+			<div id="race-panel-commentary" style="display:none;"></div>
 			<div id="race-panel-chart" style="display:none;"></div>
 			<div id="race-panel-laptimes" style="display:none;"></div>
 			<div id="race-lap-chart-legend"></div>
@@ -296,9 +298,12 @@ describe('renderer smoke', () => {
 		document.getElementById('race-tab-chart').click();
 		expect(document.getElementById('race-panel-chart').style.display).toBe('');
 		expect(document.getElementById('race-panel-timing').style.display).toBe('none');
+		document.getElementById('race-tab-commentary').click();
+		expect(document.getElementById('race-panel-commentary').style.display).toBe('');
+		expect(document.getElementById('race-panel-chart').style.display).toBe('none');
 		document.getElementById('race-tab-laptimes').click();
 		expect(document.getElementById('race-panel-laptimes').style.display).toBe('');
-		expect(document.getElementById('race-panel-chart').style.display).toBe('none');
+		expect(document.getElementById('race-panel-commentary').style.display).toBe('none');
 		expect(apiMock.getFinance).toHaveBeenCalled();
 
 		ipcHandler(JSON.stringify({ type: 'car_development_started', status: 'success' }));

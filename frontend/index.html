@@ -456,6 +456,7 @@
       <div id="race-results-container" style="display: none;">
         <div class="race-tab-bar">
           <button id="race-tab-timing" class="tab-btn race-tab-btn active" data-race-tab="timing">Timing</button>
+          <button id="race-tab-commentary" class="tab-btn race-tab-btn" data-race-tab="commentary">Commentary</button>
           <button id="race-tab-chart" class="tab-btn race-tab-btn" data-race-tab="chart">Lap Chart</button>
           <button id="race-tab-laptimes" class="tab-btn race-tab-btn" data-race-tab="laptimes">Laptimes</button>
         </div>
@@ -481,31 +482,32 @@
             <button id="race-next-lap-btn" class="btn-secondary">Next Lap</button>
           </div>
           <div id="race-latest-commentary" class="race-latest-commentary">Awaiting lights out.</div>
-          <div class="race-live-layout">
-            <div class="race-timing-panel">
-              <h2>Timing Screen</h2>
-              <table class="data-table race-results-table">
-                <thead>
-                  <tr>
-                    <th>Pos</th>
-                    <th>Driver</th>
-                    <th>Team</th>
-                    <th>Stops</th>
-                    <th>Last</th>
-                    <th>Best</th>
-                    <th>Gap</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody id="race-results-body">
-                  <!-- JS populated -->
-                </tbody>
-              </table>
-            </div>
-            <div class="race-commentary-panel">
-              <h2>Commentary</h2>
-              <div id="race-commentary-log" class="race-commentary-log"></div>
-            </div>
+          <div class="race-timing-panel">
+            <h2>Timing Screen</h2>
+            <table class="data-table race-results-table">
+              <thead>
+                <tr>
+                  <th>Pos</th>
+                  <th>Driver</th>
+                  <th>Team</th>
+                  <th>Stops</th>
+                  <th>Last</th>
+                  <th>Best</th>
+                  <th>Gap</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="race-results-body">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="race-panel-commentary" class="race-tab-panel" style="display: none;">
+          <div class="race-commentary-panel">
+            <h2>Commentary</h2>
+            <div id="race-commentary-log" class="race-commentary-log"></div>
           </div>
         </div>
 
