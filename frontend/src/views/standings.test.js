@@ -42,4 +42,32 @@ describe('StandingsView', () => {
 		expect(document.getElementById('standings-content-drivers').style.display).toBe('none');
 		expect(document.getElementById('standings-content-constructors').style.display).toBe('block');
 	});
+
+	it('renders constructors and toggles back to drivers tab', () => {
+		standingsView.render({
+			drivers: [{ name: 'Driver A', country: 'UK', points: 12 }],
+			constructors: [{ name: 'Team A', country: 'Italy', points: 20 }],
+		});
+
+		expect(document.getElementById('constructor-standings-body').textContent).toContain('Team A');
+
+		const constructorsBtn = document.querySelector('.standings-tab-btn[data-type="constructors"]');
+		const driversBtn = document.querySelector('.standings-tab-btn[data-type="drivers"]');
+		constructorsBtn.click();
+		driversBtn.click();
+
+		expect(document.getElementById('standings-content-drivers').style.display).toBe('block');
+		expect(document.getElementById('standings-content-constructors').style.display).toBe('none');
+		expect(driversBtn.classList.contains('active')).toBe(true);
+	});
+
+	it('clicking a driver without a handler does nothing', () => {
+		standingsView.render({
+			drivers: [{ name: 'No Handler Driver', country: 'France', points: 3 }],
+			constructors: [],
+		});
+
+		const link = document.querySelector('.driver-link[data-driver-name="No Handler Driver"]');
+		expect(() => link.click()).not.toThrow();
+	});
 });

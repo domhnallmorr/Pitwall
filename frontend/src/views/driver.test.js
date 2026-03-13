@@ -66,4 +66,43 @@ describe('DriverView', () => {
 		const seasonHtml = document.getElementById('driver-season-results-container').textContent;
 		expect(seasonHtml).toContain('DNF');
 	});
+
+	it('renders driver not found state and clears season results', () => {
+		driverView.render({
+			name: 'Existing Driver',
+			season_results: [{ round: 1, country: 'Australia', position: 1 }],
+		});
+
+		driverView.render(null);
+
+		expect(document.getElementById('driver-profile-title').textContent).toBe('Driver Profile');
+		expect(document.getElementById('driver-profile-container').textContent).toContain('Driver not found');
+		expect(document.getElementById('driver-season-results-container').innerHTML).toBe('');
+		expect(driverView.currentDriverName).toBe(null);
+	});
+
+	it('renders free agent, pay driver, empty season, and speed clamps', () => {
+		expect(driverView.getSpeedRating('bad')).toBe(1);
+		expect(driverView.getSpeedRating(500)).toBe(5);
+		expect(driverView.renderSpeedBlocks(0)).toContain('Speed rating 1 out of 5');
+
+		driverView.render({
+			name: 'Test Driver',
+			team_name: '',
+			age: 19,
+			country: 'Ireland',
+			speed: 0,
+			race_starts: 0,
+			wins: 0,
+			points: 0,
+			wage: -500000,
+			pay_driver: true,
+			season_results: [],
+		});
+
+		const profileHtml = document.getElementById('driver-profile-container').innerHTML;
+		expect(profileHtml).toContain('Free Agent');
+		expect(profileHtml).toContain('Pay Driver');
+		expect(document.getElementById('driver-season-results-container').textContent).toContain('No race results recorded this season yet');
+	});
 });

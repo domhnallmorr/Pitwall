@@ -1,0 +1,145 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { enterRaceView, exitRaceView, renderRaceResults } from './race_helpers.js';
+
+vi.mock('./race_charts.js', () => ({
+	formatLapTime: (ms) => (!Number.isFinite(ms) || ms <= 0 ? '-' : (ms / 1000).toFixed(3) + 's'),
+	renderLapChart: vi.fn(),
+	renderLaptimeChart: vi.fn(),
+}));
+
+describe('race_helpers', () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+		document.body.innerHTML = `
+			<div id="race-view" style="display:none;"></div>
+			<div id="race-event-name"></div>
+			<div id="race-week-display"></div>
+			<button id="simulate-race-btn" style="display:none;"></button>
+			<div id="race-results-container" data-active-lap-index="1" style="display:none;"></div>
+			<div id="race-commentary-log"></div>
+			<div id="race-lap-counter"></div>
+			<div id="race-leader-display"></div>
+			<div id="race-fastest-lap-display"></div>
+			<div id="race-latest-commentary"></div>
+			<button id="race-pause-btn"></button>
+			<button id="race-prev-lap-btn"></button>
+			<button id="race-next-lap-btn"></button>
+			<button id="race-tab-timing" class="race-tab-btn" data-race-tab="timing"></button>
+			<button id="race-tab-commentary" class="race-tab-btn" data-race-tab="commentary"></button>
+			<button id="race-tab-chart" class="race-tab-btn" data-race-tab="chart"></button>
+			<button id="race-tab-laptimes" class="race-tab-btn" data-race-tab="laptimes"></button>
+			<div id="race-panel-timing"></div>
+			<div id="race-panel-commentary" style="display:none;"></div>
+			<div id="race-panel-chart" style="display:none;"></div>
+			<div id="race-panel-laptimes" style="display:none;"></div>
+			<table><tbody id="race-results-body"></tbody></table>
+			<svg id="race-lap-chart-svg"></svg>
+			<div id="race-lap-chart-legend"></div>
+			<svg id="race-laptime-svg"></svg>
+			<div id="race-laptime-legend"></div>
+			<select id="race-laptime-driver-1"></select>
+			<select id="race-laptime-driver-2"></select>
+			<select id="race-laptime-driver-3"></select>
+			<select id="race-laptime-driver-4"></select>
+			<button id="advance-btn" class="event-active">GO TO RACE</button>
+		`;
+	});
+
+	it('renders fallback results without lap history and resets race view on exit', () => {
+		const nextEventEl = { textContent: 'Next: Monaco Grand Prix - Week 6' };
+		const weekEl = { textContent: 'Week 6 1998' };
+		enterRaceView(nextEventEl, weekEl);
+		expect(document.getElementById('race-view').style.display).toBe('flex');
+		expect(document.getElementById('race-event-name').textContent).toBe('Monaco Grand Prix');
+
+		renderRaceResults({
+			results: [
+				{ position: 1, driver_name: 'A', team_name: 'T1', points: 10 },
+				{ status: 'DNF', driver_name: 'B', team_name: 'T2', crash_out: true, mechanical_out: false },
+				{ status: 'DNF', driver_name: 'C', team_name: 'T3', crash_out: false, mechanical_out: true },
+				{ status: 'DNF', driver_name: 'D', team_name: 'T4', crash_out: false, mechanical_out: false },
+			],
+		});
+
+		const rows = document.getElementById('race-results-body').children;
+		expect(rows).toHaveLength(4);
+		expect(rows[1].children[7].textContent).toBe('Crash');
+		expect(rows[2].children[7].textContent).toBe('Mechanical');
+		expect(rows[3].children[7].textContent).toBe('DNF');
+		expect(document.getElementById('race-pause-btn').disabled).toBe(true);
+
+		exitRaceView();
+		expect(document.getElementById('race-view').style.display).toBe('none');
+		expect(document.getElementById('advance-btn').textContent).toBe('ADVANCE');
+		expect(document.getElementById('advance-btn').classList.contains('event-active')).toBe(false);
+	});
+
+	it('allows manual prev/next stepping and commentary tab switching during lap replay', async () => {
+		renderRaceResults({
+			total_laps: 3,
+			lap_history: [
+				{
+					lap: 1,
+					order: [{ driver_id: 1, position: 1, driver_name: 'A', team_name: 'T1', last_lap_ms: 83000, best_lap_ms: 83000, gap_display: 'LEADER', status: 'RUNNING' }],
+					events: [],
+				},
+				{
+					lap: 2,
+					order: [{ driver_id: 1, position: 1, driver_name: 'A', team_name: 'T1', last_lap_ms: 83100, best_lap_ms: 83000, gap_display: 'LEADER', status: 'RUNNING' }],
+					events: [{ type: 'retirement', lap: 2, driver_name: 'B', reason: 'engine' }],
+				},
+				{
+					lap: 3,
+					order: [{ driver_id: 1, position: 1, driver_name: 'C', team_name: 'T1', last_lap_ms: 83200, best_lap_ms: 83000, gap_display: 'LEADER', status: 'FINISHED' }],
+					events: [],
+				},
+			],
+			results: [],
+		});
+
+		await vi.advanceTimersByTimeAsync(460);
+		document.getElementById('race-prev-lap-btn').click();
+		expect(document.getElementById('race-pause-btn').textContent).toBe('Resume');
+		expect(document.getElementById('race-lap-counter').textContent).toBe('1 / 3');
+
+		document.getElementById('race-next-lap-btn').click();
+		expect(document.getElementById('race-lap-counter').textContent).toBe('2 / 3');
+		expect(document.getElementById('race-latest-commentary').textContent).toContain('retires with a engine');
+
+		document.getElementById('race-tab-commentary').click();
+		expect(document.getElementById('race-panel-commentary').style.display).toBe('');
+		expect(document.getElementById('race-panel-timing').style.display).toBe('none');
+	});
+
+	it('records lead changes and cancels active autoplay when stepping forward manually', async () => {
+		const clearSpy = vi.spyOn(window, 'clearInterval');
+		renderRaceResults({
+			total_laps: 3,
+			lap_history: [
+				{
+					lap: 1,
+					order: [{ driver_id: 1, position: 1, driver_name: 'A', team_name: 'T1', last_lap_ms: 83000, best_lap_ms: 83000, gap_display: 'LEADER', status: 'RUNNING' }],
+					events: [],
+				},
+				{
+					lap: 2,
+					order: [{ driver_id: 2, position: 1, driver_name: 'B', team_name: 'T2', last_lap_ms: 82900, best_lap_ms: 82900, gap_display: 'LEADER', status: 'RUNNING' }],
+					events: [],
+				},
+				{
+					lap: 3,
+					order: [{ driver_id: 2, position: 1, driver_name: 'B', team_name: 'T2', last_lap_ms: 82800, best_lap_ms: 82800, gap_display: 'LEADER', status: 'FINISHED' }],
+					events: [],
+				},
+			],
+			results: [],
+		});
+
+		expect(document.getElementById('race-latest-commentary').textContent).toBe('Awaiting the next flashpoint.');
+		document.getElementById('race-next-lap-btn').click();
+		expect(clearSpy).toHaveBeenCalled();
+		expect(document.getElementById('race-lap-counter').textContent).toBe('2 / 3');
+		expect(document.getElementById('race-latest-commentary').textContent).toContain('takes the lead');
+	});
+});

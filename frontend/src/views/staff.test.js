@@ -105,4 +105,98 @@ describe('StaffView', () => {
 		expect(onUpdate).toHaveBeenCalledWith(215);
 		expect(document.getElementById('staff-workforce-payroll').textContent).toContain('Projected payroll');
 	});
+
+	it('covers guard branches and empty states', () => {
+		expect(staffView.getSpeedRating('bad')).toBe(1);
+		expect(staffView.getSpeedRating(999)).toBe(5);
+		expect(staffView.getWorkforceRating(0, 0)).toBe(1);
+		expect(staffView.renderSpeedBlocks(0)).toContain('Speed rating 1 out of 5');
+		expect(staffView.renderSkillBlocks(100)).toContain('Skill rating 5 out of 5');
+
+		const apply = document.getElementById('staff-workforce-apply-btn');
+		const input = document.getElementById('staff-workforce-input');
+		input.value = 'not-a-number';
+		apply.click();
+
+		staffView.render({
+			drivers: [],
+			technical_director: null,
+			commercial_manager: null,
+			teams: [],
+		});
+
+		expect(document.getElementById('staff-drivers-container').textContent).toContain('No drivers assigned');
+		expect(document.getElementById('staff-management-container').textContent).toContain('No management staff assigned');
+		expect(document.getElementById('staff-workforce-summary').textContent).toContain('Your team workforce');
+	});
+
+	it('handles management replace edge cases and management-only rendering', () => {
+		const onReplaceManager = vi.fn();
+		staffView.setReplaceCommercialManagerHandler(onReplaceManager);
+
+		staffView.render({
+			team_name: 'Warrick',
+			player_workforce: 180,
+			teams: [],
+			drivers: [],
+			technical_director: {
+				name: 'Tech One',
+				age: 45,
+				country: 'UK',
+				skill: 82,
+				contract_length: 3,
+				salary: 500000,
+			},
+			commercial_manager: {
+				id: 7,
+				name: 'Manager One',
+				age: 38,
+				country: 'US',
+				skill: 77,
+				contract_length: 1,
+				salary: 320000,
+			},
+		});
+
+		const managerBtn = document.querySelector('.staff-replace-manager-btn');
+		expect(managerBtn.disabled).toBe(false);
+		managerBtn.click();
+		expect(onReplaceManager).toHaveBeenCalledWith(7);
+
+		staffView.setReplaceCommercialManagerHandler(null);
+		managerBtn.click();
+		expect(onReplaceManager).toHaveBeenCalledTimes(1);
+
+		managerBtn.setAttribute('data-manager-id', 'bad');
+		staffView.setReplaceCommercialManagerHandler(onReplaceManager);
+		managerBtn.click();
+		expect(onReplaceManager).toHaveBeenCalledTimes(1);
+	});
+
+	it('handles driver replace edge cases and pay driver rendering', () => {
+		const onReplace = vi.fn();
+		staffView.setReplaceDriverHandler(onReplace);
+		staffView.render({
+			drivers: [
+				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, wage: -250000, pay_driver: true, contract_length: 1 },
+			],
+			technical_director: null,
+			commercial_manager: null,
+			teams: [],
+		});
+
+		expect(document.getElementById('staff-drivers-container').textContent).toContain('Pay Driver');
+		const driverBtn = document.querySelector('.staff-replace-btn');
+		driverBtn.click();
+		expect(onReplace).toHaveBeenCalledWith(1);
+
+		staffView.setReplaceDriverHandler(null);
+		driverBtn.click();
+		expect(onReplace).toHaveBeenCalledTimes(1);
+
+		driverBtn.setAttribute('data-driver-id', 'nope');
+		staffView.setReplaceDriverHandler(onReplace);
+		driverBtn.click();
+		expect(onReplace).toHaveBeenCalledTimes(1);
+	});
 });

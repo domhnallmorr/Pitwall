@@ -6,6 +6,7 @@ from app.models.driver import Driver
 from app.models.state import GameState
 from app.models.team import Team
 from app.race.race_manager import RaceManager
+from app.race.retirements import mechanical_failure_probability, pick_crash_count, prepare_participants
 
 
 def create_race_state():
@@ -387,6 +388,56 @@ def test_overtake_success_uses_roll():
         assert manager._pass_succeeds() is False
     finally:
         random.randint = original_randint
+
+
+def test_pick_crash_count_handles_small_fields():
+    assert pick_crash_count(0) == 0
+    assert pick_crash_count(1) == 0
+
+
+def test_mechanical_failure_probability_handles_none_player_team_and_caps_player_wear():
+    state = create_race_state()
+    team_lookup = {team.id: team for team in state.teams}
+
+    assert mechanical_failure_probability(state, 1, team_lookup) == 0.0
+
+    state.player_team_id = 1
+    team_lookup[1].car_wear = 10_000
+    assert mechanical_failure_probability(state, 1, team_lookup) == 0.35
+    assert mechanical_failure_probability(state, 2, team_lookup) == 0.05
+
+
+def test_prepare_participants_rescues_one_driver_when_everyone_retires():
+    state = create_race_state()
+    state.player_team_id = 1
+    circuit = state.circuits[0]
+    team_lookup = {team.id: team for team in state.teams}
+    participants = [
+        {"driver_id": 1, "team_id": 1, "driver_name": "A"},
+        {"driver_id": 2, "team_id": 1, "driver_name": "B"},
+    ]
+
+    original_choice = random.choice
+    original_randint = random.randint
+    random.choice = lambda entries: entries[0]
+    random.randint = lambda a, b: 2
+    try:
+        crashed, mechanical = prepare_participants(
+            state,
+            circuit,
+            participants,
+            team_lookup,
+            lambda _: 0,
+            lambda *_args: 1.0,
+        )
+    finally:
+        random.choice = original_choice
+        random.randint = original_randint
+
+    assert crashed == []
+    assert len(mechanical) == 1
+    assert participants[0]["retirement_reason"] is None
+    assert participants[1]["retirement_reason"] == "mechanical"
 
 
 def test_simulate_race_emits_overtake_event_when_pass_succeeds():

@@ -101,3 +101,7 @@ Contains component tests for UI logic.
 cd frontend
 npm test
 ```
+
+## Staff Page Preview
+
+![Staff page preview](frontend/assets/preview/preview_staff_page.png)
