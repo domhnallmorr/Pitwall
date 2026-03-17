@@ -3,7 +3,7 @@ from app.models.calendar import EventType
 from app.core.rollover import SeasonRolloverManager
 from app.core.transport import TransportManager
 from app.core.transfers import TransferManager
-from app.core.management_transfers import CommercialManagerTransferManager
+from app.core.management_transfers import CommercialManagerTransferManager, TechnicalDirectorTransferManager
 from app.core.ai_car_development import AICarDevelopmentManager
 from app.core.player_car_development import PlayerCarDevelopmentManager
 from app.core.testing import TestSessionManager
@@ -18,6 +18,7 @@ class GameEngine:
         self.transport_manager = TransportManager()
         self.transfer_manager = TransferManager()
         self.cm_transfer_manager = CommercialManagerTransferManager()
+        self.td_transfer_manager = TechnicalDirectorTransferManager()
         self.ai_car_development_manager = AICarDevelopmentManager()
         self.player_car_development_manager = PlayerCarDevelopmentManager()
         self.test_session_manager = TestSessionManager()
@@ -36,6 +37,7 @@ class GameEngine:
         state.publish_queued_emails()
         self.transfer_manager.publish_due_announcements(state)
         self.cm_transfer_manager.publish_due_announcements(state)
+        self.td_transfer_manager.publish_due_announcements(state)
         self.ai_car_development_manager.apply_for_week(state)
 
         # Check for season end

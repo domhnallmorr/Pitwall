@@ -65,6 +65,24 @@ describe('DriverMarketView', () => {
 		expect(onSign).toHaveBeenCalledWith(11, 12, 'commercial_manager');
 	});
 
+	it('renders technical director market and signs director candidate', () => {
+		const onSign = vi.fn();
+		marketView.setSignHandler(onSign);
+		marketView.render({
+			market_type: 'technical_director',
+			outgoing_manager: { id: 21, name: 'Old TD' },
+			candidates: [{ id: 22, name: 'Free TD', age: 44, country: 'France', skill: 68, salary: 480000 }],
+		});
+
+		expect(document.getElementById('driver-market-title').textContent).toContain('Replace Old TD');
+		const head = document.querySelector('#driver-market-view thead tr').textContent;
+		expect(head).toContain('Salary');
+
+		const btn = document.querySelector('.driver-market-sign-btn');
+		btn.click();
+		expect(onSign).toHaveBeenCalledWith(21, 22, 'technical_director');
+	});
+
 	it('ignores sign clicks when no handlers or missing outgoing entities', () => {
 		marketView.render({
 			outgoing_driver: null,

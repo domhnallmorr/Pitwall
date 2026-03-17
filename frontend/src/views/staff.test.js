@@ -132,7 +132,9 @@ describe('StaffView', () => {
 
 	it('handles management replace edge cases and management-only rendering', () => {
 		const onReplaceManager = vi.fn();
+		const onReplaceDirector = vi.fn();
 		staffView.setReplaceCommercialManagerHandler(onReplaceManager);
+		staffView.setReplaceTechnicalDirectorHandler(onReplaceDirector);
 
 		staffView.render({
 			team_name: 'Warrick',
@@ -140,11 +142,12 @@ describe('StaffView', () => {
 			teams: [],
 			drivers: [],
 			technical_director: {
+				id: 6,
 				name: 'Tech One',
 				age: 45,
 				country: 'UK',
 				skill: 82,
-				contract_length: 3,
+				contract_length: 1,
 				salary: 500000,
 			},
 			commercial_manager: {
@@ -157,6 +160,20 @@ describe('StaffView', () => {
 				salary: 320000,
 			},
 		});
+
+		const directorBtn = document.querySelector('.staff-replace-technical-director-btn');
+		expect(directorBtn.disabled).toBe(false);
+		directorBtn.click();
+		expect(onReplaceDirector).toHaveBeenCalledWith(6);
+
+		staffView.setReplaceTechnicalDirectorHandler(null);
+		directorBtn.click();
+		expect(onReplaceDirector).toHaveBeenCalledTimes(1);
+
+		directorBtn.setAttribute('data-director-id', 'bad');
+		staffView.setReplaceTechnicalDirectorHandler(onReplaceDirector);
+		directorBtn.click();
+		expect(onReplaceDirector).toHaveBeenCalledTimes(1);
 
 		const managerBtn = document.querySelector('.staff-replace-manager-btn');
 		expect(managerBtn.disabled).toBe(false);

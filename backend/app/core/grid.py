@@ -22,6 +22,16 @@ class GridManager:
             return False
         return True
 
+    def _is_projected_technical_director_available(self, director, current_year: int) -> bool:
+        if not director or not getattr(director, "active", True):
+            return False
+        if getattr(director, "retirement_year", None) is not None and director.retirement_year <= current_year:
+            return False
+        # One year remaining means seat is treated as open for next season display.
+        if getattr(director, "contract_length", 0) == 1:
+            return False
+        return True
+
     def get_grid_records(self, state: GameState, year: int | None = None) -> List[dict]:
         """
         Returns grid records for a given year.
@@ -92,6 +102,11 @@ class GridManager:
             for s in state.announced_ai_cm_signings
             if s.get("status") == "announced"
         }
+        announced_td_by_team = {
+            s.get("team_id"): s.get("director_id")
+            for s in state.announced_ai_td_signings
+            if s.get("status") == "announced"
+        }
         td_lookup = {td.id: td for td in state.technical_directors}
         cm_lookup = {cm.id: cm for cm in state.commercial_managers}
         engine_country_by_name = {e.name: e.country for e in state.engine_suppliers}
@@ -105,7 +120,10 @@ class GridManager:
                 d1 = d1 if self._is_projected_driver_available(d1, state.year) else None
             if not announced_d2_id:
                 d2 = d2 if self._is_projected_driver_available(d2, state.year) else None
-            td = td_lookup.get(team.technical_director_id)
+            announced_td_id = announced_td_by_team.get(team.id)
+            td = td_lookup.get(announced_td_id) if announced_td_id else td_lookup.get(team.technical_director_id)
+            if not announced_td_id:
+                td = td if self._is_projected_technical_director_available(td, state.year) else None
             announced_cm_id = announced_cm_by_team.get(team.id)
             cm = cm_lookup.get(announced_cm_id) if announced_cm_id else cm_lookup.get(team.commercial_manager_id)
             if not announced_cm_id:

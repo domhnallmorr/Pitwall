@@ -72,6 +72,7 @@ def test_handle_start_career_team_not_found_returns_error():
 
 
 @patch("app.commands.game_commands.AICarDevelopmentManager.generate_for_season")
+@patch("app.commands.game_commands.TechnicalDirectorTransferManager.recompute_ai_signings")
 @patch("app.commands.game_commands.CommercialManagerTransferManager.recompute_ai_signings")
 @patch("app.commands.game_commands.TransferManager.recompute_ai_signings")
 @patch("app.commands.game_commands.GridManager.capture_season_snapshot")
@@ -83,6 +84,7 @@ def test_handle_start_career_success_without_retirement_email(
     mock_grid_capture,
     mock_driver_signings,
     mock_cm_signings,
+    mock_td_signings,
     mock_car_updates,
 ):
     logger = Mock()
@@ -94,6 +96,7 @@ def test_handle_start_career_success_without_retirement_email(
     subjects = [e.subject for e in next_state.emails]
     assert "Welcome to Pitwall" in subjects
     assert not any(s.startswith("Retirement Watch:") for s in subjects)
+    mock_td_signings.assert_called_once_with(next_state)
 
 
 @patch("app.commands.game_commands.load_default_state", side_effect=RuntimeError("boom"))

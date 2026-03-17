@@ -60,6 +60,24 @@ except ModuleNotFoundError:
 
 DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'roster.db')
 
+
+def sync_seed_table_names(conn, table_name, seed_rows):
+    c = conn.cursor()
+    names_by_year = {}
+    for row in seed_rows:
+        start_year = row[0]
+        name = row[1]
+        names_by_year.setdefault(start_year, set()).add(name)
+
+    for start_year, allowed_names in names_by_year.items():
+        placeholders = ", ".join("?" for _ in allowed_names)
+        query = (
+            f"DELETE FROM {table_name} "
+            f"WHERE start_year = ? AND name NOT IN ({placeholders})"
+        )
+        c.execute(query, [start_year, *sorted(allowed_names)])
+
+
 def seed_data(conn):
     c = conn.cursor()
     c.execute('SELECT name FROM circuits')
@@ -165,6 +183,7 @@ def seed_data(conn):
             'UPDATE technical_directors SET country = ?, age = ?, skill = ?, contract_length = ?, salary = ?, team_name = ? WHERE name = ? AND start_year = ?',
             [(td[2], td[3], td[4], td[5], td[6], td[7], td[1], td[0]) for td in TECHNICAL_DIRECTORS_DATA],
         )
+        sync_seed_table_names(conn, "technical_directors", TECHNICAL_DIRECTORS_DATA)
 
         c.execute('SELECT name, start_year FROM commercial_managers')
         existing_cm_keys = {(row[0], row[1]) for row in c.fetchall()}
@@ -264,6 +283,7 @@ def seed_data(conn):
         'UPDATE technical_directors SET country = ?, age = ?, skill = ?, contract_length = ?, salary = ?, team_name = ? WHERE name = ? AND start_year = ?',
         [(td[2], td[3], td[4], td[5], td[6], td[7], td[1], td[0]) for td in TECHNICAL_DIRECTORS_DATA],
     )
+    sync_seed_table_names(conn, "technical_directors", TECHNICAL_DIRECTORS_DATA)
     c.execute('SELECT name, start_year FROM commercial_managers')
     existing_cm_keys = {(row[0], row[1]) for row in c.fetchall()}
     cms_to_insert = [cm for cm in COMMERCIAL_MANAGERS_DATA if (cm[1], cm[0]) not in existing_cm_keys]

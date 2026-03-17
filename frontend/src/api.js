@@ -24,6 +24,7 @@ const API = {
 	updateWorkforce: (workforce) => window.electronAPI.sendToPython({ type: 'update_workforce', workforce }),
 	getReplacementCandidates: (driverId) => window.electronAPI.sendToPython({ type: 'get_replacement_candidates', driver_id: driverId }),
 	getManagerReplacementCandidates: (managerId) => window.electronAPI.sendToPython({ type: 'get_manager_replacement_candidates', manager_id: managerId }),
+	getTechnicalDirectorReplacementCandidates: (directorId) => window.electronAPI.sendToPython({ type: 'get_technical_director_replacement_candidates', director_id: directorId }),
 	replaceDriver: (driverId, incomingDriverId) => window.electronAPI.sendToPython({
 		type: 'replace_driver',
 		driver_id: driverId,
@@ -33,6 +34,11 @@ const API = {
 		type: 'replace_commercial_manager',
 		manager_id: managerId,
 		incoming_manager_id: incomingManagerId
+	}),
+	replaceTechnicalDirector: (directorId, incomingDirectorId) => window.electronAPI.sendToPython({
+		type: 'replace_technical_director',
+		director_id: directorId,
+		incoming_director_id: incomingDirectorId
 	}),
 	getDriver: (name) => window.electronAPI.sendToPython({ type: 'get_driver', name }),
 	getCar: () => window.electronAPI.sendToPython({ type: 'get_car' }),

@@ -9,6 +9,7 @@ export default class DriverMarketView {
 		this.backBtn = document.getElementById('driver-market-back-btn');
 		this.outgoingDriver = null;
 		this.outgoingManager = null;
+		this.outgoingRoleLabel = 'Driver';
 		this.marketType = 'driver';
 		this.onSign = null;
 		this.onBack = null;
@@ -33,15 +34,22 @@ export default class DriverMarketView {
 
 	render(payload) {
 		if (!this.tableBody || !this.title) return;
-		this.marketType = payload?.market_type === 'commercial_manager' ? 'commercial_manager' : 'driver';
+		this.marketType = payload?.market_type === 'commercial_manager' || payload?.market_type === 'technical_director'
+			? payload.market_type
+			: 'driver';
 		this.outgoingDriver = payload?.outgoing_driver || null;
 		this.outgoingManager = payload?.outgoing_manager || null;
-		const outgoingName = this.marketType === 'commercial_manager'
-			? (this.outgoingManager?.name || 'Commercial Manager')
+		this.outgoingRoleLabel = this.marketType === 'technical_director'
+			? 'Technical Director'
+			: this.marketType === 'commercial_manager'
+				? 'Commercial Manager'
+				: 'Driver';
+		const outgoingName = this.marketType === 'commercial_manager' || this.marketType === 'technical_director'
+			? (this.outgoingManager?.name || this.outgoingRoleLabel)
 			: (this.outgoingDriver?.name || 'Driver');
 		this.title.textContent = `Replace ${outgoingName}`;
 		if (this.headRow) {
-			if (this.marketType === 'commercial_manager') {
+			if (this.marketType === 'commercial_manager' || this.marketType === 'technical_director') {
 				this.headRow.innerHTML = `
 					<th>Name</th>
 					<th>Age</th>
@@ -73,7 +81,7 @@ export default class DriverMarketView {
 
 		candidates.forEach((candidate) => {
 			const tr = document.createElement('tr');
-			if (this.marketType === 'commercial_manager') {
+			if (this.marketType === 'commercial_manager' || this.marketType === 'technical_director') {
 				const absSalary = Math.abs(candidate.salary || 0);
 				tr.innerHTML = `
 					<td>${candidate.name}</td>
@@ -103,7 +111,7 @@ export default class DriverMarketView {
 				if (!this.onSign) return;
 				const incomingId = Number(btn.getAttribute('data-driver-id'));
 				if (!Number.isFinite(incomingId)) return;
-				if (this.marketType === 'commercial_manager') {
+				if (this.marketType === 'commercial_manager' || this.marketType === 'technical_director') {
 					if (!this.outgoingManager) return;
 					this.onSign(this.outgoingManager.id, incomingId, this.marketType);
 				} else {

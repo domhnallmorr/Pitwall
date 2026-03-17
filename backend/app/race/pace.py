@@ -4,12 +4,15 @@ from app.models.circuit import Circuit
 from app.race.constants import (
 	DIRTY_AIR_GAP_THRESHOLD_MS,
 	DIRTY_AIR_LAP_PENALTY_MS,
+	ENGINE_POWER_MAX_EFFECT_MS,
 	FUEL_PENALTY_MS_PER_KG,
 	LAP_JITTER_RANGE_MS,
 	OVERTAKE_SUCCESS_PROBABILITY,
 	PACE_CENTER,
 	PACE_TO_MS_FACTOR,
 	TYRE_DEGRADATION_MS_PER_LAP,
+	TYRE_GRIP_MAX_EFFECT_MS,
+	TYRE_WEAR_MAX_MULTIPLIER_DELTA,
 )
 
 
@@ -21,20 +24,39 @@ def grid_score(entrant: dict, grid_jitter_range_ms: int) -> int:
 	return entrant["performance_weight"] * 1000 + random.randint(-grid_jitter_range_ms, grid_jitter_range_ms)
 
 
-def tyre_wear_penalty_ms(stint_laps: int) -> int:
-	return max(0, int(stint_laps)) * TYRE_DEGRADATION_MS_PER_LAP
+def tyre_grip_effect_ms(entrant: dict) -> int:
+	tyre_grip = float(entrant.get("tyre_grip", 50) or 50)
+	return int(TYRE_GRIP_MAX_EFFECT_MS * (50.0 - tyre_grip) / 100.0)
+
+
+def tyre_wear_multiplier(entrant: dict) -> float:
+	tyre_wear = float(entrant.get("tyre_wear", 50) or 50)
+	return 1.0 + ((50.0 - tyre_wear) / 50.0) * TYRE_WEAR_MAX_MULTIPLIER_DELTA
+
+
+def tyre_wear_penalty_ms(stint_laps: int, entrant: dict | None = None) -> int:
+	multiplier = tyre_wear_multiplier(entrant or {})
+	return int(max(0, int(stint_laps)) * TYRE_DEGRADATION_MS_PER_LAP * multiplier)
+
+
+def engine_power_effect_ms(entrant: dict, circuit: Circuit) -> int:
+	engine_power = float(entrant.get("engine_power", 50) or 50)
+	track_power_sensitivity = float(circuit.power_factor or 0)
+	max_power_effect = ENGINE_POWER_MAX_EFFECT_MS * track_power_sensitivity / 10.0
+	return int(max_power_effect * (50.0 - engine_power) / 100.0)
 
 
 def lap_time_ms(entrant: dict, circuit: Circuit) -> int:
 	base_bonus_ms = int((entrant["performance_weight"] - PACE_CENTER) * PACE_TO_MS_FACTOR)
 	jitter_ms = random.randint(-LAP_JITTER_RANGE_MS, LAP_JITTER_RANGE_MS)
-	power_adjustment_ms = int((float(circuit.power_factor) - 1.0) * entrant["car_speed"] * 3)
+	engine_adjustment_ms = engine_power_effect_ms(entrant, circuit)
+	tyre_grip_adjustment_ms = tyre_grip_effect_ms(entrant)
 	fuel_penalty_ms = int((entrant.get("fuel_kg", 0.0) or 0.0) * FUEL_PENALTY_MS_PER_KG)
-	degradation_ms = tyre_wear_penalty_ms(entrant.get("stint_laps", 0))
+	degradation_ms = tyre_wear_penalty_ms(entrant.get("stint_laps", 0), entrant)
 	dirty_air_penalty_ms = int(entrant.get("dirty_air_penalty_ms", 0) or 0)
 	return max(
 		45_000,
-		circuit.base_laptime_ms - base_bonus_ms - power_adjustment_ms
+		circuit.base_laptime_ms - base_bonus_ms + engine_adjustment_ms + tyre_grip_adjustment_ms
 		+ fuel_penalty_ms + degradation_ms + dirty_air_penalty_ms + jitter_ms,
 	)
 

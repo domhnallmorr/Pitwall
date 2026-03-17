@@ -17,8 +17,10 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 		updateWorkforce: vi.fn(),
 		getReplacementCandidates: vi.fn(),
 		getManagerReplacementCandidates: vi.fn(),
+		getTechnicalDirectorReplacementCandidates: vi.fn(),
 		replaceDriver: vi.fn(),
 		replaceCommercialManager: vi.fn(),
+		replaceTechnicalDirector: vi.fn(),
 		getDriver: vi.fn(),
 		getCar: vi.fn(),
 		startCarDevelopment: vi.fn(),
@@ -69,7 +71,7 @@ vi.mock('./views/grid.js', () => ({
 vi.mock('./views/standings.js', () => ({ default: class { setDriverSelectHandler() {} render(...args) { viewFns.standingsRender(...args); } } }));
 vi.mock('./views/calendar.js', () => ({ default: class { render(...args) { viewFns.calendarRender(...args); } } }));
 vi.mock('./views/email.js', () => ({ default: class { render(...args) { viewFns.emailRender(...args); } updateUnreadBadge(...args) { viewFns.emailUnread(...args); } } }));
-vi.mock('./views/staff.js', () => ({ default: class { setReplaceDriverHandler() {} setReplaceCommercialManagerHandler() {} setUpdateWorkforceHandler() {} render(...args) { viewFns.staffRender(...args); } } }));
+vi.mock('./views/staff.js', () => ({ default: class { setReplaceDriverHandler() {} setReplaceCommercialManagerHandler() {} setReplaceTechnicalDirectorHandler() {} setUpdateWorkforceHandler() {} render(...args) { viewFns.staffRender(...args); } } }));
 vi.mock('./views/driver.js', () => ({ default: class { constructor() { this.currentDriverName = null; } render(...args) { viewFns.driverRender(...args); } } }));
 vi.mock('./views/driver_market.js', () => ({ default: class { setBackHandler() {} setSignHandler() {} render(...args) { viewFns.driverMarketRender(...args); } } }));
 vi.mock('./views/car.js', () => ({ default: class { setStartDevelopmentHandler() {} setRepairWearHandler() {} render(...args) { viewFns.carRender(...args); } } }));

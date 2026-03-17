@@ -20,6 +20,7 @@ export default class StaffView {
 		this.workforceTableBody = document.getElementById('staff-workforce-table-body');
 		this.onReplaceDriver = null;
 		this.onReplaceCommercialManager = null;
+		this.onReplaceTechnicalDirector = null;
 		this.onUpdateWorkforce = null;
 		this.bindTabs();
 		this.bindWorkforceEditor();
@@ -31,6 +32,10 @@ export default class StaffView {
 
 	setReplaceCommercialManagerHandler(handler) {
 		this.onReplaceCommercialManager = handler;
+	}
+
+	setReplaceTechnicalDirectorHandler(handler) {
+		this.onReplaceTechnicalDirector = handler;
 	}
 
 	setUpdateWorkforceHandler(handler) {
@@ -155,11 +160,18 @@ export default class StaffView {
 			return;
 		}
 
-		const renderCard = (member, roleLabel, showCountry = false, showReplace = false) => {
+		const renderCard = (member, roleLabel, showCountry = false, replaceType = null) => {
 			if (!member) return '';
 			const portraitFile = encodeURIComponent((member.name || '').toLowerCase() + '.png');
 			const absSalary = Math.abs(member.salary || 0);
 			const salaryFormatted = '$' + absSalary.toLocaleString();
+			const isReplaceable = replaceType === 'technical_director' || replaceType === 'commercial_manager';
+			const buttonClass = replaceType === 'technical_director'
+				? 'staff-replace-technical-director-btn'
+				: 'staff-replace-manager-btn';
+			const dataAttr = replaceType === 'technical_director'
+				? `data-director-id="${member.id}"`
+				: `data-manager-id="${member.id}"`;
 			return `
 				<div class="staff-driver-card">
 					<div class="staff-card-role">${roleLabel}</div>
@@ -189,10 +201,10 @@ export default class StaffView {
 							<span class="staff-detail-label">Salary</span>
 							<span class="staff-detail-value">${salaryFormatted}</span>
 						</div>
-						${showReplace ? `
+						${isReplaceable ? `
 						<div class="staff-detail-row">
 							<span class="staff-detail-value">
-								<button class="staff-replace-btn staff-replace-manager-btn" data-manager-id="${member.id}" ${member.contract_length >= 2 ? 'disabled' : ''}>
+								<button class="staff-replace-btn ${buttonClass}" ${dataAttr} ${member.contract_length >= 2 ? 'disabled' : ''}>
 									Replace
 								</button>
 							</span>
@@ -203,9 +215,18 @@ export default class StaffView {
 		};
 
 		this.managementContainer.innerHTML = `
-			${renderCard(td, 'Technical Director', true)}
-			${renderCard(cm, 'Commercial Manager', true, true)}
+			${renderCard(td, 'Technical Director', true, 'technical_director')}
+			${renderCard(cm, 'Commercial Manager', true, 'commercial_manager')}
 		`;
+
+		this.managementContainer.querySelectorAll('.staff-replace-technical-director-btn').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				if (!this.onReplaceTechnicalDirector) return;
+				const directorId = Number(btn.getAttribute('data-director-id'));
+				if (!Number.isFinite(directorId)) return;
+				this.onReplaceTechnicalDirector(directorId);
+			});
+		});
 
 		this.managementContainer.querySelectorAll('.staff-replace-manager-btn').forEach((btn) => {
 			btn.addEventListener('click', () => {

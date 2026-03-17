@@ -1,7 +1,19 @@
+import random
 from typing import Any
 
 from app.models.circuit import Circuit
-from app.race.constants import GRID_JITTER_RANGE_MS, PIT_LANE_TIME_LOSS_MS
+from app.race.constants import (
+	AVERAGE_T1_SPEED_MPS,
+	GRID_JITTER_RANGE_MS,
+	GRID_SLOT_DISTANCE_M,
+	LAP1_SPREAD_BASE_MS,
+	LAP1_SPREAD_JITTER_MS,
+	PIT_LANE_TIME_LOSS_MS,
+	START_CAR_SPEED_FACTOR_MPS,
+	START_DISTANCE_TO_T1_M,
+	START_DRIVER_SPEED_FACTOR_MPS,
+	START_SPEED_JITTER_MPS,
+)
 
 
 def format_gap(leader_laps: int, entrant_laps: int, gap_ms: int | None) -> str:
@@ -109,6 +121,72 @@ def lap_events(
 	return events
 
 
+def start_to_turn_one_time_ms(entrant: dict[str, Any]) -> int:
+	grid_position = max(1, int(entrant.get("grid_position", 1)))
+	distance_m = START_DISTANCE_TO_T1_M + (grid_position - 1) * GRID_SLOT_DISTANCE_M
+	driver_speed = float(entrant.get("driver_speed", 50) or 50)
+	car_speed = float(entrant.get("car_speed", 50) or 50)
+	launch_speed = (
+		AVERAGE_T1_SPEED_MPS
+		+ (driver_speed - 50.0) * START_DRIVER_SPEED_FACTOR_MPS
+		+ (car_speed - 50.0) * START_CAR_SPEED_FACTOR_MPS
+		+ random.uniform(-START_SPEED_JITTER_MPS, START_SPEED_JITTER_MPS)
+	)
+	launch_speed = max(20.0, launch_speed)
+	return int((distance_m / launch_speed) * 1000)
+
+
+def simulate_opening_lap(
+	running_before_lap: list[dict[str, Any]],
+	circuit: Circuit,
+	lap_time_fn,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+	start_order = []
+	for entrant in running_before_lap:
+		t1_time_ms = start_to_turn_one_time_ms(entrant)
+		start_order.append((t1_time_ms, entrant["grid_position"], entrant))
+
+	start_order.sort(key=lambda item: (item[0], item[1]))
+	leader_t1_ms = start_order[0][0] if start_order else 0
+	lap_one_moves: list[dict[str, Any]] = []
+	if start_order:
+		leader = start_order[0][2]
+		lap_one_moves.append({
+			"type": "turn_one_leader",
+			"lap": 1,
+			"driver_id": leader["driver_id"],
+			"driver_name": leader["driver_name"],
+			"team_name": leader["team_name"],
+		})
+
+	for idx, (t1_time_ms, _grid_position, entrant) in enumerate(start_order):
+		base_lap_time_ms = lap_time_fn(entrant, circuit)
+		start_gap_ms = max(0, t1_time_ms - leader_t1_ms)
+		lap_one_spread_ms = idx * LAP1_SPREAD_BASE_MS + random.randint(0, LAP1_SPREAD_JITTER_MS)
+		lap_time_ms = base_lap_time_ms + start_gap_ms + lap_one_spread_ms
+
+		entrant["lap_times_ms"].append(lap_time_ms)
+		entrant["total_time_ms"] += lap_time_ms
+		entrant["cumulative_times_ms"].append(entrant["total_time_ms"])
+		entrant["last_lap_ms"] = lap_time_ms
+		entrant["laps_completed"] = len(entrant["cumulative_times_ms"])
+		entrant["stint_laps"] = int(entrant.get("stint_laps", 0)) + 1
+		entrant["dirty_air_penalty_ms"] = 0
+		if entrant["best_lap_ms"] is None or lap_time_ms < entrant["best_lap_ms"]:
+			entrant["best_lap_ms"] = lap_time_ms
+		if idx + 1 < entrant["grid_position"]:
+			lap_one_moves.append({
+				"type": "position_change",
+				"lap": 1,
+				"driver_id": entrant["driver_id"],
+				"driver_name": entrant["driver_name"],
+				"from_position": entrant["grid_position"],
+				"to_position": idx + 1,
+			})
+
+	return [item[2] for item in start_order], lap_one_moves
+
+
 def simulate_lap_race(
 	participants: list[dict[str, Any]],
 	circuit: Circuit,
@@ -155,6 +233,32 @@ def simulate_lap_race(
 			entrant for entrant in entrants
 			if entrant["status"] != "DNF" and entrant.get("retirement_lap") != lap
 		]
+		lap_overtakes: list[dict[str, Any]] = []
+		for entrant in entrants:
+			entrant["last_pit_lap"] = None
+			entrant["last_fuel_added_kg"] = 0.0
+			if entrant.get("retirement_lap") == lap:
+				entrant["status"] = "DNF"
+
+		if lap == 1:
+			running_after_lap, lap_overtakes = simulate_opening_lap(
+				running_before_lap,
+				circuit,
+				lap_time_fn,
+			)
+			for entrant in running_after_lap:
+				if best_lap_record is None or entrant["last_lap_ms"] < best_lap_record["lap_time_ms"]:
+					best_lap_record = {
+						"type": "fastest_lap",
+						"lap": lap,
+						"driver_id": entrant["driver_id"],
+						"driver_name": entrant["driver_name"],
+						"lap_time_ms": entrant["last_lap_ms"],
+					}
+					fastest_events_by_lap[lap] = best_lap_record
+			overtakes_by_lap[lap] = lap_overtakes
+			continue
+
 		ordered_before_lap = sorted(
 			running_before_lap,
 			key=lambda entry: (entry["total_time_ms"], entry["grid_position"]),
@@ -168,11 +272,6 @@ def simulate_lap_race(
 			entrant["dirty_air_penalty_ms"] = dirty_air_penalty_fn(gap_ahead_ms, same_lap=True)
 
 		for entrant in entrants:
-			entrant["last_pit_lap"] = None
-			entrant["last_fuel_added_kg"] = 0.0
-			if entrant.get("retirement_lap") == lap:
-				entrant["status"] = "DNF"
-				continue
 			if entrant["status"] == "DNF":
 				continue
 
@@ -221,7 +320,6 @@ def simulate_lap_race(
 			running_after_lap,
 			key=lambda entry: (entry["total_time_ms"], entry["grid_position"]),
 		)
-		lap_overtakes: list[dict[str, Any]] = []
 		index = 1
 		while index < len(ordered_after_lap):
 			attacker = ordered_after_lap[index]

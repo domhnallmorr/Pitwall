@@ -24,10 +24,13 @@ def test_load_technical_directors_assigns_team_ids(mock_get_conn):
     assert len(technical_directors) == 20
     peter = next(td for td in technical_directors if td.name == "Peter Heed")
     francis = next(td for td in technical_directors if td.name == "Francis Durney")
+    aldo = next(td for td in technical_directors if td.name == "Aldo Conti")
     warrick = next(t for t in teams if t.name == "Warrick")
     assert peter.team_id == warrick.id
     assert warrick.technical_director_id == peter.id
     assert francis.team_id is None
+    assert francis.country == "United Kingdom"
+    assert aldo.country == "Italy"
 
 
 @patch("app.core.roster.get_connection")

@@ -59,6 +59,8 @@ class GameState(BaseModel):
     announced_ai_signings: List[Dict[str, Any]] = Field(default_factory=list)
     planned_ai_cm_signings: List[Dict[str, Any]] = Field(default_factory=list)
     announced_ai_cm_signings: List[Dict[str, Any]] = Field(default_factory=list)
+    planned_ai_td_signings: List[Dict[str, Any]] = Field(default_factory=list)
+    announced_ai_td_signings: List[Dict[str, Any]] = Field(default_factory=list)
     planned_ai_car_updates: List[Dict[str, Any]] = Field(default_factory=list)
     player_car_development: PlayerCarDevelopment | None = None
 

@@ -142,4 +142,25 @@ describe('race_helpers', () => {
 		expect(document.getElementById('race-lap-counter').textContent).toBe('2 / 3');
 		expect(document.getElementById('race-latest-commentary').textContent).toContain('takes the lead');
 	});
+
+	it('renders the turn 1 leader commentary event', () => {
+		renderRaceResults({
+			total_laps: 2,
+			lap_history: [
+				{
+					lap: 1,
+					order: [{ driver_id: 2, position: 1, driver_name: 'B', team_name: 'T2', last_lap_ms: 83000, best_lap_ms: 83000, gap_display: 'LEADER', status: 'RUNNING' }],
+					events: [{ type: 'turn_one_leader', lap: 1, driver_id: 2, driver_name: 'B', team_name: 'T2' }],
+				},
+				{
+					lap: 2,
+					order: [{ driver_id: 2, position: 1, driver_name: 'B', team_name: 'T2', last_lap_ms: 82900, best_lap_ms: 82900, gap_display: 'LEADER', status: 'FINISHED' }],
+					events: [],
+				},
+			],
+			results: [],
+		});
+
+		expect(document.getElementById('race-latest-commentary').textContent).toContain('leads out of turn 1');
+	});
 });

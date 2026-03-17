@@ -3,7 +3,7 @@ import random
 from app.models.state import GameState
 from app.core.standings import StandingsManager
 from app.core.retirement import RetirementManager
-from app.core.management_retirement import CommercialManagerRetirementManager
+from app.core.management_retirement import CommercialManagerRetirementManager, TechnicalDirectorRetirementManager
 from app.core.recruitment import RecruitmentManager
 from app.core.prize_money import PrizeMoneyManager
 from app.core.grid import GridManager
@@ -11,7 +11,7 @@ from app.core.roster import load_roster
 from app.core.car_performance import CarPerformanceManager
 from app.core.ai_car_development import AICarDevelopmentManager
 from app.core.transfers import TransferManager
-from app.core.management_transfers import CommercialManagerTransferManager
+from app.core.management_transfers import CommercialManagerTransferManager, TechnicalDirectorTransferManager
 from app.models.email import EmailCategory
 
 
@@ -23,6 +23,7 @@ class SeasonRolloverManager:
 
     def __init__(self):
         self.retirement_manager = RetirementManager()
+        self.td_retirement_manager = TechnicalDirectorRetirementManager()
         self.cm_retirement_manager = CommercialManagerRetirementManager()
         self.recruitment_manager = RecruitmentManager()
         self.prize_money_manager = PrizeMoneyManager()
@@ -31,6 +32,7 @@ class SeasonRolloverManager:
         self.ai_car_development_manager = AICarDevelopmentManager()
         self.transfer_manager = TransferManager()
         self.cm_transfer_manager = CommercialManagerTransferManager()
+        self.td_transfer_manager = TechnicalDirectorTransferManager()
         self.ai_workforce_min = 90
         self.ai_workforce_max = 250
 
@@ -59,6 +61,7 @@ class SeasonRolloverManager:
 
         # 2. Retire drivers whose final season just ended
         retired_drivers = self.retirement_manager.retire_due_drivers(state, old_year)
+        retired_technical_directors = self.td_retirement_manager.retire_due_directors(state, old_year)
         retired_commercial_managers = self.cm_retirement_manager.retire_due_managers(state, old_year)
 
         # 3. Increment year
@@ -126,6 +129,7 @@ class SeasonRolloverManager:
         # 12. Apply contract expiry and all announced transfer deals for the season that just ended.
         transfer_outcome = self.transfer_manager.apply_new_season_transfers(state, announced_year=old_year)
         management_transfer_outcome = self.cm_transfer_manager.apply_new_season_transfers(state, announced_year=old_year)
+        td_transfer_outcome = self.td_transfer_manager.apply_new_season_transfers(state, announced_year=old_year)
 
         # 13. Fill any remaining vacancies from free agents
         signings = self.recruitment_manager.fill_vacancies(state)
@@ -158,6 +162,18 @@ class SeasonRolloverManager:
                     + "\n".join(retired_lines)
                 ),
                 category=EmailCategory.SEASON
+            )
+
+        if retired_technical_directors:
+            retired_lines = [f"- {m['name']} ({m['team_name']})" for m in retired_technical_directors]
+            state.add_email(
+                sender="Competition Office",
+                subject=f"Technical Director Retirements Confirmed: End of {old_year}",
+                body=(
+                    f"The following technical directors retired after the {old_year} season:\n\n"
+                    + "\n".join(retired_lines)
+                ),
+                category=EmailCategory.SEASON,
             )
 
         if retired_commercial_managers:
@@ -220,8 +236,11 @@ class SeasonRolloverManager:
         state.announced_ai_signings.clear()
         state.planned_ai_cm_signings.clear()
         state.announced_ai_cm_signings.clear()
+        state.planned_ai_td_signings.clear()
+        state.announced_ai_td_signings.clear()
         planned_transfers = self.transfer_manager.recompute_ai_signings(state)
         planned_management_transfers = self.cm_transfer_manager.recompute_ai_signings(state)
+        planned_td_transfers = self.td_transfer_manager.recompute_ai_signings(state)
         planned_car_updates = self.ai_car_development_manager.generate_for_season(state)
 
         return {
@@ -230,6 +249,7 @@ class SeasonRolloverManager:
             "final_driver_standings": final_drivers,
             "final_constructor_standings": final_constructors,
             "retired_drivers": retired_drivers,
+            "retired_technical_directors": retired_technical_directors,
             "retired_commercial_managers": retired_commercial_managers,
             "facilities_updates": facilities_updates,
             "ai_facilities_upgrades": ai_facilities_upgrades,
@@ -238,12 +258,14 @@ class SeasonRolloverManager:
             "management_updates": management_updates,
             "transfer_outcome": transfer_outcome,
             "management_transfer_outcome": management_transfer_outcome,
+            "td_transfer_outcome": td_transfer_outcome,
             "signings": signings,
             "car_speed_updates": car_speed_updates,
             "next_season_prize_money": next_season_prize_money,
             "next_season_final_season_drivers": final_season_drivers,
             "planned_transfers": planned_transfers,
             "planned_management_transfers": planned_management_transfers,
+            "planned_td_transfers": planned_td_transfers,
             "planned_car_updates": planned_car_updates,
         }
 

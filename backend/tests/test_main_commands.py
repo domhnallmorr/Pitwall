@@ -7,6 +7,7 @@ from app.models.driver import Driver
 from app.models.commercial_manager import CommercialManager
 from app.models.circuit import Circuit
 from app.models.finance import TransactionCategory
+from app.models.technical_director import TechnicalDirector
 
 
 def create_state() -> GameState:
@@ -17,6 +18,7 @@ def create_state() -> GameState:
             country="United Kingdom",
             driver1_id=1,
             driver2_id=2,
+            technical_director_id=21,
             commercial_manager_id=11,
             car_speed=80,
             workforce=250,
@@ -59,6 +61,10 @@ def create_state() -> GameState:
         year=1998,
         teams=teams,
         drivers=drivers,
+        technical_directors=[
+            TechnicalDirector(id=21, name="Peter Heed", country="United Kingdom", age=52, skill=75, contract_length=1, salary=4_800_000, team_id=1),
+            TechnicalDirector(id=22, name="Free Director", country="Germany", age=43, skill=66, contract_length=0, salary=0, team_id=None),
+        ],
         commercial_managers=[
             CommercialManager(id=11, name="Jace Whitman", country="United Kingdom", age=29, skill=70, contract_length=1, salary=360_000, team_id=1),
             CommercialManager(id=12, name="Free Manager", country="Germany", age=43, skill=66, contract_length=0, salary=0, team_id=None),
@@ -241,6 +247,27 @@ def test_replace_commercial_manager_respects_contract_rule_and_signs_replacement
     manager = next(m for m in app_main.CURRENT_STATE.commercial_managers if m.id == 11)
     manager.contract_length = 2
     locked = process_command({"type": "replace_commercial_manager", "manager_id": 11})
+    assert locked["status"] == "error"
+    assert "2 or more years" in locked["message"]
+
+
+def test_replace_technical_director_respects_contract_rule_and_signs_replacement():
+    state = create_state()
+    app_main.CURRENT_STATE = state
+
+    candidates = process_command({"type": "get_technical_director_replacement_candidates", "director_id": 21})
+    assert candidates["status"] == "success"
+    assert any(m["id"] == 22 for m in candidates["data"]["candidates"])
+
+    success = process_command({"type": "replace_technical_director", "director_id": 21, "incoming_director_id": 22})
+    assert success["status"] == "success"
+    assert success["type"] == "technical_director_replaced"
+    assert success["data"]["team_id"] == 1
+    assert success["data"]["director_id"] == 22
+
+    director = next(d for d in app_main.CURRENT_STATE.technical_directors if d.id == 21)
+    director.contract_length = 2
+    locked = process_command({"type": "replace_technical_director", "director_id": 21})
     assert locked["status"] == "error"
     assert "2 or more years" in locked["message"]
 

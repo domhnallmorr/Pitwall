@@ -40,7 +40,11 @@ class Calendar(BaseModel):
         """True if the current week is past the last event."""
         return self.current_week > self.last_event_week
 
-    def get_schedule_data(self, circuits: List[Circuit]) -> List[Dict[str, Any]]:
+    def get_schedule_data(
+        self,
+        circuits: List[Circuit],
+        winners_by_event: Optional[Dict[str, str]] = None,
+    ) -> List[Dict[str, Any]]:
         """
         Returns a list of dictionaries representing the schedule for the UI.
         Format: {round, week, track, country, winner}
@@ -50,6 +54,7 @@ class Calendar(BaseModel):
         
         # Create a lookup for circuits by name for O(1) access
         circuit_map = {c.name: c for c in circuits}
+        winner_lookup = winners_by_event or {}
 
         for event in self.events:
             round_display = "-"
@@ -70,7 +75,7 @@ class Calendar(BaseModel):
                 "type": type_display,
                 "track": event.name,
                 "country": country,
-                "winner": "" # Placeholder
+                "winner": winner_lookup.get(event.name, ""),
             })
             
         return schedule

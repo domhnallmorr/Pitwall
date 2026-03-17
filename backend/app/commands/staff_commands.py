@@ -1,7 +1,7 @@
 import logging
 
 from app.core.player_car_development import PlayerCarDevelopmentManager
-from app.core.management_transfers import CommercialManagerTransferManager
+from app.core.management_transfers import CommercialManagerTransferManager, TechnicalDirectorTransferManager
 from app.core.transfers import TransferManager
 from app.core.workforce_costs import WorkforceCostManager
 from app.models.calendar import EventType
@@ -99,6 +99,32 @@ def handle_replace_commercial_manager(
         return state, {"status": "error", "message": str(e)}
 
 
+def handle_replace_technical_director(
+    state: GameState,
+    logger: logging.Logger,
+    director_id: int | None,
+    incoming_director_id: int | None = None,
+):
+    try:
+        if director_id is None:
+            return state, {"status": "error", "message": "Technical director id is required"}
+        signing = TechnicalDirectorTransferManager().sign_player_replacement(
+            state,
+            outgoing_director_id=int(director_id),
+            incoming_director_id=int(incoming_director_id) if incoming_director_id is not None else None,
+        )
+        return state, {
+            "type": "technical_director_replaced",
+            "status": "success",
+            "data": signing,
+        }
+    except ValueError as ve:
+        return state, {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error replacing technical director: {e}")
+        return state, {"status": "error", "message": str(e)}
+
+
 def handle_get_manager_replacement_candidates(state: GameState, logger: logging.Logger, manager_id: int | None):
     try:
         if manager_id is None:
@@ -133,6 +159,47 @@ def handle_get_manager_replacement_candidates(state: GameState, logger: logging.
         return {"status": "error", "message": str(ve)}
     except Exception as e:
         logger.error(f"Error loading commercial manager replacement candidates: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def handle_get_technical_director_replacement_candidates(
+    state: GameState,
+    logger: logging.Logger,
+    director_id: int | None,
+):
+    try:
+        if director_id is None:
+            return {"status": "error", "message": "Technical director id is required"}
+
+        outgoing = next((d for d in state.technical_directors if d.id == int(director_id)), None)
+        if outgoing is None:
+            return {"status": "error", "message": "Technical director not found"}
+
+        candidates = TechnicalDirectorTransferManager().get_player_replacement_candidates(state, int(director_id))
+        payload = {
+            "market_type": "technical_director",
+            "outgoing_manager": {
+                "id": outgoing.id,
+                "name": outgoing.name,
+                "contract_length": outgoing.contract_length,
+            },
+            "candidates": [
+                {
+                    "id": d.id,
+                    "name": d.name,
+                    "age": d.age,
+                    "country": d.country,
+                    "skill": d.skill,
+                    "salary": d.salary,
+                }
+                for d in candidates
+            ],
+        }
+        return {"type": "manager_replacement_candidates", "status": "success", "data": payload}
+    except ValueError as ve:
+        return {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error loading technical director replacement candidates: {e}")
         return {"status": "error", "message": str(e)}
 
 

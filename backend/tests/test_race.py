@@ -3,8 +3,10 @@ import random
 from app.models.calendar import Calendar, Event, EventType
 from app.models.circuit import Circuit
 from app.models.driver import Driver
+from app.models.engine_supplier import EngineSupplier
 from app.models.state import GameState
 from app.models.team import Team
+from app.models.tyre_supplier import TyreSupplier
 from app.race.race_manager import RaceManager
 from app.race.retirements import mechanical_failure_probability, pick_crash_count, prepare_participants
 
@@ -36,7 +38,27 @@ def create_race_state():
             power_factor=1.0,
         )
     ]
-    return GameState(year=1998, teams=teams, drivers=drivers, calendar=calendar, circuits=circuits)
+    engine_suppliers = [
+        EngineSupplier(id=1, name="Engine A", country="UK", resources=60, power=50),
+        EngineSupplier(id=2, name="Engine B", country="IT", resources=60, power=50),
+    ]
+    tyre_suppliers = [
+        TyreSupplier(id=1, name="Tyre A", country="UK", wear=50, grip=50),
+        TyreSupplier(id=2, name="Tyre B", country="IT", wear=50, grip=50),
+    ]
+    teams[0].engine_supplier_name = "Engine A"
+    teams[1].engine_supplier_name = "Engine B"
+    teams[0].tyre_supplier_name = "Tyre A"
+    teams[1].tyre_supplier_name = "Tyre B"
+    return GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        engine_suppliers=engine_suppliers,
+        tyre_suppliers=tyre_suppliers,
+        calendar=calendar,
+        circuits=circuits,
+    )
 
 
 def test_simulate_race_returns_all_drivers_and_lap_history():
@@ -164,6 +186,74 @@ def test_simulate_race_weighting_favors_faster_driver_and_car():
     assert wins_for_fastest > 150
 
 
+def test_simulate_race_engine_power_favors_stronger_supplier_on_power_track():
+    manager = RaceManager()
+    wins_for_strong_engine = 0
+    runs = 120
+
+    for seed in range(runs):
+        random.seed(seed)
+        state = create_race_state()
+        state.circuits[0].power_factor = 10
+        for driver in state.drivers:
+            driver.speed = 50
+        for team in state.teams:
+            team.car_speed = 50
+        state.engine_suppliers[0].power = 80
+        state.engine_suppliers[1].power = 20
+        manager._pick_crash_count = lambda _: 0
+
+        result = manager.simulate_race(state)
+        if result["results"][0]["team_id"] == 1:
+            wins_for_strong_engine += 1
+
+    assert wins_for_strong_engine > 75
+
+
+def test_simulate_race_launch_phase_can_reorder_field_on_lap_one():
+    state = create_race_state()
+    state.circuits[0].laps = 3
+    state.drivers[0].speed = 50
+    state.drivers[1].speed = 100
+    state.drivers[2].speed = 40
+    state.drivers[3].speed = 30
+    for team in state.teams:
+        team.car_speed = 50
+
+    manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
+
+    original_grid = manager._grid_score
+    original_randint = random.randint
+    original_uniform = random.uniform
+
+    def forced_grid(entrant):
+        return {
+            1: 4000,
+            2: 3000,
+            3: 2000,
+            4: 1000,
+        }[entrant["driver_id"]]
+
+    random.randint = lambda a, b: 0
+    random.uniform = lambda a, b: 0.0
+    manager._grid_score = forced_grid
+    try:
+        result = manager.simulate_race(state)
+    finally:
+        manager._grid_score = original_grid
+        random.randint = original_randint
+        random.uniform = original_uniform
+
+    lap_one_order = result["lap_history"][0]["order"]
+    lap_one_events = result["lap_history"][0]["events"]
+
+    assert lap_one_order[0]["driver_id"] == 2
+    assert lap_one_order[1]["gap_to_leader_ms"] > 0
+    assert any(event["type"] == "turn_one_leader" and event["driver_id"] == 2 for event in lap_one_events)
+    assert any(event["type"] == "position_change" and event["driver_id"] == 2 for event in lap_one_events)
+
+
 def test_simulate_race_can_include_crash_outs_and_marks_dnf():
     state = create_race_state()
     manager = RaceManager()
@@ -243,6 +333,9 @@ def test_heavier_fuel_load_makes_lap_time_slower():
     entrant = {
         "performance_weight": 50,
         "car_speed": 50,
+        "engine_power": 50,
+        "tyre_grip": 50,
+        "tyre_wear": 50,
         "fuel_kg": 100.0,
         "stint_laps": 0,
     }
@@ -266,6 +359,9 @@ def test_tyre_wear_makes_lap_time_slower():
     entrant = {
         "performance_weight": 50,
         "car_speed": 50,
+        "engine_power": 50,
+        "tyre_grip": 50,
+        "tyre_wear": 50,
         "fuel_kg": 0.0,
         "stint_laps": 0,
     }
@@ -280,6 +376,118 @@ def test_tyre_wear_makes_lap_time_slower():
         random.randint = original_randint
 
     assert worn > fresh
+
+
+def test_more_powerful_engine_reduces_lap_time_on_power_sensitive_track():
+    state = create_race_state()
+    state.circuits[0].power_factor = 10
+    manager = RaceManager()
+    circuit = state.circuits[0]
+    entrant = {
+        "performance_weight": 50,
+        "car_speed": 50,
+        "engine_power": 80,
+        "tyre_grip": 50,
+        "tyre_wear": 50,
+        "fuel_kg": 0.0,
+        "stint_laps": 0,
+    }
+
+    original_randint = random.randint
+    random.randint = lambda a, b: 0
+    try:
+        powerful = manager._lap_time_ms(entrant, circuit)
+        entrant["engine_power"] = 20
+        weak = manager._lap_time_ms(entrant, circuit)
+    finally:
+        random.randint = original_randint
+
+    assert powerful < weak
+
+
+def test_engine_power_effect_scales_down_on_low_power_track():
+    state = create_race_state()
+    manager = RaceManager()
+    entrant = {
+        "performance_weight": 50,
+        "car_speed": 50,
+        "engine_power": 80,
+        "tyre_grip": 50,
+        "tyre_wear": 50,
+        "fuel_kg": 0.0,
+        "stint_laps": 0,
+    }
+
+    low_power_circuit = state.circuits[0].model_copy(update={"power_factor": 1})
+    high_power_circuit = state.circuits[0].model_copy(update={"power_factor": 10})
+
+    original_randint = random.randint
+    random.randint = lambda a, b: 0
+    try:
+        low_power_fast = manager._lap_time_ms(entrant, low_power_circuit)
+        entrant["engine_power"] = 20
+        low_power_slow = manager._lap_time_ms(entrant, low_power_circuit)
+
+        entrant["engine_power"] = 80
+        high_power_fast = manager._lap_time_ms(entrant, high_power_circuit)
+        entrant["engine_power"] = 20
+        high_power_slow = manager._lap_time_ms(entrant, high_power_circuit)
+    finally:
+        random.randint = original_randint
+
+    assert (high_power_slow - high_power_fast) > (low_power_slow - low_power_fast)
+
+
+def test_more_grippy_tyres_reduce_lap_time():
+    state = create_race_state()
+    manager = RaceManager()
+    circuit = state.circuits[0]
+    entrant = {
+        "performance_weight": 50,
+        "car_speed": 50,
+        "engine_power": 50,
+        "tyre_grip": 80,
+        "tyre_wear": 50,
+        "fuel_kg": 0.0,
+        "stint_laps": 0,
+    }
+
+    original_randint = random.randint
+    random.randint = lambda a, b: 0
+    try:
+        grippy = manager._lap_time_ms(entrant, circuit)
+        entrant["tyre_grip"] = 20
+        slippery = manager._lap_time_ms(entrant, circuit)
+    finally:
+        random.randint = original_randint
+
+    assert grippy < slippery
+
+
+def test_more_durable_tyres_reduce_stint_degradation():
+    state = create_race_state()
+    manager = RaceManager()
+    circuit = state.circuits[0]
+    entrant = {
+        "performance_weight": 50,
+        "car_speed": 50,
+        "engine_power": 50,
+        "tyre_grip": 50,
+        "tyre_wear": 80,
+        "fuel_kg": 0.0,
+        "stint_laps": 12,
+    }
+
+    original_randint = random.randint
+    random.randint = lambda a, b: 0
+    try:
+        durable = manager._lap_time_ms(entrant, circuit)
+        entrant["tyre_wear"] = 20
+        fragile = manager._lap_time_ms(entrant, circuit)
+    finally:
+        random.randint = original_randint
+
+    assert durable < fragile
 
 
 def test_assign_strategy_generates_valid_pit_windows():

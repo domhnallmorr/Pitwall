@@ -2,13 +2,14 @@ from unittest.mock import patch
 
 from app.core.engine import GameEngine
 from app.core.grid import GridManager
-from app.core.management_transfers import CommercialManagerTransferManager
+from app.core.management_transfers import CommercialManagerTransferManager, TechnicalDirectorTransferManager
 from app.core.transfers import TransferManager
 from app.models.calendar import Calendar, Event, EventType
 from app.models.commercial_manager import CommercialManager
 from app.models.driver import Driver
 from app.models.state import GameState
 from app.models.team import Team
+from app.models.technical_director import TechnicalDirector
 
 
 def create_transfer_state() -> GameState:
@@ -29,10 +30,18 @@ def create_transfer_state() -> GameState:
         CommercialManager(id=2, name="AI Expiring CM", country="IT", age=45, skill=72, contract_length=1, salary=100, team_id=2),
         CommercialManager(id=3, name="Free CM", country="DE", age=38, skill=68, contract_length=0, salary=0, team_id=None),
     ]
+    technical_directors = [
+        TechnicalDirector(id=1, name="Player TD", country="UK", age=46, skill=78, contract_length=2, salary=100, team_id=1),
+        TechnicalDirector(id=2, name="AI Expiring TD", country="IT", age=49, skill=80, contract_length=1, salary=100, team_id=2),
+        TechnicalDirector(id=3, name="Free TD", country="DE", age=43, skill=76, contract_length=0, salary=0, team_id=None),
+    ]
+    teams[0].technical_director_id = 1
+    teams[1].technical_director_id = 2
     return GameState(
         year=1998,
         teams=teams,
         drivers=drivers,
+        technical_directors=technical_directors,
         commercial_managers=commercial_managers,
         calendar=calendar,
         circuits=[],
@@ -325,6 +334,151 @@ def test_apply_new_season_cm_transfers_moves_announced_manager_and_sets_contract
     assert incoming.contract_length == 2
     assert outgoing.team_id is None
     assert any(s["manager_id"] == 3 for s in outcome["applied_signings"])
+
+
+@patch("app.core.management_transfers.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfers.random.randint", return_value=6)
+@patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])
+def test_recompute_ai_td_signings_plans_only_ai_vacancies(mock_choice, mock_randint, mock_shuffle):
+    state = create_transfer_state()
+
+    planned = TechnicalDirectorTransferManager().recompute_ai_signings(state)
+
+    assert len(planned) == 1
+    assert planned[0]["team_id"] == 2
+    assert planned[0]["seat"] == "technical_director_id"
+    assert planned[0]["director_id"] in {2, 3}
+    assert planned[0]["status"] == "planned"
+    assert planned[0]["announce_week"] == 6
+
+
+def test_publish_due_td_announcements_moves_planned_to_announced_and_emails():
+    state = create_transfer_state()
+    state.calendar.current_week = 3
+    state.planned_ai_td_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "technical_director_id",
+            "seat_label": "Technical Director",
+            "director_id": 3,
+            "director_name": "Free TD",
+            "announce_week": 3,
+            "announce_year": 1998,
+            "status": "planned",
+        }
+    ]
+
+    published = TechnicalDirectorTransferManager().publish_due_announcements(state)
+
+    assert len(published) == 1
+    assert len(state.planned_ai_td_signings) == 0
+    assert len(state.announced_ai_td_signings) == 1
+    assert state.announced_ai_td_signings[0]["status"] == "announced"
+    assert any(e.subject == "Technical Director Signing Confirmed: Free TD to AI Team" for e in state.emails)
+
+
+def test_engine_advance_week_publishes_due_td_transfer_announcements():
+    state = create_transfer_state()
+    state.planned_ai_td_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "technical_director_id",
+            "seat_label": "Technical Director",
+            "director_id": 3,
+            "director_name": "Free TD",
+            "announce_week": 2,
+            "announce_year": 1998,
+            "status": "planned",
+        }
+    ]
+
+    GameEngine().advance_week(state)
+
+    assert len(state.announced_ai_td_signings) == 1
+    assert len(state.planned_ai_td_signings) == 0
+    assert any(e.subject == "Technical Director Signing Confirmed: Free TD to AI Team" for e in state.emails)
+
+
+def test_grid_next_year_projection_uses_announced_td_signings():
+    state = create_transfer_state()
+    state.announced_ai_td_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "technical_director_id",
+            "seat_label": "Technical Director",
+            "director_id": 3,
+            "director_name": "Free TD",
+            "announce_week": 2,
+            "announce_year": 1998,
+            "status": "announced",
+        }
+    ]
+
+    df = GridManager().get_grid_dataframe(state, year=1999)
+    row = df[df["Team"] == "AI Team"].iloc[0]
+    assert row["TechnicalDirector"] == "Free TD"
+    assert row["TechnicalDirectorCountry"] == "DE"
+
+
+def test_apply_new_season_td_transfers_moves_announced_director_and_sets_contract():
+    state = create_transfer_state()
+    state.announced_ai_td_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "technical_director_id",
+            "seat_label": "Technical Director",
+            "director_id": 3,
+            "director_name": "Free TD",
+            "announce_week": 20,
+            "announce_year": 1998,
+            "status": "announced",
+        }
+    ]
+
+    outcome = TechnicalDirectorTransferManager().apply_new_season_transfers(state, announced_year=1998)
+
+    ai_team = next(t for t in state.teams if t.id == 2)
+    incoming = next(d for d in state.technical_directors if d.id == 3)
+    outgoing = next(d for d in state.technical_directors if d.id == 2)
+    assert ai_team.technical_director_id == 3
+    assert incoming.team_id == 2
+    assert incoming.contract_length == 2
+    assert outgoing.team_id is None
+    assert any(s["director_id"] == 3 for s in outcome["applied_signings"])
+
+
+@patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])
+def test_player_td_replacement_signing_updates_announced_and_replans_ai(mock_choice):
+    state = create_transfer_state()
+    player_director = next(d for d in state.technical_directors if d.id == 1)
+    player_director.contract_length = 1
+
+    signing = TechnicalDirectorTransferManager().sign_player_replacement(state, outgoing_director_id=1)
+
+    assert signing["team_id"] == 1
+    assert signing["seat"] == "technical_director_id"
+    assert signing["status"] == "announced"
+    assert len(state.announced_ai_td_signings) == 1
+    assert any(s["team_id"] == 2 for s in state.planned_ai_td_signings)
+    assert any(e.subject.startswith("Technical Director Signed:") for e in state.emails)
+
+
+@patch("app.core.management_transfers.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfers.random.randint", return_value=6)
+@patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])
+def test_recompute_ai_td_signings_excludes_retired_directors(mock_choice, mock_randint, mock_shuffle):
+    state = create_transfer_state()
+    retired = next(d for d in state.technical_directors if d.id == 3)
+    retired.active = False
+
+    planned = TechnicalDirectorTransferManager().recompute_ai_signings(state)
+
+    assert len(planned) == 1
+    assert planned[0]["director_id"] == 2
 
 
 @patch("app.core.management_transfers.random.shuffle", side_effect=lambda x: None)

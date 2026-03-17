@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
+from types import SimpleNamespace
 from app.models.calendar import Calendar, Event, EventType
 from app.models.circuit import Circuit
 from app.main import process_command, CURRENT_STATE
@@ -51,6 +52,21 @@ def test_get_schedule_data_formatting(sample_events, sample_circuits):
     assert race2['round'] == '2'
     assert race2['country'] == 'Monaco'
 
+
+def test_get_schedule_data_populates_winner_when_provided(sample_events, sample_circuits):
+    calendar = Calendar(events=sample_events, current_week=1)
+
+    schedule = calendar.get_schedule_data(
+        sample_circuits,
+        winners_by_event={"Melb": "Driver A"},
+    )
+
+    race1 = next(s for s in schedule if s['track'] == 'Melb')
+    test_evt = next(s for s in schedule if s['track'] == 'Test1')
+    assert race1['winner'] == 'Driver A'
+    assert test_evt['winner'] == ''
+
+
 @patch('app.main.CURRENT_STATE')
 def test_get_calendar_api(mock_state, sample_events, sample_circuits):
     """
@@ -59,6 +75,13 @@ def test_get_calendar_api(mock_state, sample_events, sample_circuits):
     # Setup Mock State
     mock_state.calendar = Calendar(events=sample_events)
     mock_state.circuits = sample_circuits
+    mock_state.year = 1998
+    mock_state.drivers = [SimpleNamespace(id=1, name="Winner One")]
+    mock_state.driver_season_results = {
+        1998: {
+            1: [{"round": 1, "event_name": "Melb", "country": "Australia", "position": 1}]
+        }
+    }
     
     cmd = {'type': 'get_calendar'}
     response = process_command(cmd)
@@ -67,3 +90,4 @@ def test_get_calendar_api(mock_state, sample_events, sample_circuits):
     assert response['type'] == 'calendar_data'
     assert len(response['data']) == 3
     assert response['data'][0]['track'] == 'Melb' # Order preserved from events list passed 
+    assert response['data'][0]['winner'] == 'Winner One'

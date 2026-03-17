@@ -14,6 +14,9 @@ function buildCommentaryLine(event) {
 	if (event.type === 'lead_change') {
 		return `Lap ${event.lap}: ${event.driver_name} takes the lead.`;
 	}
+	if (event.type === 'turn_one_leader') {
+		return `Lap ${event.lap}: ${event.driver_name} leads out of turn 1.`;
+	}
 	if (event.type === 'pit_stop') {
 		return `Lap ${event.lap}: ${event.driver_name} pits for fuel, stop ${event.stop_number}.`;
 	}

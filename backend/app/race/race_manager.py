@@ -151,6 +151,8 @@ class RaceManager:
 		participants: list[dict[str, Any]] = []
 		driver_lookup = {d.id: d for d in state.drivers}
 		team_lookup = {t.id: t for t in state.teams}
+		engine_supplier_lookup = {supplier.name: supplier for supplier in state.engine_suppliers}
+		tyre_supplier_lookup = {supplier.name: supplier for supplier in state.tyre_suppliers}
 		circuit = self._get_circuit(state)
 
 		for team in state.teams:
@@ -159,6 +161,11 @@ class RaceManager:
 					driver = driver_lookup[did]
 					driver_speed = getattr(driver, "speed", 50)
 					car_speed = getattr(team, "car_speed", 50)
+					engine_supplier = engine_supplier_lookup.get(getattr(team, "engine_supplier_name", None))
+					engine_power = getattr(engine_supplier, "power", 50) if engine_supplier else 50
+					tyre_supplier = tyre_supplier_lookup.get(getattr(team, "tyre_supplier_name", None))
+					tyre_grip = getattr(tyre_supplier, "grip", 50) if tyre_supplier else 50
+					tyre_wear = getattr(tyre_supplier, "wear", 50) if tyre_supplier else 50
 					participants.append({
 						"driver_id": did,
 						"driver_name": driver.name,
@@ -166,6 +173,9 @@ class RaceManager:
 						"team_name": team.name,
 						"driver_speed": driver_speed,
 						"car_speed": car_speed,
+						"engine_power": engine_power,
+						"tyre_grip": tyre_grip,
+						"tyre_wear": tyre_wear,
 						"performance_weight": self._get_performance_weight(driver_speed, car_speed),
 					})
 

@@ -1,5 +1,6 @@
 from app.core.rollover import SeasonRolloverManager
 from app.core.engine import GameEngine
+from app.core.management_retirement import TechnicalDirectorRetirementManager
 from app.models.state import GameState
 from app.models.calendar import Calendar, Event, EventType
 from app.models.driver import Driver
@@ -259,8 +260,9 @@ def test_rollover_increments_driver_ages(mock_load_roster):
         assert driver.age == original_ages[i] + 1
 
 
+@patch('app.core.management_retirement.random.random', return_value=1.0)
 @patch('app.core.rollover.load_roster', return_value=([], [], 1999, [], []))
-def test_rollover_updates_management_age_and_contracts(mock_load_roster):
+def test_rollover_updates_management_age_and_contracts(mock_load_roster, mock_management_random):
     teams = [
         Team(
             id=1,
@@ -357,6 +359,43 @@ def test_rollover_updates_next_season_prize_money_from_constructor_position(mock
 
 @patch("app.core.management_retirement.random.random", return_value=0.0)
 @patch("app.core.rollover.load_roster", return_value=([], [], 1999, [], []))
+def test_rollover_retires_eligible_technical_director(mock_load_roster, mock_td_random):
+    teams = [
+        Team(id=1, name="Team A", country="UK", driver1_id=1, driver2_id=2, technical_director_id=10, points=50),
+    ]
+    drivers = [
+        Driver(id=1, name="Driver A1", age=30, country="UK", team_id=1, role="DRIVER_1", points=30),
+        Driver(id=2, name="Driver A2", age=29, country="FR", team_id=1, role="DRIVER_2", points=20),
+    ]
+    technical_directors = [
+        TechnicalDirector(id=10, name="TD Veteran", country="UK", age=52, skill=70, contract_length=3, salary=100_000, team_id=1),
+    ]
+    events = [Event(name="Race 2", week=3, type=EventType.RACE)]
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        technical_directors=technical_directors,
+        calendar=Calendar(events=events, current_week=3),
+        circuits=[],
+        events_processed=["3_Race 2"],
+    )
+
+    result = SeasonRolloverManager().process_rollover(state)
+
+    director = state.technical_directors[0]
+    assert director.active is False
+    assert director.team_id is None
+    assert director.retired_year == 1998
+    assert state.teams[0].technical_director_id is None
+    assert any(m["name"] == "TD Veteran" for m in result["retired_technical_directors"])
+    email = next((e for e in state.emails if e.subject == "Technical Director Retirements Confirmed: End of 1998"), None)
+    assert email is not None
+    assert "TD Veteran" in email.body
+
+
+@patch("app.core.management_retirement.random.random", return_value=0.0)
+@patch("app.core.rollover.load_roster", return_value=([], [], 1999, [], []))
 def test_rollover_retires_eligible_commercial_manager(mock_load_roster, mock_cm_random):
     teams = [
         Team(id=1, name="Team A", country="UK", driver1_id=1, driver2_id=2, commercial_manager_id=20, points=50),
@@ -390,6 +429,68 @@ def test_rollover_retires_eligible_commercial_manager(mock_load_roster, mock_cm_
     email = next((e for e in state.emails if e.subject == "Management Retirements Confirmed: End of 1998"), None)
     assert email is not None
     assert "CM Veteran" in email.body
+
+
+@patch("app.core.management_retirement.random.random", return_value=1.0)
+@patch("app.core.rollover.load_roster", return_value=([], [], 1999, [], []))
+def test_rollover_applies_announced_technical_director_transfer(mock_load_roster, mock_management_random):
+    teams = [
+        Team(id=1, name="Player Team", country="UK", driver1_id=1, driver2_id=2, technical_director_id=10, points=10),
+        Team(id=2, name="AI Team", country="IT", driver1_id=3, driver2_id=4, technical_director_id=20, points=8),
+    ]
+    drivers = [
+        Driver(id=1, name="P1", age=30, country="UK", team_id=1),
+        Driver(id=2, name="P2", age=29, country="UK", team_id=1),
+        Driver(id=3, name="A1", age=28, country="IT", team_id=2),
+        Driver(id=4, name="A2", age=27, country="IT", team_id=2),
+    ]
+    technical_directors = [
+        TechnicalDirector(id=10, name="Player TD", country="UK", age=45, skill=75, contract_length=2, salary=1, team_id=1),
+        TechnicalDirector(id=20, name="AI Expiring TD", country="IT", age=50, skill=78, contract_length=1, salary=1, team_id=2),
+        TechnicalDirector(id=30, name="Free TD", country="DE", age=43, skill=80, contract_length=0, salary=1, team_id=None),
+    ]
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        technical_directors=technical_directors,
+        calendar=Calendar(events=[Event(name="Race 2", week=3, type=EventType.RACE)], current_week=3),
+        circuits=[],
+        events_processed=["3_Race 2"],
+        announced_ai_td_signings=[
+            {
+                "team_id": 2,
+                "team_name": "AI Team",
+                "seat": "technical_director_id",
+                "seat_label": "Technical Director",
+                "director_id": 30,
+                "director_name": "Free TD",
+                "announce_week": 2,
+                "announce_year": 1998,
+                "status": "announced",
+            }
+        ],
+    )
+
+    result = SeasonRolloverManager().process_rollover(state)
+
+    ai_team = next(t for t in state.teams if t.id == 2)
+    incoming = next(td for td in state.technical_directors if td.id == 30)
+    outgoing = next(td for td in state.technical_directors if td.id == 20)
+    assert ai_team.technical_director_id == 30
+    assert incoming.team_id == 2
+    assert incoming.contract_length == 2
+    assert outgoing.team_id is None
+    assert outgoing.contract_length == 0
+    assert any(s["director_id"] == 30 for s in result["td_transfer_outcome"]["applied_signings"])
+
+
+def test_technical_director_retirement_probability_bounds():
+    manager = TechnicalDirectorRetirementManager()
+
+    assert manager._retirement_probability(49) == 0.0
+    assert manager._retirement_probability(50) == 0.05
+    assert manager._retirement_probability(65) == 1.0
 
 
 @patch('app.core.rollover.load_roster', return_value=([], [], 1999, [], []))

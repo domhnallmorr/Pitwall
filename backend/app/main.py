@@ -7,11 +7,13 @@ from app.core.save_manager import save_game, load_game as load_game_file, has_sa
 from app.commands.game_commands import (
     build_finance_payload,
     handle_facilities_upgrade_preview,
+    handle_get_technical_director_replacement_candidates,
     handle_get_manager_replacement_candidates,
     handle_get_replacement_candidates,
     handle_repair_car_wear,
     handle_load_roster,
     handle_replace_commercial_manager,
+    handle_replace_technical_director,
     handle_replace_driver,
     handle_start_car_development,
     handle_start_facilities_upgrade,
@@ -81,8 +83,25 @@ def process_command(command):
         try:
             if not CURRENT_STATE:
                 return {"status": "error", "message": "Game not started"}
-            
-            schedule = CURRENT_STATE.calendar.get_schedule_data(CURRENT_STATE.circuits)
+
+            drivers = getattr(CURRENT_STATE, "drivers", []) or []
+            driver_name_by_id = {driver.id: driver.name for driver in drivers}
+            winners_by_event = {}
+            season_results = getattr(CURRENT_STATE, "driver_season_results", {}) or {}
+            current_year = getattr(CURRENT_STATE, "year", None)
+            for driver_id, results in season_results.get(current_year, {}).items():
+                for result in results:
+                    if result.get("position") != 1:
+                        continue
+                    event_name = result.get("event_name")
+                    if not event_name:
+                        continue
+                    winners_by_event[event_name] = driver_name_by_id.get(driver_id, "")
+
+            schedule = CURRENT_STATE.calendar.get_schedule_data(
+                CURRENT_STATE.circuits,
+                winners_by_event=winners_by_event,
+            )
             
             return {
                 "type": "calendar_data",
@@ -201,6 +220,19 @@ def process_command(command):
             save_game(CURRENT_STATE)
         return response
 
+    if cmd_type == 'replace_technical_director':
+        if not CURRENT_STATE:
+            return {"status": "error", "message": "Game not started"}
+        CURRENT_STATE, response = handle_replace_technical_director(
+            CURRENT_STATE,
+            logging,
+            command.get("director_id"),
+            command.get("incoming_director_id"),
+        )
+        if response.get("status") == "success":
+            save_game(CURRENT_STATE)
+        return response
+
     if cmd_type == 'get_replacement_candidates':
         if not CURRENT_STATE:
             return {"status": "error", "message": "Game not started"}
@@ -210,6 +242,11 @@ def process_command(command):
         if not CURRENT_STATE:
             return {"status": "error", "message": "Game not started"}
         return handle_get_manager_replacement_candidates(CURRENT_STATE, logging, command.get("manager_id"))
+
+    if cmd_type == 'get_technical_director_replacement_candidates':
+        if not CURRENT_STATE:
+            return {"status": "error", "message": "Game not started"}
+        return handle_get_technical_director_replacement_candidates(CURRENT_STATE, logging, command.get("director_id"))
 
     if cmd_type == 'preview_facilities_upgrade':
         if not CURRENT_STATE:
