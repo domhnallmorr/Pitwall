@@ -252,9 +252,9 @@ def test_apply_new_season_transfers_expiring_driver_without_deal_becomes_free_ag
     assert any(l["driver_id"] == 3 for l in outcome["expiring_leavers"])
 
 
-@patch("app.core.management_transfers.random.shuffle", side_effect=lambda x: None)
-@patch("app.core.management_transfers.random.randint", return_value=6)
-@patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])
+@patch("app.core.management_transfer_markets.commercial_manager.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfer_markets.commercial_manager.random.randint", return_value=6)
+@patch("app.core.management_transfer_markets.commercial_manager.random.choice", side_effect=lambda choices: choices[0])
 def test_recompute_ai_cm_signings_plans_only_ai_vacancies(mock_choice, mock_randint, mock_shuffle):
     state = create_transfer_state()
 
@@ -366,9 +366,9 @@ def test_apply_new_season_cm_transfers_moves_announced_manager_and_sets_contract
     assert any(s["manager_id"] == 3 for s in outcome["applied_signings"])
 
 
-@patch("app.core.management_transfers.random.shuffle", side_effect=lambda x: None)
-@patch("app.core.management_transfers.random.randint", return_value=6)
-@patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])
+@patch("app.core.management_transfer_markets.technical_director.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfer_markets.technical_director.random.randint", return_value=6)
+@patch("app.core.management_transfer_markets.technical_director.random.choice", side_effect=lambda choices: choices[0])
 def test_recompute_ai_td_signings_plans_only_ai_vacancies(mock_choice, mock_randint, mock_shuffle):
     state = create_transfer_state()
 
@@ -481,9 +481,9 @@ def test_apply_new_season_td_transfers_moves_announced_director_and_sets_contrac
     assert any(s["director_id"] == 3 for s in outcome["applied_signings"])
 
 
-@patch("app.core.management_transfers.random.shuffle", side_effect=lambda x: None)
-@patch("app.core.management_transfers.random.randint", return_value=6)
-@patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])
+@patch("app.core.management_transfer_markets.title_sponsor.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfer_markets.title_sponsor.random.randint", return_value=6)
+@patch("app.core.management_transfer_markets.title_sponsor.random.choice", side_effect=lambda choices: choices[0])
 def test_recompute_ai_title_sponsor_signings_plans_only_ai_vacancies(mock_choice, mock_randint, mock_shuffle):
     state = create_transfer_state()
 
@@ -600,7 +600,7 @@ def test_apply_new_season_title_sponsor_transfers_moves_announced_sponsor_and_se
     assert any(s["sponsor_id"] == 3 for s in outcome["applied_signings"])
 
 
-@patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])
+@patch("app.core.management_transfer_markets.title_sponsor.random.choice", side_effect=lambda choices: choices[0])
 def test_player_title_sponsor_replacement_updates_announced_and_replans_ai(mock_choice):
     state = create_transfer_state()
     player_team = next(t for t in state.teams if t.id == 1)
@@ -616,7 +616,7 @@ def test_player_title_sponsor_replacement_updates_announced_and_replans_ai(mock_
     assert any(e.subject.startswith("Title Sponsor Signed:") for e in state.emails)
 
 
-@patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])
+@patch("app.core.management_transfer_markets.technical_director.random.choice", side_effect=lambda choices: choices[0])
 def test_player_td_replacement_signing_updates_announced_and_replans_ai(mock_choice):
     state = create_transfer_state()
     player_director = next(d for d in state.technical_directors if d.id == 1)
@@ -632,9 +632,9 @@ def test_player_td_replacement_signing_updates_announced_and_replans_ai(mock_cho
     assert any(e.subject.startswith("Technical Director Signed:") for e in state.emails)
 
 
-@patch("app.core.management_transfers.random.shuffle", side_effect=lambda x: None)
-@patch("app.core.management_transfers.random.randint", return_value=6)
-@patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])
+@patch("app.core.management_transfer_markets.technical_director.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfer_markets.technical_director.random.randint", return_value=6)
+@patch("app.core.management_transfer_markets.technical_director.random.choice", side_effect=lambda choices: choices[0])
 def test_recompute_ai_td_signings_excludes_retired_directors(mock_choice, mock_randint, mock_shuffle):
     state = create_transfer_state()
     retired = next(d for d in state.technical_directors if d.id == 3)
@@ -646,9 +646,9 @@ def test_recompute_ai_td_signings_excludes_retired_directors(mock_choice, mock_r
     assert planned[0]["director_id"] == 2
 
 
-@patch("app.core.management_transfers.random.shuffle", side_effect=lambda x: None)
-@patch("app.core.management_transfers.random.randint", return_value=6)
-@patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])
+@patch("app.core.management_transfer_markets.commercial_manager.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfer_markets.commercial_manager.random.randint", return_value=6)
+@patch("app.core.management_transfer_markets.commercial_manager.random.choice", side_effect=lambda choices: choices[0])
 def test_recompute_ai_cm_signings_excludes_retired_managers(mock_choice, mock_randint, mock_shuffle):
     state = create_transfer_state()
     retired = next(m for m in state.commercial_managers if m.id == 3)
