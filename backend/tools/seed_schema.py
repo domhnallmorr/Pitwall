@@ -39,6 +39,7 @@ def create_schema(conn):
             workforce INTEGER DEFAULT 0,
             title_sponsor_name TEXT,
             title_sponsor_yearly INTEGER DEFAULT 0,
+            title_sponsor_contract_length INTEGER DEFAULT 0,
             other_sponsorship_yearly INTEGER DEFAULT 0,
             engine_supplier_name TEXT,
             engine_supplier_deal TEXT,
@@ -194,6 +195,8 @@ def create_schema(conn):
         c.execute("ALTER TABLE teams ADD COLUMN title_sponsor_name TEXT")
     if "title_sponsor_yearly" not in team_columns:
         c.execute("ALTER TABLE teams ADD COLUMN title_sponsor_yearly INTEGER DEFAULT 0")
+    if "title_sponsor_contract_length" not in team_columns:
+        c.execute("ALTER TABLE teams ADD COLUMN title_sponsor_contract_length INTEGER DEFAULT 0")
     if "other_sponsorship_yearly" not in team_columns:
         c.execute("ALTER TABLE teams ADD COLUMN other_sponsorship_yearly INTEGER DEFAULT 0")
     if "engine_supplier_name" not in team_columns:

@@ -25,6 +25,19 @@ def get_staff_payload(state: GameState) -> dict:
     player_team = next((t for t in state.teams if t.id == state.player_team_id), None)
     if not player_team:
         raise ValueError("No player team assigned")
+    pending_driver_seats = {
+        s.get("seat")
+        for s in state.announced_ai_signings
+        if s.get("status") == "announced" and s.get("team_id") == player_team.id
+    }
+    pending_cm = any(
+        s.get("status") == "announced" and s.get("team_id") == player_team.id
+        for s in state.announced_ai_cm_signings
+    )
+    pending_td = any(
+        s.get("status") == "announced" and s.get("team_id") == player_team.id
+        for s in state.announced_ai_td_signings
+    )
 
     team_drivers = [
         {
@@ -37,6 +50,10 @@ def get_staff_payload(state: GameState) -> dict:
             "wage": d.wage,
             "pay_driver": d.pay_driver,
             "contract_length": d.contract_length,
+            "pending_replacement": (
+                ("driver1_id" in pending_driver_seats and d.id == player_team.driver1_id)
+                or ("driver2_id" in pending_driver_seats and d.id == player_team.driver2_id)
+            ),
         }
         for d in state.drivers
         if d.team_id == player_team.id
@@ -60,6 +77,7 @@ def get_staff_payload(state: GameState) -> dict:
                 "skill": team_td.skill,
                 "contract_length": team_td.contract_length,
                 "salary": team_td.salary,
+                "pending_replacement": pending_td,
             }
             if team_td
             else None
@@ -73,6 +91,7 @@ def get_staff_payload(state: GameState) -> dict:
                 "skill": team_cm.skill,
                 "contract_length": team_cm.contract_length,
                 "salary": team_cm.salary,
+                "pending_replacement": pending_cm,
             }
             if team_cm
             else None

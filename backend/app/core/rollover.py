@@ -11,7 +11,11 @@ from app.core.roster import load_roster
 from app.core.car_performance import CarPerformanceManager
 from app.core.ai_car_development import AICarDevelopmentManager
 from app.core.transfers import TransferManager
-from app.core.management_transfers import CommercialManagerTransferManager, TechnicalDirectorTransferManager
+from app.core.management_transfers import (
+    CommercialManagerTransferManager,
+    TechnicalDirectorTransferManager,
+    TitleSponsorTransferManager,
+)
 from app.models.email import EmailCategory
 
 
@@ -33,6 +37,7 @@ class SeasonRolloverManager:
         self.transfer_manager = TransferManager()
         self.cm_transfer_manager = CommercialManagerTransferManager()
         self.td_transfer_manager = TechnicalDirectorTransferManager()
+        self.title_sponsor_transfer_manager = TitleSponsorTransferManager()
         self.ai_workforce_min = 90
         self.ai_workforce_max = 250
 
@@ -123,13 +128,17 @@ class SeasonRolloverManager:
             category=EmailCategory.SEASON,
         )
 
-        # 11. Load new seasonal driver entrants into free-agent pool
+        # 11. Load new seasonal driver entrants and title sponsors for the new year
         new_entrants = self._add_new_season_drivers(state)
+        new_title_sponsors = self._add_new_season_title_sponsors(state)
 
         # 12. Apply contract expiry and all announced transfer deals for the season that just ended.
         transfer_outcome = self.transfer_manager.apply_new_season_transfers(state, announced_year=old_year)
         management_transfer_outcome = self.cm_transfer_manager.apply_new_season_transfers(state, announced_year=old_year)
         td_transfer_outcome = self.td_transfer_manager.apply_new_season_transfers(state, announced_year=old_year)
+        title_sponsor_transfer_outcome = self.title_sponsor_transfer_manager.apply_new_season_transfers(
+            state, announced_year=old_year
+        )
 
         # 13. Fill any remaining vacancies from free agents
         signings = self.recruitment_manager.fill_vacancies(state)
@@ -201,6 +210,18 @@ class SeasonRolloverManager:
                 category=EmailCategory.SEASON
             )
 
+        if new_title_sponsors:
+            sponsor_lines = [f"- {s['name']} (wealth {s['wealth']})" for s in new_title_sponsors]
+            state.add_email(
+                sender="Competition Office",
+                subject=f"New Title Sponsors Entering {state.year}",
+                body=(
+                    f"The following title sponsors have entered the market for {state.year}:\n\n"
+                    + "\n".join(sponsor_lines)
+                ),
+                category=EmailCategory.SEASON,
+            )
+
         # 19. Queue and publish Week 1 signing announcements
         if signings:
             signing_lines = [f"- {s['team_name']}: {s['driver_name']} ({s['seat']})" for s in signings]
@@ -238,9 +259,12 @@ class SeasonRolloverManager:
         state.announced_ai_cm_signings.clear()
         state.planned_ai_td_signings.clear()
         state.announced_ai_td_signings.clear()
+        state.planned_ai_title_sponsor_signings.clear()
+        state.announced_ai_title_sponsor_signings.clear()
         planned_transfers = self.transfer_manager.recompute_ai_signings(state)
         planned_management_transfers = self.cm_transfer_manager.recompute_ai_signings(state)
         planned_td_transfers = self.td_transfer_manager.recompute_ai_signings(state)
+        planned_title_sponsor_transfers = self.title_sponsor_transfer_manager.recompute_ai_signings(state)
         planned_car_updates = self.ai_car_development_manager.generate_for_season(state)
 
         return {
@@ -255,10 +279,12 @@ class SeasonRolloverManager:
             "ai_facilities_upgrades": ai_facilities_upgrades,
             "ai_workforce_updates": ai_workforce_updates,
             "new_entrants": new_entrants,
+            "new_title_sponsors": new_title_sponsors,
             "management_updates": management_updates,
             "transfer_outcome": transfer_outcome,
             "management_transfer_outcome": management_transfer_outcome,
             "td_transfer_outcome": td_transfer_outcome,
+            "title_sponsor_transfer_outcome": title_sponsor_transfer_outcome,
             "signings": signings,
             "car_speed_updates": car_speed_updates,
             "next_season_prize_money": next_season_prize_money,
@@ -266,6 +292,7 @@ class SeasonRolloverManager:
             "planned_transfers": planned_transfers,
             "planned_management_transfers": planned_management_transfers,
             "planned_td_transfers": planned_td_transfers,
+            "planned_title_sponsor_transfers": planned_title_sponsor_transfers,
             "planned_car_updates": planned_car_updates,
         }
 
@@ -433,3 +460,26 @@ class SeasonRolloverManager:
             })
 
         return new_entrants
+
+    def _add_new_season_title_sponsors(self, state: GameState) -> list[dict]:
+        """Load and append title sponsors whose start_year matches the new season."""
+        roster_data = load_roster(
+            year=state.year,
+            include_title_sponsors=True,
+        )
+        season_title_sponsors = roster_data[5] if len(roster_data) > 5 else []
+        existing_ids = {s.id for s in state.title_sponsors}
+        new_sponsors = []
+
+        for sponsor in season_title_sponsors:
+            if sponsor.id in existing_ids:
+                continue
+            state.title_sponsors.append(sponsor)
+            new_sponsors.append({
+                "id": sponsor.id,
+                "name": sponsor.name,
+                "wealth": sponsor.wealth,
+                "start_year": sponsor.start_year,
+            })
+
+        return new_sponsors

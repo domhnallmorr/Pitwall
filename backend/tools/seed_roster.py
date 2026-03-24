@@ -22,6 +22,7 @@ try:
         TEAM_OTHER_SPONSORSHIP,
         TEAM_SPEEDS,
         TEAM_TITLE_SPONSORS,
+        TEAM_TITLE_SPONSOR_CONTRACT_LENGTHS,
         TEAM_TYRE_SUPPLIERS,
         TEAM_FUEL_SUPPLIERS,
         TEAM_WORKFORCE,
@@ -50,6 +51,7 @@ except ModuleNotFoundError:
         TEAM_OTHER_SPONSORSHIP,
         TEAM_SPEEDS,
         TEAM_TITLE_SPONSORS,
+        TEAM_TITLE_SPONSOR_CONTRACT_LENGTHS,
         TEAM_TYRE_SUPPLIERS,
         TEAM_FUEL_SUPPLIERS,
         TEAM_WORKFORCE,
@@ -149,8 +151,11 @@ def seed_data(conn):
             [(balance, name) for name, balance in TEAM_BALANCES.items()]
         )
         c.executemany(
-            'UPDATE teams SET title_sponsor_name = ?, title_sponsor_yearly = ? WHERE name = ?',
-            [(s[0], s[1], team_name) for team_name, s in TEAM_TITLE_SPONSORS.items()]
+            'UPDATE teams SET title_sponsor_name = ?, title_sponsor_yearly = ?, title_sponsor_contract_length = ? WHERE name = ?',
+            [
+                (s[0], s[1], TEAM_TITLE_SPONSOR_CONTRACT_LENGTHS.get(team_name, 0), team_name)
+                for team_name, s in TEAM_TITLE_SPONSORS.items()
+            ]
         )
         c.executemany(
             'UPDATE teams SET other_sponsorship_yearly = ? WHERE name = ?',
@@ -208,10 +213,6 @@ def seed_data(conn):
                 'INSERT INTO title_sponsors (start_year, name, wealth) VALUES (?, ?, ?)',
                 sponsors_to_insert,
             )
-        c.executemany(
-            'DELETE FROM title_sponsors WHERE start_year = ? AND name = ?',
-            [(0, name) for name in ("Bright Shot", "Technonica", "x-plus")],
-        )
         c.executemany(
             'UPDATE title_sponsors SET wealth = ? WHERE name = ? AND start_year = ?',
             [(s[2], s[1], s[0]) for s in TITLE_SPONSORS_DATA],
@@ -309,8 +310,11 @@ def seed_data(conn):
         [(s[2], s[1], s[0]) for s in TITLE_SPONSORS_DATA],
     )
     c.executemany(
-        'UPDATE teams SET title_sponsor_name = ?, title_sponsor_yearly = ? WHERE name = ?',
-        [(s[0], s[1], team_name) for team_name, s in TEAM_TITLE_SPONSORS.items()]
+        'UPDATE teams SET title_sponsor_name = ?, title_sponsor_yearly = ?, title_sponsor_contract_length = ? WHERE name = ?',
+        [
+            (s[0], s[1], TEAM_TITLE_SPONSOR_CONTRACT_LENGTHS.get(team_name, 0), team_name)
+            for team_name, s in TEAM_TITLE_SPONSORS.items()
+        ]
     )
     c.executemany(
         'UPDATE teams SET other_sponsorship_yearly = ? WHERE name = ?',
@@ -388,12 +392,13 @@ def seed_data(conn):
             *row,
             TEAM_TITLE_SPONSORS.get(row[1], (None, 0))[0],
             TEAM_TITLE_SPONSORS.get(row[1], (None, 0))[1],
+            TEAM_TITLE_SPONSOR_CONTRACT_LENGTHS.get(row[1], 0),
             TEAM_OTHER_SPONSORSHIP.get(row[1], 0),
         )
         for row in teams_data_with_attrs
     ]
     c.executemany(
-        'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed, workforce, title_sponsor_name, title_sponsor_yearly, other_sponsorship_yearly) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed, workforce, title_sponsor_name, title_sponsor_yearly, title_sponsor_contract_length, other_sponsorship_yearly) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         teams_data_with_attrs
     )
     c.executemany(

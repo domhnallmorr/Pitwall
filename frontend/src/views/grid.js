@@ -131,7 +131,7 @@ export default class GridView {
 
 			if (targetHead) {
 			if (this.mode === 'sponsors') {
-				targetHead.innerHTML = '<tr><th>Team</th><th>Title Sponsor</th><th>Other Sponsorship</th></tr>';
+				targetHead.innerHTML = '<tr><th>Team</th><th>Title Sponsor</th><th>Contract</th><th>Other Sponsorship</th></tr>';
 			} else if (this.mode === 'suppliers') {
 				targetHead.innerHTML = '<tr><th>Team</th><th>Engine Supplier</th><th>Engine Deal</th><th>Tyre Supplier</th><th>Tyre Deal</th></tr>';
 			} else {
@@ -144,10 +144,12 @@ export default class GridView {
 			const tr = document.createElement('tr');
 			if (this.mode === 'sponsors') {
 				const sponsorName = row.TitleSponsor || '';
+				const sponsorContractLength = Number(row.TitleSponsorContractLength || 0);
 				const otherSponsorship = Number(row.OtherSponsorshipYearly || 0);
 				tr.innerHTML = `
 					<td>${row.Team}</td>
 					<td>${this.renderSponsorCell(sponsorName)}</td>
+					<td>${sponsorContractLength > 0 ? `${sponsorContractLength} year(s)` : '-'}</td>
 					<td>$${otherSponsorship.toLocaleString()}</td>
 				`;
 			} else if (this.mode === 'suppliers') {

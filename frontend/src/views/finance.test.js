@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { JSDOM } from 'jsdom'
 import FinanceView from './finance.js'
 
@@ -30,6 +30,7 @@ describe('FinanceView', () => {
 			<div id="finance-sponsorship-total"></div>
 			<div id="finance-prize-progress"></div>
 			<div id="finance-sponsor-name"></div>
+			<button id="finance-sponsor-replace-btn"></button>
 			<div id="finance-sponsor-annual"></div>
 			<div id="finance-sponsor-installment"></div>
 			<div id="finance-sponsor-paid"></div>
@@ -91,6 +92,7 @@ describe('FinanceView', () => {
 			},
 			sponsor: {
 				name: 'Windale',
+				contract_length: 1,
 				annual_value: 32500000,
 				installment: 2031250,
 				paid_so_far: 2031250,
@@ -143,6 +145,7 @@ describe('FinanceView', () => {
 		expect(document.getElementById('finance-fuel-supplier-total').textContent).toBe('-$75,000')
 		expect(document.getElementById('finance-sponsorship-total').textContent).toBe('$900')
 		expect(document.getElementById('finance-sponsor-name').textContent).toBe('Windale')
+		expect(document.getElementById('finance-sponsor-replace-btn').disabled).toBe(false)
 		expect(document.getElementById('finance-other-sponsorship-annual').textContent).toBe('$9,500,000')
 		expect(document.getElementById('finance-engine-supplier-name').textContent).toBe('Mechatron')
 		expect(document.getElementById('finance-engine-supplier-deal').textContent).toBe('customer')
@@ -186,11 +189,47 @@ describe('FinanceView', () => {
 		expect(document.getElementById('finance-track-pl-body').textContent).toContain('No track-linked finance yet')
 		expect(document.getElementById('finance-transactions-body').textContent).toContain('No transactions yet')
 		expect(document.getElementById('finance-sponsor-logo-wrap').innerHTML).toBe('')
+		expect(document.getElementById('finance-sponsor-replace-btn').disabled).toBe(true)
 		expect(document.getElementById('finance-engine-supplier-logo-wrap').innerHTML).toBe('')
 
 		const trackerBtn = document.querySelector('.finance-tab-btn[data-type="tracker"]')
 		trackerBtn.click()
 		expect(document.getElementById('finance-content-main').style.display).toBe('none')
 		expect(document.getElementById('finance-content-tracker').style.display).toBe('block')
+	})
+
+	it('triggers title sponsor replace handler when enabled', () => {
+		const onReplace = vi.fn()
+		financeView.setReplaceTitleSponsorHandler(onReplace)
+		financeView.render({
+			balance: 0,
+			summary: {},
+			sponsor: { name: 'Windale', contract_length: 1, annual_value: 1, installment: 0, paid_so_far: 0, remaining: 1 },
+			other_sponsorship: {},
+			engine_supplier: {},
+			tyre_supplier: {},
+			fuel_supplier: {},
+			track_profit_loss: [],
+			transactions: []
+		})
+
+		document.getElementById('finance-sponsor-replace-btn').click()
+		expect(onReplace).toHaveBeenCalledWith('Windale')
+	})
+
+	it('keeps title sponsor replace disabled when a pending replacement exists', () => {
+		financeView.render({
+			balance: 0,
+			summary: {},
+			sponsor: { name: 'Windale', contract_length: 1, pending_replacement: true, annual_value: 1, installment: 0, paid_so_far: 0, remaining: 1 },
+			other_sponsorship: {},
+			engine_supplier: {},
+			tyre_supplier: {},
+			fuel_supplier: {},
+			track_profit_loss: [],
+			transactions: []
+		})
+
+		expect(document.getElementById('finance-sponsor-replace-btn').disabled).toBe(true)
 	})
 })

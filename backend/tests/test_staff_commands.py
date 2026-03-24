@@ -3,9 +3,11 @@ from unittest.mock import Mock, patch
 from app.commands.staff_commands import (
     handle_get_technical_director_replacement_candidates,
     handle_get_manager_replacement_candidates,
+    handle_get_title_sponsor_replacement_candidates,
     handle_get_replacement_candidates,
     handle_replace_commercial_manager,
     handle_replace_technical_director,
+    handle_replace_title_sponsor,
     handle_replace_driver,
     handle_repair_car_wear,
     handle_start_car_development,
@@ -17,12 +19,13 @@ from app.models.driver import Driver
 from app.models.state import GameState
 from app.models.team import Team
 from app.models.technical_director import TechnicalDirector
+from app.models.title_sponsor import TitleSponsor
 
 
 def create_state() -> GameState:
     return GameState(
         year=1998,
-        teams=[Team(id=1, name="Warrick", country="United Kingdom", driver1_id=1, driver2_id=2, workforce=120, car_wear=10)],
+        teams=[Team(id=1, name="Warrick", country="United Kingdom", driver1_id=1, driver2_id=2, workforce=120, car_wear=10, title_sponsor_name="Windale", title_sponsor_yearly=32_500_000, title_sponsor_contract_length=1)],
         drivers=[
             Driver(id=1, name="John Newhouse", age=27, country="Canada", team_id=1, contract_length=1, speed=80),
             Driver(id=2, name="Henrik Friedrich", age=31, country="Germany", team_id=1, contract_length=2, speed=70),
@@ -35,6 +38,10 @@ def create_state() -> GameState:
         technical_directors=[
             TechnicalDirector(id=21, name="Peter Heed", country="United Kingdom", age=52, skill=75, contract_length=1, salary=4_800_000, team_id=1),
             TechnicalDirector(id=22, name="Free TD", country="France", age=44, skill=68, contract_length=0, salary=0, team_id=None),
+        ],
+        title_sponsors=[
+            TitleSponsor(id=31, name="Windale", wealth=70, start_year=0),
+            TitleSponsor(id=32, name="Bright Shot", wealth=85, start_year=0),
         ],
         calendar=Calendar(events=[Event(name="Albert Park", week=10, type=EventType.RACE)], current_week=10),
         circuits=[],
@@ -155,6 +162,41 @@ def test_get_technical_director_replacement_candidates_validates_and_handles_err
 
     with patch("app.commands.staff_commands.TechnicalDirectorTransferManager.get_player_replacement_candidates", side_effect=RuntimeError("fail")):
         result = handle_get_technical_director_replacement_candidates(state, logger, director_id=21)
+    assert result["status"] == "error"
+    assert result["message"] == "fail"
+    assert logger.error.called
+
+
+def test_replace_title_sponsor_validates_and_handles_errors():
+    state = create_state()
+    logger = Mock()
+    _, result = handle_replace_title_sponsor(state, logger, sponsor_name=None)
+    assert result["status"] == "error"
+
+    with patch("app.commands.staff_commands.TitleSponsorTransferManager.sign_player_replacement", side_effect=ValueError("bad")):
+        _, result = handle_replace_title_sponsor(state, logger, sponsor_name="Windale")
+    assert result["status"] == "error"
+    assert result["message"] == "bad"
+
+    with patch("app.commands.staff_commands.TitleSponsorTransferManager.sign_player_replacement", side_effect=RuntimeError("oops")):
+        _, result = handle_replace_title_sponsor(state, logger, sponsor_name="Windale")
+    assert result["status"] == "error"
+    assert result["message"] == "oops"
+
+
+def test_get_title_sponsor_replacement_candidates_validates_and_handles_errors():
+    state = create_state()
+    logger = Mock()
+    assert handle_get_title_sponsor_replacement_candidates(state, logger, sponsor_name=None)["status"] == "error"
+    assert handle_get_title_sponsor_replacement_candidates(state, logger, sponsor_name="Nope")["status"] == "error"
+
+    with patch("app.commands.staff_commands.TitleSponsorTransferManager.get_player_replacement_candidates", side_effect=ValueError("blocked")):
+        result = handle_get_title_sponsor_replacement_candidates(state, logger, sponsor_name="Windale")
+    assert result["status"] == "error"
+    assert result["message"] == "blocked"
+
+    with patch("app.commands.staff_commands.TitleSponsorTransferManager.get_player_replacement_candidates", side_effect=RuntimeError("fail")):
+        result = handle_get_title_sponsor_replacement_candidates(state, logger, sponsor_name="Windale")
     assert result["status"] == "error"
     assert result["message"] == "fail"
     assert logger.error.called

@@ -18,9 +18,11 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 		getReplacementCandidates: vi.fn(),
 		getManagerReplacementCandidates: vi.fn(),
 		getTechnicalDirectorReplacementCandidates: vi.fn(),
+		getTitleSponsorReplacementCandidates: vi.fn(),
 		replaceDriver: vi.fn(),
 		replaceCommercialManager: vi.fn(),
 		replaceTechnicalDirector: vi.fn(),
+		replaceTitleSponsor: vi.fn(),
 		getDriver: vi.fn(),
 		getCar: vi.fn(),
 		startCarDevelopment: vi.fn(),
@@ -75,7 +77,7 @@ vi.mock('./views/staff.js', () => ({ default: class { setReplaceDriverHandler() 
 vi.mock('./views/driver.js', () => ({ default: class { constructor() { this.currentDriverName = null; } render(...args) { viewFns.driverRender(...args); } } }));
 vi.mock('./views/driver_market.js', () => ({ default: class { setBackHandler() {} setSignHandler() {} render(...args) { viewFns.driverMarketRender(...args); } } }));
 vi.mock('./views/car.js', () => ({ default: class { setStartDevelopmentHandler() {} setRepairWearHandler() {} render(...args) { viewFns.carRender(...args); } } }));
-vi.mock('./views/finance.js', () => ({ default: class { render(...args) { viewFns.financeRender(...args); } } }));
+vi.mock('./views/finance.js', () => ({ default: class { setReplaceTitleSponsorHandler() {} render(...args) { viewFns.financeRender(...args); } } }));
 vi.mock('./views/facilities.js', () => ({
 	default: class {
 		setPreviewHandler() {}

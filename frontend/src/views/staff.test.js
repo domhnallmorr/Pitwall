@@ -216,4 +216,37 @@ describe('StaffView', () => {
 		driverBtn.click();
 		expect(onReplace).toHaveBeenCalledTimes(1);
 	});
+
+	it('disables replace buttons when a pending replacement exists', () => {
+		staffView.render({
+			drivers: [
+				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, wage: 1000, pay_driver: false, contract_length: 1, pending_replacement: true },
+			],
+			technical_director: {
+				id: 6,
+				name: 'Tech One',
+				age: 45,
+				country: 'UK',
+				skill: 82,
+				contract_length: 1,
+				pending_replacement: true,
+				salary: 500000,
+			},
+			commercial_manager: {
+				id: 7,
+				name: 'Manager One',
+				age: 38,
+				country: 'US',
+				skill: 77,
+				contract_length: 1,
+				pending_replacement: true,
+				salary: 320000,
+			},
+			teams: [],
+		});
+
+		expect(document.querySelector('.staff-replace-btn').disabled).toBe(true);
+		expect(document.querySelector('.staff-replace-technical-director-btn').disabled).toBe(true);
+		expect(document.querySelector('.staff-replace-manager-btn').disabled).toBe(true);
+	});
 });

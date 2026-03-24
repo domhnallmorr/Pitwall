@@ -37,6 +37,8 @@ function renderFinanceSupplierSections() {
 			title: 'Title Sponsor',
 			nameId: 'finance-sponsor-name',
 			nameDefault: 'Unassigned',
+			actionButtonId: 'finance-sponsor-replace-btn',
+			actionButtonLabel: 'Replace',
 			rows: [
 				{ label: 'Annual Value', id: 'finance-sponsor-annual', defaultValue: '$0' },
 				{ label: 'Per Race', id: 'finance-sponsor-installment', defaultValue: '$0' },
@@ -110,6 +112,7 @@ function renderFinanceSupplierSections() {
 					<div id="${card.nameId}" class="finance-section-title">${card.nameDefault}</div>
 				</div>
 			</div>
+			${card.actionButtonId ? `<div class="finance-sponsor-actions"><button id="${card.actionButtonId}" class="btn-secondary">${card.actionButtonLabel}</button></div>` : ''}
 			<div class="finance-sponsor-grid">
 				${card.rows.map((row) => `
 					<div>

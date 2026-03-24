@@ -45,6 +45,7 @@ describe('GridView modes and branch behavior', () => {
 				{
 					Team: 'Warrick',
 					TitleSponsor: 'Windale',
+					TitleSponsorContractLength: 2,
 					OtherSponsorshipYearly: 9_500_000,
 				},
 			],
@@ -57,7 +58,9 @@ describe('GridView modes and branch behavior', () => {
 		const head = document.getElementById('grid-head-1998').textContent;
 		const row = document.querySelector('#grid-table-body tr');
 		expect(head).toContain('Title Sponsor');
+		expect(head).toContain('Contract');
 		expect(row.innerHTML).toContain('Windale');
+		expect(row.innerHTML).toContain('2 year(s)');
 		expect(row.innerHTML).toContain('$9,500,000');
 	});
 

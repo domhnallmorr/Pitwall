@@ -7,7 +7,11 @@ from app.core.prize_money import PrizeMoneyManager
 from app.core.retirement import RetirementManager
 from app.core.roster import load_roster
 from app.core.transfers import TransferManager
-from app.core.management_transfers import CommercialManagerTransferManager, TechnicalDirectorTransferManager
+from app.core.management_transfers import (
+    CommercialManagerTransferManager,
+    TechnicalDirectorTransferManager,
+    TitleSponsorTransferManager,
+)
 from app.commands.facilities_commands import (
     handle_facilities_upgrade_preview,
     handle_start_facilities_upgrade,
@@ -17,10 +21,12 @@ from app.commands.race_commands import handle_simulate_race
 from app.commands.staff_commands import (
     handle_get_technical_director_replacement_candidates,
     handle_get_manager_replacement_candidates,
+    handle_get_title_sponsor_replacement_candidates,
     handle_get_replacement_candidates,
     handle_repair_car_wear,
     handle_replace_commercial_manager,
     handle_replace_technical_director,
+    handle_replace_title_sponsor,
     handle_replace_driver,
     handle_start_car_development,
     handle_update_workforce,
@@ -120,6 +126,7 @@ def handle_start_career(state: GameState | None, logger: logging.Logger, team_na
         TransferManager().recompute_ai_signings(current_state)
         CommercialManagerTransferManager().recompute_ai_signings(current_state)
         TechnicalDirectorTransferManager().recompute_ai_signings(current_state)
+        TitleSponsorTransferManager().recompute_ai_signings(current_state)
         AICarDevelopmentManager().generate_for_season(current_state)
         return current_state, {
             "type": "game_started",

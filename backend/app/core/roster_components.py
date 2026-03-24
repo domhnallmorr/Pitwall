@@ -61,6 +61,7 @@ def load_teams(cursor, start_year: int, driver_map: Dict[str, Driver]) -> List[T
     has_workforce = "workforce" in team_columns
     has_title_sponsor_name = "title_sponsor_name" in team_columns
     has_title_sponsor_yearly = "title_sponsor_yearly" in team_columns
+    has_title_sponsor_contract_length = "title_sponsor_contract_length" in team_columns
     has_other_sponsorship_yearly = "other_sponsorship_yearly" in team_columns
     has_engine_supplier_name = "engine_supplier_name" in team_columns
     has_engine_supplier_deal = "engine_supplier_deal" in team_columns
@@ -75,6 +76,7 @@ def load_teams(cursor, start_year: int, driver_map: Dict[str, Driver]) -> List[T
     workforce_expr = "workforce" if has_workforce else "0"
     title_sponsor_name_expr = "title_sponsor_name" if has_title_sponsor_name else "NULL"
     title_sponsor_yearly_expr = "title_sponsor_yearly" if has_title_sponsor_yearly else "0"
+    title_sponsor_contract_length_expr = "title_sponsor_contract_length" if has_title_sponsor_contract_length else "0"
     other_sponsorship_yearly_expr = "other_sponsorship_yearly" if has_other_sponsorship_yearly else "0"
     engine_supplier_name_expr = "engine_supplier_name" if has_engine_supplier_name else "NULL"
     engine_supplier_deal_expr = "engine_supplier_deal" if has_engine_supplier_deal else "NULL"
@@ -88,7 +90,7 @@ def load_teams(cursor, start_year: int, driver_map: Dict[str, Driver]) -> List[T
 
     cursor.execute(
         f"SELECT id, name, country, driver1_name, driver2_name, balance, facilities, {car_speed_expr} AS car_speed, {workforce_expr} AS workforce, "
-        f"{title_sponsor_name_expr} AS title_sponsor_name, {title_sponsor_yearly_expr} AS title_sponsor_yearly, {other_sponsorship_yearly_expr} AS other_sponsorship_yearly, "
+        f"{title_sponsor_name_expr} AS title_sponsor_name, {title_sponsor_yearly_expr} AS title_sponsor_yearly, {title_sponsor_contract_length_expr} AS title_sponsor_contract_length, {other_sponsorship_yearly_expr} AS other_sponsorship_yearly, "
         f"{engine_supplier_name_expr} AS engine_supplier_name, {engine_supplier_deal_expr} AS engine_supplier_deal, {engine_supplier_yearly_cost_expr} AS engine_supplier_yearly_cost, "
         f"{tyre_supplier_name_expr} AS tyre_supplier_name, {tyre_supplier_deal_expr} AS tyre_supplier_deal, {tyre_supplier_yearly_cost_expr} AS tyre_supplier_yearly_cost, "
         f"{fuel_supplier_name_expr} AS fuel_supplier_name, {fuel_supplier_deal_expr} AS fuel_supplier_deal, {fuel_supplier_yearly_cost_expr} AS fuel_supplier_yearly_cost "
@@ -107,16 +109,17 @@ def load_teams(cursor, start_year: int, driver_map: Dict[str, Driver]) -> List[T
             workforce=row[8] if row[8] is not None else 0,
             title_sponsor_name=row[9] if row[9] is not None else None,
             title_sponsor_yearly=row[10] if row[10] is not None else 0,
-            other_sponsorship_yearly=row[11] if row[11] is not None else 0,
-            engine_supplier_name=row[12] if row[12] is not None else None,
-            engine_supplier_deal=row[13] if row[13] is not None else None,
-            engine_supplier_yearly_cost=row[14] if row[14] is not None else 0,
-            tyre_supplier_name=row[15] if row[15] is not None else None,
-            tyre_supplier_deal=row[16] if row[16] is not None else None,
-            tyre_supplier_yearly_cost=row[17] if row[17] is not None else 0,
-            fuel_supplier_name=row[18] if row[18] is not None else None,
-            fuel_supplier_deal=row[19] if row[19] is not None else None,
-            fuel_supplier_yearly_cost=row[20] if row[20] is not None else 0,
+            title_sponsor_contract_length=row[11] if row[11] is not None else 0,
+            other_sponsorship_yearly=row[12] if row[12] is not None else 0,
+            engine_supplier_name=row[13] if row[13] is not None else None,
+            engine_supplier_deal=row[14] if row[14] is not None else None,
+            engine_supplier_yearly_cost=row[15] if row[15] is not None else 0,
+            tyre_supplier_name=row[16] if row[16] is not None else None,
+            tyre_supplier_deal=row[17] if row[17] is not None else None,
+            tyre_supplier_yearly_cost=row[18] if row[18] is not None else 0,
+            fuel_supplier_name=row[19] if row[19] is not None else None,
+            fuel_supplier_deal=row[20] if row[20] is not None else None,
+            fuel_supplier_yearly_cost=row[21] if row[21] is not None else 0,
         )
 
         d1_name = row[3]

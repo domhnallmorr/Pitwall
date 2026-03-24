@@ -32,6 +32,13 @@ class GridManager:
             return False
         return True
 
+    def _projected_title_sponsor(self, team) -> tuple[str, int]:
+        sponsor_name = getattr(team, "title_sponsor_name", None)
+        contract_length = int(getattr(team, "title_sponsor_contract_length", 0) or 0)
+        if not sponsor_name or contract_length <= 1:
+            return "VACANT", 0
+        return sponsor_name, contract_length - 1
+
     def get_grid_records(self, state: GameState, year: int | None = None) -> List[dict]:
         """
         Returns grid records for a given year.
@@ -60,6 +67,8 @@ class GridManager:
             d2 = driver_lookup.get(team.driver2_id)
             td = td_lookup.get(team.technical_director_id)
             cm = cm_lookup.get(team.commercial_manager_id)
+            title_sponsor_name = team.title_sponsor_name if getattr(team, "title_sponsor_name", None) else "VACANT"
+            title_sponsor_contract_length = int(getattr(team, "title_sponsor_contract_length", 0) or 0)
 
             row = {
                 "Team": team.name,
@@ -71,7 +80,8 @@ class GridManager:
                 "TechnicalDirector": td.name if td else "VACANT",
                 "TechnicalDirectorCountry": td.country if td and td.country else "",
                 "CommercialManager": cm.name if cm else "VACANT",
-                "TitleSponsor": team.title_sponsor_name if getattr(team, "title_sponsor_name", None) else "VACANT",
+                "TitleSponsor": title_sponsor_name,
+                "TitleSponsorContractLength": title_sponsor_contract_length,
                 "OtherSponsorshipYearly": str(team.other_sponsorship_yearly if getattr(team, "other_sponsorship_yearly", None) is not None else 0),
                 "EngineSupplier": team.engine_supplier_name if getattr(team, "engine_supplier_name", None) else "VACANT",
                 "EngineSupplierCountry": engine_country_by_name.get(team.engine_supplier_name or "", ""),
@@ -107,6 +117,11 @@ class GridManager:
             for s in state.announced_ai_td_signings
             if s.get("status") == "announced"
         }
+        announced_title_sponsor_by_team = {
+            s.get("team_id"): s
+            for s in state.announced_ai_title_sponsor_signings
+            if s.get("status") == "announced"
+        }
         td_lookup = {td.id: td for td in state.technical_directors}
         cm_lookup = {cm.id: cm for cm in state.commercial_managers}
         engine_country_by_name = {e.name: e.country for e in state.engine_suppliers}
@@ -128,6 +143,12 @@ class GridManager:
             cm = cm_lookup.get(announced_cm_id) if announced_cm_id else cm_lookup.get(team.commercial_manager_id)
             if not announced_cm_id:
                 cm = cm if self._is_projected_commercial_manager_available(cm) else None
+            announced_title_sponsor = announced_title_sponsor_by_team.get(team.id)
+            if announced_title_sponsor:
+                title_sponsor_name = announced_title_sponsor.get("sponsor_name") or "VACANT"
+                title_sponsor_contract_length = 2 if title_sponsor_name != "VACANT" else 0
+            else:
+                title_sponsor_name, title_sponsor_contract_length = self._projected_title_sponsor(team)
 
             row = {
                 "Team": team.name,
@@ -139,7 +160,8 @@ class GridManager:
                 "TechnicalDirector": td.name if td else "VACANT",
                 "TechnicalDirectorCountry": td.country if td and td.country else "",
                 "CommercialManager": cm.name if cm else "VACANT",
-                "TitleSponsor": team.title_sponsor_name if getattr(team, "title_sponsor_name", None) else "VACANT",
+                "TitleSponsor": title_sponsor_name,
+                "TitleSponsorContractLength": title_sponsor_contract_length,
                 "OtherSponsorshipYearly": str(team.other_sponsorship_yearly if getattr(team, "other_sponsorship_yearly", None) is not None else 0),
                 "EngineSupplier": team.engine_supplier_name if getattr(team, "engine_supplier_name", None) else "VACANT",
                 "EngineSupplierCountry": engine_country_by_name.get(team.engine_supplier_name or "", ""),

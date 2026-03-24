@@ -196,6 +196,20 @@ TEAM_TITLE_SPONSORS = {
     "Marchetti": ("Tonometal", 4_400_000),
 }
 
+TEAM_TITLE_SPONSOR_CONTRACT_LENGTHS = {
+    "Warrick": 2,
+    "Ferano": 5,
+    "Benedetti": 4,
+    "McAlister": 4,
+    "Joyce": 3,
+    "Pascal": 2,
+    "Schweizer": 4,
+    "Swords": 1,
+    "Strathmore": 2,
+    "Tarnwell": 1,
+    "Marchetti": 1,
+}
+
 TEAM_OTHER_SPONSORSHIP = {
     "Warrick": 9_500_000,
     "Ferano": 12_500_000,
@@ -308,6 +322,19 @@ TITLE_SPONSORS_DATA = [
     (0, "HBRC", 58),
     (0, "PIKA", 28),
     (0, "Tonometal", 25),
+    (0, "Bright Shot", 85),
+    (0, "Technonica", 31),
+    (0, "x-plus", 20),
+    (1999, "Purple", 50),
+    (1999, "Zenteq", 55),
+    (2000, "Eurostar Charter", 30),
+    (2000, "Axen", 58),
+    (2001, "FRL", 41),
+    (2001, "Panatron", 76),
+    (2002, "Throtl", 27),
+    (2002, "VL", 66),
+    (2004, "OzAir", 18),
+    (2004, "Capital Helvetia", 70),
 ]
 
 ENGINE_SUPPLIERS_DATA = [

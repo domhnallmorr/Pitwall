@@ -8,6 +8,7 @@ from app.models.commercial_manager import CommercialManager
 from app.models.circuit import Circuit
 from app.models.finance import TransactionCategory
 from app.models.technical_director import TechnicalDirector
+from app.models.title_sponsor import TitleSponsor
 
 
 def create_state() -> GameState:
@@ -24,6 +25,7 @@ def create_state() -> GameState:
             workforce=250,
             title_sponsor_name="Windale",
             title_sponsor_yearly=32_500_000,
+            title_sponsor_contract_length=1,
             other_sponsorship_yearly=9_500_000,
             engine_supplier_name="Mechatron",
             engine_supplier_deal="customer",
@@ -68,6 +70,10 @@ def create_state() -> GameState:
         commercial_managers=[
             CommercialManager(id=11, name="Jace Whitman", country="United Kingdom", age=29, skill=70, contract_length=1, salary=360_000, team_id=1),
             CommercialManager(id=12, name="Free Manager", country="Germany", age=43, skill=66, contract_length=0, salary=0, team_id=None),
+        ],
+        title_sponsors=[
+            TitleSponsor(id=31, name="Windale", wealth=70, start_year=0),
+            TitleSponsor(id=32, name="Bright Shot", wealth=85, start_year=0),
         ],
         calendar=calendar,
         circuits=circuits,
@@ -270,6 +276,55 @@ def test_replace_technical_director_respects_contract_rule_and_signs_replacement
     locked = process_command({"type": "replace_technical_director", "director_id": 21})
     assert locked["status"] == "error"
     assert "2 or more years" in locked["message"]
+
+
+def test_replace_title_sponsor_respects_contract_rule_and_signs_replacement():
+    state = create_state()
+    app_main.CURRENT_STATE = state
+
+    candidates = process_command({"type": "get_title_sponsor_replacement_candidates", "sponsor_name": "Windale"})
+    assert candidates["status"] == "success"
+    assert any(s["id"] == 32 for s in candidates["data"]["candidates"])
+
+    success = process_command({"type": "replace_title_sponsor", "sponsor_name": "Windale", "incoming_sponsor_id": 32})
+    assert success["status"] == "success"
+    assert success["type"] == "title_sponsor_replaced"
+    assert success["data"]["team_id"] == 1
+    assert success["data"]["sponsor_id"] == 32
+
+    app_main.CURRENT_STATE.player_team.title_sponsor_contract_length = 2
+    locked = process_command({"type": "replace_title_sponsor", "sponsor_name": "Windale"})
+    assert locked["status"] == "error"
+    assert "2 or more years" in locked["message"]
+
+
+def test_pending_player_replacements_are_reflected_in_staff_and_finance_payloads():
+    state = create_state()
+    state.drivers[0].contract_length = 1
+    state.commercial_managers[0].contract_length = 1
+    state.technical_directors[0].contract_length = 1
+    state.announced_ai_signings = [
+        {
+            "team_id": 1,
+            "seat": "driver1_id",
+            "driver_id": 99,
+            "status": "announced",
+        }
+    ]
+    state.announced_ai_cm_signings = [{"team_id": 1, "manager_id": 12, "status": "announced"}]
+    state.announced_ai_td_signings = [{"team_id": 1, "director_id": 22, "status": "announced"}]
+    state.announced_ai_title_sponsor_signings = [{"team_id": 1, "sponsor_id": 32, "status": "announced"}]
+    app_main.CURRENT_STATE = state
+
+    staff = process_command({"type": "get_staff"})
+    finance = process_command({"type": "get_finance"})
+
+    assert staff["status"] == "success"
+    assert finance["status"] == "success"
+    assert next(d for d in staff["data"]["drivers"] if d["id"] == 1)["pending_replacement"] is True
+    assert staff["data"]["commercial_manager"]["pending_replacement"] is True
+    assert staff["data"]["technical_director"]["pending_replacement"] is True
+    assert finance["data"]["sponsor"]["pending_replacement"] is True
 
 
 def test_get_facilities_returns_player_and_team_comparison_data():

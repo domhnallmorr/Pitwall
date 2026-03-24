@@ -204,7 +204,7 @@ export default class StaffView {
 						${isReplaceable ? `
 						<div class="staff-detail-row">
 							<span class="staff-detail-value">
-								<button class="staff-replace-btn ${buttonClass}" ${dataAttr} ${member.contract_length >= 2 ? 'disabled' : ''}>
+								<button class="staff-replace-btn ${buttonClass}" ${dataAttr} ${member.contract_length >= 2 || member.pending_replacement ? 'disabled' : ''}>
 									Replace
 								</button>
 							</span>
@@ -287,7 +287,7 @@ export default class StaffView {
 					</div>
 					<div class="staff-detail-row">
 						<span class="staff-detail-value">
-							<button class="staff-replace-btn" data-driver-id="${driver.id}" ${driver.contract_length >= 2 ? 'disabled' : ''}>
+							<button class="staff-replace-btn" data-driver-id="${driver.id}" ${driver.contract_length >= 2 || driver.pending_replacement ? 'disabled' : ''}>
 								Replace
 							</button>
 						</span>

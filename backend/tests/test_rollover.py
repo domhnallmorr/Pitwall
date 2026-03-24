@@ -7,6 +7,7 @@ from app.models.driver import Driver
 from app.models.team import Team
 from app.models.technical_director import TechnicalDirector
 from app.models.commercial_manager import CommercialManager
+from app.models.title_sponsor import TitleSponsor
 from unittest.mock import patch
 from app.models.enums import DriverRole
 
@@ -618,3 +619,44 @@ def test_rollover_adds_new_season_entrants(mock_random, mock_choice, mock_load_r
     assert "Jenson Button" in entrants_email[0].body
     assert "Nick Heidfeld" in entrants_email[0].body
     assert "Gaston Mazzacane" in entrants_email[0].body
+
+
+@patch('app.core.rollover.load_roster')
+def test_rollover_adds_new_season_title_sponsors(mock_load_roster):
+    teams = [
+        Team(id=1, name="Team A", country="UK", title_sponsor_name="Windale", title_sponsor_contract_length=2),
+    ]
+    existing_sponsors = [
+        TitleSponsor(id=1, name="Windale", wealth=70, start_year=0),
+    ]
+    calendar = Calendar(events=[Event(name="Race 1", week=3, type=EventType.RACE)], current_week=3)
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=[],
+        title_sponsors=existing_sponsors.copy(),
+        calendar=calendar,
+        circuits=[],
+    )
+
+    future_sponsors = [
+        TitleSponsor(id=1, name="Windale", wealth=70, start_year=0),
+        TitleSponsor(id=20, name="Purple", wealth=50, start_year=1999),
+        TitleSponsor(id=21, name="Zenteq", wealth=55, start_year=1999),
+    ]
+    mock_load_roster.side_effect = [
+        ([], [], 1999, [], []),
+        ([], [], 1999, [], [], future_sponsors),
+    ]
+
+    manager = SeasonRolloverManager()
+    result = manager.process_rollover(state)
+
+    sponsor_names = {s["name"] for s in result["new_title_sponsors"]}
+    assert sponsor_names == {"Purple", "Zenteq"}
+    assert {s.name for s in state.title_sponsors} == {"Windale", "Purple", "Zenteq"}
+
+    sponsor_email = next((e for e in state.emails if e.subject == "New Title Sponsors Entering 1999"), None)
+    assert sponsor_email is not None
+    assert "Purple" in sponsor_email.body
+    assert "Zenteq" in sponsor_email.body

@@ -24,6 +24,7 @@ export default class FinanceView {
 		this.sponsorshipTotalEl = document.getElementById('finance-sponsorship-total');
 		this.prizeProgressEl = document.getElementById('finance-prize-progress');
 		this.sponsorNameEl = document.getElementById('finance-sponsor-name');
+		this.sponsorReplaceBtn = document.getElementById('finance-sponsor-replace-btn');
 		this.sponsorAnnualEl = document.getElementById('finance-sponsor-annual');
 		this.sponsorInstallmentEl = document.getElementById('finance-sponsor-installment');
 		this.sponsorPaidEl = document.getElementById('finance-sponsor-paid');
@@ -58,7 +59,13 @@ export default class FinanceView {
 		this.fuelSupplierLogoWrap = document.getElementById('finance-fuel-supplier-logo-wrap');
 		this.trackPlBody = document.getElementById('finance-track-pl-body');
 		this.tbody = document.getElementById('finance-transactions-body');
+		this.onReplaceTitleSponsor = null;
 		this.bindTabs();
+		this.bindSponsorActions();
+	}
+
+	setReplaceTitleSponsorHandler(handler) {
+		this.onReplaceTitleSponsor = handler;
 	}
 
 	setSupplierLogo(targetWrap, supplierName) {
@@ -104,6 +111,16 @@ export default class FinanceView {
 				if (this.logContent) this.logContent.style.display = 'none';
 				showPanel(panelByType[type]);
 			});
+		});
+	}
+
+	bindSponsorActions() {
+		if (!this.sponsorReplaceBtn) return;
+		this.sponsorReplaceBtn.addEventListener('click', () => {
+			if (!this.onReplaceTitleSponsor) return;
+			const sponsorName = this.sponsorReplaceBtn.getAttribute('data-sponsor-name');
+			if (!sponsorName) return;
+			this.onReplaceTitleSponsor(sponsorName);
 		});
 	}
 
@@ -162,12 +179,23 @@ export default class FinanceView {
 
 		const sponsor = data.sponsor || {};
 		const sponsorName = sponsor.name || 'Unassigned';
+		const sponsorContractLength = sponsor.contract_length || 0;
+		const sponsorPendingReplacement = Boolean(sponsor.pending_replacement);
 		const annualValue = sponsor.annual_value || 0;
 		const installment = sponsor.installment || 0;
 		const paidSoFar = sponsor.paid_so_far || 0;
 		const sponsorRemaining = sponsor.remaining || 0;
 
 		if (this.sponsorNameEl) this.sponsorNameEl.textContent = sponsorName;
+		if (this.sponsorReplaceBtn) {
+			const canReplace = Boolean(sponsor.name) && sponsorContractLength < 2 && !sponsorPendingReplacement;
+			this.sponsorReplaceBtn.disabled = !canReplace;
+			if (canReplace) {
+				this.sponsorReplaceBtn.setAttribute('data-sponsor-name', sponsor.name);
+			} else {
+				this.sponsorReplaceBtn.removeAttribute('data-sponsor-name');
+			}
+		}
 		if (this.sponsorAnnualEl) this.sponsorAnnualEl.textContent = '$' + annualValue.toLocaleString();
 		if (this.sponsorInstallmentEl) this.sponsorInstallmentEl.textContent = '$' + installment.toLocaleString();
 		if (this.sponsorPaidEl) this.sponsorPaidEl.textContent = '$' + paidSoFar.toLocaleString();

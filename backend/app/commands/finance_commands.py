@@ -10,6 +10,10 @@ def build_finance_payload(state: GameState):
     player_team = state.player_team
     sponsor_name = player_team.title_sponsor_name if player_team else None
     sponsor_yearly = player_team.title_sponsor_yearly if player_team else 0
+    sponsor_pending_replacement = any(
+        s.get("status") == "announced" and s.get("team_id") == player_team.id
+        for s in state.announced_ai_title_sponsor_signings
+    ) if player_team else False
     other_sponsorship_yearly = player_team.other_sponsorship_yearly if player_team else 0
     race_count = state.finance.prize_money_total_races or max(
         1, sum(1 for e in state.calendar.events if getattr(e.type, "value", e.type) == "RACE")
@@ -88,6 +92,8 @@ def build_finance_payload(state: GameState):
             "installment": sponsor_installment,
             "paid_so_far": sponsor_paid_so_far,
             "remaining": sponsor_remaining,
+            "contract_length": int(player_team.title_sponsor_contract_length or 0) if player_team else 0,
+            "pending_replacement": sponsor_pending_replacement,
         },
         "other_sponsorship": {
             "annual_value": other_sponsorship_yearly,

@@ -2,7 +2,11 @@ from unittest.mock import patch
 
 from app.core.engine import GameEngine
 from app.core.grid import GridManager
-from app.core.management_transfers import CommercialManagerTransferManager, TechnicalDirectorTransferManager
+from app.core.management_transfers import (
+    CommercialManagerTransferManager,
+    TechnicalDirectorTransferManager,
+    TitleSponsorTransferManager,
+)
 from app.core.transfers import TransferManager
 from app.models.calendar import Calendar, Event, EventType
 from app.models.commercial_manager import CommercialManager
@@ -10,12 +14,33 @@ from app.models.driver import Driver
 from app.models.state import GameState
 from app.models.team import Team
 from app.models.technical_director import TechnicalDirector
+from app.models.title_sponsor import TitleSponsor
 
 
 def create_transfer_state() -> GameState:
     teams = [
-        Team(id=1, name="Player Team", country="UK", driver1_id=1, driver2_id=2, commercial_manager_id=1),
-        Team(id=2, name="AI Team", country="IT", driver1_id=3, driver2_id=4, commercial_manager_id=2),
+        Team(
+            id=1,
+            name="Player Team",
+            country="UK",
+            driver1_id=1,
+            driver2_id=2,
+            commercial_manager_id=1,
+            title_sponsor_name="Windale",
+            title_sponsor_yearly=70,
+            title_sponsor_contract_length=2,
+        ),
+        Team(
+            id=2,
+            name="AI Team",
+            country="IT",
+            driver1_id=3,
+            driver2_id=4,
+            commercial_manager_id=2,
+            title_sponsor_name="Bright Shot",
+            title_sponsor_yearly=85,
+            title_sponsor_contract_length=1,
+        ),
     ]
     drivers = [
         Driver(id=1, name="Player Expiring", age=30, country="UK", team_id=1, contract_length=1),
@@ -43,6 +68,11 @@ def create_transfer_state() -> GameState:
         drivers=drivers,
         technical_directors=technical_directors,
         commercial_managers=commercial_managers,
+        title_sponsors=[
+            TitleSponsor(id=1, name="Windale", wealth=70, start_year=0),
+            TitleSponsor(id=2, name="Bright Shot", wealth=85, start_year=0),
+            TitleSponsor(id=3, name="Purple", wealth=50, start_year=1999),
+        ],
         calendar=calendar,
         circuits=[],
         player_team_id=1,
@@ -449,6 +479,141 @@ def test_apply_new_season_td_transfers_moves_announced_director_and_sets_contrac
     assert incoming.contract_length == 2
     assert outgoing.team_id is None
     assert any(s["director_id"] == 3 for s in outcome["applied_signings"])
+
+
+@patch("app.core.management_transfers.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfers.random.randint", return_value=6)
+@patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])
+def test_recompute_ai_title_sponsor_signings_plans_only_ai_vacancies(mock_choice, mock_randint, mock_shuffle):
+    state = create_transfer_state()
+
+    planned = TitleSponsorTransferManager().recompute_ai_signings(state)
+
+    assert len(planned) == 1
+    assert planned[0]["team_id"] == 2
+    assert planned[0]["seat"] == "title_sponsor_name"
+    assert planned[0]["sponsor_id"] in {2, 3}
+    assert planned[0]["status"] == "planned"
+    assert planned[0]["announce_week"] == 6
+
+
+def test_publish_due_title_sponsor_announcements_moves_planned_to_announced_and_emails():
+    state = create_transfer_state()
+    state.calendar.current_week = 3
+    state.planned_ai_title_sponsor_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "title_sponsor_name",
+            "seat_label": "Title Sponsor",
+            "sponsor_id": 3,
+            "sponsor_name": "Purple",
+            "sponsor_wealth": 50,
+            "announce_week": 3,
+            "announce_year": 1998,
+            "status": "planned",
+        }
+    ]
+
+    published = TitleSponsorTransferManager().publish_due_announcements(state)
+
+    assert len(published) == 1
+    assert len(state.planned_ai_title_sponsor_signings) == 0
+    assert len(state.announced_ai_title_sponsor_signings) == 1
+    assert state.announced_ai_title_sponsor_signings[0]["status"] == "announced"
+    assert any(e.subject == "Title Sponsor Signing Confirmed: Purple to AI Team" for e in state.emails)
+
+
+def test_engine_advance_week_publishes_due_title_sponsor_announcements():
+    state = create_transfer_state()
+    state.planned_ai_title_sponsor_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "title_sponsor_name",
+            "seat_label": "Title Sponsor",
+            "sponsor_id": 3,
+            "sponsor_name": "Purple",
+            "sponsor_wealth": 50,
+            "announce_week": 2,
+            "announce_year": 1998,
+            "status": "planned",
+        }
+    ]
+
+    GameEngine().advance_week(state)
+
+    assert len(state.announced_ai_title_sponsor_signings) == 1
+    assert len(state.planned_ai_title_sponsor_signings) == 0
+    assert any(e.subject == "Title Sponsor Signing Confirmed: Purple to AI Team" for e in state.emails)
+
+
+def test_grid_next_year_projection_uses_announced_title_sponsor_signings():
+    state = create_transfer_state()
+    state.announced_ai_title_sponsor_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "title_sponsor_name",
+            "seat_label": "Title Sponsor",
+            "sponsor_id": 3,
+            "sponsor_name": "Purple",
+            "sponsor_wealth": 50,
+            "announce_week": 2,
+            "announce_year": 1998,
+            "status": "announced",
+        }
+    ]
+
+    df = GridManager().get_grid_dataframe(state, year=1999)
+    row = df[df["Team"] == "AI Team"].iloc[0]
+    assert row["TitleSponsor"] == "Purple"
+    assert row["TitleSponsorContractLength"] == 2
+
+
+def test_apply_new_season_title_sponsor_transfers_moves_announced_sponsor_and_sets_contract():
+    state = create_transfer_state()
+    state.announced_ai_title_sponsor_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "title_sponsor_name",
+            "seat_label": "Title Sponsor",
+            "sponsor_id": 3,
+            "sponsor_name": "Purple",
+            "sponsor_wealth": 50,
+            "announce_week": 20,
+            "announce_year": 1998,
+            "status": "announced",
+        }
+    ]
+
+    outcome = TitleSponsorTransferManager().apply_new_season_transfers(state, announced_year=1998)
+
+    ai_team = next(t for t in state.teams if t.id == 2)
+    player_team = next(t for t in state.teams if t.id == 1)
+    assert ai_team.title_sponsor_name == "Purple"
+    assert ai_team.title_sponsor_yearly == 50
+    assert ai_team.title_sponsor_contract_length == 2
+    assert player_team.title_sponsor_name == "Windale"
+    assert player_team.title_sponsor_contract_length == 1
+    assert any(s["sponsor_id"] == 3 for s in outcome["applied_signings"])
+
+
+@patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])
+def test_player_title_sponsor_replacement_updates_announced_and_replans_ai(mock_choice):
+    state = create_transfer_state()
+    player_team = next(t for t in state.teams if t.id == 1)
+    player_team.title_sponsor_contract_length = 1
+
+    signing = TitleSponsorTransferManager().sign_player_replacement(state, outgoing_sponsor_name="Windale")
+
+    assert signing["team_id"] == 1
+    assert signing["seat"] == "title_sponsor_name"
+    assert signing["status"] == "announced"
+    assert len(state.announced_ai_title_sponsor_signings) == 1
+    assert any(s["team_id"] == 2 for s in state.planned_ai_title_sponsor_signings)
+    assert any(e.subject.startswith("Title Sponsor Signed:") for e in state.emails)
 
 
 @patch("app.core.management_transfers.random.choice", side_effect=lambda choices: choices[0])

@@ -9,6 +9,7 @@ export default class DriverMarketView {
 		this.backBtn = document.getElementById('driver-market-back-btn');
 		this.outgoingDriver = null;
 		this.outgoingManager = null;
+		this.outgoingSponsor = null;
 		this.outgoingRoleLabel = 'Driver';
 		this.marketType = 'driver';
 		this.onSign = null;
@@ -34,18 +35,23 @@ export default class DriverMarketView {
 
 	render(payload) {
 		if (!this.tableBody || !this.title) return;
-		this.marketType = payload?.market_type === 'commercial_manager' || payload?.market_type === 'technical_director'
+		this.marketType = payload?.market_type === 'commercial_manager' || payload?.market_type === 'technical_director' || payload?.market_type === 'title_sponsor'
 			? payload.market_type
 			: 'driver';
 		this.outgoingDriver = payload?.outgoing_driver || null;
 		this.outgoingManager = payload?.outgoing_manager || null;
+		this.outgoingSponsor = payload?.outgoing_sponsor || null;
 		this.outgoingRoleLabel = this.marketType === 'technical_director'
 			? 'Technical Director'
 			: this.marketType === 'commercial_manager'
 				? 'Commercial Manager'
+				: this.marketType === 'title_sponsor'
+					? 'Title Sponsor'
 				: 'Driver';
 		const outgoingName = this.marketType === 'commercial_manager' || this.marketType === 'technical_director'
 			? (this.outgoingManager?.name || this.outgoingRoleLabel)
+			: this.marketType === 'title_sponsor'
+				? (this.outgoingSponsor?.name || this.outgoingRoleLabel)
 			: (this.outgoingDriver?.name || 'Driver');
 		this.title.textContent = `Replace ${outgoingName}`;
 		if (this.headRow) {
@@ -56,6 +62,13 @@ export default class DriverMarketView {
 					<th>Country</th>
 					<th>Skill</th>
 					<th>Salary</th>
+					<th>Action</th>
+				`;
+			} else if (this.marketType === 'title_sponsor') {
+				this.headRow.innerHTML = `
+					<th>Name</th>
+					<th>Wealth</th>
+					<th>Market Since</th>
 					<th>Action</th>
 				`;
 			} else {
@@ -91,6 +104,13 @@ export default class DriverMarketView {
 					<td>$${absSalary.toLocaleString()}</td>
 					<td><button class="driver-market-sign-btn" data-driver-id="${candidate.id}">Sign</button></td>
 				`;
+			} else if (this.marketType === 'title_sponsor') {
+				tr.innerHTML = `
+					<td>${candidate.name}</td>
+					<td>${candidate.wealth}</td>
+					<td>${candidate.start_year || 'Default'}</td>
+					<td><button class="driver-market-sign-btn" data-driver-id="${candidate.id}">Sign</button></td>
+				`;
 			} else {
 				const absWage = Math.abs(candidate.wage || 0);
 				const wageText = `$${absWage.toLocaleString()}${candidate.pay_driver ? ' (Pay Driver)' : ''}`;
@@ -114,6 +134,9 @@ export default class DriverMarketView {
 				if (this.marketType === 'commercial_manager' || this.marketType === 'technical_director') {
 					if (!this.outgoingManager) return;
 					this.onSign(this.outgoingManager.id, incomingId, this.marketType);
+				} else if (this.marketType === 'title_sponsor') {
+					if (!this.outgoingSponsor) return;
+					this.onSign(this.outgoingSponsor.name, incomingId, this.marketType);
 				} else {
 					if (!this.outgoingDriver) return;
 					this.onSign(this.outgoingDriver.id, incomingId, this.marketType);

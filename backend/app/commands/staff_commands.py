@@ -1,7 +1,11 @@
 import logging
 
 from app.core.player_car_development import PlayerCarDevelopmentManager
-from app.core.management_transfers import CommercialManagerTransferManager, TechnicalDirectorTransferManager
+from app.core.management_transfers import (
+    CommercialManagerTransferManager,
+    TechnicalDirectorTransferManager,
+    TitleSponsorTransferManager,
+)
 from app.core.transfers import TransferManager
 from app.core.workforce_costs import WorkforceCostManager
 from app.models.calendar import EventType
@@ -200,6 +204,71 @@ def handle_get_technical_director_replacement_candidates(
         return {"status": "error", "message": str(ve)}
     except Exception as e:
         logger.error(f"Error loading technical director replacement candidates: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def handle_replace_title_sponsor(
+    state: GameState,
+    logger: logging.Logger,
+    sponsor_name: str | None,
+    incoming_sponsor_id: int | None = None,
+):
+    try:
+        if not sponsor_name:
+            return state, {"status": "error", "message": "Title sponsor name is required"}
+        signing = TitleSponsorTransferManager().sign_player_replacement(
+            state,
+            outgoing_sponsor_name=str(sponsor_name),
+            incoming_sponsor_id=int(incoming_sponsor_id) if incoming_sponsor_id is not None else None,
+        )
+        return state, {
+            "type": "title_sponsor_replaced",
+            "status": "success",
+            "data": signing,
+        }
+    except ValueError as ve:
+        return state, {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error replacing title sponsor: {e}")
+        return state, {"status": "error", "message": str(e)}
+
+
+def handle_get_title_sponsor_replacement_candidates(
+    state: GameState,
+    logger: logging.Logger,
+    sponsor_name: str | None,
+):
+    try:
+        if not sponsor_name:
+            return {"status": "error", "message": "Title sponsor name is required"}
+
+        team = state.player_team
+        if team is None or getattr(team, "title_sponsor_name", None) != str(sponsor_name):
+            return {"status": "error", "message": "Title sponsor not found"}
+
+        candidates = TitleSponsorTransferManager().get_player_replacement_candidates(state, str(sponsor_name))
+        payload = {
+            "market_type": "title_sponsor",
+            "outgoing_sponsor": {
+                "name": sponsor_name,
+                "contract_length": int(getattr(team, "title_sponsor_contract_length", 0) or 0),
+                "annual_value": int(getattr(team, "title_sponsor_yearly", 0) or 0),
+            },
+            "candidates": [
+                {
+                    "id": s.id,
+                    "name": s.name,
+                    "wealth": s.wealth,
+                    "start_year": s.start_year,
+                }
+                for s in candidates
+            ],
+        }
+        return {"type": "title_sponsor_replacement_candidates", "status": "success", "data": payload}
+    except ValueError as ve:
+        return {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error loading title sponsor replacement candidates: {e}")
         return {"status": "error", "message": str(e)}
 
 

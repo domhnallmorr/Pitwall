@@ -83,6 +83,24 @@ describe('DriverMarketView', () => {
 		expect(onSign).toHaveBeenCalledWith(21, 22, 'technical_director');
 	});
 
+	it('renders title sponsor market and signs sponsor candidate', () => {
+		const onSign = vi.fn();
+		marketView.setSignHandler(onSign);
+		marketView.render({
+			market_type: 'title_sponsor',
+			outgoing_sponsor: { name: 'Windale' },
+			candidates: [{ id: 32, name: 'Bright Shot', wealth: 85, start_year: 0 }],
+		});
+
+		expect(document.getElementById('driver-market-title').textContent).toContain('Replace Windale');
+		const head = document.querySelector('#driver-market-view thead tr').textContent;
+		expect(head).toContain('Wealth');
+
+		const btn = document.querySelector('.driver-market-sign-btn');
+		btn.click();
+		expect(onSign).toHaveBeenCalledWith('Windale', 32, 'title_sponsor');
+	});
+
 	it('ignores sign clicks when no handlers or missing outgoing entities', () => {
 		marketView.render({
 			outgoing_driver: null,

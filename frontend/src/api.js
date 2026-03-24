@@ -25,6 +25,7 @@ const API = {
 	getReplacementCandidates: (driverId) => window.electronAPI.sendToPython({ type: 'get_replacement_candidates', driver_id: driverId }),
 	getManagerReplacementCandidates: (managerId) => window.electronAPI.sendToPython({ type: 'get_manager_replacement_candidates', manager_id: managerId }),
 	getTechnicalDirectorReplacementCandidates: (directorId) => window.electronAPI.sendToPython({ type: 'get_technical_director_replacement_candidates', director_id: directorId }),
+	getTitleSponsorReplacementCandidates: (sponsorName) => window.electronAPI.sendToPython({ type: 'get_title_sponsor_replacement_candidates', sponsor_name: sponsorName }),
 	replaceDriver: (driverId, incomingDriverId) => window.electronAPI.sendToPython({
 		type: 'replace_driver',
 		driver_id: driverId,
@@ -39,6 +40,11 @@ const API = {
 		type: 'replace_technical_director',
 		director_id: directorId,
 		incoming_director_id: incomingDirectorId
+	}),
+	replaceTitleSponsor: (sponsorName, incomingSponsorId) => window.electronAPI.sendToPython({
+		type: 'replace_title_sponsor',
+		sponsor_name: sponsorName,
+		incoming_sponsor_id: incomingSponsorId
 	}),
 	getDriver: (name) => window.electronAPI.sendToPython({ type: 'get_driver', name }),
 	getCar: () => window.electronAPI.sendToPython({ type: 'get_car' }),

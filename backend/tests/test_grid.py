@@ -130,6 +130,58 @@ def test_grid_next_year_projection_marks_expiring_commercial_manager_as_vacant()
     assert row["CommercialManager"] == "VACANT"
 
 
+def test_grid_next_year_projection_marks_expiring_title_sponsor_as_vacant():
+    drivers = [
+        Driver(id=1, name="Driver One", age=29, country="UK", points=0, team_id=1, contract_length=3),
+        Driver(id=2, name="Driver Two", age=24, country="DE", points=0, team_id=1, contract_length=3),
+    ]
+    teams = [
+        Team(
+            id=1,
+            name="Team 1",
+            country="UK",
+            driver1_id=1,
+            driver2_id=2,
+            points=0,
+            title_sponsor_name="Windale",
+            title_sponsor_contract_length=1,
+        ),
+    ]
+    calendar = Calendar(events=[], current_week=1)
+    state = GameState(year=1998, teams=teams, drivers=drivers, calendar=calendar, circuits=[])
+
+    df = GridManager().get_grid_dataframe(state, year=1999)
+    row = df[df["Team"] == "Team 1"].iloc[0]
+    assert row["TitleSponsor"] == "VACANT"
+    assert row["TitleSponsorContractLength"] == 0
+
+
+def test_grid_next_year_projection_decrements_title_sponsor_contract_length():
+    drivers = [
+        Driver(id=1, name="Driver One", age=29, country="UK", points=0, team_id=1, contract_length=3),
+        Driver(id=2, name="Driver Two", age=24, country="DE", points=0, team_id=1, contract_length=3),
+    ]
+    teams = [
+        Team(
+            id=1,
+            name="Team 1",
+            country="UK",
+            driver1_id=1,
+            driver2_id=2,
+            points=0,
+            title_sponsor_name="Windale",
+            title_sponsor_contract_length=4,
+        ),
+    ]
+    calendar = Calendar(events=[], current_week=1)
+    state = GameState(year=1998, teams=teams, drivers=drivers, calendar=calendar, circuits=[])
+
+    df = GridManager().get_grid_dataframe(state, year=1999)
+    row = df[df["Team"] == "Team 1"].iloc[0]
+    assert row["TitleSponsor"] == "Windale"
+    assert row["TitleSponsorContractLength"] == 3
+
+
 def test_grid_next_year_projection_marks_expiring_technical_director_as_vacant():
     drivers = [
         Driver(id=1, name="Driver One", age=29, country="UK", points=0, team_id=1, contract_length=3),

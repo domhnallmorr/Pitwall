@@ -87,6 +87,11 @@ function init() {
 	driverView = new DriverView();
 	driverMarketView = new DriverMarketView();
 	driverMarketView.setBackHandler(() => {
+		if (driverMarketView.marketType === 'title_sponsor') {
+			if (navigation) navigation.showView('finance');
+			API.getFinance();
+			return;
+		}
 		if (navigation) navigation.showView('staff');
 		API.getStaff();
 	});
@@ -99,12 +104,17 @@ function init() {
 			API.replaceTechnicalDirector(outgoingId, incomingId);
 			return;
 		}
+		if (marketType === 'title_sponsor') {
+			API.replaceTitleSponsor(outgoingId, incomingId);
+			return;
+		}
 		API.replaceDriver(outgoingId, incomingId);
 	});
 	carView = new CarView();
 	carView.setStartDevelopmentHandler((developmentType) => API.startCarDevelopment(developmentType));
 	carView.setRepairWearHandler((wearPoints) => API.repairCarWear(wearPoints));
 	financeView = new FinanceView();
+	financeView.setReplaceTitleSponsorHandler((sponsorName) => API.getTitleSponsorReplacementCandidates(sponsorName));
 	facilitiesView = new FacilitiesView();
 	facilitiesView.setPreviewHandler((points, years) => API.previewFacilitiesUpgrade(points, years));
 	facilitiesView.setStartUpgradeHandler((points, years) => API.startFacilitiesUpgrade(points, years));
@@ -309,6 +319,9 @@ function setupIPC() {
 			} else if (parsed.type === 'manager_replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
+			} else if (parsed.type === 'title_sponsor_replacement_candidates') {
+				driverMarketView.render(parsed.data);
+				if (navigation) navigation.showView('driver-market');
 			} else if (parsed.type === 'driver_replaced') {
 				if (navigation) navigation.showView('staff');
 				API.getStaff();
@@ -324,6 +337,12 @@ function setupIPC() {
 			} else if (parsed.type === 'technical_director_replaced') {
 				if (navigation) navigation.showView('staff');
 				API.getStaff();
+				API.getGrid(gridView.getActiveYear());
+				API.getGrid(gridView.baseYear + 1);
+				API.getEmails();
+			} else if (parsed.type === 'title_sponsor_replaced') {
+				if (navigation) navigation.showView('finance');
+				API.getFinance();
 				API.getGrid(gridView.getActiveYear());
 				API.getGrid(gridView.baseYear + 1);
 				API.getEmails();

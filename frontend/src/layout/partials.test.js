@@ -26,6 +26,7 @@ describe('layout partials', () => {
 			'Tyre Supplier',
 			'Fuel Supplier',
 		]);
+		expect(document.getElementById('finance-sponsor-replace-btn')).toBeTruthy();
 	});
 
 	it('is safe when containers are missing', () => {
