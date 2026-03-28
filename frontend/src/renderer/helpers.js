@@ -10,4 +10,5 @@ export {
 	enterRaceView,
 	exitRaceView,
 	renderRaceResults,
+	renderRaceWeekend,
 } from './race_helpers.js';

@@ -6,6 +6,12 @@ let raceAutoplayData = null;
 let raceAutoplayLapIndex = 0;
 let raceAutoplayPaused = false;
 
+function formatQualifyingGap(bestLapMs, poleLapMs) {
+	if (!Number.isFinite(bestLapMs) || !Number.isFinite(poleLapMs)) return '-';
+	if (bestLapMs === poleLapMs) return 'POLE';
+	return `+${((bestLapMs - poleLapMs) / 1000).toFixed(3)}s`;
+}
+
 function buildCommentaryLine(event) {
 	if (!event) return null;
 	if (event.type === 'position_change') {
@@ -59,6 +65,7 @@ function stopRaceAutoplay() {
 function activateRaceTab(tabName = 'timing') {
 	const tabButtons = document.querySelectorAll('.race-tab-btn');
 	const timingPanel = document.getElementById('race-panel-timing');
+	const qualifyingPanel = document.getElementById('race-panel-qualifying');
 	const commentaryPanel = document.getElementById('race-panel-commentary');
 	const chartPanel = document.getElementById('race-panel-chart');
 	const laptimesPanel = document.getElementById('race-panel-laptimes');
@@ -67,6 +74,7 @@ function activateRaceTab(tabName = 'timing') {
 		button.classList.toggle('active', button.dataset.raceTab === tabName);
 	});
 	if (timingPanel) timingPanel.style.display = tabName === 'timing' ? '' : 'none';
+	if (qualifyingPanel) qualifyingPanel.style.display = tabName === 'qualifying' ? '' : 'none';
 	if (commentaryPanel) commentaryPanel.style.display = tabName === 'commentary' ? '' : 'none';
 	if (chartPanel) chartPanel.style.display = tabName === 'chart' ? '' : 'none';
 	if (laptimesPanel) laptimesPanel.style.display = tabName === 'laptimes' ? '' : 'none';
@@ -78,14 +86,41 @@ export function enterRaceView(nextEventEl, weekEl) {
 	const event = nextEventEl.textContent;
 	const raceName = document.getElementById('race-event-name');
 	const raceWeek = document.getElementById('race-week-display');
+	const qualifyingBtn = document.getElementById('simulate-qualifying-btn');
+	const simBtn = document.getElementById('simulate-race-btn');
+	const qualifyingBody = document.getElementById('race-qualifying-body');
+	const circuitDisplay = document.getElementById('race-circuit-display');
+	const locationDisplay = document.getElementById('race-location-display');
+	const lapsDisplay = document.getElementById('race-laps-display');
+	const poleDisplay = document.getElementById('race-pole-display');
+	const statusText = document.getElementById('race-weekend-status');
+	const statusChip = document.getElementById('race-status-chip');
+	const weekendPanel = document.getElementById('race-weekend-panel');
 
 	raceName.textContent = event.replace('Next: ', '').split(' - ')[0] || 'Grand Prix';
 	raceWeek.textContent = weekEl.textContent;
-
-	const simBtn = document.getElementById('simulate-race-btn');
-	simBtn.disabled = false;
-	simBtn.textContent = 'SIMULATE RACE';
-	simBtn.style.display = '';
+	if (circuitDisplay) circuitDisplay.textContent = 'Loading weekend data...';
+	if (locationDisplay) locationDisplay.textContent = '-';
+	if (lapsDisplay) lapsDisplay.textContent = '-';
+	if (poleDisplay) poleDisplay.textContent = 'No grid set yet.';
+	if (statusText) statusText.textContent = 'Qualifying must be completed before the race can begin.';
+	if (statusChip) {
+		statusChip.textContent = 'Qualifying Pending';
+		statusChip.className = 'race-status-chip pending';
+	}
+	if (qualifyingBody) {
+		qualifyingBody.innerHTML = '<tr class="race-qualifying-placeholder"><td colspan="4">Loading race weekend...</td></tr>';
+	}
+	if (qualifyingBtn) {
+		qualifyingBtn.disabled = true;
+		qualifyingBtn.textContent = 'RUN QUALIFYING';
+	}
+	if (simBtn) {
+		simBtn.disabled = true;
+		simBtn.textContent = 'SIMULATE RACE';
+		simBtn.style.display = '';
+	}
+	if (weekendPanel) weekendPanel.style.display = 'grid';
 	document.getElementById('race-results-container').style.display = 'none';
 	const commentaryLog = document.getElementById('race-commentary-log');
 	const lapCounter = document.getElementById('race-lap-counter');
@@ -105,6 +140,85 @@ export function enterRaceView(nextEventEl, weekEl) {
 	activateRaceTab('timing');
 
 	raceView.style.display = 'flex';
+}
+
+export function renderRaceWeekend(data) {
+	stopRaceAutoplay();
+	const qualifyingBtn = document.getElementById('simulate-qualifying-btn');
+	const simBtn = document.getElementById('simulate-race-btn');
+	const qualifyingBody = document.getElementById('race-qualifying-body');
+	const circuitDisplay = document.getElementById('race-circuit-display');
+	const locationDisplay = document.getElementById('race-location-display');
+	const lapsDisplay = document.getElementById('race-laps-display');
+	const poleDisplay = document.getElementById('race-pole-display');
+	const statusText = document.getElementById('race-weekend-status');
+	const statusChip = document.getElementById('race-status-chip');
+	const weekendPanel = document.getElementById('race-weekend-panel');
+	const resultsContainer = document.getElementById('race-results-container');
+	const qualifyingResults = Array.isArray(data.qualifying_results) ? data.qualifying_results : [];
+	const qualifyingComplete = !!data.qualifying_complete;
+	const raceComplete = !!data.race_complete;
+
+	if (circuitDisplay) circuitDisplay.textContent = data.circuit_name || data.event_name || 'Grand Prix';
+	if (locationDisplay) locationDisplay.textContent = [data.circuit_location, data.circuit_country].filter(Boolean).join(', ') || '-';
+	if (lapsDisplay) lapsDisplay.textContent = Number.isFinite(data.laps) ? `${data.laps} laps` : '-';
+	if (qualifyingBody) {
+		qualifyingBody.innerHTML = '';
+		if (!qualifyingResults.length) {
+			qualifyingBody.innerHTML = '<tr class="race-qualifying-placeholder"><td colspan="5">Run qualifying to set the grid.</td></tr>';
+		} else {
+			const poleLapMs = qualifyingResults[0].best_lap_ms;
+			qualifyingResults.forEach((row) => {
+				const tr = document.createElement('tr');
+				tr.innerHTML = `
+					<td>${row.position}</td>
+					<td>${row.driver_name}</td>
+					<td>${row.team_name}</td>
+					<td>${formatLapTime(row.best_lap_ms)}</td>
+					<td>${formatQualifyingGap(row.best_lap_ms, poleLapMs)}</td>
+				`;
+				qualifyingBody.appendChild(tr);
+			});
+		}
+	}
+
+	if (poleDisplay) {
+		poleDisplay.textContent = qualifyingResults.length
+			? `Pole: ${qualifyingResults[0].driver_name} (${formatLapTime(qualifyingResults[0].best_lap_ms)})`
+			: 'No grid set yet.';
+	}
+
+	if (raceComplete) {
+		if (statusText) statusText.textContent = 'The race has already been run. Replay data is shown below.';
+		if (statusChip) {
+			statusChip.textContent = 'Race Complete';
+			statusChip.className = 'race-status-chip complete';
+		}
+	} else if (qualifyingComplete) {
+		if (statusText) statusText.textContent = 'Grid locked in. The race is ready to simulate.';
+		if (statusChip) {
+			statusChip.textContent = 'Grid Set';
+			statusChip.className = 'race-status-chip ready';
+		}
+	} else {
+		if (statusText) statusText.textContent = 'Qualifying must be completed before the race can begin.';
+		if (statusChip) {
+			statusChip.textContent = 'Qualifying Pending';
+			statusChip.className = 'race-status-chip pending';
+		}
+	}
+
+	if (qualifyingBtn) {
+		qualifyingBtn.disabled = qualifyingComplete || raceComplete;
+		qualifyingBtn.textContent = qualifyingComplete ? 'QUALIFYING COMPLETE' : 'RUN QUALIFYING';
+	}
+	if (simBtn) {
+		simBtn.disabled = !qualifyingComplete || raceComplete;
+		simBtn.textContent = raceComplete ? 'RACE COMPLETE' : 'SIMULATE RACE';
+		simBtn.style.display = '';
+	}
+	if (weekendPanel) weekendPanel.style.display = 'grid';
+	if (resultsContainer && !raceComplete) resultsContainer.style.display = 'none';
 }
 
 function renderLapSnapshot(data, lapIndex) {
@@ -242,14 +356,44 @@ function startRaceAutoplay(data) {
 export function renderRaceResults(data) {
 	const tbody = document.getElementById('race-results-body');
 	const container = document.getElementById('race-results-container');
+	const weekendPanel = document.getElementById('race-weekend-panel');
+	const qualifyingResultsBody = document.getElementById('race-results-qualifying-body');
+	const qualifyingPoleDisplay = document.getElementById('race-results-pole-display');
 	const simulateBtn = document.getElementById('simulate-race-btn');
 	const prevBtn = document.getElementById('race-prev-lap-btn');
 	const nextBtn = document.getElementById('race-next-lap-btn');
 	const pauseBtn = document.getElementById('race-pause-btn');
 	const timingTab = document.getElementById('race-tab-timing');
+	const qualifyingTab = document.getElementById('race-tab-qualifying');
 	const commentaryTab = document.getElementById('race-tab-commentary');
 	const chartTab = document.getElementById('race-tab-chart');
 	const laptimesTab = document.getElementById('race-tab-laptimes');
+	const qualifyingResults = Array.isArray(data.qualifying_results) ? data.qualifying_results : [];
+
+	if (qualifyingResultsBody) {
+		qualifyingResultsBody.innerHTML = '';
+		if (!qualifyingResults.length) {
+			qualifyingResultsBody.innerHTML = '<tr class="race-qualifying-placeholder"><td colspan="5">No qualifying data recorded.</td></tr>';
+		} else {
+			const poleLapMs = qualifyingResults[0].best_lap_ms;
+			qualifyingResults.forEach((row) => {
+				const tr = document.createElement('tr');
+				tr.innerHTML = `
+					<td>${row.position}</td>
+					<td>${row.driver_name}</td>
+					<td>${row.team_name}</td>
+					<td>${formatLapTime(row.best_lap_ms)}</td>
+					<td>${formatQualifyingGap(row.best_lap_ms, poleLapMs)}</td>
+				`;
+				qualifyingResultsBody.appendChild(tr);
+			});
+		}
+	}
+	if (qualifyingPoleDisplay) {
+		qualifyingPoleDisplay.textContent = qualifyingResults.length
+			? `Pole: ${qualifyingResults[0].driver_name} (${formatLapTime(qualifyingResults[0].best_lap_ms)})`
+			: '-';
+	}
 
 	const lapHistory = Array.isArray(data.lap_history) ? data.lap_history : [];
 	if (!lapHistory.length) {
@@ -281,6 +425,7 @@ export function renderRaceResults(data) {
 		renderLapChart(data);
 		renderLaptimeChart(data);
 		if (timingTab) timingTab.onclick = () => activateRaceTab('timing');
+		if (qualifyingTab) qualifyingTab.onclick = () => activateRaceTab('qualifying');
 		if (commentaryTab) commentaryTab.onclick = () => activateRaceTab('commentary');
 		if (chartTab) chartTab.onclick = () => activateRaceTab('chart');
 		if (laptimesTab) laptimesTab.onclick = () => activateRaceTab('laptimes');
@@ -315,8 +460,10 @@ export function renderRaceResults(data) {
 		startRaceAutoplay(data);
 	}
 
+	if (weekendPanel) weekendPanel.style.display = 'none';
 	simulateBtn.style.display = 'none';
 	container.style.display = 'block';
+	activateRaceTab('timing');
 }
 
 export function exitRaceView() {

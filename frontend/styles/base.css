@@ -200,8 +200,24 @@ select,
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
+  gap: 15px;
   font-family: inherit;
   font-weight: 500;
+}
+
+.nav-item > span:first-of-type {
+  flex: 1;
+}
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .nav-item:hover {
@@ -213,14 +229,6 @@ select,
   background-color: rgba(16, 39, 70, 0.5);
   color: var(--text-color);
   border-left: 3px solid var(--accent-color);
-}
-
-/* Unicode Icons for Menu */
-.nav-item:nth-child(1)::before {
-  content: "\1F3E0";
-  margin-right: 15px;
-  width: 25px;
-  text-align: center;
 }
 
 .sidebar-footer {
@@ -255,32 +263,6 @@ select,
 .btn-advance:active {
   transform: translateY(0);
 }
-
-/* Home */
-.nav-item:nth-child(2)::before {
-  content: "\2709";
-  margin-right: 15px;
-  width: 25px;
-  text-align: center;
-}
-
-/* Email */
-.nav-item:nth-child(3)::before {
-  content: "\1F3CE";
-  margin-right: 15px;
-  width: 25px;
-  text-align: center;
-}
-
-/* Grid */
-.nav-item:nth-child(4)::before {
-  content: "\1F3C6";
-  margin-right: 15px;
-  width: 25px;
-  text-align: center;
-}
-
-/* Standings */
 
 
 /* Main Content Wrapper */

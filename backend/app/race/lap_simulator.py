@@ -199,9 +199,20 @@ def simulate_lap_race(
 	should_attempt_pass_fn,
 	overtaking_delta_ms_fn,
 	pass_succeeds_fn,
+	starting_grid: list[int] | None = None,
 ) -> dict[str, Any]:
 	entrants = [dict(entry) for entry in participants]
-	seeded_grid = sorted(entrants, key=lambda entry: grid_score_fn(entry), reverse=True)
+	if starting_grid:
+		grid_lookup = {driver_id: idx for idx, driver_id in enumerate(starting_grid, start=1)}
+		seeded_grid = sorted(
+			entrants,
+			key=lambda entry: (
+				grid_lookup.get(entry["driver_id"], len(entrants) + 1),
+				-grid_score_fn(entry),
+			),
+		)
+	else:
+		seeded_grid = sorted(entrants, key=lambda entry: grid_score_fn(entry), reverse=True)
 	for idx, entrant in enumerate(seeded_grid, start=1):
 		entrant["grid_position"] = idx
 		entrant["position"] = idx

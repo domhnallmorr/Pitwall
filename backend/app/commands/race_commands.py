@@ -13,7 +13,51 @@ from app.core.workforce_costs import WorkforceCostManager
 from app.models.email import EmailCategory
 from app.models.finance import TransactionCategory
 from app.models.state import GameState
+from app.models.calendar import EventType
 from app.race.race_manager import RaceManager
+
+
+def _build_race_weekend_payload(state: GameState) -> dict:
+    current_event = state.calendar.current_event
+    if current_event is None or current_event.type != EventType.RACE:
+        return {}
+
+    circuit = RaceManager()._get_circuit(state)
+    event_key = f"{state.year}_{current_event.week}_{current_event.name}"
+    qualifying_results = list(state.qualifying_results_by_event.get(event_key, []))
+    event_processed = f"{current_event.week}_{current_event.name}" in state.events_processed
+
+    return {
+        "event_name": current_event.name,
+        "week": current_event.week,
+        "circuit_name": circuit.name,
+        "circuit_location": circuit.location,
+        "circuit_country": circuit.country,
+        "laps": circuit.laps,
+        "qualifying_complete": bool(qualifying_results),
+        "race_complete": event_processed,
+        "qualifying_results": qualifying_results,
+    }
+
+
+def handle_get_race_weekend(state: GameState, logger: logging.Logger):
+    try:
+        payload = _build_race_weekend_payload(state)
+        if not payload:
+            return state, {"status": "error", "message": "No active race weekend"}
+        return state, {"type": "race_weekend", "status": "success", "data": payload}
+    except Exception as e:
+        logger.error(f"Error building race weekend payload: {e}")
+        return state, {"status": "error", "message": str(e)}
+
+
+def handle_simulate_qualifying(state: GameState, logger: logging.Logger):
+    try:
+        result = RaceManager().simulate_qualifying(state)
+        return state, {"type": "qualifying_result", "status": "success", "data": result}
+    except Exception as e:
+        logger.error(f"Error simulating qualifying: {e}")
+        return state, {"status": "error", "message": str(e)}
 
 
 def handle_simulate_race(state: GameState, logger: logging.Logger):

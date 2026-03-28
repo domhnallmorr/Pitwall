@@ -3,12 +3,13 @@ from typing import Any
 
 from app.models.circuit import Circuit
 from app.models.state import GameState
-from app.race.constants import GRID_JITTER_RANGE_MS, POINTS_TABLE
+from app.race.constants import GRID_JITTER_RANGE_MS, POINTS_TABLE, QUALIFYING_ATTEMPTS
 from app.race.lap_simulator import simulate_lap_race
 from app.race.pace import (
 	dirty_air_penalty_ms,
 	get_performance_weight,
 	grid_score,
+	qualifying_lap_time_ms,
 	lap_time_ms,
 	overtaking_delta_ms,
 	pass_succeeds,
@@ -77,11 +78,53 @@ class RaceManager:
 			power_factor=1.0,
 		)
 
+	def _current_event_key(self, state: GameState) -> str | None:
+		event = state.calendar.current_event
+		if event is None:
+			return None
+		return f"{state.year}_{event.week}_{event.name}"
+
+	def _build_participants(self, state: GameState) -> tuple[list[dict[str, Any]], Circuit]:
+		participants: list[dict[str, Any]] = []
+		driver_lookup = {d.id: d for d in state.drivers}
+		engine_supplier_lookup = {supplier.name: supplier for supplier in state.engine_suppliers}
+		tyre_supplier_lookup = {supplier.name: supplier for supplier in state.tyre_suppliers}
+		circuit = self._get_circuit(state)
+
+		for team in state.teams:
+			for did in [team.driver1_id, team.driver2_id]:
+				if did and did in driver_lookup:
+					driver = driver_lookup[did]
+					driver_speed = getattr(driver, "speed", 50)
+					car_speed = getattr(team, "car_speed", 50)
+					engine_supplier = engine_supplier_lookup.get(getattr(team, "engine_supplier_name", None))
+					engine_power = getattr(engine_supplier, "power", 50) if engine_supplier else 50
+					tyre_supplier = tyre_supplier_lookup.get(getattr(team, "tyre_supplier_name", None))
+					tyre_grip = getattr(tyre_supplier, "grip", 50) if tyre_supplier else 50
+					tyre_wear = getattr(tyre_supplier, "wear", 50) if tyre_supplier else 50
+					participants.append({
+						"driver_id": did,
+						"driver_name": driver.name,
+						"team_id": team.id,
+						"team_name": team.name,
+						"driver_speed": driver_speed,
+						"car_speed": car_speed,
+						"engine_power": engine_power,
+						"tyre_grip": tyre_grip,
+						"tyre_wear": tyre_wear,
+						"performance_weight": self._get_performance_weight(driver_speed, car_speed),
+					})
+
+		return participants, circuit
+
 	def _grid_score(self, entrant: dict[str, Any]) -> int:
 		return grid_score(entrant, GRID_JITTER_RANGE_MS)
 
 	def _lap_time_ms(self, entrant: dict[str, Any], circuit: Circuit) -> int:
 		return lap_time_ms(entrant, circuit)
+
+	def _qualifying_lap_time_ms(self, entrant: dict[str, Any], circuit: Circuit) -> int:
+		return qualifying_lap_time_ms(entrant, circuit)
 
 	def _dirty_air_penalty_ms(self, gap_ahead_ms: int | None, same_lap: bool) -> int:
 		return dirty_air_penalty_ms(gap_ahead_ms, same_lap)
@@ -129,7 +172,12 @@ class RaceManager:
 			self._mechanical_failure_probability,
 		)
 
-	def _simulate_lap_race(self, participants: list[dict[str, Any]], circuit: Circuit) -> dict[str, Any]:
+	def _simulate_lap_race(
+		self,
+		participants: list[dict[str, Any]],
+		circuit: Circuit,
+		starting_grid: list[int] | None = None,
+	) -> dict[str, Any]:
 		return simulate_lap_race(
 			participants,
 			circuit,
@@ -142,42 +190,59 @@ class RaceManager:
 			self._should_attempt_pass,
 			self._overtaking_delta_ms,
 			self._pass_succeeds,
+			starting_grid,
 		)
+
+	def _simulate_qualifying(
+		self,
+		participants: list[dict[str, Any]],
+		circuit: Circuit,
+	) -> list[dict[str, Any]]:
+		results: list[dict[str, Any]] = []
+		for entrant in participants:
+			best_lap_ms = min(
+				self._qualifying_lap_time_ms(entrant, circuit)
+				for _ in range(QUALIFYING_ATTEMPTS)
+			)
+			results.append({
+				"driver_id": entrant["driver_id"],
+				"driver_name": entrant["driver_name"],
+				"team_id": entrant["team_id"],
+				"team_name": entrant["team_name"],
+				"best_lap_ms": best_lap_ms,
+			})
+
+		results.sort(key=lambda row: (row["best_lap_ms"], row["driver_id"]))
+		for idx, row in enumerate(results, start=1):
+			row["position"] = idx
+		return results
+
+	def simulate_qualifying(self, state: GameState) -> dict[str, Any]:
+		participants, circuit = self._build_participants(state)
+		qualifying_results = self._simulate_qualifying(participants, circuit)
+		event_key = self._current_event_key(state)
+		if event_key is not None:
+			state.qualifying_results_by_event[event_key] = qualifying_results
+
+		event = state.calendar.current_event
+		return {
+			"event_name": event.name if event else circuit.name,
+			"week": event.week if event else state.calendar.current_week,
+			"circuit_name": circuit.name,
+			"circuit_location": circuit.location,
+			"circuit_country": circuit.country,
+			"laps": circuit.laps,
+			"qualifying_complete": True,
+			"qualifying_results": qualifying_results,
+		}
 
 	def simulate_race(self, state: GameState) -> dict[str, Any]:
 		"""
 		Simulates a race lap by lap and returns lap history plus final classification.
 		"""
-		participants: list[dict[str, Any]] = []
-		driver_lookup = {d.id: d for d in state.drivers}
 		team_lookup = {t.id: t for t in state.teams}
-		engine_supplier_lookup = {supplier.name: supplier for supplier in state.engine_suppliers}
-		tyre_supplier_lookup = {supplier.name: supplier for supplier in state.tyre_suppliers}
-		circuit = self._get_circuit(state)
-
-		for team in state.teams:
-			for did in [team.driver1_id, team.driver2_id]:
-				if did and did in driver_lookup:
-					driver = driver_lookup[did]
-					driver_speed = getattr(driver, "speed", 50)
-					car_speed = getattr(team, "car_speed", 50)
-					engine_supplier = engine_supplier_lookup.get(getattr(team, "engine_supplier_name", None))
-					engine_power = getattr(engine_supplier, "power", 50) if engine_supplier else 50
-					tyre_supplier = tyre_supplier_lookup.get(getattr(team, "tyre_supplier_name", None))
-					tyre_grip = getattr(tyre_supplier, "grip", 50) if tyre_supplier else 50
-					tyre_wear = getattr(tyre_supplier, "wear", 50) if tyre_supplier else 50
-					participants.append({
-						"driver_id": did,
-						"driver_name": driver.name,
-						"team_id": team.id,
-						"team_name": team.name,
-						"driver_speed": driver_speed,
-						"car_speed": car_speed,
-						"engine_power": engine_power,
-						"tyre_grip": tyre_grip,
-						"tyre_wear": tyre_wear,
-						"performance_weight": self._get_performance_weight(driver_speed, car_speed),
-					})
+		driver_lookup = {d.id: d for d in state.drivers}
+		participants, circuit = self._build_participants(state)
 
 		crashed_participants, mechanical_participants = self._prepare_participants(
 			state,
@@ -185,7 +250,16 @@ class RaceManager:
 			participants,
 			team_lookup,
 		)
-		race_run = self._simulate_lap_race(participants, circuit)
+		event_key = self._current_event_key(state)
+		qualifying_results = []
+		if event_key is not None:
+			qualifying_results = list(state.qualifying_results_by_event.get(event_key, []))
+		if not qualifying_results:
+			qualifying_results = self._simulate_qualifying(participants, circuit)
+			if event_key is not None:
+				state.qualifying_results_by_event[event_key] = qualifying_results
+		starting_grid = [row["driver_id"] for row in qualifying_results]
+		race_run = self._simulate_lap_race(participants, circuit, starting_grid)
 
 		results = []
 		finishing_position = 1
@@ -245,6 +319,7 @@ class RaceManager:
 
 		return {
 			"event_name": event_name,
+			"qualifying_results": qualifying_results,
 			"total_laps": race_run["total_laps"],
 			"lap_history": race_run["lap_history"],
 			"results": results,

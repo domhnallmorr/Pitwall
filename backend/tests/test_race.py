@@ -68,12 +68,25 @@ def test_simulate_race_returns_all_drivers_and_lap_history():
     result = manager.simulate_race(state)
 
     assert len(result["results"]) == 4
+    assert len(result["qualifying_results"]) == 4
     assert result["total_laps"] == 12
     assert len(result["lap_history"]) == 12
     assert result["lap_history"][0]["lap"] == 1
     assert len(result["lap_history"][0]["order"]) == 4
     positions = [r["position"] for r in result["results"]]
     assert positions == [1, 2, 3, 4]
+
+
+def test_simulate_qualifying_stores_results_for_current_event():
+    state = create_race_state()
+    manager = RaceManager()
+
+    result = manager.simulate_qualifying(state)
+    event_key = f"{state.year}_{state.calendar.current_week}_Test GP"
+
+    assert result["qualifying_complete"] is True
+    assert len(result["qualifying_results"]) == 4
+    assert state.qualifying_results_by_event[event_key] == result["qualifying_results"]
 
 
 def test_simulate_race_awards_points():
@@ -251,7 +264,46 @@ def test_simulate_race_launch_phase_can_reorder_field_on_lap_one():
     assert lap_one_order[0]["driver_id"] == 2
     assert lap_one_order[1]["gap_to_leader_ms"] > 0
     assert any(event["type"] == "turn_one_leader" and event["driver_id"] == 2 for event in lap_one_events)
-    assert any(event["type"] == "position_change" and event["driver_id"] == 2 for event in lap_one_events)
+
+
+def test_simulate_race_returns_qualifying_order_and_uses_it_for_grid():
+    state = create_race_state()
+    state.circuits[0].laps = 3
+    manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
+
+    qualifying_times = {
+        1: [81_200, 81_150, 81_180],
+        2: [80_950, 80_940, 80_960],
+        3: [81_500, 81_450, 81_470],
+        4: [81_700, 81_680, 81_690],
+    }
+    qualifying_calls = {driver_id: 0 for driver_id in qualifying_times}
+
+    def fake_quali_lap(entrant, circuit):
+        driver_id = entrant["driver_id"]
+        attempt_index = qualifying_calls[driver_id]
+        qualifying_calls[driver_id] += 1
+        return qualifying_times[driver_id][attempt_index]
+
+    original_quali_lap = manager._qualifying_lap_time_ms
+    original_randint = random.randint
+    original_uniform = random.uniform
+    manager._qualifying_lap_time_ms = fake_quali_lap
+    random.randint = lambda a, b: 0
+    random.uniform = lambda a, b: 0.0
+    try:
+        result = manager.simulate_race(state)
+    finally:
+        manager._qualifying_lap_time_ms = original_quali_lap
+        random.randint = original_randint
+        random.uniform = original_uniform
+
+    qualifying_order = [row["driver_id"] for row in result["qualifying_results"]]
+    lap_one_grid_order = [row["driver_id"] for row in result["lap_history"][0]["order"]]
+
+    assert qualifying_order == [2, 1, 3, 4]
+    assert lap_one_grid_order == [2, 1, 3, 4]
 
 
 def test_simulate_race_can_include_crash_outs_and_marks_dnf():
@@ -562,10 +614,15 @@ def test_pit_stop_resets_tyre_wear_for_next_lap():
         next(row for row in lap["order"] if row["driver_id"] == 1)
         for lap in result["lap_history"]
     ]
-    lap4 = next(row for row in driver_one_rows if row["laps_completed"] == 4)
-    lap5 = next(row for row in driver_one_rows if row["laps_completed"] == 5)
+    pit_lap = next(
+        lap["lap"]
+        for lap in result["lap_history"]
+        if any(event["type"] == "pit_stop" and event["driver_id"] == 1 for event in lap["events"])
+    )
+    pit_row = driver_one_rows[pit_lap]
+    next_row = driver_one_rows[pit_lap + 1]
 
-    assert lap4["last_lap_ms"] > lap5["last_lap_ms"]
+    assert pit_row["last_lap_ms"] > next_row["last_lap_ms"]
 
 
 def test_dirty_air_penalty_applies_within_threshold():

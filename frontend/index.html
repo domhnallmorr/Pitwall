@@ -30,16 +30,92 @@
     <div class="sidebar">
       <div class="logo-area">Pitwall</div>
       <nav>
-        <button class="nav-item active">Home</button>
-        <button class="nav-item">Email <span id="email-sidebar-badge" class="sidebar-badge"
-            style="display:none;">0</span></button>
-        <button class="nav-item">Calendar</button>
-        <button class="nav-item">Grid</button>
-        <button class="nav-item">Staff</button>
-        <button class="nav-item">Car</button>
-        <button class="nav-item">Finance</button>
-        <button class="nav-item">Facilities</button>
-        <button class="nav-item">Standings</button>
+        <button class="nav-item active">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3.75 10.5 12 4l8.25 6.5" />
+            <path d="M6.75 9.5v9.75h10.5V9.5" />
+            <path d="M10 19.25v-5.5h4v5.5" />
+          </svg>
+          <span>Home</span>
+        </button>
+        <button class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6.75h16v10.5H4z" />
+            <path d="m4.5 7.5 7.5 6 7.5-6" />
+          </svg>
+          <span>Email</span>
+          <span id="email-sidebar-badge" class="sidebar-badge" style="display:none;">0</span>
+        </button>
+        <button class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4.5" y="5.5" width="15" height="14" rx="2" />
+            <path d="M8 3.75v3.5" />
+            <path d="M16 3.75v3.5" />
+            <path d="M4.5 9.5h15" />
+          </svg>
+          <span>Calendar</span>
+        </button>
+        <button class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4.75 5.25h6.75v6.75H4.75z" />
+            <path d="M12.5 5.25h6.75v6.75H12.5z" />
+            <path d="M4.75 13h6.75v5.75H4.75z" />
+            <path d="M12.5 13h6.75v5.75H12.5z" />
+          </svg>
+          <span>Grid</span>
+        </button>
+        <button class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7.5 19.25v-1.5a3.75 3.75 0 0 1 7.5 0v1.5" />
+            <circle cx="11.25" cy="9" r="2.75" />
+            <path d="M15.75 11.5a2.5 2.5 0 1 1 0-5" />
+            <path d="M16.75 19.25v-1a2.75 2.75 0 0 0-2-2.64" />
+          </svg>
+          <span>Staff</span>
+        </button>
+        <button class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4.5 14.75 8 10.5h8.75l2.75 2.5v4.25H4.5z" />
+            <path d="M7.75 10.5 9.5 7.25h5.5l1.75 3.25" />
+            <circle cx="8" cy="17.25" r="1.25" />
+            <circle cx="16.5" cy="17.25" r="1.25" />
+          </svg>
+          <span>Car</span>
+        </button>
+        <button class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4.5 8.25h15" />
+            <path d="M4.5 12h15" />
+            <path d="M4.5 15.75h15" />
+            <circle cx="8.25" cy="8.25" r="1.25" />
+            <circle cx="14.5" cy="12" r="1.25" />
+            <circle cx="10.75" cy="15.75" r="1.25" />
+          </svg>
+          <span>Finance</span>
+        </button>
+        <button class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 4.25v3.5" />
+            <path d="M12 16.25v3.5" />
+            <path d="M4.25 12h3.5" />
+            <path d="M16.25 12h3.5" />
+            <path d="m6.5 6.5 2.5 2.5" />
+            <path d="m15 15 2.5 2.5" />
+            <path d="m17.5 6.5-2.5 2.5" />
+            <path d="m9 15-2.5 2.5" />
+            <circle cx="12" cy="12" r="3.5" />
+          </svg>
+          <span>Facilities</span>
+        </button>
+        <button class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 18.5h14" />
+            <path d="M7 18.5v-4.25" />
+            <path d="M12 18.5v-8" />
+            <path d="M17 18.5v-11.25" />
+          </svg>
+          <span>Standings</span>
+        </button>
       </nav>
       <div class="sidebar-footer">
         <button id="advance-btn" class="btn-advance">ADVANCE</button>
@@ -449,13 +525,60 @@
     </div>
 
     <div class="race-body">
-      <div class="race-controls">
-        <button id="simulate-race-btn" class="btn-simulate">SIMULATE RACE</button>
+      <div id="race-weekend-panel" class="race-weekend-panel">
+        <div class="race-weekend-hero">
+          <div class="race-weekend-copy">
+            <p id="race-weekend-kicker" class="race-weekend-kicker">Race Weekend</p>
+            <h2 id="race-circuit-display" class="race-weekend-title">Circuit Preview</h2>
+            <p id="race-weekend-status" class="race-weekend-status">Qualifying must be completed before the race can begin.</p>
+          </div>
+          <div class="race-weekend-metrics">
+            <div class="race-weekend-metric">
+              <span class="race-summary-label">Location</span>
+              <strong id="race-location-display">-</strong>
+            </div>
+            <div class="race-weekend-metric">
+              <span class="race-summary-label">Distance</span>
+              <strong id="race-laps-display">-</strong>
+            </div>
+            <div class="race-weekend-metric">
+              <span class="race-summary-label">Status</span>
+              <strong id="race-status-chip" class="race-status-chip pending">Qualifying Pending</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="race-controls race-weekend-actions">
+          <button id="simulate-qualifying-btn" class="btn-secondary btn-weekend">RUN QUALIFYING</button>
+          <button id="simulate-race-btn" class="btn-simulate" disabled>SIMULATE RACE</button>
+        </div>
+
+        <div class="race-qualifying-panel">
+          <div class="race-qualifying-heading">
+            <h3>Qualifying</h3>
+            <span id="race-pole-display" class="race-qualifying-note">No grid set yet.</span>
+          </div>
+          <table class="data-table race-qualifying-table">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th>Driver</th>
+                <th>Team</th>
+                <th>Best</th>
+                <th>Gap</th>
+              </tr>
+            </thead>
+            <tbody id="race-qualifying-body">
+              <!-- JS populated -->
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div id="race-results-container" style="display: none;">
         <div class="race-tab-bar">
           <button id="race-tab-timing" class="tab-btn race-tab-btn active" data-race-tab="timing">Timing</button>
+          <button id="race-tab-qualifying" class="tab-btn race-tab-btn" data-race-tab="qualifying">Qualifying</button>
           <button id="race-tab-commentary" class="tab-btn race-tab-btn" data-race-tab="commentary">Commentary</button>
           <button id="race-tab-chart" class="tab-btn race-tab-btn" data-race-tab="chart">Lap Chart</button>
           <button id="race-tab-laptimes" class="tab-btn race-tab-btn" data-race-tab="laptimes">Laptimes</button>
@@ -498,6 +621,29 @@
                 </tr>
               </thead>
               <tbody id="race-results-body">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="race-panel-qualifying" class="race-tab-panel" style="display: none;">
+          <div class="race-commentary-panel">
+            <div class="race-qualifying-heading">
+              <h2>Qualifying</h2>
+              <span id="race-results-pole-display" class="race-qualifying-note">-</span>
+            </div>
+            <table class="data-table race-qualifying-table">
+              <thead>
+                <tr>
+                  <th>Pos</th>
+                  <th>Driver</th>
+                  <th>Team</th>
+                  <th>Best</th>
+                  <th>Gap</th>
+                </tr>
+              </thead>
+              <tbody id="race-results-qualifying-body">
                 <!-- JS populated -->
               </tbody>
             </table>

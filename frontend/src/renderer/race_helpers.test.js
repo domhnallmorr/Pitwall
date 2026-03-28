@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { enterRaceView, exitRaceView, renderRaceResults } from './race_helpers.js';
+import { enterRaceView, exitRaceView, renderRaceResults, renderRaceWeekend } from './race_helpers.js';
 
 vi.mock('./race_charts.js', () => ({
 	formatLapTime: (ms) => (!Number.isFinite(ms) || ms <= 0 ? '-' : (ms / 1000).toFixed(3) + 's'),
@@ -15,6 +15,15 @@ describe('race_helpers', () => {
 			<div id="race-view" style="display:none;"></div>
 			<div id="race-event-name"></div>
 			<div id="race-week-display"></div>
+			<div id="race-weekend-panel"></div>
+			<div id="race-circuit-display"></div>
+			<div id="race-location-display"></div>
+			<div id="race-laps-display"></div>
+			<div id="race-pole-display"></div>
+			<div id="race-weekend-status"></div>
+			<div id="race-status-chip"></div>
+			<table><tbody id="race-qualifying-body"></tbody></table>
+			<button id="simulate-qualifying-btn"></button>
 			<button id="simulate-race-btn" style="display:none;"></button>
 			<div id="race-results-container" data-active-lap-index="1" style="display:none;"></div>
 			<div id="race-commentary-log"></div>
@@ -26,13 +35,17 @@ describe('race_helpers', () => {
 			<button id="race-prev-lap-btn"></button>
 			<button id="race-next-lap-btn"></button>
 			<button id="race-tab-timing" class="race-tab-btn" data-race-tab="timing"></button>
+			<button id="race-tab-qualifying" class="race-tab-btn" data-race-tab="qualifying"></button>
 			<button id="race-tab-commentary" class="race-tab-btn" data-race-tab="commentary"></button>
 			<button id="race-tab-chart" class="race-tab-btn" data-race-tab="chart"></button>
 			<button id="race-tab-laptimes" class="race-tab-btn" data-race-tab="laptimes"></button>
 			<div id="race-panel-timing"></div>
+			<div id="race-panel-qualifying" style="display:none;"></div>
 			<div id="race-panel-commentary" style="display:none;"></div>
 			<div id="race-panel-chart" style="display:none;"></div>
 			<div id="race-panel-laptimes" style="display:none;"></div>
+			<div id="race-results-pole-display"></div>
+			<table><tbody id="race-results-qualifying-body"></tbody></table>
 			<table><tbody id="race-results-body"></tbody></table>
 			<svg id="race-lap-chart-svg"></svg>
 			<div id="race-lap-chart-legend"></div>
@@ -52,6 +65,8 @@ describe('race_helpers', () => {
 		enterRaceView(nextEventEl, weekEl);
 		expect(document.getElementById('race-view').style.display).toBe('flex');
 		expect(document.getElementById('race-event-name').textContent).toBe('Monaco Grand Prix');
+		expect(document.getElementById('simulate-race-btn').disabled).toBe(true);
+		expect(document.getElementById('simulate-qualifying-btn').disabled).toBe(true);
 
 		renderRaceResults({
 			results: [
@@ -146,6 +161,7 @@ describe('race_helpers', () => {
 	it('renders the turn 1 leader commentary event', () => {
 		renderRaceResults({
 			total_laps: 2,
+			qualifying_results: [{ position: 1, driver_name: 'B', team_name: 'T2', best_lap_ms: 82800 }],
 			lap_history: [
 				{
 					lap: 1,
@@ -162,5 +178,56 @@ describe('race_helpers', () => {
 		});
 
 		expect(document.getElementById('race-latest-commentary').textContent).toContain('leads out of turn 1');
+	});
+
+	it('renders the qualifying weekend panel and enables the race when grid is set', () => {
+		renderRaceWeekend({
+			circuit_name: 'Monaco Grand Prix',
+			circuit_location: 'Monte Carlo',
+			circuit_country: 'Monaco',
+			laps: 78,
+			qualifying_complete: true,
+			race_complete: false,
+			qualifying_results: [
+				{ position: 1, driver_name: 'A', team_name: 'T1', best_lap_ms: 80000 },
+				{ position: 2, driver_name: 'B', team_name: 'T2', best_lap_ms: 80200 },
+			],
+		});
+
+		expect(document.getElementById('race-circuit-display').textContent).toBe('Monaco Grand Prix');
+		expect(document.getElementById('race-location-display').textContent).toBe('Monte Carlo, Monaco');
+		expect(document.getElementById('race-laps-display').textContent).toBe('78 laps');
+		expect(document.getElementById('race-pole-display').textContent).toContain('Pole: A');
+		expect(document.getElementById('simulate-qualifying-btn').disabled).toBe(true);
+		expect(document.getElementById('simulate-race-btn').disabled).toBe(false);
+		expect(document.getElementById('race-qualifying-body').children).toHaveLength(2);
+		expect(document.getElementById('race-qualifying-body').children[0].children[4].textContent).toBe('POLE');
+		expect(document.getElementById('race-qualifying-body').children[1].children[4].textContent).toBe('+0.200s');
+	});
+
+	it('renders qualifying data as a replay tab', () => {
+		renderRaceResults({
+			total_laps: 1,
+			qualifying_results: [
+				{ position: 1, driver_name: 'A', team_name: 'T1', best_lap_ms: 80000 },
+				{ position: 2, driver_name: 'B', team_name: 'T2', best_lap_ms: 80200 },
+			],
+			lap_history: [
+				{
+					lap: 1,
+					order: [{ driver_id: 1, position: 1, driver_name: 'A', team_name: 'T1', last_lap_ms: 83000, best_lap_ms: 83000, gap_display: 'LEADER', status: 'FINISHED' }],
+					events: [],
+				},
+			],
+			results: [],
+		});
+
+		expect(document.getElementById('race-results-qualifying-body').children).toHaveLength(2);
+		expect(document.getElementById('race-results-pole-display').textContent).toContain('Pole: A');
+		expect(document.getElementById('race-results-qualifying-body').children[0].children[4].textContent).toBe('POLE');
+		expect(document.getElementById('race-results-qualifying-body').children[1].children[4].textContent).toBe('+0.200s');
+		document.getElementById('race-tab-qualifying').click();
+		expect(document.getElementById('race-panel-qualifying').style.display).toBe('');
+		expect(document.getElementById('race-panel-timing').style.display).toBe('none');
 	});
 });

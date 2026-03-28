@@ -17,7 +17,11 @@ from app.commands.facilities_commands import (
     handle_start_facilities_upgrade,
 )
 from app.commands.finance_commands import build_finance_payload
-from app.commands.race_commands import handle_simulate_race
+from app.commands.race_commands import (
+    handle_get_race_weekend,
+    handle_simulate_qualifying,
+    handle_simulate_race,
+)
 from app.commands.staff_commands import (
     handle_get_technical_director_replacement_candidates,
     handle_get_manager_replacement_candidates,

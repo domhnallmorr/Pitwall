@@ -10,6 +10,7 @@ from app.race.constants import (
 	OVERTAKE_SUCCESS_PROBABILITY,
 	PACE_CENTER,
 	PACE_TO_MS_FACTOR,
+	QUALIFYING_JITTER_RANGE_MS,
 	TYRE_DEGRADATION_MS_PER_LAP,
 	TYRE_GRIP_MAX_EFFECT_MS,
 	TYRE_WEAR_MAX_MULTIPLIER_DELTA,
@@ -58,6 +59,17 @@ def lap_time_ms(entrant: dict, circuit: Circuit) -> int:
 		45_000,
 		circuit.base_laptime_ms - base_bonus_ms + engine_adjustment_ms + tyre_grip_adjustment_ms
 		+ fuel_penalty_ms + degradation_ms + dirty_air_penalty_ms + jitter_ms,
+	)
+
+
+def qualifying_lap_time_ms(entrant: dict, circuit: Circuit) -> int:
+	base_bonus_ms = int((entrant["performance_weight"] - PACE_CENTER) * PACE_TO_MS_FACTOR)
+	jitter_ms = random.randint(-QUALIFYING_JITTER_RANGE_MS, QUALIFYING_JITTER_RANGE_MS)
+	engine_adjustment_ms = engine_power_effect_ms(entrant, circuit)
+	tyre_grip_adjustment_ms = tyre_grip_effect_ms(entrant)
+	return max(
+		45_000,
+		circuit.base_laptime_ms - base_bonus_ms + engine_adjustment_ms + tyre_grip_adjustment_ms + jitter_ms,
 	)
 
 

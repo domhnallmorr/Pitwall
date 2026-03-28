@@ -23,6 +23,7 @@ import {
 	openDriverProfile,
 	refreshVisibleViews,
 	renderRaceResults,
+	renderRaceWeekend,
 	showTeamSelect,
 	updateDashboard,
 } from './renderer/helpers.js';
@@ -175,6 +176,7 @@ function setupEventListeners() {
 				testModal.style.display = 'flex';
 			} else if (advanceBtn.textContent === "GO TO RACE") {
 				enterRaceView(nextEventEl, weekEl);
+				API.getRaceWeekend();
 			} else {
 				console.log("Advancing Week...");
 				API.advanceWeek();
@@ -218,8 +220,18 @@ function setupEventListeners() {
 	}
 
 	// Race View Controls
+	const qualifyingBtn = document.getElementById('simulate-qualifying-btn');
 	const simulateBtn = document.getElementById('simulate-race-btn');
 	const returnBtn = document.getElementById('return-dashboard-btn');
+
+	if (qualifyingBtn) {
+		qualifyingBtn.addEventListener('click', () => {
+			console.log("Simulating Qualifying...");
+			qualifyingBtn.disabled = true;
+			qualifyingBtn.textContent = "RUNNING...";
+			API.simulateQualifying();
+		});
+	}
 
 	if (simulateBtn) {
 		simulateBtn.addEventListener('click', () => {
@@ -300,6 +312,10 @@ function setupIPC() {
 				renderRaceResults(parsed.data);
 				refreshVisibleViews({ gridView, driverView, api: API });
 				API.getFinance();
+			} else if (parsed.type === 'race_weekend') {
+				renderRaceWeekend(parsed.data);
+			} else if (parsed.type === 'qualifying_result') {
+				renderRaceWeekend(parsed.data);
 			} else if (parsed.type === 'email_data') {
 				emailView.render(parsed.data);
 			} else if (parsed.type === 'email_read') {

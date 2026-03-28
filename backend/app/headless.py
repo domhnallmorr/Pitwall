@@ -69,6 +69,7 @@ def run_headless(num_seasons: int = 2):
                 event_id = f"{event.week}_{event.name}"
                 if event_id not in state.events_processed:
                     if event.type == EventType.RACE:
+                        race_manager.simulate_qualifying(state)
                         result = race_manager.simulate_race(state)
                         races_run += 1
                         winner = result["results"][0]
