@@ -135,7 +135,7 @@ export default class GridView {
 			} else if (this.mode === 'suppliers') {
 				targetHead.innerHTML = '<tr><th>Team</th><th>Engine Supplier</th><th>Engine Deal</th><th>Tyre Supplier</th><th>Tyre Deal</th></tr>';
 			} else {
-				targetHead.innerHTML = '<tr><th>Team</th><th>Driver 1</th><th>Driver 2</th><th>Technical Director</th><th>Commercial Manager</th></tr>';
+				targetHead.innerHTML = '<tr><th>Team</th><th>Driver 1</th><th>Driver 2</th><th>Team Principal</th><th>Technical Director</th><th>Commercial Manager</th></tr>';
 			}
 		}
 
@@ -176,12 +176,15 @@ export default class GridView {
 				const tdName = row.TechnicalDirector || '';
 				const d1Country = row.Driver1Country || this.driverCountryByName[d1Name] || '';
 				const d2Country = row.Driver2Country || this.driverCountryByName[d2Name] || '';
+				const tpName = row.TeamPrincipal || '';
+				const tpCountry = row.TeamPrincipalCountry || '';
 				const tdCountry = row.TechnicalDirectorCountry || '';
 				const cmName = row.CommercialManager || '';
 				tr.innerHTML = `
 	                <td>${row.Team}</td>
 	                <td>${this.renderDriverCell(d1Country, d1Name)}</td>
 	                <td>${this.renderDriverCell(d2Country, d2Name)}</td>
+	                <td>${this.renderStaffCell(tpCountry, tpName)}</td>
 	                <td>${this.renderStaffCell(tdCountry, tdName)}</td>
 	                <td>${this.renderStaffCell('', cmName)}</td>
 	            `;

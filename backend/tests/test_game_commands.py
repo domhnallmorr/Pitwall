@@ -8,6 +8,7 @@ from app.commands.game_commands import (
 from app.models.calendar import Calendar, Event, EventType
 from app.models.state import GameState
 from app.models.team import Team
+from app.models.team_principal import TeamPrincipal
 
 
 def create_state() -> GameState:
@@ -15,6 +16,7 @@ def create_state() -> GameState:
         year=1998,
         teams=[Team(id=1, name="Warrick", country="United Kingdom", balance=1_000_000)],
         drivers=[],
+        team_principals=[TeamPrincipal(id=1, name="Franklin Warrick", country="United Kingdom", age=56, skill=80, contract_length=99, team_id=1, owns_team=True)],
         calendar=Calendar(events=[Event(name="Albert Park", week=10, type=EventType.RACE)], current_week=1),
         circuits=[],
     )
@@ -27,6 +29,7 @@ def test_load_default_state_populates_all_roster_groups(mock_load_roster):
         [],
         1998,
         [Event(name="Albert Park", week=10, type=EventType.RACE)],
+        [],
         [],
         [],
         [],
@@ -97,6 +100,8 @@ def test_handle_start_career_success_without_retirement_email(
     assert "Welcome to Pitwall" in subjects
     assert not any(s.startswith("Retirement Watch:") for s in subjects)
     mock_td_signings.assert_called_once_with(next_state)
+    assert next_state.team_principals[0].team_id is None
+    assert next_state.teams[0].team_principal_id is None
 
 
 @patch("app.commands.game_commands.load_default_state", side_effect=RuntimeError("boom"))

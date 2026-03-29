@@ -5,6 +5,7 @@ from app.models.driver import Driver
 from app.models.team import Team
 from app.models.commercial_manager import CommercialManager
 from app.models.technical_director import TechnicalDirector
+from app.models.team_principal import TeamPrincipal
 from app.models.calendar import Calendar
 
 def create_mock_state():
@@ -29,12 +30,14 @@ def test_grid_dataframe_structure():
     assert "Team" in df.columns
     assert "Driver1" in df.columns
     assert "Driver2" in df.columns
+    assert "TeamPrincipal" in df.columns
     assert "TechnicalDirector" in df.columns
     
     # Check Team 1 (Full)
     row1 = df[df["Team"] == "Team 1"].iloc[0]
     assert row1["Driver1"] == "Driver A"
     assert row1["Driver2"] == "Driver B"
+    assert row1["TeamPrincipal"] == "VACANT"
     
     # Check Team 2 (Vacant)
     row2 = df[df["Team"] == "Team 2"].iloc[0]
@@ -65,6 +68,111 @@ def test_grid_dataframe_uses_year_snapshot_when_available():
     assert row1["Driver1"] == "Next Driver 1"
     assert row1["Driver2"] == "Next Driver 2"
     assert row1["TechnicalDirector"] == "VACANT"
+
+
+def test_grid_live_records_include_team_principal():
+    drivers = [
+        Driver(id=1, name="Driver One", age=29, country="UK", points=0, team_id=1, contract_length=3),
+        Driver(id=2, name="Driver Two", age=24, country="DE", points=0, team_id=1, contract_length=3),
+    ]
+    teams = [
+        Team(id=1, name="Team 1", country="UK", driver1_id=1, driver2_id=2, points=0, team_principal_id=10),
+    ]
+    team_principals = [
+        TeamPrincipal(
+            id=10,
+            name="Principal Active",
+            country="France",
+            age=48,
+            skill=80,
+            contract_length=3,
+            team_id=1,
+        ),
+    ]
+    calendar = Calendar(events=[], current_week=1)
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        calendar=calendar,
+        circuits=[],
+        team_principals=team_principals,
+    )
+
+    df = GridManager().get_grid_dataframe(state)
+    row = df[df["Team"] == "Team 1"].iloc[0]
+    assert row["TeamPrincipal"] == "Principal Active"
+    assert row["TeamPrincipalCountry"] == "France"
+
+
+def test_grid_next_year_projection_marks_expiring_team_principal_as_vacant():
+    drivers = [
+        Driver(id=1, name="Driver One", age=29, country="UK", points=0, team_id=1, contract_length=3),
+        Driver(id=2, name="Driver Two", age=24, country="DE", points=0, team_id=1, contract_length=3),
+    ]
+    teams = [
+        Team(id=1, name="Team 1", country="UK", driver1_id=1, driver2_id=2, points=0, team_principal_id=10),
+    ]
+    team_principals = [
+        TeamPrincipal(
+            id=10,
+            name="Principal Expiring",
+            country="UK",
+            age=52,
+            skill=77,
+            contract_length=1,
+            team_id=1,
+            owns_team=False,
+        ),
+    ]
+    calendar = Calendar(events=[], current_week=1)
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        calendar=calendar,
+        circuits=[],
+        team_principals=team_principals,
+    )
+
+    df = GridManager().get_grid_dataframe(state, year=1999)
+    row = df[df["Team"] == "Team 1"].iloc[0]
+    assert row["TeamPrincipal"] == "VACANT"
+
+
+def test_grid_next_year_projection_keeps_owner_team_principal():
+    drivers = [
+        Driver(id=1, name="Driver One", age=29, country="UK", points=0, team_id=1, contract_length=3),
+        Driver(id=2, name="Driver Two", age=24, country="DE", points=0, team_id=1, contract_length=3),
+    ]
+    teams = [
+        Team(id=1, name="Team 1", country="UK", driver1_id=1, driver2_id=2, points=0, team_principal_id=10),
+    ]
+    team_principals = [
+        TeamPrincipal(
+            id=10,
+            name="Owner Principal",
+            country="Italy",
+            age=58,
+            skill=72,
+            contract_length=1,
+            team_id=1,
+            owns_team=True,
+        ),
+    ]
+    calendar = Calendar(events=[], current_week=1)
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        calendar=calendar,
+        circuits=[],
+        team_principals=team_principals,
+    )
+
+    df = GridManager().get_grid_dataframe(state, year=1999)
+    row = df[df["Team"] == "Team 1"].iloc[0]
+    assert row["TeamPrincipal"] == "Owner Principal"
 
 
 def test_grid_next_year_projection_excludes_retiring_drivers():

@@ -8,6 +8,7 @@ from app.models.engine_supplier import EngineSupplier
 from app.models.enums import DriverRole
 from app.models.fuel_supplier import FuelSupplier
 from app.models.team import Team
+from app.models.team_principal import TeamPrincipal
 from app.models.technical_director import TechnicalDirector
 from app.models.title_sponsor import TitleSponsor
 from app.models.tyre_supplier import TyreSupplier
@@ -173,6 +174,43 @@ def load_technical_directors(
     except Exception as e:
         print(f"Error linking technical directors: {e}")
     return technical_directors
+
+
+def load_team_principals(
+    cursor, start_year: int, teams: List[Team], include: bool
+) -> List[TeamPrincipal]:
+    team_principals: List[TeamPrincipal] = []
+    try:
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='team_principals'")
+        has_tp_table = cursor.fetchone() is not None
+        if has_tp_table:
+            cursor.execute(
+                "SELECT id, name, country, age, skill, contract_length, team_name, owns_team "
+                "FROM team_principals WHERE start_year = ? OR start_year = 0",
+                (start_year,),
+            )
+            rows = cursor.fetchall()
+            team_by_name = {t.name: t for t in teams}
+            for tp_id, tp_name, tp_country, tp_age, tp_skill, tp_contract_length, team_name, owns_team in rows:
+                team = team_by_name.get(team_name)
+                if team:
+                    team.team_principal_id = tp_id
+                if include:
+                    team_principals.append(
+                        TeamPrincipal(
+                            id=tp_id,
+                            name=tp_name,
+                            country=tp_country,
+                            age=tp_age,
+                            skill=tp_skill if tp_skill is not None else 50,
+                            contract_length=tp_contract_length if tp_contract_length is not None else 0,
+                            team_id=team.id if team else None,
+                            owns_team=bool(owns_team),
+                        )
+                    )
+    except Exception as e:
+        print(f"Error linking team principals: {e}")
+    return team_principals
 
 
 def load_commercial_managers(

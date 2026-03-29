@@ -48,6 +48,7 @@ def load_default_state() -> GameState:
         year,
         events,
         circuits,
+        team_principals,
         technical_directors,
         commercial_managers,
         title_sponsors,
@@ -56,6 +57,7 @@ def load_default_state() -> GameState:
         fuel_suppliers,
     ) = load_roster(
         year=0,
+        include_team_principals=True,
         include_technical_directors=True,
         include_commercial_managers=True,
         include_title_sponsors=True,
@@ -68,6 +70,7 @@ def load_default_state() -> GameState:
         year=year,
         teams=teams,
         drivers=drivers,
+        team_principals=team_principals,
         technical_directors=technical_directors,
         commercial_managers=commercial_managers,
         title_sponsors=title_sponsors,
@@ -103,6 +106,13 @@ def handle_start_career(state: GameState | None, logger: logging.Logger, team_na
             return current_state, {"status": "error", "message": f"Team '{selected_team_name}' not found in roster."}
 
         current_state.player_team_id = selected_team.id
+        released_principal = next(
+            (principal for principal in current_state.team_principals if principal.team_id == selected_team.id),
+            None,
+        )
+        if released_principal:
+            released_principal.team_id = None
+            selected_team.team_principal_id = None
         current_state.finance = Finance(balance=selected_team.balance)
         PrizeMoneyManager().assign_initial_entitlement_from_roster_order(current_state)
 

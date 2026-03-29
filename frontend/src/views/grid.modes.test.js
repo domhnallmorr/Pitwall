@@ -98,6 +98,8 @@ describe('GridView modes and branch behavior', () => {
 					Driver1: 'John Newhouse',
 					Driver1Country: 'Canada',
 					Driver2: 'VACANT',
+					TeamPrincipal: 'Franklin Warrick',
+					TeamPrincipalCountry: 'United Kingdom',
 					TechnicalDirector: 'Peter Heed',
 					TechnicalDirectorCountry: 'United Kingdom',
 					CommercialManager: 'Jace Whitman',
@@ -108,6 +110,7 @@ describe('GridView modes and branch behavior', () => {
 
 		const link = document.querySelector('.driver-link[data-driver-name="John Newhouse"]');
 		expect(link).toBeTruthy();
+		expect(document.querySelector('#grid-table-body tr').textContent).toContain('Franklin Warrick');
 		link.click();
 		expect(onDriver).toHaveBeenCalledWith('John Newhouse');
 	});

@@ -72,6 +72,22 @@ def create_schema(conn):
 
     c.execute(
         '''
+        CREATE TABLE IF NOT EXISTS team_principals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            country TEXT,
+            age INTEGER,
+            skill INTEGER DEFAULT 50,
+            contract_length INTEGER DEFAULT 0,
+            team_name TEXT,
+            owns_team INTEGER DEFAULT 0,
+            start_year INTEGER DEFAULT 0
+        )
+    '''
+    )
+
+    c.execute(
+        '''
         CREATE TABLE IF NOT EXISTS commercial_managers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -232,6 +248,23 @@ def create_schema(conn):
         c.execute("ALTER TABLE technical_directors ADD COLUMN team_name TEXT")
     if "start_year" not in td_columns:
         c.execute("ALTER TABLE technical_directors ADD COLUMN start_year INTEGER DEFAULT 0")
+
+    c.execute("PRAGMA table_info(team_principals)")
+    tp_columns = {row[1] for row in c.fetchall()}
+    if "country" not in tp_columns:
+        c.execute("ALTER TABLE team_principals ADD COLUMN country TEXT")
+    if "age" not in tp_columns:
+        c.execute("ALTER TABLE team_principals ADD COLUMN age INTEGER")
+    if "skill" not in tp_columns:
+        c.execute("ALTER TABLE team_principals ADD COLUMN skill INTEGER DEFAULT 50")
+    if "contract_length" not in tp_columns:
+        c.execute("ALTER TABLE team_principals ADD COLUMN contract_length INTEGER DEFAULT 0")
+    if "team_name" not in tp_columns:
+        c.execute("ALTER TABLE team_principals ADD COLUMN team_name TEXT")
+    if "owns_team" not in tp_columns:
+        c.execute("ALTER TABLE team_principals ADD COLUMN owns_team INTEGER DEFAULT 0")
+    if "start_year" not in tp_columns:
+        c.execute("ALTER TABLE team_principals ADD COLUMN start_year INTEGER DEFAULT 0")
 
     c.execute("PRAGMA table_info(commercial_managers)")
     cm_columns = {row[1] for row in c.fetchall()}

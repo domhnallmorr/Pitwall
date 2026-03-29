@@ -21,8 +21,8 @@ describe('GridView', () => {
 
 	it('renders grid data correctly', () => {
 		const mockData = [
-			{ Team: 'Team A', Country: 'UK', Driver1: 'Driver 1', Driver2: 'Driver 2', TechnicalDirector: 'TD A', CommercialManager: 'CM A' },
-			{ Team: 'Team B', Country: 'IT', Driver1: 'Driver 3', Driver2: 'VACANT', TechnicalDirector: 'VACANT', CommercialManager: 'VACANT' }
+			{ Team: 'Team A', Country: 'UK', Driver1: 'Driver 1', Driver2: 'Driver 2', TeamPrincipal: 'TP A', TechnicalDirector: 'TD A', CommercialManager: 'CM A' },
+			{ Team: 'Team B', Country: 'IT', Driver1: 'Driver 3', Driver2: 'VACANT', TeamPrincipal: 'VACANT', TechnicalDirector: 'VACANT', CommercialManager: 'VACANT' }
 		];
 
 		gridView.render(mockData);
@@ -35,14 +35,16 @@ describe('GridView', () => {
 		expect(cells1[0].textContent.trim()).toBe('Team A');
 		expect(cells1[1].textContent.trim()).toBe('Driver 1');
 		expect(cells1[2].textContent.trim()).toBe('Driver 2');
-		expect(cells1[3].textContent.trim()).toBe('TD A');
-		expect(cells1[4].textContent.trim()).toBe('CM A');
+		expect(cells1[3].textContent.trim()).toBe('TP A');
+		expect(cells1[4].textContent.trim()).toBe('TD A');
+		expect(cells1[5].textContent.trim()).toBe('CM A');
 
 		// Check second row content
 		const cells2 = rows[1].querySelectorAll('td');
 		expect(cells2[2].textContent.trim()).toBe('');
 		expect(cells2[3].textContent.trim()).toBe('');
 		expect(cells2[4].textContent.trim()).toBe('');
+		expect(cells2[5].textContent.trim()).toBe('');
 	});
 
 	it('handles empty data', () => {

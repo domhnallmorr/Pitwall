@@ -22,6 +22,15 @@ class GridManager:
             return False
         return True
 
+    def _is_projected_team_principal_available(self, principal) -> bool:
+        if not principal or not getattr(principal, "active", True):
+            return False
+        if getattr(principal, "owns_team", False):
+            return True
+        if getattr(principal, "contract_length", 0) == 1:
+            return False
+        return True
+
     def _is_projected_technical_director_available(self, director, current_year: int) -> bool:
         if not director or not getattr(director, "active", True):
             return False
@@ -58,6 +67,7 @@ class GridManager:
         """
         data = []
         driver_lookup = {d.id: d for d in state.drivers}
+        tp_lookup = {tp.id: tp for tp in state.team_principals}
         td_lookup = {td.id: td for td in state.technical_directors}
         cm_lookup = {cm.id: cm for cm in state.commercial_managers}
         engine_country_by_name = {e.name: e.country for e in state.engine_suppliers}
@@ -65,6 +75,7 @@ class GridManager:
         for team in state.teams:
             d1 = driver_lookup.get(team.driver1_id)
             d2 = driver_lookup.get(team.driver2_id)
+            tp = tp_lookup.get(team.team_principal_id)
             td = td_lookup.get(team.technical_director_id)
             cm = cm_lookup.get(team.commercial_manager_id)
             title_sponsor_name = team.title_sponsor_name if getattr(team, "title_sponsor_name", None) else "VACANT"
@@ -77,6 +88,8 @@ class GridManager:
                 "Driver2": d2.name if d2 else "VACANT",
                 "Driver1Country": d1.country if d1 and d1.country else "",
                 "Driver2Country": d2.country if d2 and d2.country else "",
+                "TeamPrincipal": tp.name if tp else "VACANT",
+                "TeamPrincipalCountry": tp.country if tp and tp.country else "",
                 "TechnicalDirector": td.name if td else "VACANT",
                 "TechnicalDirectorCountry": td.country if td and td.country else "",
                 "CommercialManager": cm.name if cm else "VACANT",
@@ -117,6 +130,7 @@ class GridManager:
             for s in state.announced_ai_td_signings
             if s.get("status") == "announced"
         }
+        tp_lookup = {tp.id: tp for tp in state.team_principals}
         announced_title_sponsor_by_team = {
             s.get("team_id"): s
             for s in state.announced_ai_title_sponsor_signings
@@ -135,6 +149,8 @@ class GridManager:
                 d1 = d1 if self._is_projected_driver_available(d1, state.year) else None
             if not announced_d2_id:
                 d2 = d2 if self._is_projected_driver_available(d2, state.year) else None
+            tp = tp_lookup.get(team.team_principal_id)
+            tp = tp if self._is_projected_team_principal_available(tp) else None
             announced_td_id = announced_td_by_team.get(team.id)
             td = td_lookup.get(announced_td_id) if announced_td_id else td_lookup.get(team.technical_director_id)
             if not announced_td_id:
@@ -157,6 +173,8 @@ class GridManager:
                 "Driver2": d2.name if d2 else "VACANT",
                 "Driver1Country": d1.country if d1 and d1.country else "",
                 "Driver2Country": d2.country if d2 and d2.country else "",
+                "TeamPrincipal": tp.name if tp else "VACANT",
+                "TeamPrincipalCountry": tp.country if tp and tp.country else "",
                 "TechnicalDirector": td.name if td else "VACANT",
                 "TechnicalDirectorCountry": td.country if td and td.country else "",
                 "CommercialManager": cm.name if cm else "VACANT",

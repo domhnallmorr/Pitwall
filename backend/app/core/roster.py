@@ -8,6 +8,7 @@ from app.core.roster_components import (
     load_engine_suppliers,
     load_events,
     load_fuel_suppliers,
+    load_team_principals as load_team_principals_for_roster,
     load_teams,
     load_technical_directors as load_technical_directors_for_roster,
     load_title_sponsors,
@@ -15,6 +16,7 @@ from app.core.roster_components import (
 )
 from app.models.commercial_manager import CommercialManager
 from app.models.team import Team
+from app.models.team_principal import TeamPrincipal
 from app.models.technical_director import TechnicalDirector
 
 
@@ -42,6 +44,18 @@ def load_technical_directors(year: int = 0, teams: List[Team] | None = None) -> 
     return technical_directors
 
 
+def load_team_principals(year: int = 0, teams: List[Team] | None = None) -> List[TeamPrincipal]:
+    conn = get_connection()
+    c = conn.cursor()
+    start_year = _resolve_start_year(c, year)
+    linked_teams = teams or []
+    team_principals = load_team_principals_for_roster(
+        c, start_year, linked_teams, include=True
+    )
+    conn.close()
+    return team_principals
+
+
 def load_commercial_managers(year: int = 0, teams: List[Team] | None = None) -> List[CommercialManager]:
     """
     Loads commercial managers for the supplied year (or metadata default).
@@ -60,6 +74,7 @@ def load_commercial_managers(year: int = 0, teams: List[Team] | None = None) -> 
 
 def load_roster(
     year: int = 0,
+    include_team_principals: bool = False,
     include_technical_directors: bool = False,
     include_commercial_managers: bool = False,
     include_title_sponsors: bool = False,
@@ -78,6 +93,9 @@ def load_roster(
     drivers, driver_map = load_drivers(c, start_year)
     teams = load_teams(c, start_year, driver_map)
 
+    team_principals = load_team_principals_for_roster(
+        c, start_year, teams, include_team_principals
+    )
     technical_directors = load_technical_directors_for_roster(
         c, start_year, teams, include_technical_directors
     )
@@ -93,6 +111,8 @@ def load_roster(
 
     conn.close()
     result = [teams, drivers, start_year, events, circuits]
+    if include_team_principals:
+        result.append(team_principals)
     if include_technical_directors:
         result.append(technical_directors)
     if include_commercial_managers:

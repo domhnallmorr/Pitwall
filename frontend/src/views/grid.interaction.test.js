@@ -32,7 +32,7 @@ describe('GridView interactions', () => {
 		const onDriver = vi.fn();
 		gridView.setDriverSelectHandler(onDriver);
 		gridView.setDriverCountryMap([{ name: 'John Newhouse', country: 'Canada' }]);
-		gridView.render([{ Team: 'Warrick', Driver1: 'John Newhouse', Driver2: 'VACANT', TechnicalDirector: 'Peter Heed', CommercialManager: 'Jace Whitman' }], 1998);
+		gridView.render([{ Team: 'Warrick', Driver1: 'John Newhouse', Driver2: 'VACANT', TeamPrincipal: 'Franklin Warrick', TechnicalDirector: 'Peter Heed', CommercialManager: 'Jace Whitman' }], 1998);
 
 		const link = document.querySelector('.driver-link[data-driver-name="John Newhouse"]');
 		expect(link).toBeTruthy();

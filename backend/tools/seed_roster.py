@@ -16,6 +16,7 @@ try:
         FUTURE_DRIVERS_DATA,
         REQUIRED_CIRCUITS,
         TECHNICAL_DIRECTORS_DATA,
+        TEAM_PRINCIPALS_DATA,
         TEAMS_DATA,
         TEAM_BALANCES,
         TEAM_ENGINE_SUPPLIERS,
@@ -45,6 +46,7 @@ except ModuleNotFoundError:
         FUTURE_DRIVERS_DATA,
         REQUIRED_CIRCUITS,
         TECHNICAL_DIRECTORS_DATA,
+        TEAM_PRINCIPALS_DATA,
         TEAMS_DATA,
         TEAM_BALANCES,
         TEAM_ENGINE_SUPPLIERS,
@@ -190,6 +192,21 @@ def seed_data(conn):
         )
         sync_seed_table_names(conn, "technical_directors", TECHNICAL_DIRECTORS_DATA)
 
+        c.execute('SELECT name, start_year FROM team_principals')
+        existing_tp_keys = {(row[0], row[1]) for row in c.fetchall()}
+        principals_to_insert = [tp for tp in TEAM_PRINCIPALS_DATA if (tp[1], tp[0]) not in existing_tp_keys]
+        if principals_to_insert:
+            c.executemany(
+                'INSERT INTO team_principals (start_year, name, country, age, skill, contract_length, team_name, owns_team) '
+                'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                principals_to_insert,
+            )
+        c.executemany(
+            'UPDATE team_principals SET country = ?, age = ?, skill = ?, contract_length = ?, team_name = ?, owns_team = ? WHERE name = ? AND start_year = ?',
+            [(tp[2], tp[3], tp[4], tp[5], tp[6], tp[7], tp[1], tp[0]) for tp in TEAM_PRINCIPALS_DATA],
+        )
+        sync_seed_table_names(conn, "team_principals", TEAM_PRINCIPALS_DATA)
+
         c.execute('SELECT name, start_year FROM commercial_managers')
         existing_cm_keys = {(row[0], row[1]) for row in c.fetchall()}
         cms_to_insert = [cm for cm in COMMERCIAL_MANAGERS_DATA if (cm[1], cm[0]) not in existing_cm_keys]
@@ -285,6 +302,19 @@ def seed_data(conn):
         [(td[2], td[3], td[4], td[5], td[6], td[7], td[1], td[0]) for td in TECHNICAL_DIRECTORS_DATA],
     )
     sync_seed_table_names(conn, "technical_directors", TECHNICAL_DIRECTORS_DATA)
+    c.execute('SELECT name, start_year FROM team_principals')
+    existing_tp_keys = {(row[0], row[1]) for row in c.fetchall()}
+    principals_to_insert = [tp for tp in TEAM_PRINCIPALS_DATA if (tp[1], tp[0]) not in existing_tp_keys]
+    if principals_to_insert:
+        c.executemany(
+            'INSERT INTO team_principals (start_year, name, country, age, skill, contract_length, team_name, owns_team) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            principals_to_insert,
+        )
+    c.executemany(
+        'UPDATE team_principals SET country = ?, age = ?, skill = ?, contract_length = ?, team_name = ?, owns_team = ? WHERE name = ? AND start_year = ?',
+        [(tp[2], tp[3], tp[4], tp[5], tp[6], tp[7], tp[1], tp[0]) for tp in TEAM_PRINCIPALS_DATA],
+    )
+    sync_seed_table_names(conn, "team_principals", TEAM_PRINCIPALS_DATA)
     c.execute('SELECT name, start_year FROM commercial_managers')
     existing_cm_keys = {(row[0], row[1]) for row in c.fetchall()}
     cms_to_insert = [cm for cm in COMMERCIAL_MANAGERS_DATA if (cm[1], cm[0]) not in existing_cm_keys]

@@ -4,6 +4,7 @@ from app.core.car_performance import CarPerformanceManager
 from app.models.calendar import Calendar
 from app.models.state import GameState
 from app.models.team import Team
+from app.models.team_principal import TeamPrincipal
 from app.models.technical_director import TechnicalDirector
 
 
@@ -40,10 +41,15 @@ def test_apply_for_new_season_updates_teams_and_sends_player_email(mock_randint)
         TechnicalDirector(id=1, name="Peter Heed", country="United Kingdom", age=52, skill=75, team_id=1),
         TechnicalDirector(id=2, name="Rob Brann", country="United Kingdom", age=48, skill=90, team_id=2),
     ]
+    principals = [
+        TeamPrincipal(id=1, name="Player Principal", country="United Kingdom", age=45, skill=99, team_id=1),
+        TeamPrincipal(id=2, name="AI Principal", country="France", age=52, skill=74, team_id=2),
+    ]
     state = GameState(
         year=1999,
         teams=teams,
         drivers=[],
+        team_principals=principals,
         technical_directors=tds,
         calendar=Calendar(events=[], current_week=1),
         circuits=[],
@@ -54,9 +60,21 @@ def test_apply_for_new_season_updates_teams_and_sends_player_email(mock_randint)
 
     assert len(updates) == 2
     assert teams[0].car_speed == 62  # (100 + 75 + 75 + 0)/4
-    assert teams[1].car_speed == 63  # (92 + 70 + 90 + 0)/4
+    assert teams[1].car_speed == 65  # (92 + 70 + 90 + 0)/4 = 63, then +2 from AI team principal
 
     emails = [e for e in state.emails if e.subject.startswith("New Car Performance:")]
     assert len(emails) == 1
     assert "Previous rating: 80" in emails[0].body
     assert "New rating: 62" in emails[0].body
+
+    assert updates[0]["team_principal_modifier"] == 0
+    assert updates[1]["team_principal_modifier"] == 2
+
+
+def test_ai_team_principal_modifier_is_neutral_at_fifty_and_clamped():
+    manager = CarPerformanceManager()
+
+    assert manager._ai_team_principal_modifier(50) == 0
+    assert manager._ai_team_principal_modifier(80) == 2
+    assert manager._ai_team_principal_modifier(99) == 3
+    assert manager._ai_team_principal_modifier(5) == -3

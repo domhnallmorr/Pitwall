@@ -20,8 +20,9 @@ def run_headless(num_seasons: int = 2):
     print(f"=== Headless Simulation: {num_seasons} Season(s) ===\n")
 
     # 1. Load roster
-    teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors, engine_suppliers, tyre_suppliers, fuel_suppliers = load_roster(
+    teams, drivers, year, events, circuits, team_principals, technical_directors, commercial_managers, title_sponsors, engine_suppliers, tyre_suppliers, fuel_suppliers = load_roster(
         year=0,
+        include_team_principals=True,
         include_technical_directors=True,
         include_commercial_managers=True,
         include_title_sponsors=True,
@@ -34,6 +35,7 @@ def run_headless(num_seasons: int = 2):
         year=year,
         teams=teams,
         drivers=drivers,
+        team_principals=team_principals,
         technical_directors=technical_directors,
         commercial_managers=commercial_managers,
         title_sponsors=title_sponsors,
@@ -49,7 +51,7 @@ def run_headless(num_seasons: int = 2):
 
     print(
         f"Loaded {len(teams)} teams, {len(drivers)} drivers, "
-        f"{len(technical_directors)} technical directors, {len(commercial_managers)} commercial managers, "
+        f"{len(team_principals)} team principals, {len(technical_directors)} technical directors, {len(commercial_managers)} commercial managers, "
         f"{len(engine_suppliers)} engine suppliers, {len(fuel_suppliers)} fuel suppliers"
     )
     print(f"Calendar: {len(events)} events, last event week {calendar.last_event_week}")

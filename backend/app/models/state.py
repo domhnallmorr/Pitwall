@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any, ClassVar
 from app.models.driver import Driver
 from app.models.team import Team
+from app.models.team_principal import TeamPrincipal
 from app.models.technical_director import TechnicalDirector
 from app.models.commercial_manager import CommercialManager
 from app.models.title_sponsor import TitleSponsor
@@ -38,6 +39,7 @@ class GameState(BaseModel):
     year: int
     teams: List[Team]
     drivers: List[Driver]
+    team_principals: List[TeamPrincipal] = Field(default_factory=list)
     technical_directors: List[TechnicalDirector] = Field(default_factory=list)
     commercial_managers: List[CommercialManager] = Field(default_factory=list)
     title_sponsors: List[TitleSponsor] = Field(default_factory=list)
@@ -52,7 +54,7 @@ class GameState(BaseModel):
     next_email_id: int = 1
     finance: Finance = Field(default_factory=Finance)
     queued_emails: List[QueuedEmail] = Field(default_factory=list)
-    grid_snapshots: Dict[int, List[Dict[str, str]]] = Field(default_factory=dict)
+    grid_snapshots: Dict[int, List[Dict[str, Any]]] = Field(default_factory=dict)
     driver_season_results: Dict[int, Dict[int, List[Dict[str, Any]]]] = Field(default_factory=dict)
     qualifying_results_by_event: Dict[str, List[Dict[str, Any]]] = Field(default_factory=dict)
     latest_race_incidents: List[Dict[str, Any]] = Field(default_factory=list)

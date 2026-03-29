@@ -20,6 +20,7 @@ class Team(BaseModel):
     fuel_supplier_name: str | None = None
     fuel_supplier_deal: str | None = None
     fuel_supplier_yearly_cost: int = 0
+    team_principal_id: Optional[int] = None
     technical_director_id: Optional[int] = None
     commercial_manager_id: Optional[int] = None
     driver1_id: Optional[int] = None

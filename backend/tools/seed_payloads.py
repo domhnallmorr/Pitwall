@@ -310,6 +310,22 @@ COMMERCIAL_MANAGERS_DATA = [
     (0, "Matteo Fessari", "Germany", 45, 60, 0, 0, None),
 ]
 
+TEAM_PRINCIPALS_DATA = [
+    (0, "Franklin Warrick", "United Kingdom", 56, 80, 99, "Warrick", 1),
+    (0, "Julien Tissot", "France", 52, 99, 4, "Ferano", 0),
+    (0, "Fausto Bruni", "Italy", 48, 85, 3, "Benedetti", 0),
+    (0, "Rodney Deering", "United Kingdom", 51, 90, 5, "McAlister", 0),
+    (0, "Eamonn Joyce", "Ireland", 50, 75, 99, "Joyce", 1),
+    (0, "Adrien Pascal", "France", 43, 40, 99, "Pascal", 1),
+    (0, "Pius Schweizer", "Switzerland", 55, 66, 99, "Schweizer", 1),
+    (0, "Tyler Waterson", "United Kingdom", 52, 50, 1, "Swords", 0),
+    (0, "Jock Strathmore", "United Kingdom", 59, 55, 99, "Strathmore", 1),
+    (0, "Keith Tarnwell", "United Kingdom", 74, 35, 99, "Tarnwell", 1),
+    (0, "Guido Marchetti", "Italy", 51, 45, 99, "Marchetti", 1),
+    (0, "Cedric Palling", "United Kingdom", 43, 30, 0, None, 0),
+    (0, "Terrence Dane", "United Kingdom", 50, 38, 0, None, 0),
+]
+
 TITLE_SPONSORS_DATA = [
     (0, "Windale", 80),
     (0, "Marbano", 99),
