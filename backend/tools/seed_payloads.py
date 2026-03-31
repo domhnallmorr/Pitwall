@@ -35,6 +35,12 @@ DRIVER_SPEEDS = {
     "Jamie Brenton": 80,
     "Nico Heidmann": 74,
     "Gustav Mazzane": 52,
+    "Tobias Eagle": 56,
+    "Adrian Youth": 21,
+    "Faustino Asturias": 95,
+    "Eugenio Boldini": 59,
+    "Kasper Rimmanen": 89,
+    "Teodoro Marcello": 62,
 }
 
 DRIVER_RACE_STARTS = {
@@ -74,6 +80,12 @@ DRIVER_RACE_STARTS = {
     "Jamie Brenton": 0,
     "Nico Heidmann": 0,
     "Gustav Mazzane": 0,
+    "Tobias Eagle": 0,
+    "Adrian Youth": 0,
+    "Faustino Asturias": 0,
+    "Eugenio Boldini": 0,
+    "Kasper Rimmanen": 0,
+    "Teodoro Marcello": 0,
 }
 
 DRIVER_WINS = {
@@ -113,6 +125,12 @@ DRIVER_WINS = {
     "Jamie Brenton": 0,
     "Nico Heidmann": 0,
     "Gustav Mazzane": 0,
+    "Tobias Eagle": 0,
+    "Adrian Youth": 0,
+    "Faustino Asturias": 0,
+    "Eugenio Boldini": 0,
+    "Kasper Rimmanen": 0,
+    "Teodoro Marcello": 0,
 }
 
 DRIVER_CONTRACT_LENGTHS = {
@@ -138,6 +156,12 @@ DRIVER_CONTRACT_LENGTHS = {
     "Toshiro Tanaka": 1,
     "Kazuki Nakamura": 1,
     "Eduardo Torres": 1,
+    "Tobias Eagle": 0,
+    "Adrian Youth": 0,
+    "Faustino Asturias": 0,
+    "Eugenio Boldini": 0,
+    "Kasper Rimmanen": 0,
+    "Teodoro Marcello": 0,
 }
 
 TEAM_SPEEDS = {
@@ -402,6 +426,12 @@ FUTURE_DRIVERS_DATA = [
     (1999, "Jamie Brenton", 19, "United Kingdom", 0, 0),
     (1999, "Nico Heidmann", 22, "Germany", 0, 0),
     (1999, "Gustav Mazzane", 24, "Argentina", 0, 1),
+    (2000, "Tobias Eagle", 23, "Czech Republic", 0, 0),
+    (2000, "Adrian Youth", 24, "Malaysia", 0, 1),
+    (2000, "Faustino Asturias", 19, "Spain", 0, 0),
+    (2000, "Eugenio Boldini", 21, "Brazil", 0, 0),
+    (2000, "Kasper Rimmanen", 20, "Finland", 0, 0),
+    (2000, "Teodoro Marcello", 24, "Brazil", 0, 1),
 ]
 
 CALENDAR_EVENTS_BASE = [
@@ -461,6 +491,12 @@ DRIVERS_DATA = [
     (1999, "Jamie Brenton", 19, "United Kingdom", 0, 0),
     (1999, "Nico Heidmann", 22, "Germany", 0, 0),
     (1999, "Gustav Mazzane", 24, "Argentina", 0, 1),
+    (2000, "Tobias Eagle", 23, "Czech Republic", 0, 0),
+    (2000, "Adrian Youth", 24, "Malaysia", 0, 1),
+    (2000, "Faustino Asturias", 19, "Spain", 0, 0),
+    (2000, "Eugenio Boldini", 21, "Brazil", 0, 0),
+    (2000, "Kasper Rimmanen", 20, "Finland", 0, 0),
+    (2000, "Teodoro Marcello", 24, "Brazil", 0, 1),
 ]
 
 TEAMS_DATA = [
