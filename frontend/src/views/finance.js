@@ -25,6 +25,7 @@ export default class FinanceView {
 		this.prizeProgressEl = document.getElementById('finance-prize-progress');
 		this.sponsorNameEl = document.getElementById('finance-sponsor-name');
 		this.sponsorReplaceBtn = document.getElementById('finance-sponsor-replace-btn');
+		this.tyreSupplierReplaceBtn = document.getElementById('finance-tyre-supplier-replace-btn');
 		this.sponsorAnnualEl = document.getElementById('finance-sponsor-annual');
 		this.sponsorInstallmentEl = document.getElementById('finance-sponsor-installment');
 		this.sponsorPaidEl = document.getElementById('finance-sponsor-paid');
@@ -60,12 +61,17 @@ export default class FinanceView {
 		this.trackPlBody = document.getElementById('finance-track-pl-body');
 		this.tbody = document.getElementById('finance-transactions-body');
 		this.onReplaceTitleSponsor = null;
+		this.onReplaceTyreSupplier = null;
 		this.bindTabs();
 		this.bindSponsorActions();
 	}
 
 	setReplaceTitleSponsorHandler(handler) {
 		this.onReplaceTitleSponsor = handler;
+	}
+
+	setReplaceTyreSupplierHandler(handler) {
+		this.onReplaceTyreSupplier = handler;
 	}
 
 	setSupplierLogo(targetWrap, supplierName) {
@@ -115,13 +121,22 @@ export default class FinanceView {
 	}
 
 	bindSponsorActions() {
-		if (!this.sponsorReplaceBtn) return;
-		this.sponsorReplaceBtn.addEventListener('click', () => {
-			if (!this.onReplaceTitleSponsor) return;
-			const sponsorName = this.sponsorReplaceBtn.getAttribute('data-sponsor-name');
-			if (!sponsorName) return;
-			this.onReplaceTitleSponsor(sponsorName);
-		});
+		if (this.sponsorReplaceBtn) {
+			this.sponsorReplaceBtn.addEventListener('click', () => {
+				if (!this.onReplaceTitleSponsor) return;
+				const sponsorName = this.sponsorReplaceBtn.getAttribute('data-sponsor-name');
+				if (!sponsorName) return;
+				this.onReplaceTitleSponsor(sponsorName);
+			});
+		}
+		if (this.tyreSupplierReplaceBtn) {
+			this.tyreSupplierReplaceBtn.addEventListener('click', () => {
+				if (!this.onReplaceTyreSupplier) return;
+				const supplierName = this.tyreSupplierReplaceBtn.getAttribute('data-supplier-name');
+				if (!supplierName) return;
+				this.onReplaceTyreSupplier(supplierName);
+			});
+		}
 	}
 
 	render(data) {
@@ -246,12 +261,23 @@ export default class FinanceView {
 		const tyreSupplier = data.tyre_supplier || {};
 		const tyreSupplierName = tyreSupplier.name || 'Unassigned';
 		const tyreSupplierDeal = tyreSupplier.deal || '-';
+		const tyreSupplierContractLength = tyreSupplier.contract_length || 0;
+		const tyreSupplierPendingReplacement = Boolean(tyreSupplier.pending_replacement);
 		const tyreSupplierAnnual = tyreSupplier.annual_value || 0;
 		const tyreSupplierInstallment = tyreSupplier.installment || 0;
 		const tyreSupplierPaid = tyreSupplier.paid_so_far || 0;
 		const tyreSupplierRemaining = tyreSupplier.remaining || 0;
 
 		if (this.tyreSupplierNameEl) this.tyreSupplierNameEl.textContent = tyreSupplierName;
+		if (this.tyreSupplierReplaceBtn) {
+			const canReplace = Boolean(tyreSupplier.name) && tyreSupplierContractLength < 2 && !tyreSupplierPendingReplacement;
+			this.tyreSupplierReplaceBtn.disabled = !canReplace;
+			if (canReplace) {
+				this.tyreSupplierReplaceBtn.setAttribute('data-supplier-name', tyreSupplier.name);
+			} else {
+				this.tyreSupplierReplaceBtn.removeAttribute('data-supplier-name');
+			}
+		}
 		if (this.tyreSupplierDealEl) this.tyreSupplierDealEl.textContent = tyreSupplierDeal;
 		if (this.tyreSupplierAnnualEl) this.tyreSupplierAnnualEl.textContent = '$' + tyreSupplierAnnual.toLocaleString();
 		if (this.tyreSupplierInstallmentEl) this.tyreSupplierInstallmentEl.textContent = '$' + tyreSupplierInstallment.toLocaleString();

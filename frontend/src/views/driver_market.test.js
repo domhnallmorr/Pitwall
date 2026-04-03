@@ -101,6 +101,25 @@ describe('DriverMarketView', () => {
 		expect(onSign).toHaveBeenCalledWith('Windale', 32, 'title_sponsor');
 	});
 
+	it('renders tyre supplier market and signs supplier candidate', () => {
+		const onSign = vi.fn();
+		marketView.setSignHandler(onSign);
+		marketView.render({
+			market_type: 'tyre_supplier',
+			outgoing_supplier: { name: 'Greatday' },
+			candidates: [{ id: 42, name: 'Spanrock', country: 'Japan', grip: 70, wear: 80 }],
+		});
+
+		expect(document.getElementById('driver-market-title').textContent).toContain('Replace Greatday');
+		const head = document.querySelector('#driver-market-view thead tr').textContent;
+		expect(head).toContain('Grip');
+		expect(head).toContain('Wear');
+
+		const btn = document.querySelector('.driver-market-sign-btn');
+		btn.click();
+		expect(onSign).toHaveBeenCalledWith('Greatday', 42, 'tyre_supplier');
+	});
+
 	it('ignores sign clicks when no handlers or missing outgoing entities', () => {
 		marketView.render({
 			outgoing_driver: null,

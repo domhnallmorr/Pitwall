@@ -9,6 +9,7 @@ from app.models.circuit import Circuit
 from app.models.finance import TransactionCategory
 from app.models.technical_director import TechnicalDirector
 from app.models.title_sponsor import TitleSponsor
+from app.models.tyre_supplier import TyreSupplier
 
 
 def create_state() -> GameState:
@@ -33,6 +34,7 @@ def create_state() -> GameState:
             tyre_supplier_name="Greatday",
             tyre_supplier_deal="partner",
             tyre_supplier_yearly_cost=0,
+            tyre_supplier_contract_length=1,
             fuel_supplier_name="Brasoil",
             fuel_supplier_deal="partner",
             fuel_supplier_yearly_cost=150_000,
@@ -74,6 +76,10 @@ def create_state() -> GameState:
         title_sponsors=[
             TitleSponsor(id=31, name="Windale", wealth=70, start_year=0),
             TitleSponsor(id=32, name="Bright Shot", wealth=85, start_year=0),
+        ],
+        tyre_suppliers=[
+            TyreSupplier(id=41, name="Greatday", country="USA", wear=60, grip=80, start_year=0),
+            TyreSupplier(id=42, name="Spanrock", country="Japan", wear=80, grip=70, start_year=0),
         ],
         calendar=calendar,
         circuits=circuits,
@@ -298,6 +304,27 @@ def test_replace_title_sponsor_respects_contract_rule_and_signs_replacement():
     assert "2 or more years" in locked["message"]
 
 
+def test_replace_tyre_supplier_respects_contract_rule_and_signs_replacement():
+    state = create_state()
+    app_main.CURRENT_STATE = state
+
+    candidates = process_command({"type": "get_tyre_supplier_replacement_candidates", "supplier_name": "Greatday"})
+    assert candidates["status"] == "success"
+    assert any(s["id"] == 41 for s in candidates["data"]["candidates"])
+    assert any(s["id"] == 42 for s in candidates["data"]["candidates"])
+
+    success = process_command({"type": "replace_tyre_supplier", "supplier_name": "Greatday", "incoming_supplier_id": 42})
+    assert success["status"] == "success"
+    assert success["type"] == "tyre_supplier_replaced"
+    assert success["data"]["team_id"] == 1
+    assert success["data"]["supplier_id"] == 42
+
+    app_main.CURRENT_STATE.player_team.tyre_supplier_contract_length = 2
+    locked = process_command({"type": "replace_tyre_supplier", "supplier_name": "Greatday"})
+    assert locked["status"] == "error"
+    assert "2 or more years" in locked["message"]
+
+
 def test_pending_player_replacements_are_reflected_in_staff_and_finance_payloads():
     state = create_state()
     state.drivers[0].contract_length = 1
@@ -314,6 +341,7 @@ def test_pending_player_replacements_are_reflected_in_staff_and_finance_payloads
     state.announced_ai_cm_signings = [{"team_id": 1, "manager_id": 12, "status": "announced"}]
     state.announced_ai_td_signings = [{"team_id": 1, "director_id": 22, "status": "announced"}]
     state.announced_ai_title_sponsor_signings = [{"team_id": 1, "sponsor_id": 32, "status": "announced"}]
+    state.announced_ai_tyre_supplier_signings = [{"team_id": 1, "supplier_id": 42, "status": "announced"}]
     app_main.CURRENT_STATE = state
 
     staff = process_command({"type": "get_staff"})
@@ -325,6 +353,7 @@ def test_pending_player_replacements_are_reflected_in_staff_and_finance_payloads
     assert staff["data"]["commercial_manager"]["pending_replacement"] is True
     assert staff["data"]["technical_director"]["pending_replacement"] is True
     assert finance["data"]["sponsor"]["pending_replacement"] is True
+    assert finance["data"]["tyre_supplier"]["pending_replacement"] is True
 
 
 def test_get_facilities_returns_player_and_team_comparison_data():

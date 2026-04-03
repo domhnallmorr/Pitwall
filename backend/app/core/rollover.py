@@ -15,6 +15,7 @@ from app.core.management_transfers import (
     CommercialManagerTransferManager,
     TechnicalDirectorTransferManager,
     TitleSponsorTransferManager,
+    TyreSupplierTransferManager,
 )
 from app.models.email import EmailCategory
 
@@ -38,6 +39,7 @@ class SeasonRolloverManager:
         self.cm_transfer_manager = CommercialManagerTransferManager()
         self.td_transfer_manager = TechnicalDirectorTransferManager()
         self.title_sponsor_transfer_manager = TitleSponsorTransferManager()
+        self.tyre_supplier_transfer_manager = TyreSupplierTransferManager()
         self.ai_workforce_min = 90
         self.ai_workforce_max = 250
 
@@ -137,6 +139,9 @@ class SeasonRolloverManager:
         management_transfer_outcome = self.cm_transfer_manager.apply_new_season_transfers(state, announced_year=old_year)
         td_transfer_outcome = self.td_transfer_manager.apply_new_season_transfers(state, announced_year=old_year)
         title_sponsor_transfer_outcome = self.title_sponsor_transfer_manager.apply_new_season_transfers(
+            state, announced_year=old_year
+        )
+        tyre_supplier_transfer_outcome = self.tyre_supplier_transfer_manager.apply_new_season_transfers(
             state, announced_year=old_year
         )
 
@@ -261,10 +266,13 @@ class SeasonRolloverManager:
         state.announced_ai_td_signings.clear()
         state.planned_ai_title_sponsor_signings.clear()
         state.announced_ai_title_sponsor_signings.clear()
+        state.planned_ai_tyre_supplier_signings.clear()
+        state.announced_ai_tyre_supplier_signings.clear()
         planned_transfers = self.transfer_manager.recompute_ai_signings(state)
         planned_management_transfers = self.cm_transfer_manager.recompute_ai_signings(state)
         planned_td_transfers = self.td_transfer_manager.recompute_ai_signings(state)
         planned_title_sponsor_transfers = self.title_sponsor_transfer_manager.recompute_ai_signings(state)
+        planned_tyre_supplier_transfers = self.tyre_supplier_transfer_manager.recompute_ai_signings(state)
         planned_car_updates = self.ai_car_development_manager.generate_for_season(state)
 
         return {
@@ -285,6 +293,7 @@ class SeasonRolloverManager:
             "management_transfer_outcome": management_transfer_outcome,
             "td_transfer_outcome": td_transfer_outcome,
             "title_sponsor_transfer_outcome": title_sponsor_transfer_outcome,
+            "tyre_supplier_transfer_outcome": tyre_supplier_transfer_outcome,
             "signings": signings,
             "car_speed_updates": car_speed_updates,
             "next_season_prize_money": next_season_prize_money,
@@ -293,6 +302,7 @@ class SeasonRolloverManager:
             "planned_management_transfers": planned_management_transfers,
             "planned_td_transfers": planned_td_transfers,
             "planned_title_sponsor_transfers": planned_title_sponsor_transfers,
+            "planned_tyre_supplier_transfers": planned_tyre_supplier_transfers,
             "planned_car_updates": planned_car_updates,
         }
 

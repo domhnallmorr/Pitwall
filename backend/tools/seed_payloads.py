@@ -276,6 +276,20 @@ TEAM_TYRE_SUPPLIERS = {
     "Marchetti": ("Spanrock", "customer", 450_000),
 }
 
+TEAM_TYRE_SUPPLIER_CONTRACT_LENGTHS = {
+    "Warrick": 1,
+    "Ferano": 2,
+    "Benedetti": 4,
+    "McAlister": 2,
+    "Joyce": 3,
+    "Pascal": 1,
+    "Schweizer": 3,
+    "Swords": 2,
+    "Strathmore": 2,
+    "Tarnwell": 3,
+    "Marchetti": 1,
+}
+
 TEAM_FUEL_SUPPLIERS = {
     "Warrick": ("Brasoil", "partner", 150_000),
     "Ferano": ("Shale", "works", -3_000_000),

@@ -133,7 +133,7 @@ export default class GridView {
 			if (this.mode === 'sponsors') {
 				targetHead.innerHTML = '<tr><th>Team</th><th>Title Sponsor</th><th>Contract</th><th>Other Sponsorship</th></tr>';
 			} else if (this.mode === 'suppliers') {
-				targetHead.innerHTML = '<tr><th>Team</th><th>Engine Supplier</th><th>Engine Deal</th><th>Tyre Supplier</th><th>Tyre Deal</th></tr>';
+				targetHead.innerHTML = '<tr><th>Team</th><th>Engine Supplier</th><th>Engine Deal</th><th>Tyre Supplier</th><th>Tyre Deal</th><th>Tyre Contract</th></tr>';
 			} else {
 				targetHead.innerHTML = '<tr><th>Team</th><th>Driver 1</th><th>Driver 2</th><th>Team Principal</th><th>Technical Director</th><th>Commercial Manager</th></tr>';
 			}
@@ -163,12 +163,14 @@ export default class GridView {
 				const tyreSupplierDeal = tyreSupplierDealRaw === '-'
 					? tyreSupplierDealRaw
 					: tyreSupplierDealRaw.charAt(0).toUpperCase() + tyreSupplierDealRaw.slice(1).toLowerCase();
+				const tyreSupplierContractLength = Number(row.TyreSupplierContractLength || 0);
 				tr.innerHTML = `
 					<td>${row.Team}</td>
 					<td>${this.renderSupplierCell(engineSupplierName)}</td>
 					<td>${engineSupplierDeal}</td>
 					<td>${this.renderSupplierCell(tyreSupplierName)}</td>
 					<td>${tyreSupplierDeal}</td>
+					<td>${tyreSupplierContractLength > 0 ? `${tyreSupplierContractLength} year(s)` : '-'}</td>
 				`;
 			} else {
 				const d1Name = row.Driver1 || '';

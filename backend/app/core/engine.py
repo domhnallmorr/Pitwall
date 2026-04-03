@@ -7,6 +7,7 @@ from app.core.management_transfers import (
     CommercialManagerTransferManager,
     TechnicalDirectorTransferManager,
     TitleSponsorTransferManager,
+    TyreSupplierTransferManager,
 )
 from app.core.ai_car_development import AICarDevelopmentManager
 from app.core.player_car_development import PlayerCarDevelopmentManager
@@ -24,6 +25,7 @@ class GameEngine:
         self.cm_transfer_manager = CommercialManagerTransferManager()
         self.td_transfer_manager = TechnicalDirectorTransferManager()
         self.title_sponsor_transfer_manager = TitleSponsorTransferManager()
+        self.tyre_supplier_transfer_manager = TyreSupplierTransferManager()
         self.ai_car_development_manager = AICarDevelopmentManager()
         self.player_car_development_manager = PlayerCarDevelopmentManager()
         self.test_session_manager = TestSessionManager()
@@ -44,6 +46,7 @@ class GameEngine:
         self.cm_transfer_manager.publish_due_announcements(state)
         self.td_transfer_manager.publish_due_announcements(state)
         self.title_sponsor_transfer_manager.publish_due_announcements(state)
+        self.tyre_supplier_transfer_manager.publish_due_announcements(state)
         self.ai_car_development_manager.apply_for_week(state)
 
         # Check for season end

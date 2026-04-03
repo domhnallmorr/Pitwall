@@ -47,6 +47,7 @@ def create_schema(conn):
             tyre_supplier_name TEXT,
             tyre_supplier_deal TEXT,
             tyre_supplier_yearly_cost INTEGER DEFAULT 0,
+            tyre_supplier_contract_length INTEGER DEFAULT 0,
             fuel_supplier_name TEXT,
             fuel_supplier_deal TEXT,
             fuel_supplier_yearly_cost INTEGER DEFAULT 0
@@ -227,6 +228,8 @@ def create_schema(conn):
         c.execute("ALTER TABLE teams ADD COLUMN tyre_supplier_deal TEXT")
     if "tyre_supplier_yearly_cost" not in team_columns:
         c.execute("ALTER TABLE teams ADD COLUMN tyre_supplier_yearly_cost INTEGER DEFAULT 0")
+    if "tyre_supplier_contract_length" not in team_columns:
+        c.execute("ALTER TABLE teams ADD COLUMN tyre_supplier_contract_length INTEGER DEFAULT 0")
     if "fuel_supplier_name" not in team_columns:
         c.execute("ALTER TABLE teams ADD COLUMN fuel_supplier_name TEXT")
     if "fuel_supplier_deal" not in team_columns:

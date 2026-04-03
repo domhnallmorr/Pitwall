@@ -73,6 +73,7 @@ describe('GridView modes and branch behavior', () => {
 					EngineSupplierDeal: 'works',
 					TyreSupplier: 'VACANT',
 					TyreSupplierDeal: '-',
+					TyreSupplierContractLength: 0,
 				},
 			],
 			1998,
@@ -84,8 +85,10 @@ describe('GridView modes and branch behavior', () => {
 		const row = document.querySelector('#grid-table-body tr');
 		expect(row.innerHTML).toContain('Works');
 		expect(row.innerHTML).toContain('harteck.png');
+		expect(document.getElementById('grid-head-1998').textContent).toContain('Tyre Contract');
 		const cells = row.querySelectorAll('td');
 		expect(cells[3].textContent.trim()).toBe('');
+		expect(cells[5].textContent.trim()).toBe('-');
 	});
 
 	it('renders staff mode and triggers driver callback', () => {

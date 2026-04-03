@@ -79,6 +79,8 @@ function renderFinanceSupplierSections() {
 			title: 'Tyre Supplier',
 			nameId: 'finance-tyre-supplier-name',
 			nameDefault: 'Unassigned',
+			actionButtonId: 'finance-tyre-supplier-replace-btn',
+			actionButtonLabel: 'Replace',
 			rows: [
 				{ label: 'Deal', id: 'finance-tyre-supplier-deal', defaultValue: '-' },
 				{ label: 'Annual Cost', id: 'finance-tyre-supplier-annual', defaultValue: '$0' },

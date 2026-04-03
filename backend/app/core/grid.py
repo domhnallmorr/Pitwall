@@ -48,6 +48,14 @@ class GridManager:
             return "VACANT", 0
         return sponsor_name, contract_length - 1
 
+    def _projected_tyre_supplier(self, team) -> tuple[str, str, int]:
+        supplier_name = getattr(team, "tyre_supplier_name", None)
+        deal = getattr(team, "tyre_supplier_deal", None) or "-"
+        contract_length = int(getattr(team, "tyre_supplier_contract_length", 0) or 0)
+        if not supplier_name or contract_length <= 1:
+            return "VACANT", "-", 0
+        return supplier_name, deal, contract_length - 1
+
     def get_grid_records(self, state: GameState, year: int | None = None) -> List[dict]:
         """
         Returns grid records for a given year.
@@ -102,6 +110,7 @@ class GridManager:
                 "EngineSupplierYearlyCost": str(team.engine_supplier_yearly_cost if getattr(team, "engine_supplier_yearly_cost", None) is not None else 0),
                 "TyreSupplier": team.tyre_supplier_name if getattr(team, "tyre_supplier_name", None) else "VACANT",
                 "TyreSupplierDeal": team.tyre_supplier_deal if getattr(team, "tyre_supplier_deal", None) else "-",
+                "TyreSupplierContractLength": int(getattr(team, "tyre_supplier_contract_length", 0) or 0),
                 "TyreSupplierYearlyCost": str(team.tyre_supplier_yearly_cost if getattr(team, "tyre_supplier_yearly_cost", None) is not None else 0),
             }
             data.append(row)
@@ -136,6 +145,11 @@ class GridManager:
             for s in state.announced_ai_title_sponsor_signings
             if s.get("status") == "announced"
         }
+        announced_tyre_supplier_by_team = {
+            s.get("team_id"): s
+            for s in state.announced_ai_tyre_supplier_signings
+            if s.get("status") == "announced"
+        }
         td_lookup = {td.id: td for td in state.technical_directors}
         cm_lookup = {cm.id: cm for cm in state.commercial_managers}
         engine_country_by_name = {e.name: e.country for e in state.engine_suppliers}
@@ -165,6 +179,13 @@ class GridManager:
                 title_sponsor_contract_length = 2 if title_sponsor_name != "VACANT" else 0
             else:
                 title_sponsor_name, title_sponsor_contract_length = self._projected_title_sponsor(team)
+            announced_tyre_supplier = announced_tyre_supplier_by_team.get(team.id)
+            if announced_tyre_supplier:
+                tyre_supplier_name = announced_tyre_supplier.get("supplier_name") or "VACANT"
+                tyre_supplier_deal = announced_tyre_supplier.get("deal_type") or "-"
+                tyre_supplier_contract_length = 2 if tyre_supplier_name != "VACANT" else 0
+            else:
+                tyre_supplier_name, tyre_supplier_deal, tyre_supplier_contract_length = self._projected_tyre_supplier(team)
 
             row = {
                 "Team": team.name,
@@ -185,8 +206,9 @@ class GridManager:
                 "EngineSupplierCountry": engine_country_by_name.get(team.engine_supplier_name or "", ""),
                 "EngineSupplierDeal": team.engine_supplier_deal if getattr(team, "engine_supplier_deal", None) else "-",
                 "EngineSupplierYearlyCost": str(team.engine_supplier_yearly_cost if getattr(team, "engine_supplier_yearly_cost", None) is not None else 0),
-                "TyreSupplier": team.tyre_supplier_name if getattr(team, "tyre_supplier_name", None) else "VACANT",
-                "TyreSupplierDeal": team.tyre_supplier_deal if getattr(team, "tyre_supplier_deal", None) else "-",
+                "TyreSupplier": tyre_supplier_name,
+                "TyreSupplierDeal": tyre_supplier_deal,
+                "TyreSupplierContractLength": tyre_supplier_contract_length,
                 "TyreSupplierYearlyCost": str(team.tyre_supplier_yearly_cost if getattr(team, "tyre_supplier_yearly_cost", None) is not None else 0),
             }
             data.append(row)

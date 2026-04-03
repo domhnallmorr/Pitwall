@@ -6,6 +6,7 @@ from app.core.management_transfers import (
     CommercialManagerTransferManager,
     TechnicalDirectorTransferManager,
     TitleSponsorTransferManager,
+    TyreSupplierTransferManager,
 )
 from app.core.transfers import TransferManager
 from app.models.calendar import Calendar, Event, EventType
@@ -15,6 +16,7 @@ from app.models.state import GameState
 from app.models.team import Team
 from app.models.technical_director import TechnicalDirector
 from app.models.title_sponsor import TitleSponsor
+from app.models.tyre_supplier import TyreSupplier
 
 
 def create_transfer_state() -> GameState:
@@ -29,6 +31,9 @@ def create_transfer_state() -> GameState:
             title_sponsor_name="Windale",
             title_sponsor_yearly=70,
             title_sponsor_contract_length=2,
+            tyre_supplier_name="Greatday",
+            tyre_supplier_deal="partner",
+            tyre_supplier_contract_length=1,
         ),
         Team(
             id=2,
@@ -40,6 +45,9 @@ def create_transfer_state() -> GameState:
             title_sponsor_name="Bright Shot",
             title_sponsor_yearly=85,
             title_sponsor_contract_length=1,
+            tyre_supplier_name="Greatday",
+            tyre_supplier_deal="customer",
+            tyre_supplier_contract_length=1,
         ),
     ]
     drivers = [
@@ -72,6 +80,10 @@ def create_transfer_state() -> GameState:
             TitleSponsor(id=1, name="Windale", wealth=70, start_year=0),
             TitleSponsor(id=2, name="Bright Shot", wealth=85, start_year=0),
             TitleSponsor(id=3, name="Purple", wealth=50, start_year=1999),
+        ],
+        tyre_suppliers=[
+            TyreSupplier(id=1, name="Greatday", country="USA", wear=60, grip=80, start_year=0),
+            TyreSupplier(id=2, name="Spanrock", country="Japan", wear=80, grip=70, start_year=0),
         ],
         calendar=calendar,
         circuits=[],
@@ -600,6 +612,134 @@ def test_apply_new_season_title_sponsor_transfers_moves_announced_sponsor_and_se
     assert any(s["sponsor_id"] == 3 for s in outcome["applied_signings"])
 
 
+@patch("app.core.management_transfer_markets.tyre_supplier.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfer_markets.tyre_supplier.random.randint", return_value=6)
+@patch("app.core.management_transfer_markets.tyre_supplier.random.choices", side_effect=lambda choices, weights, k: [choices[0]])
+@patch("app.core.management_transfer_markets.tyre_supplier.random.choice", side_effect=lambda choices: choices[-1])
+def test_recompute_ai_tyre_supplier_signings_plans_only_ai_vacancies(mock_choice, mock_choices, mock_randint, mock_shuffle):
+    state = create_transfer_state()
+
+    planned = TyreSupplierTransferManager().recompute_ai_signings(state)
+
+    assert len(planned) == 1
+    assert planned[0]["team_id"] == 2
+    assert planned[0]["seat"] == "tyre_supplier_name"
+    assert planned[0]["supplier_id"] == 2
+    assert planned[0]["deal_type"] == "works"
+    assert planned[0]["yearly_cost"] == 0
+    assert planned[0]["status"] == "planned"
+    assert planned[0]["announce_week"] == 6
+
+
+def test_publish_due_tyre_supplier_announcements_moves_planned_to_announced_and_emails():
+    state = create_transfer_state()
+    state.calendar.current_week = 3
+    state.planned_ai_tyre_supplier_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "tyre_supplier_name",
+            "seat_label": "Tyre Supplier",
+            "supplier_id": 2,
+            "supplier_name": "Spanrock",
+            "deal_type": "partner",
+            "yearly_cost": 0,
+            "announce_week": 3,
+            "announce_year": 1998,
+            "status": "planned",
+        }
+    ]
+
+    published = TyreSupplierTransferManager().publish_due_announcements(state)
+
+    assert len(published) == 1
+    assert len(state.planned_ai_tyre_supplier_signings) == 0
+    assert len(state.announced_ai_tyre_supplier_signings) == 1
+    assert state.announced_ai_tyre_supplier_signings[0]["status"] == "announced"
+    assert any(e.subject == "Tyre Supplier Signing Confirmed: Spanrock to AI Team" for e in state.emails)
+
+
+def test_engine_advance_week_publishes_due_tyre_supplier_announcements():
+    state = create_transfer_state()
+    state.planned_ai_tyre_supplier_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "tyre_supplier_name",
+            "seat_label": "Tyre Supplier",
+            "supplier_id": 2,
+            "supplier_name": "Spanrock",
+            "deal_type": "partner",
+            "yearly_cost": 0,
+            "announce_week": 2,
+            "announce_year": 1998,
+            "status": "planned",
+        }
+    ]
+
+    GameEngine().advance_week(state)
+
+    assert len(state.announced_ai_tyre_supplier_signings) == 1
+    assert len(state.planned_ai_tyre_supplier_signings) == 0
+    assert any(e.subject == "Tyre Supplier Signing Confirmed: Spanrock to AI Team" for e in state.emails)
+
+
+def test_grid_next_year_projection_uses_announced_tyre_supplier_signings():
+    state = create_transfer_state()
+    state.announced_ai_tyre_supplier_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "tyre_supplier_name",
+            "seat_label": "Tyre Supplier",
+            "supplier_id": 2,
+            "supplier_name": "Spanrock",
+            "deal_type": "partner",
+            "yearly_cost": 0,
+            "announce_week": 2,
+            "announce_year": 1998,
+            "status": "announced",
+        }
+    ]
+
+    df = GridManager().get_grid_dataframe(state, year=1999)
+    row = df[df["Team"] == "AI Team"].iloc[0]
+    assert row["TyreSupplier"] == "Spanrock"
+    assert row["TyreSupplierDeal"] == "partner"
+    assert row["TyreSupplierContractLength"] == 2
+
+
+def test_apply_new_season_tyre_supplier_transfers_moves_announced_supplier_and_sets_contract():
+    state = create_transfer_state()
+    state.announced_ai_tyre_supplier_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "tyre_supplier_name",
+            "seat_label": "Tyre Supplier",
+            "supplier_id": 2,
+            "supplier_name": "Spanrock",
+            "deal_type": "partner",
+            "yearly_cost": 0,
+            "announce_week": 20,
+            "announce_year": 1998,
+            "status": "announced",
+        }
+    ]
+
+    outcome = TyreSupplierTransferManager().apply_new_season_transfers(state, announced_year=1998)
+
+    ai_team = next(t for t in state.teams if t.id == 2)
+    player_team = next(t for t in state.teams if t.id == 1)
+    assert ai_team.tyre_supplier_name == "Spanrock"
+    assert ai_team.tyre_supplier_deal == "partner"
+    assert ai_team.tyre_supplier_yearly_cost == 0
+    assert ai_team.tyre_supplier_contract_length == 2
+    assert player_team.tyre_supplier_name is None
+    assert player_team.tyre_supplier_contract_length == 0
+    assert any(s["supplier_id"] == 2 for s in outcome["applied_signings"])
+
+
 @patch("app.core.management_transfer_markets.title_sponsor.random.choice", side_effect=lambda choices: choices[0])
 def test_player_title_sponsor_replacement_updates_announced_and_replans_ai(mock_choice):
     state = create_transfer_state()
@@ -614,6 +754,41 @@ def test_player_title_sponsor_replacement_updates_announced_and_replans_ai(mock_
     assert len(state.announced_ai_title_sponsor_signings) == 1
     assert any(s["team_id"] == 2 for s in state.planned_ai_title_sponsor_signings)
     assert any(e.subject.startswith("Title Sponsor Signed:") for e in state.emails)
+
+
+@patch("app.core.management_transfer_markets.tyre_supplier.random.choices", side_effect=lambda choices, weights, k: [choices[1]])
+@patch("app.core.management_transfer_markets.tyre_supplier.random.choice", side_effect=lambda choices: choices[0])
+def test_player_tyre_supplier_replacement_updates_announced_and_replans_ai(mock_choice, mock_choices):
+    state = create_transfer_state()
+    player_team = next(t for t in state.teams if t.id == 1)
+    player_team.tyre_supplier_contract_length = 1
+
+    signing = TyreSupplierTransferManager().sign_player_replacement(
+        state,
+        outgoing_supplier_name="Greatday",
+        incoming_supplier_id=2,
+    )
+
+    assert signing["team_id"] == 1
+    assert signing["seat"] == "tyre_supplier_name"
+    assert signing["status"] == "announced"
+    assert signing["supplier_name"] == "Spanrock"
+    assert signing["deal_type"] == "partner"
+    assert len(state.announced_ai_tyre_supplier_signings) == 1
+    assert any(s["team_id"] == 2 for s in state.planned_ai_tyre_supplier_signings)
+    assert any(e.subject.startswith("Tyre Supplier Signed:") for e in state.emails)
+
+
+def test_player_tyre_supplier_replacement_rejects_supplier_with_two_or_more_years():
+    state = create_transfer_state()
+    player_team = next(t for t in state.teams if t.id == 1)
+    player_team.tyre_supplier_contract_length = 2
+
+    try:
+        TyreSupplierTransferManager().sign_player_replacement(state, outgoing_supplier_name="Greatday")
+        assert False, "Expected ValueError"
+    except ValueError as ve:
+        assert "2 or more years" in str(ve)
 
 
 @patch("app.core.management_transfer_markets.technical_director.random.choice", side_effect=lambda choices: choices[0])

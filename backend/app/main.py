@@ -9,6 +9,7 @@ from app.commands.game_commands import (
     handle_facilities_upgrade_preview,
     handle_get_technical_director_replacement_candidates,
     handle_get_manager_replacement_candidates,
+    handle_get_tyre_supplier_replacement_candidates,
     handle_get_title_sponsor_replacement_candidates,
     handle_get_replacement_candidates,
     handle_repair_car_wear,
@@ -16,6 +17,7 @@ from app.commands.game_commands import (
     handle_get_race_weekend,
     handle_replace_commercial_manager,
     handle_replace_technical_director,
+    handle_replace_tyre_supplier,
     handle_replace_title_sponsor,
     handle_replace_driver,
     handle_simulate_qualifying,
@@ -264,6 +266,19 @@ def process_command(command):
             save_game(CURRENT_STATE)
         return response
 
+    if cmd_type == 'replace_tyre_supplier':
+        if not CURRENT_STATE:
+            return {"status": "error", "message": "Game not started"}
+        CURRENT_STATE, response = handle_replace_tyre_supplier(
+            CURRENT_STATE,
+            logging,
+            command.get("supplier_name"),
+            command.get("incoming_supplier_id"),
+        )
+        if response.get("status") == "success":
+            save_game(CURRENT_STATE)
+        return response
+
     if cmd_type == 'get_replacement_candidates':
         if not CURRENT_STATE:
             return {"status": "error", "message": "Game not started"}
@@ -283,6 +298,11 @@ def process_command(command):
         if not CURRENT_STATE:
             return {"status": "error", "message": "Game not started"}
         return handle_get_title_sponsor_replacement_candidates(CURRENT_STATE, logging, command.get("sponsor_name"))
+
+    if cmd_type == 'get_tyre_supplier_replacement_candidates':
+        if not CURRENT_STATE:
+            return {"status": "error", "message": "Game not started"}
+        return handle_get_tyre_supplier_replacement_candidates(CURRENT_STATE, logging, command.get("supplier_name"))
 
     if cmd_type == 'preview_facilities_upgrade':
         if not CURRENT_STATE:

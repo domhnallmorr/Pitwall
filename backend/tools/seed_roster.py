@@ -25,6 +25,7 @@ try:
         TEAM_TITLE_SPONSORS,
         TEAM_TITLE_SPONSOR_CONTRACT_LENGTHS,
         TEAM_TYRE_SUPPLIERS,
+        TEAM_TYRE_SUPPLIER_CONTRACT_LENGTHS,
         TEAM_FUEL_SUPPLIERS,
         TEAM_WORKFORCE,
         TITLE_SPONSORS_DATA,
@@ -55,6 +56,7 @@ except ModuleNotFoundError:
         TEAM_TITLE_SPONSORS,
         TEAM_TITLE_SPONSOR_CONTRACT_LENGTHS,
         TEAM_TYRE_SUPPLIERS,
+        TEAM_TYRE_SUPPLIER_CONTRACT_LENGTHS,
         TEAM_FUEL_SUPPLIERS,
         TEAM_WORKFORCE,
         TITLE_SPONSORS_DATA,
@@ -168,8 +170,11 @@ def seed_data(conn):
             [(s[0], s[1], s[2], team_name) for team_name, s in TEAM_ENGINE_SUPPLIERS.items()]
         )
         c.executemany(
-            'UPDATE teams SET tyre_supplier_name = ?, tyre_supplier_deal = ?, tyre_supplier_yearly_cost = ? WHERE name = ?',
-            [(s[0], s[1], s[2], team_name) for team_name, s in TEAM_TYRE_SUPPLIERS.items()]
+            'UPDATE teams SET tyre_supplier_name = ?, tyre_supplier_deal = ?, tyre_supplier_yearly_cost = ?, tyre_supplier_contract_length = ? WHERE name = ?',
+            [
+                (s[0], s[1], s[2], TEAM_TYRE_SUPPLIER_CONTRACT_LENGTHS.get(team_name, 0), team_name)
+                for team_name, s in TEAM_TYRE_SUPPLIERS.items()
+            ]
         )
         c.executemany(
             'UPDATE teams SET fuel_supplier_name = ?, fuel_supplier_deal = ?, fuel_supplier_yearly_cost = ? WHERE name = ?',
@@ -355,8 +360,11 @@ def seed_data(conn):
         [(s[0], s[1], s[2], team_name) for team_name, s in TEAM_ENGINE_SUPPLIERS.items()]
     )
     c.executemany(
-        'UPDATE teams SET tyre_supplier_name = ?, tyre_supplier_deal = ?, tyre_supplier_yearly_cost = ? WHERE name = ?',
-        [(s[0], s[1], s[2], team_name) for team_name, s in TEAM_TYRE_SUPPLIERS.items()]
+        'UPDATE teams SET tyre_supplier_name = ?, tyre_supplier_deal = ?, tyre_supplier_yearly_cost = ?, tyre_supplier_contract_length = ? WHERE name = ?',
+        [
+            (s[0], s[1], s[2], TEAM_TYRE_SUPPLIER_CONTRACT_LENGTHS.get(team_name, 0), team_name)
+            for team_name, s in TEAM_TYRE_SUPPLIERS.items()
+        ]
     )
     c.executemany(
         'UPDATE teams SET fuel_supplier_name = ?, fuel_supplier_deal = ?, fuel_supplier_yearly_cost = ? WHERE name = ?',
@@ -436,8 +444,11 @@ def seed_data(conn):
         [(s[0], s[1], s[2], team_name) for team_name, s in TEAM_ENGINE_SUPPLIERS.items()]
     )
     c.executemany(
-        'UPDATE teams SET tyre_supplier_name = ?, tyre_supplier_deal = ?, tyre_supplier_yearly_cost = ? WHERE name = ?',
-        [(s[0], s[1], s[2], team_name) for team_name, s in TEAM_TYRE_SUPPLIERS.items()]
+        'UPDATE teams SET tyre_supplier_name = ?, tyre_supplier_deal = ?, tyre_supplier_yearly_cost = ?, tyre_supplier_contract_length = ? WHERE name = ?',
+        [
+            (s[0], s[1], s[2], TEAM_TYRE_SUPPLIER_CONTRACT_LENGTHS.get(team_name, 0), team_name)
+            for team_name, s in TEAM_TYRE_SUPPLIERS.items()
+        ]
     )
     c.executemany(
         'UPDATE teams SET fuel_supplier_name = ?, fuel_supplier_deal = ?, fuel_supplier_yearly_cost = ? WHERE name = ?',

@@ -5,6 +5,7 @@ from app.core.management_transfers import (
     CommercialManagerTransferManager,
     TechnicalDirectorTransferManager,
     TitleSponsorTransferManager,
+    TyreSupplierTransferManager,
 )
 from app.core.transfers import TransferManager
 from app.core.workforce_costs import WorkforceCostManager
@@ -269,6 +270,74 @@ def handle_get_title_sponsor_replacement_candidates(
         return {"status": "error", "message": str(ve)}
     except Exception as e:
         logger.error(f"Error loading title sponsor replacement candidates: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def handle_replace_tyre_supplier(
+    state: GameState,
+    logger: logging.Logger,
+    supplier_name: str | None,
+    incoming_supplier_id: int | None = None,
+):
+    try:
+        if not supplier_name:
+            return state, {"status": "error", "message": "Tyre supplier name is required"}
+        signing = TyreSupplierTransferManager().sign_player_replacement(
+            state,
+            outgoing_supplier_name=str(supplier_name),
+            incoming_supplier_id=int(incoming_supplier_id) if incoming_supplier_id is not None else None,
+        )
+        return state, {
+            "type": "tyre_supplier_replaced",
+            "status": "success",
+            "data": signing,
+        }
+    except ValueError as ve:
+        return state, {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error replacing tyre supplier: {e}")
+        return state, {"status": "error", "message": str(e)}
+
+
+def handle_get_tyre_supplier_replacement_candidates(
+    state: GameState,
+    logger: logging.Logger,
+    supplier_name: str | None,
+):
+    try:
+        if not supplier_name:
+            return {"status": "error", "message": "Tyre supplier name is required"}
+
+        team = state.player_team
+        if team is None or getattr(team, "tyre_supplier_name", None) != str(supplier_name):
+            return {"status": "error", "message": "Tyre supplier not found"}
+
+        candidates = TyreSupplierTransferManager().get_player_replacement_candidates(state, str(supplier_name))
+        payload = {
+            "market_type": "tyre_supplier",
+            "outgoing_supplier": {
+                "name": supplier_name,
+                "contract_length": int(getattr(team, "tyre_supplier_contract_length", 0) or 0),
+                "deal": getattr(team, "tyre_supplier_deal", None),
+                "annual_value": int(getattr(team, "tyre_supplier_yearly_cost", 0) or 0),
+            },
+            "candidates": [
+                {
+                    "id": s.id,
+                    "name": s.name,
+                    "country": s.country,
+                    "wear": s.wear,
+                    "grip": s.grip,
+                    "start_year": s.start_year,
+                }
+                for s in candidates
+            ],
+        }
+        return {"type": "tyre_supplier_replacement_candidates", "status": "success", "data": payload}
+    except ValueError as ve:
+        return {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error loading tyre supplier replacement candidates: {e}")
         return {"status": "error", "message": str(e)}
 
 

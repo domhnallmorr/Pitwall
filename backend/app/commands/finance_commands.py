@@ -56,6 +56,10 @@ def build_finance_payload(state: GameState):
 
     tyre_supplier_name = player_team.tyre_supplier_name if player_team else None
     tyre_supplier_yearly = player_team.tyre_supplier_yearly_cost if player_team else 0
+    tyre_supplier_pending_replacement = any(
+        s.get("status") == "announced" and s.get("team_id") == player_team.id
+        for s in state.announced_ai_tyre_supplier_signings
+    ) if player_team else False
     tyre_supplier_installment = int(round(max(0, tyre_supplier_yearly) / max(1, race_count))) if tyre_supplier_name else 0
     tyre_supplier_paid_so_far = sum(
         -t.amount for t in state.finance.transactions
@@ -116,6 +120,8 @@ def build_finance_payload(state: GameState):
             "installment": tyre_supplier_installment,
             "paid_so_far": tyre_supplier_paid_so_far,
             "remaining": tyre_supplier_remaining,
+            "contract_length": int(player_team.tyre_supplier_contract_length or 0) if player_team else 0,
+            "pending_replacement": tyre_supplier_pending_replacement,
         },
         "fuel_supplier": {
             "name": fuel_supplier_name,
