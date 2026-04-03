@@ -4,6 +4,7 @@ from app.core.engine import GameEngine
 from app.core.grid import GridManager
 from app.core.management_transfers import (
     CommercialManagerTransferManager,
+    EngineSupplierTransferManager,
     TechnicalDirectorTransferManager,
     TitleSponsorTransferManager,
     TyreSupplierTransferManager,
@@ -12,6 +13,7 @@ from app.core.transfers import TransferManager
 from app.models.calendar import Calendar, Event, EventType
 from app.models.commercial_manager import CommercialManager
 from app.models.driver import Driver
+from app.models.engine_supplier import EngineSupplier
 from app.models.state import GameState
 from app.models.team import Team
 from app.models.technical_director import TechnicalDirector
@@ -31,6 +33,9 @@ def create_transfer_state() -> GameState:
             title_sponsor_name="Windale",
             title_sponsor_yearly=70,
             title_sponsor_contract_length=2,
+            engine_supplier_name="Mechatron",
+            engine_supplier_deal="customer",
+            engine_supplier_contract_length=2,
             tyre_supplier_name="Greatday",
             tyre_supplier_deal="partner",
             tyre_supplier_contract_length=1,
@@ -45,6 +50,9 @@ def create_transfer_state() -> GameState:
             title_sponsor_name="Bright Shot",
             title_sponsor_yearly=85,
             title_sponsor_contract_length=1,
+            engine_supplier_name="Mechatron",
+            engine_supplier_deal="customer",
+            engine_supplier_contract_length=1,
             tyre_supplier_name="Greatday",
             tyre_supplier_deal="customer",
             tyre_supplier_contract_length=1,
@@ -80,6 +88,11 @@ def create_transfer_state() -> GameState:
             TitleSponsor(id=1, name="Windale", wealth=70, start_year=0),
             TitleSponsor(id=2, name="Bright Shot", wealth=85, start_year=0),
             TitleSponsor(id=3, name="Purple", wealth=50, start_year=1999),
+        ],
+        engine_suppliers=[
+            EngineSupplier(id=1, name="Ferano", country="Italy", resources=90, power=72, start_year=0),
+            EngineSupplier(id=2, name="Mechatron", country="France", resources=55, power=60, start_year=0),
+            EngineSupplier(id=3, name="Frost", country="USA", resources=65, power=38, start_year=0),
         ],
         tyre_suppliers=[
             TyreSupplier(id=1, name="Greatday", country="USA", wear=60, grip=80, start_year=0),
@@ -610,6 +623,194 @@ def test_apply_new_season_title_sponsor_transfers_moves_announced_sponsor_and_se
     assert player_team.title_sponsor_name == "Windale"
     assert player_team.title_sponsor_contract_length == 1
     assert any(s["sponsor_id"] == 3 for s in outcome["applied_signings"])
+
+
+@patch("app.core.management_transfer_markets.engine_supplier.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfer_markets.engine_supplier.random.randint", return_value=6)
+@patch("app.core.management_transfer_markets.engine_supplier.random.choices", side_effect=lambda choices, weights, k: [choices[0]])
+@patch("app.core.management_transfer_markets.engine_supplier.random.choice", side_effect=lambda choices: choices[-1])
+def test_recompute_ai_engine_supplier_signings_plans_only_ai_vacancies(mock_choice, mock_choices, mock_randint, mock_shuffle):
+    state = create_transfer_state()
+
+    planned = EngineSupplierTransferManager().recompute_ai_signings(state)
+
+    assert len(planned) == 1
+    assert planned[0]["team_id"] == 2
+    assert planned[0]["seat"] == "engine_supplier_name"
+    assert planned[0]["supplier_id"] == 3
+    assert planned[0]["deal_type"] == "works"
+    assert planned[0]["status"] == "planned"
+    assert planned[0]["announce_week"] == 6
+
+
+def test_publish_due_engine_supplier_announcements_moves_planned_to_announced_and_emails():
+    state = create_transfer_state()
+    state.calendar.current_week = 3
+    state.planned_ai_engine_supplier_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "engine_supplier_name",
+            "seat_label": "Engine Supplier",
+            "supplier_id": 3,
+            "supplier_name": "Frost",
+            "deal_type": "partner",
+            "yearly_cost": 0,
+            "announce_week": 3,
+            "announce_year": 1998,
+            "status": "planned",
+        }
+    ]
+
+    published = EngineSupplierTransferManager().publish_due_announcements(state)
+
+    assert len(published) == 1
+    assert len(state.planned_ai_engine_supplier_signings) == 0
+    assert len(state.announced_ai_engine_supplier_signings) == 1
+    assert state.announced_ai_engine_supplier_signings[0]["status"] == "announced"
+    assert any(e.subject == "Engine Supplier Signing Confirmed: Frost to AI Team" for e in state.emails)
+
+
+def test_engine_advance_week_publishes_due_engine_supplier_announcements():
+    state = create_transfer_state()
+    state.planned_ai_engine_supplier_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "engine_supplier_name",
+            "seat_label": "Engine Supplier",
+            "supplier_id": 3,
+            "supplier_name": "Frost",
+            "deal_type": "partner",
+            "yearly_cost": 0,
+            "announce_week": 2,
+            "announce_year": 1998,
+            "status": "planned",
+        }
+    ]
+
+    GameEngine().advance_week(state)
+
+    assert len(state.announced_ai_engine_supplier_signings) == 1
+    assert len(state.planned_ai_engine_supplier_signings) == 0
+    assert any(e.subject == "Engine Supplier Signing Confirmed: Frost to AI Team" for e in state.emails)
+
+
+def test_grid_next_year_projection_uses_announced_engine_supplier_signings():
+    state = create_transfer_state()
+    state.announced_ai_engine_supplier_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "engine_supplier_name",
+            "seat_label": "Engine Supplier",
+            "supplier_id": 3,
+            "supplier_name": "Frost",
+            "deal_type": "partner",
+            "yearly_cost": 0,
+            "announce_week": 2,
+            "announce_year": 1998,
+            "status": "announced",
+        }
+    ]
+
+    df = GridManager().get_grid_dataframe(state, year=1999)
+    row = df[df["Team"] == "AI Team"].iloc[0]
+    assert row["EngineSupplier"] == "Frost"
+    assert row["EngineSupplierDeal"] == "partner"
+    assert row["EngineSupplierContractLength"] == 2
+
+
+def test_apply_new_season_engine_supplier_transfers_moves_announced_supplier_and_sets_contract():
+    state = create_transfer_state()
+    state.announced_ai_engine_supplier_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "engine_supplier_name",
+            "seat_label": "Engine Supplier",
+            "supplier_id": 3,
+            "supplier_name": "Frost",
+            "deal_type": "partner",
+            "yearly_cost": 0,
+            "announce_week": 20,
+            "announce_year": 1998,
+            "status": "announced",
+        }
+    ]
+
+    outcome = EngineSupplierTransferManager().apply_new_season_transfers(state, announced_year=1998)
+
+    ai_team = next(t for t in state.teams if t.id == 2)
+    player_team = next(t for t in state.teams if t.id == 1)
+    assert ai_team.engine_supplier_name == "Frost"
+    assert ai_team.engine_supplier_deal == "partner"
+    assert ai_team.engine_supplier_yearly_cost == 0
+    assert ai_team.engine_supplier_contract_length == 2
+    assert player_team.engine_supplier_name == "Mechatron"
+    assert player_team.engine_supplier_contract_length == 1
+    assert any(s["supplier_id"] == 3 for s in outcome["applied_signings"])
+
+
+@patch("app.core.management_transfer_markets.engine_supplier.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfer_markets.engine_supplier.random.randint", return_value=6)
+@patch("app.core.management_transfer_markets.engine_supplier.random.choices", side_effect=lambda choices, weights, k: [choices[0]])
+@patch("app.core.management_transfer_markets.engine_supplier.random.choice", side_effect=lambda choices: choices[-1])
+def test_recompute_ai_engine_supplier_signings_excludes_self_built_teams(mock_choice, mock_choices, mock_randint, mock_shuffle):
+    state = create_transfer_state()
+    state.teams.append(
+        Team(
+            id=3,
+            name="Ferano",
+            country="IT",
+            engine_supplier_name="Ferano",
+            engine_supplier_deal="works",
+            engine_supplier_contract_length=0,
+            builds_own_engine=True,
+        )
+    )
+
+    planned = EngineSupplierTransferManager().recompute_ai_signings(state)
+
+    assert all(signing["team_id"] != 3 for signing in planned)
+
+
+def test_apply_new_season_engine_supplier_transfers_keeps_self_built_team_locked():
+    state = create_transfer_state()
+    state.teams.append(
+        Team(
+            id=3,
+            name="Ferano",
+            country="IT",
+            engine_supplier_name="Ferano",
+            engine_supplier_deal="works",
+            engine_supplier_yearly_cost=0,
+            engine_supplier_contract_length=0,
+            builds_own_engine=True,
+        )
+    )
+    state.announced_ai_engine_supplier_signings = [
+        {
+            "team_id": 3,
+            "team_name": "Ferano",
+            "seat": "engine_supplier_name",
+            "seat_label": "Engine Supplier",
+            "supplier_id": 3,
+            "supplier_name": "Frost",
+            "deal_type": "partner",
+            "yearly_cost": 0,
+            "announce_week": 20,
+            "announce_year": 1998,
+            "status": "announced",
+        }
+    ]
+
+    EngineSupplierTransferManager().apply_new_season_transfers(state, announced_year=1998)
+
+    ferano = next(t for t in state.teams if t.id == 3)
+    assert ferano.engine_supplier_name == "Ferano"
+    assert ferano.engine_supplier_deal == "works"
+    assert ferano.engine_supplier_contract_length == 0
 
 
 @patch("app.core.management_transfer_markets.tyre_supplier.random.shuffle", side_effect=lambda x: None)

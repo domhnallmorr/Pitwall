@@ -88,7 +88,7 @@ function init() {
 	driverView = new DriverView();
 	driverMarketView = new DriverMarketView();
 	driverMarketView.setBackHandler(() => {
-		if (driverMarketView.marketType === 'title_sponsor' || driverMarketView.marketType === 'tyre_supplier') {
+		if (driverMarketView.marketType === 'title_sponsor' || driverMarketView.marketType === 'engine_supplier' || driverMarketView.marketType === 'tyre_supplier') {
 			if (navigation) navigation.showView('finance');
 			API.getFinance();
 			return;
@@ -109,6 +109,10 @@ function init() {
 			API.replaceTitleSponsor(outgoingId, incomingId);
 			return;
 		}
+		if (marketType === 'engine_supplier') {
+			API.replaceEngineSupplier(outgoingId, incomingId);
+			return;
+		}
 		if (marketType === 'tyre_supplier') {
 			API.replaceTyreSupplier(outgoingId, incomingId);
 			return;
@@ -120,6 +124,7 @@ function init() {
 	carView.setRepairWearHandler((wearPoints) => API.repairCarWear(wearPoints));
 	financeView = new FinanceView();
 	financeView.setReplaceTitleSponsorHandler((sponsorName) => API.getTitleSponsorReplacementCandidates(sponsorName));
+	financeView.setReplaceEngineSupplierHandler((supplierName) => API.getEngineSupplierReplacementCandidates(supplierName));
 	financeView.setReplaceTyreSupplierHandler((supplierName) => API.getTyreSupplierReplacementCandidates(supplierName));
 	facilitiesView = new FacilitiesView();
 	facilitiesView.setPreviewHandler((points, years) => API.previewFacilitiesUpgrade(points, years));
@@ -343,6 +348,9 @@ function setupIPC() {
 			} else if (parsed.type === 'title_sponsor_replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
+			} else if (parsed.type === 'engine_supplier_replacement_candidates') {
+				driverMarketView.render(parsed.data);
+				if (navigation) navigation.showView('driver-market');
 			} else if (parsed.type === 'tyre_supplier_replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
@@ -365,6 +373,12 @@ function setupIPC() {
 				API.getGrid(gridView.baseYear + 1);
 				API.getEmails();
 			} else if (parsed.type === 'title_sponsor_replaced') {
+				if (navigation) navigation.showView('finance');
+				API.getFinance();
+				API.getGrid(gridView.getActiveYear());
+				API.getGrid(gridView.baseYear + 1);
+				API.getEmails();
+			} else if (parsed.type === 'engine_supplier_replaced') {
 				if (navigation) navigation.showView('finance');
 				API.getFinance();
 				API.getGrid(gridView.getActiveYear());

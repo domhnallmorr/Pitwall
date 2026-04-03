@@ -14,6 +14,8 @@ class Team(BaseModel):
     engine_supplier_name: str | None = None
     engine_supplier_deal: str | None = None
     engine_supplier_yearly_cost: int = 0
+    engine_supplier_contract_length: int = 0
+    builds_own_engine: bool = False
     tyre_supplier_name: str | None = None
     tyre_supplier_deal: str | None = None
     tyre_supplier_yearly_cost: int = 0

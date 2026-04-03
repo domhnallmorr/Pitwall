@@ -9,6 +9,7 @@ from app.core.roster import load_roster
 from app.core.transfers import TransferManager
 from app.core.management_transfers import (
     CommercialManagerTransferManager,
+    EngineSupplierTransferManager,
     TechnicalDirectorTransferManager,
     TitleSponsorTransferManager,
     TyreSupplierTransferManager,
@@ -25,12 +26,14 @@ from app.commands.race_commands import (
 )
 from app.commands.staff_commands import (
     handle_get_technical_director_replacement_candidates,
+    handle_get_engine_supplier_replacement_candidates,
     handle_get_manager_replacement_candidates,
     handle_get_tyre_supplier_replacement_candidates,
     handle_get_title_sponsor_replacement_candidates,
     handle_get_replacement_candidates,
     handle_repair_car_wear,
     handle_replace_commercial_manager,
+    handle_replace_engine_supplier,
     handle_replace_technical_director,
     handle_replace_tyre_supplier,
     handle_replace_title_sponsor,
@@ -144,6 +147,7 @@ def handle_start_career(state: GameState | None, logger: logging.Logger, team_na
         CommercialManagerTransferManager().recompute_ai_signings(current_state)
         TechnicalDirectorTransferManager().recompute_ai_signings(current_state)
         TitleSponsorTransferManager().recompute_ai_signings(current_state)
+        EngineSupplierTransferManager().recompute_ai_signings(current_state)
         TyreSupplierTransferManager().recompute_ai_signings(current_state)
         AICarDevelopmentManager().generate_for_season(current_state)
         return current_state, {

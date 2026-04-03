@@ -9,6 +9,7 @@ from app.models.circuit import Circuit
 from app.models.finance import TransactionCategory
 from app.models.technical_director import TechnicalDirector
 from app.models.title_sponsor import TitleSponsor
+from app.models.engine_supplier import EngineSupplier
 from app.models.tyre_supplier import TyreSupplier
 
 
@@ -31,6 +32,7 @@ def create_state() -> GameState:
             engine_supplier_name="Mechatron",
             engine_supplier_deal="customer",
             engine_supplier_yearly_cost=4_500_000,
+            engine_supplier_contract_length=1,
             tyre_supplier_name="Greatday",
             tyre_supplier_deal="partner",
             tyre_supplier_yearly_cost=0,
@@ -76,6 +78,11 @@ def create_state() -> GameState:
         title_sponsors=[
             TitleSponsor(id=31, name="Windale", wealth=70, start_year=0),
             TitleSponsor(id=32, name="Bright Shot", wealth=85, start_year=0),
+        ],
+        engine_suppliers=[
+            EngineSupplier(id=40, name="Ferano", country="Italy", resources=90, power=72, start_year=0),
+            EngineSupplier(id=41, name="Mechatron", country="France", resources=55, power=60, start_year=0),
+            EngineSupplier(id=42, name="Frost", country="USA", resources=65, power=38, start_year=0),
         ],
         tyre_suppliers=[
             TyreSupplier(id=41, name="Greatday", country="USA", wear=60, grip=80, start_year=0),
@@ -175,6 +182,7 @@ def test_get_finance_returns_summary_and_track_profit_loss():
     assert result["data"]["sponsor"]["name"] == "Windale"
     assert result["data"]["other_sponsorship"]["annual_value"] == 9_500_000
     assert result["data"]["engine_supplier"]["name"] == "Mechatron"
+    assert result["data"]["engine_supplier"]["contract_length"] == 1
     assert result["data"]["tyre_supplier"]["name"] == "Greatday"
     assert result["data"]["fuel_supplier"]["name"] == "Brasoil"
 
@@ -304,6 +312,46 @@ def test_replace_title_sponsor_respects_contract_rule_and_signs_replacement():
     assert "2 or more years" in locked["message"]
 
 
+def test_replace_engine_supplier_respects_contract_rule_and_signs_replacement():
+    state = create_state()
+    app_main.CURRENT_STATE = state
+
+    candidates = process_command({"type": "get_engine_supplier_replacement_candidates", "supplier_name": "Mechatron"})
+    assert candidates["status"] == "success"
+    assert any(s["id"] == 41 for s in candidates["data"]["candidates"])
+    assert any(s["id"] == 42 for s in candidates["data"]["candidates"])
+
+    success = process_command({"type": "replace_engine_supplier", "supplier_name": "Mechatron", "incoming_supplier_id": 42})
+    assert success["status"] == "success"
+    assert success["type"] == "engine_supplier_replaced"
+    assert success["data"]["team_id"] == 1
+    assert success["data"]["supplier_id"] == 42
+
+    app_main.CURRENT_STATE.player_team.engine_supplier_contract_length = 2
+    locked = process_command({"type": "replace_engine_supplier", "supplier_name": "Mechatron"})
+    assert locked["status"] == "error"
+    assert "2 or more years" in locked["message"]
+
+
+def test_replace_engine_supplier_blocks_self_built_engine_team():
+    state = create_state()
+    state.player_team.name = "Ferano"
+    state.player_team.country = "Italy"
+    state.player_team.engine_supplier_name = "Ferano"
+    state.player_team.engine_supplier_deal = "works"
+    state.player_team.engine_supplier_contract_length = 0
+    state.player_team.builds_own_engine = True
+    app_main.CURRENT_STATE = state
+
+    candidates = process_command({"type": "get_engine_supplier_replacement_candidates", "supplier_name": "Ferano"})
+    assert candidates["status"] == "error"
+    assert "cannot be replaced" in candidates["message"]
+
+    blocked = process_command({"type": "replace_engine_supplier", "supplier_name": "Ferano"})
+    assert blocked["status"] == "error"
+    assert "cannot be replaced" in blocked["message"]
+
+
 def test_replace_tyre_supplier_respects_contract_rule_and_signs_replacement():
     state = create_state()
     app_main.CURRENT_STATE = state
@@ -341,6 +389,7 @@ def test_pending_player_replacements_are_reflected_in_staff_and_finance_payloads
     state.announced_ai_cm_signings = [{"team_id": 1, "manager_id": 12, "status": "announced"}]
     state.announced_ai_td_signings = [{"team_id": 1, "director_id": 22, "status": "announced"}]
     state.announced_ai_title_sponsor_signings = [{"team_id": 1, "sponsor_id": 32, "status": "announced"}]
+    state.announced_ai_engine_supplier_signings = [{"team_id": 1, "supplier_id": 42, "status": "announced"}]
     state.announced_ai_tyre_supplier_signings = [{"team_id": 1, "supplier_id": 42, "status": "announced"}]
     app_main.CURRENT_STATE = state
 
@@ -353,6 +402,7 @@ def test_pending_player_replacements_are_reflected_in_staff_and_finance_payloads
     assert staff["data"]["commercial_manager"]["pending_replacement"] is True
     assert staff["data"]["technical_director"]["pending_replacement"] is True
     assert finance["data"]["sponsor"]["pending_replacement"] is True
+    assert finance["data"]["engine_supplier"]["pending_replacement"] is True
     assert finance["data"]["tyre_supplier"]["pending_replacement"] is True
 
 

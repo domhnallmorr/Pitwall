@@ -31,6 +31,7 @@ describe('FinanceView', () => {
 			<div id="finance-prize-progress"></div>
 			<div id="finance-sponsor-name"></div>
 			<button id="finance-sponsor-replace-btn"></button>
+			<button id="finance-engine-supplier-replace-btn"></button>
 			<button id="finance-tyre-supplier-replace-btn"></button>
 			<div id="finance-sponsor-annual"></div>
 			<div id="finance-sponsor-installment"></div>
@@ -112,6 +113,7 @@ describe('FinanceView', () => {
 				installment: 281250,
 				paid_so_far: 281250,
 				remaining: 4218750,
+				contract_length: 1,
 			},
 			tyre_supplier: {
 				name: 'Greatday',
@@ -150,6 +152,7 @@ describe('FinanceView', () => {
 		expect(document.getElementById('finance-other-sponsorship-annual').textContent).toBe('$9,500,000')
 		expect(document.getElementById('finance-engine-supplier-name').textContent).toBe('Mechatron')
 		expect(document.getElementById('finance-engine-supplier-deal').textContent).toBe('customer')
+		expect(document.getElementById('finance-engine-supplier-replace-btn').disabled).toBe(false)
 		expect(document.getElementById('finance-tyre-supplier-name').textContent).toBe('Greatday')
 		expect(document.getElementById('finance-tyre-supplier-replace-btn').disabled).toBe(false)
 		expect(document.getElementById('finance-fuel-supplier-name').textContent).toBe('Brasoil')
@@ -192,6 +195,7 @@ describe('FinanceView', () => {
 		expect(document.getElementById('finance-transactions-body').textContent).toContain('No transactions yet')
 		expect(document.getElementById('finance-sponsor-logo-wrap').innerHTML).toBe('')
 		expect(document.getElementById('finance-sponsor-replace-btn').disabled).toBe(true)
+		expect(document.getElementById('finance-engine-supplier-replace-btn').disabled).toBe(true)
 		expect(document.getElementById('finance-tyre-supplier-replace-btn').disabled).toBe(true)
 		expect(document.getElementById('finance-engine-supplier-logo-wrap').innerHTML).toBe('')
 
@@ -267,5 +271,50 @@ describe('FinanceView', () => {
 		})
 
 		expect(document.getElementById('finance-tyre-supplier-replace-btn').disabled).toBe(true)
+	})
+
+	it('triggers engine supplier replace handler when enabled and disables for self-built or pending replacement', () => {
+		const onReplace = vi.fn()
+		financeView.setReplaceEngineSupplierHandler(onReplace)
+		financeView.render({
+			balance: 0,
+			summary: {},
+			sponsor: {},
+			other_sponsorship: {},
+			engine_supplier: { name: 'Mechatron', contract_length: 1, annual_value: 0, installment: 0, paid_so_far: 0, remaining: 0 },
+			tyre_supplier: {},
+			fuel_supplier: {},
+			track_profit_loss: [],
+			transactions: []
+		})
+
+		document.getElementById('finance-engine-supplier-replace-btn').click()
+		expect(onReplace).toHaveBeenCalledWith('Mechatron')
+
+		financeView.render({
+			balance: 0,
+			summary: {},
+			sponsor: {},
+			other_sponsorship: {},
+			engine_supplier: { name: 'Ferano', contract_length: 0, builds_own_engine: true, annual_value: 0, installment: 0, paid_so_far: 0, remaining: 0 },
+			tyre_supplier: {},
+			fuel_supplier: {},
+			track_profit_loss: [],
+			transactions: []
+		})
+		expect(document.getElementById('finance-engine-supplier-replace-btn').disabled).toBe(true)
+
+		financeView.render({
+			balance: 0,
+			summary: {},
+			sponsor: {},
+			other_sponsorship: {},
+			engine_supplier: { name: 'Mechatron', contract_length: 1, pending_replacement: true, annual_value: 0, installment: 0, paid_so_far: 0, remaining: 0 },
+			tyre_supplier: {},
+			fuel_supplier: {},
+			track_profit_loss: [],
+			transactions: []
+		})
+		expect(document.getElementById('finance-engine-supplier-replace-btn').disabled).toBe(true)
 	})
 })

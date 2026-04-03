@@ -65,6 +65,8 @@ function renderFinanceSupplierSections() {
 			title: 'Engine Supplier',
 			nameId: 'finance-engine-supplier-name',
 			nameDefault: 'Unassigned',
+			actionButtonId: 'finance-engine-supplier-replace-btn',
+			actionButtonLabel: 'Replace',
 			rows: [
 				{ label: 'Deal', id: 'finance-engine-supplier-deal', defaultValue: '-' },
 				{ label: 'Annual Cost', id: 'finance-engine-supplier-annual', defaultValue: '$0' },

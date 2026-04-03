@@ -101,3 +101,91 @@ def test_generate_for_season_delays_low_workforce_updates(mock_choices, mock_ran
     assert by_team[3]["development_weeks"] == 8
     assert by_team[2]["week"] >= 6
     assert by_team[3]["week"] >= 9
+
+
+def test_workforce_time_multiplier_and_development_weeks_are_bounded():
+    manager = AICarDevelopmentManager()
+
+    assert manager._workforce_time_multiplier(250) == 1.0
+    assert manager._workforce_time_multiplier(0) == 2.0
+    assert manager._workforce_time_multiplier(-10) == 2.0
+    assert manager._workforce_time_multiplier(999) == 1.0
+
+    assert manager._development_weeks_for_team("minor", 250) == 4
+    assert manager._development_weeks_for_team("minor", 0) == 8
+    assert manager._development_weeks_for_team("major", 0) == 20
+
+
+@patch("app.core.ai_car_development.random.choice", side_effect=lambda seq: seq[0])
+def test_pick_spread_weeks_handles_empty_full_and_gap_filtered_cases(mock_choice):
+    manager = AICarDevelopmentManager()
+
+    assert manager._pick_spread_weeks([], 2) == []
+    assert manager._pick_spread_weeks([2, 4], 0) == []
+    assert manager._pick_spread_weeks([2, 4], 3) == [2, 4]
+
+    picked = manager._pick_spread_weeks([2, 3, 4, 5, 6], 2)
+    assert picked == [2, 4]
+
+
+def test_generate_for_season_returns_empty_without_races_or_eligible_weeks():
+    manager = AICarDevelopmentManager()
+
+    no_race_state = GameState(
+        year=1998,
+        teams=[Team(id=1, name="AI Team", country="Italy", workforce=250)],
+        drivers=[],
+        calendar=Calendar(events=[Event(name="Test", week=1, type=EventType.TEST)], current_week=1),
+        circuits=[],
+    )
+    assert manager.generate_for_season(no_race_state) == []
+    assert no_race_state.planned_ai_car_updates == []
+
+    only_opening_race_state = GameState(
+        year=1998,
+        teams=[Team(id=1, name="AI Team", country="Italy", workforce=250)],
+        drivers=[],
+        calendar=Calendar(events=[Event(name="Race 1", week=2, type=EventType.RACE)], current_week=1),
+        circuits=[],
+    )
+    assert manager.generate_for_season(only_opening_race_state) == []
+    assert only_opening_race_state.planned_ai_car_updates == []
+
+
+@patch("app.core.ai_car_development.random.randint", return_value=2)
+@patch("app.core.ai_car_development.random.choices", return_value=["major"])
+def test_generate_for_season_skips_updates_when_completion_window_is_impossible(mock_choices, mock_randint):
+    state = create_state()
+    for team in state.teams:
+        team.workforce = 0
+
+    planned = AICarDevelopmentManager().generate_for_season(state)
+
+    assert planned == []
+    assert state.planned_ai_car_updates == []
+
+
+def test_apply_for_week_handles_empty_due_updates_and_missing_team():
+    state = create_state()
+    manager = AICarDevelopmentManager()
+
+    assert manager.apply_for_week(state, week=99) == []
+    assert state.emails == []
+
+    state.planned_ai_car_updates = [
+        {
+            "year": 1998,
+            "team_id": 999,
+            "team_name": "Ghost Team",
+            "week": state.calendar.current_week,
+            "update_type": "minor",
+            "delta": 1,
+            "applied": False,
+        }
+    ]
+
+    applied = manager.apply_for_week(state)
+
+    assert applied == []
+    assert state.planned_ai_car_updates[0]["applied"] is True
+    assert state.emails == []

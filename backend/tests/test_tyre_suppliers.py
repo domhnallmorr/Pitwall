@@ -62,7 +62,7 @@ def test_load_roster_can_include_all_sets_including_tyres(mock_get_conn):
     ) = result
     assert len(technical_directors) == 20
     assert len(commercial_managers) == 18
-    assert len(title_sponsors) == 11
+    assert len(title_sponsors) == 14
     assert len(engine_suppliers) == 7
     assert len(tyre_suppliers) == 2
 

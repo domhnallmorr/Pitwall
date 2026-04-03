@@ -5,6 +5,7 @@ from app.core.transport import TransportManager
 from app.core.transfers import TransferManager
 from app.core.management_transfers import (
     CommercialManagerTransferManager,
+    EngineSupplierTransferManager,
     TechnicalDirectorTransferManager,
     TitleSponsorTransferManager,
     TyreSupplierTransferManager,
@@ -23,6 +24,7 @@ class GameEngine:
         self.transport_manager = TransportManager()
         self.transfer_manager = TransferManager()
         self.cm_transfer_manager = CommercialManagerTransferManager()
+        self.engine_supplier_transfer_manager = EngineSupplierTransferManager()
         self.td_transfer_manager = TechnicalDirectorTransferManager()
         self.title_sponsor_transfer_manager = TitleSponsorTransferManager()
         self.tyre_supplier_transfer_manager = TyreSupplierTransferManager()
@@ -44,6 +46,7 @@ class GameEngine:
         state.publish_queued_emails()
         self.transfer_manager.publish_due_announcements(state)
         self.cm_transfer_manager.publish_due_announcements(state)
+        self.engine_supplier_transfer_manager.publish_due_announcements(state)
         self.td_transfer_manager.publish_due_announcements(state)
         self.title_sponsor_transfer_manager.publish_due_announcements(state)
         self.tyre_supplier_transfer_manager.publish_due_announcements(state)

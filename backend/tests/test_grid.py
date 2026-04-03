@@ -377,6 +377,7 @@ def test_grid_includes_engine_and_tyre_supplier_columns():
             driver2_id=2,
             engine_supplier_name="Mechatron",
             engine_supplier_deal="customer",
+            engine_supplier_contract_length=2,
             tyre_supplier_name="Greatday",
             tyre_supplier_deal="partner",
             tyre_supplier_contract_length=3,
@@ -389,6 +390,7 @@ def test_grid_includes_engine_and_tyre_supplier_columns():
     assert len(rows) == 1
     assert rows[0]["EngineSupplier"] == "Mechatron"
     assert rows[0]["EngineSupplierDeal"] == "customer"
+    assert rows[0]["EngineSupplierContractLength"] == 2
     assert rows[0]["TyreSupplier"] == "Greatday"
     assert rows[0]["TyreSupplierDeal"] == "partner"
     assert rows[0]["TyreSupplierContractLength"] == 3
@@ -418,6 +420,58 @@ def test_grid_next_year_projection_marks_expiring_tyre_supplier_as_vacant():
     assert rows[0]["TyreSupplier"] == "VACANT"
     assert rows[0]["TyreSupplierDeal"] == "-"
     assert rows[0]["TyreSupplierContractLength"] == 0
+
+
+def test_grid_next_year_projection_marks_expiring_engine_supplier_as_vacant():
+    drivers = [
+        Driver(id=1, name="Driver A", age=20, country="UK", points=0),
+        Driver(id=2, name="Driver B", age=22, country="DE", points=0),
+    ]
+    teams = [
+        Team(
+            id=1,
+            name="Team 1",
+            country="UK",
+            driver1_id=1,
+            driver2_id=2,
+            engine_supplier_name="Mechatron",
+            engine_supplier_deal="customer",
+            engine_supplier_contract_length=1,
+        ),
+    ]
+    calendar = Calendar(events=[], current_week=1)
+    state = GameState(year=1998, teams=teams, drivers=drivers, calendar=calendar, circuits=[])
+
+    rows = GridManager().get_grid_records(state, year=1999)
+    assert rows[0]["EngineSupplier"] == "VACANT"
+    assert rows[0]["EngineSupplierDeal"] == "-"
+    assert rows[0]["EngineSupplierContractLength"] == 0
+
+
+def test_grid_next_year_projection_decrements_engine_supplier_contract_length():
+    drivers = [
+        Driver(id=1, name="Driver A", age=20, country="UK", points=0),
+        Driver(id=2, name="Driver B", age=22, country="DE", points=0),
+    ]
+    teams = [
+        Team(
+            id=1,
+            name="Team 1",
+            country="UK",
+            driver1_id=1,
+            driver2_id=2,
+            engine_supplier_name="Frost",
+            engine_supplier_deal="customer",
+            engine_supplier_contract_length=4,
+        ),
+    ]
+    calendar = Calendar(events=[], current_week=1)
+    state = GameState(year=1998, teams=teams, drivers=drivers, calendar=calendar, circuits=[])
+
+    rows = GridManager().get_grid_records(state, year=1999)
+    assert rows[0]["EngineSupplier"] == "Frost"
+    assert rows[0]["EngineSupplierDeal"] == "customer"
+    assert rows[0]["EngineSupplierContractLength"] == 3
 
 
 def test_grid_next_year_projection_decrements_tyre_supplier_contract_length():

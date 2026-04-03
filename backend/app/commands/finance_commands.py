@@ -47,6 +47,10 @@ def build_finance_payload(state: GameState):
 
     engine_supplier_name = player_team.engine_supplier_name if player_team else None
     engine_supplier_yearly = player_team.engine_supplier_yearly_cost if player_team else 0
+    engine_supplier_pending_replacement = any(
+        s.get("status") == "announced" and s.get("team_id") == player_team.id
+        for s in state.announced_ai_engine_supplier_signings
+    ) if player_team else False
     engine_supplier_installment = int(round(max(0, engine_supplier_yearly) / max(1, race_count))) if engine_supplier_name else 0
     engine_supplier_paid_so_far = sum(
         -t.amount for t in state.finance.transactions
@@ -112,6 +116,9 @@ def build_finance_payload(state: GameState):
             "installment": engine_supplier_installment,
             "paid_so_far": engine_supplier_paid_so_far,
             "remaining": engine_supplier_remaining,
+            "contract_length": int(player_team.engine_supplier_contract_length or 0) if player_team else 0,
+            "pending_replacement": engine_supplier_pending_replacement,
+            "builds_own_engine": bool(getattr(player_team, "builds_own_engine", False)) if player_team else False,
         },
         "tyre_supplier": {
             "name": tyre_supplier_name,

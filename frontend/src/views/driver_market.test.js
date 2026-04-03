@@ -120,6 +120,25 @@ describe('DriverMarketView', () => {
 		expect(onSign).toHaveBeenCalledWith('Greatday', 42, 'tyre_supplier');
 	});
 
+	it('renders engine supplier market and signs supplier candidate', () => {
+		const onSign = vi.fn();
+		marketView.setSignHandler(onSign);
+		marketView.render({
+			market_type: 'engine_supplier',
+			outgoing_supplier: { name: 'Mechatron' },
+			candidates: [{ id: 42, name: 'Frost', country: 'USA', power: 38, resources: 65 }],
+		});
+
+		expect(document.getElementById('driver-market-title').textContent).toContain('Replace Mechatron');
+		const head = document.querySelector('#driver-market-view thead tr').textContent;
+		expect(head).toContain('Power');
+		expect(head).toContain('Resources');
+
+		const btn = document.querySelector('.driver-market-sign-btn');
+		btn.click();
+		expect(onSign).toHaveBeenCalledWith('Mechatron', 42, 'engine_supplier');
+	});
+
 	it('ignores sign clicks when no handlers or missing outgoing entities', () => {
 		marketView.render({
 			outgoing_driver: null,

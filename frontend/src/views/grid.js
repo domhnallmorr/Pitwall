@@ -133,7 +133,7 @@ export default class GridView {
 			if (this.mode === 'sponsors') {
 				targetHead.innerHTML = '<tr><th>Team</th><th>Title Sponsor</th><th>Contract</th><th>Other Sponsorship</th></tr>';
 			} else if (this.mode === 'suppliers') {
-				targetHead.innerHTML = '<tr><th>Team</th><th>Engine Supplier</th><th>Engine Deal</th><th>Tyre Supplier</th><th>Tyre Deal</th><th>Tyre Contract</th></tr>';
+				targetHead.innerHTML = '<tr><th>Team</th><th>Engine Supplier</th><th>Engine Deal</th><th>Engine Contract</th><th>Tyre Supplier</th><th>Tyre Deal</th><th>Tyre Contract</th></tr>';
 			} else {
 				targetHead.innerHTML = '<tr><th>Team</th><th>Driver 1</th><th>Driver 2</th><th>Team Principal</th><th>Technical Director</th><th>Commercial Manager</th></tr>';
 			}
@@ -158,6 +158,7 @@ export default class GridView {
 				const engineSupplierDeal = engineSupplierDealRaw === '-'
 					? engineSupplierDealRaw
 					: engineSupplierDealRaw.charAt(0).toUpperCase() + engineSupplierDealRaw.slice(1).toLowerCase();
+				const engineSupplierContractLength = Number(row.EngineSupplierContractLength || 0);
 				const tyreSupplierName = row.TyreSupplier || '';
 				const tyreSupplierDealRaw = row.TyreSupplierDeal || '-';
 				const tyreSupplierDeal = tyreSupplierDealRaw === '-'
@@ -168,6 +169,7 @@ export default class GridView {
 					<td>${row.Team}</td>
 					<td>${this.renderSupplierCell(engineSupplierName)}</td>
 					<td>${engineSupplierDeal}</td>
+					<td>${engineSupplierContractLength > 0 ? `${engineSupplierContractLength} year(s)` : '-'}</td>
 					<td>${this.renderSupplierCell(tyreSupplierName)}</td>
 					<td>${tyreSupplierDeal}</td>
 					<td>${tyreSupplierContractLength > 0 ? `${tyreSupplierContractLength} year(s)` : '-'}</td>

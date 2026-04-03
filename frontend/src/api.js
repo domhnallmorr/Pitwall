@@ -28,6 +28,7 @@ const API = {
 	getManagerReplacementCandidates: (managerId) => window.electronAPI.sendToPython({ type: 'get_manager_replacement_candidates', manager_id: managerId }),
 	getTechnicalDirectorReplacementCandidates: (directorId) => window.electronAPI.sendToPython({ type: 'get_technical_director_replacement_candidates', director_id: directorId }),
 	getTitleSponsorReplacementCandidates: (sponsorName) => window.electronAPI.sendToPython({ type: 'get_title_sponsor_replacement_candidates', sponsor_name: sponsorName }),
+	getEngineSupplierReplacementCandidates: (supplierName) => window.electronAPI.sendToPython({ type: 'get_engine_supplier_replacement_candidates', supplier_name: supplierName }),
 	getTyreSupplierReplacementCandidates: (supplierName) => window.electronAPI.sendToPython({ type: 'get_tyre_supplier_replacement_candidates', supplier_name: supplierName }),
 	replaceDriver: (driverId, incomingDriverId) => window.electronAPI.sendToPython({
 		type: 'replace_driver',
@@ -48,6 +49,11 @@ const API = {
 		type: 'replace_title_sponsor',
 		sponsor_name: sponsorName,
 		incoming_sponsor_id: incomingSponsorId
+	}),
+	replaceEngineSupplier: (supplierName, incomingSupplierId) => window.electronAPI.sendToPython({
+		type: 'replace_engine_supplier',
+		supplier_name: supplierName,
+		incoming_supplier_id: incomingSupplierId
 	}),
 	replaceTyreSupplier: (supplierName, incomingSupplierId) => window.electronAPI.sendToPython({
 		type: 'replace_tyre_supplier',

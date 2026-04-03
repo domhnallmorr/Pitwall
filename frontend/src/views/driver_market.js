@@ -36,7 +36,7 @@ export default class DriverMarketView {
 
 	render(payload) {
 		if (!this.tableBody || !this.title) return;
-		this.marketType = payload?.market_type === 'commercial_manager' || payload?.market_type === 'technical_director' || payload?.market_type === 'title_sponsor' || payload?.market_type === 'tyre_supplier'
+		this.marketType = payload?.market_type === 'commercial_manager' || payload?.market_type === 'technical_director' || payload?.market_type === 'title_sponsor' || payload?.market_type === 'tyre_supplier' || payload?.market_type === 'engine_supplier'
 			? payload.market_type
 			: 'driver';
 		this.outgoingDriver = payload?.outgoing_driver || null;
@@ -49,6 +49,8 @@ export default class DriverMarketView {
 				? 'Commercial Manager'
 				: this.marketType === 'title_sponsor'
 					? 'Title Sponsor'
+					: this.marketType === 'engine_supplier'
+						? 'Engine Supplier'
 					: this.marketType === 'tyre_supplier'
 						? 'Tyre Supplier'
 					: 'Driver';
@@ -56,6 +58,8 @@ export default class DriverMarketView {
 			? (this.outgoingManager?.name || this.outgoingRoleLabel)
 			: this.marketType === 'title_sponsor'
 				? (this.outgoingSponsor?.name || this.outgoingRoleLabel)
+				: this.marketType === 'engine_supplier'
+					? (this.outgoingSupplier?.name || this.outgoingRoleLabel)
 				: this.marketType === 'tyre_supplier'
 					? (this.outgoingSupplier?.name || this.outgoingRoleLabel)
 			: (this.outgoingDriver?.name || 'Driver');
@@ -83,6 +87,14 @@ export default class DriverMarketView {
 					<th>Country</th>
 					<th>Grip</th>
 					<th>Wear</th>
+					<th>Action</th>
+				`;
+			} else if (this.marketType === 'engine_supplier') {
+				this.headRow.innerHTML = `
+					<th>Name</th>
+					<th>Country</th>
+					<th>Power</th>
+					<th>Resources</th>
 					<th>Action</th>
 				`;
 			} else {
@@ -133,6 +145,14 @@ export default class DriverMarketView {
 					<td>${candidate.wear}</td>
 					<td><button class="driver-market-sign-btn" data-driver-id="${candidate.id}">Sign</button></td>
 				`;
+			} else if (this.marketType === 'engine_supplier') {
+				tr.innerHTML = `
+					<td>${candidate.name}</td>
+					<td>${renderFlagLabel(candidate.country, candidate.country)}</td>
+					<td>${candidate.power}</td>
+					<td>${candidate.resources}</td>
+					<td><button class="driver-market-sign-btn" data-driver-id="${candidate.id}">Sign</button></td>
+				`;
 			} else {
 				const absWage = Math.abs(candidate.wage || 0);
 				const wageText = `$${absWage.toLocaleString()}${candidate.pay_driver ? ' (Pay Driver)' : ''}`;
@@ -159,6 +179,9 @@ export default class DriverMarketView {
 				} else if (this.marketType === 'title_sponsor') {
 					if (!this.outgoingSponsor) return;
 					this.onSign(this.outgoingSponsor.name, incomingId, this.marketType);
+				} else if (this.marketType === 'engine_supplier') {
+					if (!this.outgoingSupplier) return;
+					this.onSign(this.outgoingSupplier.name, incomingId, this.marketType);
 				} else if (this.marketType === 'tyre_supplier') {
 					if (!this.outgoingSupplier) return;
 					this.onSign(this.outgoingSupplier.name, incomingId, this.marketType);

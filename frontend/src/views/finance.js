@@ -25,6 +25,7 @@ export default class FinanceView {
 		this.prizeProgressEl = document.getElementById('finance-prize-progress');
 		this.sponsorNameEl = document.getElementById('finance-sponsor-name');
 		this.sponsorReplaceBtn = document.getElementById('finance-sponsor-replace-btn');
+		this.engineSupplierReplaceBtn = document.getElementById('finance-engine-supplier-replace-btn');
 		this.tyreSupplierReplaceBtn = document.getElementById('finance-tyre-supplier-replace-btn');
 		this.sponsorAnnualEl = document.getElementById('finance-sponsor-annual');
 		this.sponsorInstallmentEl = document.getElementById('finance-sponsor-installment');
@@ -61,6 +62,7 @@ export default class FinanceView {
 		this.trackPlBody = document.getElementById('finance-track-pl-body');
 		this.tbody = document.getElementById('finance-transactions-body');
 		this.onReplaceTitleSponsor = null;
+		this.onReplaceEngineSupplier = null;
 		this.onReplaceTyreSupplier = null;
 		this.bindTabs();
 		this.bindSponsorActions();
@@ -72,6 +74,10 @@ export default class FinanceView {
 
 	setReplaceTyreSupplierHandler(handler) {
 		this.onReplaceTyreSupplier = handler;
+	}
+
+	setReplaceEngineSupplierHandler(handler) {
+		this.onReplaceEngineSupplier = handler;
 	}
 
 	setSupplierLogo(targetWrap, supplierName) {
@@ -127,6 +133,14 @@ export default class FinanceView {
 				const sponsorName = this.sponsorReplaceBtn.getAttribute('data-sponsor-name');
 				if (!sponsorName) return;
 				this.onReplaceTitleSponsor(sponsorName);
+			});
+		}
+		if (this.engineSupplierReplaceBtn) {
+			this.engineSupplierReplaceBtn.addEventListener('click', () => {
+				if (!this.onReplaceEngineSupplier) return;
+				const supplierName = this.engineSupplierReplaceBtn.getAttribute('data-supplier-name');
+				if (!supplierName) return;
+				this.onReplaceEngineSupplier(supplierName);
 			});
 		}
 		if (this.tyreSupplierReplaceBtn) {
@@ -245,12 +259,24 @@ export default class FinanceView {
 		const engineSupplier = data.engine_supplier || {};
 		const engineSupplierName = engineSupplier.name || 'Unassigned';
 		const engineSupplierDeal = engineSupplier.deal || '-';
+		const engineSupplierContractLength = engineSupplier.contract_length || 0;
+		const engineSupplierPendingReplacement = Boolean(engineSupplier.pending_replacement);
+		const engineSupplierBuildsOwnEngine = Boolean(engineSupplier.builds_own_engine);
 		const engineSupplierAnnual = engineSupplier.annual_value || 0;
 		const engineSupplierInstallment = engineSupplier.installment || 0;
 		const engineSupplierPaid = engineSupplier.paid_so_far || 0;
 		const engineSupplierRemaining = engineSupplier.remaining || 0;
 
 		if (this.engineSupplierNameEl) this.engineSupplierNameEl.textContent = engineSupplierName;
+		if (this.engineSupplierReplaceBtn) {
+			const canReplace = Boolean(engineSupplier.name) && !engineSupplierBuildsOwnEngine && engineSupplierContractLength < 2 && !engineSupplierPendingReplacement;
+			this.engineSupplierReplaceBtn.disabled = !canReplace;
+			if (canReplace) {
+				this.engineSupplierReplaceBtn.setAttribute('data-supplier-name', engineSupplier.name);
+			} else {
+				this.engineSupplierReplaceBtn.removeAttribute('data-supplier-name');
+			}
+		}
 		if (this.engineSupplierDealEl) this.engineSupplierDealEl.textContent = engineSupplierDeal;
 		if (this.engineSupplierAnnualEl) this.engineSupplierAnnualEl.textContent = '$' + engineSupplierAnnual.toLocaleString();
 		if (this.engineSupplierInstallmentEl) this.engineSupplierInstallmentEl.textContent = '$' + engineSupplierInstallment.toLocaleString();

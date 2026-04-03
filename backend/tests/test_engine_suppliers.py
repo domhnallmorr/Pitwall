@@ -65,5 +65,5 @@ def test_load_roster_can_include_all_staff_sponsor_and_engine_sets(mock_get_conn
     teams, drivers, year, events, circuits, technical_directors, commercial_managers, title_sponsors, engine_suppliers = result
     assert len(technical_directors) == 20
     assert len(commercial_managers) == 18
-    assert len(title_sponsors) == 11
+    assert len(title_sponsors) == 14
     assert len(engine_suppliers) == 7

@@ -262,6 +262,24 @@ TEAM_ENGINE_SUPPLIERS = {
     "Marchetti": ("Frost", "customer", 7_500_000),
 }
 
+TEAM_ENGINE_SUPPLIER_CONTRACT_LENGTHS = {
+    "Warrick": 2,
+    "Ferano": 0,
+    "Benedetti": 3,
+    "McAlister": 5,
+    "Joyce": 3,
+    "Pascal": 3,
+    "Schweizer": 1,
+    "Swords": 2,
+    "Strathmore": 4,
+    "Tarnwell": 1,
+    "Marchetti": 1,
+}
+
+TEAM_BUILDS_OWN_ENGINE = {
+    "Ferano": 1,
+}
+
 TEAM_TYRE_SUPPLIERS = {
     "Warrick": ("Greatday", "partner", 0),
     "Ferano": ("Greatday", "works", 0),

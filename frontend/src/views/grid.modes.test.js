@@ -71,6 +71,7 @@ describe('GridView modes and branch behavior', () => {
 					Team: 'Swords',
 					EngineSupplier: 'Hartek',
 					EngineSupplierDeal: 'works',
+					EngineSupplierContractLength: 2,
 					TyreSupplier: 'VACANT',
 					TyreSupplierDeal: '-',
 					TyreSupplierContractLength: 0,
@@ -85,10 +86,12 @@ describe('GridView modes and branch behavior', () => {
 		const row = document.querySelector('#grid-table-body tr');
 		expect(row.innerHTML).toContain('Works');
 		expect(row.innerHTML).toContain('harteck.png');
+		expect(document.getElementById('grid-head-1998').textContent).toContain('Engine Contract');
 		expect(document.getElementById('grid-head-1998').textContent).toContain('Tyre Contract');
 		const cells = row.querySelectorAll('td');
-		expect(cells[3].textContent.trim()).toBe('');
-		expect(cells[5].textContent.trim()).toBe('-');
+		expect(cells[3].textContent.trim()).toBe('2 year(s)');
+		expect(cells[4].textContent.trim()).toBe('');
+		expect(cells[6].textContent.trim()).toBe('-');
 	});
 
 	it('renders staff mode and triggers driver callback', () => {
