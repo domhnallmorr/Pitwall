@@ -277,6 +277,117 @@ def test_apply_new_season_transfers_expiring_driver_without_deal_becomes_free_ag
     assert any(l["driver_id"] == 3 for l in outcome["expiring_leavers"])
 
 
+def test_ai_team_can_retain_strong_expiring_lead_driver():
+    state = create_transfer_state()
+    ai_driver = next(d for d in state.drivers if d.id == 3)
+    ai_driver.speed = 68
+
+    vacancies = TransferManager()._get_ai_vacancies_for_next_season(state, blocked_seats=set())
+
+    assert all(vacancy["team_id"] != 2 or vacancy["seat"] != "driver1_id" for vacancy in vacancies)
+
+
+def test_driver_scoring_can_favor_pay_driver_for_weak_support_seat():
+    state = create_transfer_state()
+    manager = TransferManager()
+    weak_team = next(team for team in state.teams if team.id == 2)
+    weak_team.car_speed = 40
+    standard_driver = Driver(id=6, name="Solid Driver", age=27, country="ES", speed=48, team_id=None, contract_length=0)
+    pay_driver = Driver(id=7, name="Funded Driver", age=26, country="PT", speed=46, team_id=None, contract_length=0, pay_driver=True)
+    vacancy = {"seat": "driver2_id"}
+
+    standard_score = manager._score_driver_for_vacancy(weak_team, vacancy, standard_driver)
+    pay_score = manager._score_driver_for_vacancy(weak_team, vacancy, pay_driver)
+
+    assert pay_score > standard_score
+
+
+def test_vacancy_strategy_marks_weak_support_seat_as_cash_seat():
+    state = create_transfer_state()
+    manager = TransferManager()
+    weak_team = next(team for team in state.teams if team.id == 2)
+    weak_team.car_speed = 40
+
+    strategy = manager._vacancy_strategy(
+        weak_team,
+        {
+            "seat": "driver2_id",
+            "outgoing_driver_speed": 42,
+            "outgoing_driver_pay_driver": True,
+        },
+    )
+
+    assert strategy == "cash_seat"
+
+
+def test_vacancy_strategy_marks_top_lead_seat_as_upgrade():
+    state = create_transfer_state()
+    manager = TransferManager()
+    strong_team = next(team for team in state.teams if team.id == 2)
+    strong_team.car_speed = 70
+
+    strategy = manager._vacancy_strategy(
+        strong_team,
+        {
+            "seat": "driver1_id",
+            "outgoing_driver_speed": 58,
+            "outgoing_driver_pay_driver": False,
+        },
+    )
+
+    assert strategy == "upgrade"
+
+
+def test_hold_strategy_prefers_like_for_like_replacement():
+    state = create_transfer_state()
+    manager = TransferManager()
+    team = next(team for team in state.teams if team.id == 2)
+    team.car_speed = 55
+    vacancy = {
+        "seat": "driver2_id",
+        "outgoing_driver_speed": 56,
+        "outgoing_driver_pay_driver": False,
+    }
+    like_for_like = Driver(id=8, name="Like For Like", age=28, country="NL", speed=56, team_id=None, contract_length=0)
+    boom_or_bust = Driver(id=9, name="Boom Or Bust", age=22, country="SE", speed=63, team_id=None, contract_length=0)
+
+    assert manager._vacancy_strategy(team, vacancy) == "hold"
+    assert manager._score_driver_for_vacancy(team, vacancy, like_for_like) > manager._score_driver_for_vacancy(team, vacancy, boom_or_bust)
+
+
+def test_team_desirability_uses_baseline_and_team_principal_skill():
+    state = create_transfer_state()
+    manager = TransferManager()
+    ai_team = next(team for team in state.teams if team.id == 2)
+    ai_team.car_speed = 50
+    state.grid_snapshots[1998] = [
+        {"Team": "AI Team", "CarRating": 78},
+    ]
+    state.team_principals = []
+
+    desirability = manager._team_desirability(state, ai_team)
+
+    assert desirability == round((50 * 0.5) + (78 * 0.35) + (50 * 0.15))
+
+
+def test_top_team_vacancy_uses_desirability_for_upgrade_bias():
+    state = create_transfer_state()
+    manager = TransferManager()
+    ai_team = next(team for team in state.teams if team.id == 2)
+    ai_team.car_speed = 52
+    state.grid_snapshots[1998] = [
+        {"Team": "AI Team", "CarRating": 82},
+    ]
+    vacancy = {
+        "seat": "driver1_id",
+        "outgoing_driver_speed": 58,
+        "outgoing_driver_pay_driver": False,
+        "team_desirability": manager._team_desirability(state, ai_team),
+    }
+
+    assert manager._vacancy_strategy(ai_team, vacancy) == "upgrade"
+
+
 @patch("app.core.management_transfer_markets.commercial_manager.random.shuffle", side_effect=lambda x: None)
 @patch("app.core.management_transfer_markets.commercial_manager.random.randint", return_value=6)
 @patch("app.core.management_transfer_markets.commercial_manager.random.choice", side_effect=lambda choices: choices[0])

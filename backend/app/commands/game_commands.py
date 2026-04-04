@@ -21,6 +21,7 @@ from app.commands.facilities_commands import (
 from app.commands.finance_commands import build_finance_payload
 from app.commands.race_commands import (
     handle_get_race_weekend,
+    handle_set_race_strategy,
     handle_simulate_qualifying,
     handle_simulate_race,
 )

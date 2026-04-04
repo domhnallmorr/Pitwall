@@ -22,10 +22,12 @@ def _build_race_weekend_payload(state: GameState) -> dict:
     if current_event is None or current_event.type != EventType.RACE:
         return {}
 
-    circuit = RaceManager()._get_circuit(state)
+    race_manager = RaceManager()
+    circuit = race_manager._get_circuit(state)
     event_key = f"{state.year}_{current_event.week}_{current_event.name}"
     qualifying_results = list(state.qualifying_results_by_event.get(event_key, []))
     event_processed = f"{current_event.week}_{current_event.name}" in state.events_processed
+    player_strategies = race_manager._player_strategy_entries(state, qualifying_results)
 
     return {
         "event_name": current_event.name,
@@ -37,6 +39,7 @@ def _build_race_weekend_payload(state: GameState) -> dict:
         "qualifying_complete": bool(qualifying_results),
         "race_complete": event_processed,
         "qualifying_results": qualifying_results,
+        "player_strategies": player_strategies,
     }
 
 
@@ -53,10 +56,22 @@ def handle_get_race_weekend(state: GameState, logger: logging.Logger):
 
 def handle_simulate_qualifying(state: GameState, logger: logging.Logger):
     try:
-        result = RaceManager().simulate_qualifying(state)
-        return state, {"type": "qualifying_result", "status": "success", "data": result}
+        RaceManager().simulate_qualifying(state)
+        return state, {"type": "qualifying_result", "status": "success", "data": _build_race_weekend_payload(state)}
     except Exception as e:
         logger.error(f"Error simulating qualifying: {e}")
+        return state, {"status": "error", "message": str(e)}
+
+
+def handle_set_race_strategy(state: GameState, logger: logging.Logger, strategies: list[dict] | None):
+    try:
+        if not strategies:
+            return state, {"status": "error", "message": "No player strategies supplied"}
+        race_manager = RaceManager()
+        race_manager.update_player_pit_strategies(state, strategies)
+        return state, {"type": "race_strategy_updated", "status": "success", "data": _build_race_weekend_payload(state)}
+    except Exception as e:
+        logger.error(f"Error updating race strategy: {e}")
         return state, {"status": "error", "message": str(e)}
 
 

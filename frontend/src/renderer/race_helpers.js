@@ -5,6 +5,7 @@ let raceAutoplayTimer = null;
 let raceAutoplayData = null;
 let raceAutoplayLapIndex = 0;
 let raceAutoplayPaused = false;
+let currentRaceWeekendData = null;
 
 function formatQualifyingGap(bestLapMs, poleLapMs) {
 	if (!Number.isFinite(bestLapMs) || !Number.isFinite(poleLapMs)) return '-';
@@ -82,6 +83,7 @@ function activateRaceTab(tabName = 'timing') {
 
 export function enterRaceView(nextEventEl, weekEl) {
 	stopRaceAutoplay();
+	currentRaceWeekendData = null;
 	const raceView = document.getElementById('race-view');
 	const event = nextEventEl.textContent;
 	const raceName = document.getElementById('race-event-name');
@@ -96,6 +98,7 @@ export function enterRaceView(nextEventEl, weekEl) {
 	const statusText = document.getElementById('race-weekend-status');
 	const statusChip = document.getElementById('race-status-chip');
 	const weekendPanel = document.getElementById('race-weekend-panel');
+	const strategyPanel = document.getElementById('race-strategy-panel');
 
 	raceName.textContent = event.replace('Next: ', '').split(' - ')[0] || 'Grand Prix';
 	raceWeek.textContent = weekEl.textContent;
@@ -121,6 +124,7 @@ export function enterRaceView(nextEventEl, weekEl) {
 		simBtn.style.display = '';
 	}
 	if (weekendPanel) weekendPanel.style.display = 'grid';
+	if (strategyPanel) strategyPanel.style.display = 'none';
 	document.getElementById('race-results-container').style.display = 'none';
 	const commentaryLog = document.getElementById('race-commentary-log');
 	const lapCounter = document.getElementById('race-lap-counter');
@@ -142,8 +146,10 @@ export function enterRaceView(nextEventEl, weekEl) {
 	raceView.style.display = 'flex';
 }
 
-export function renderRaceWeekend(data) {
+export function renderRaceWeekend(data = currentRaceWeekendData) {
+	if (!data) return;
 	stopRaceAutoplay();
+	currentRaceWeekendData = data;
 	const qualifyingBtn = document.getElementById('simulate-qualifying-btn');
 	const simBtn = document.getElementById('simulate-race-btn');
 	const qualifyingBody = document.getElementById('race-qualifying-body');
@@ -154,6 +160,7 @@ export function renderRaceWeekend(data) {
 	const statusText = document.getElementById('race-weekend-status');
 	const statusChip = document.getElementById('race-status-chip');
 	const weekendPanel = document.getElementById('race-weekend-panel');
+	const strategyPanel = document.getElementById('race-strategy-panel');
 	const resultsContainer = document.getElementById('race-results-container');
 	const qualifyingResults = Array.isArray(data.qualifying_results) ? data.qualifying_results : [];
 	const qualifyingComplete = !!data.qualifying_complete;
@@ -218,7 +225,73 @@ export function renderRaceWeekend(data) {
 		simBtn.style.display = '';
 	}
 	if (weekendPanel) weekendPanel.style.display = 'grid';
+	if (strategyPanel) strategyPanel.style.display = 'none';
 	if (resultsContainer && !raceComplete) resultsContainer.style.display = 'none';
+}
+
+function strategyCardMarkup(strategy) {
+	const plannedPitLaps = Array.isArray(strategy.planned_pit_laps) ? strategy.planned_pit_laps : [];
+	return `
+		<div class="race-strategy-card" data-driver-id="${strategy.driver_id}">
+			<div class="race-strategy-card-head">
+				<div>
+					<h3>${strategy.driver_name}</h3>
+					<p>${strategy.grid_position ? `Grid: P${strategy.grid_position}` : 'Grid: TBD'}</p>
+				</div>
+				<div class="race-strategy-stop-block">
+					<label for="race-strategy-stops-${strategy.driver_id}">Stops</label>
+					<select id="race-strategy-stops-${strategy.driver_id}" class="race-strategy-stop-select" data-driver-id="${strategy.driver_id}">
+						<option value="1"${strategy.planned_stops === 1 ? ' selected' : ''}>1 stop</option>
+						<option value="2"${strategy.planned_stops === 2 ? ' selected' : ''}>2 stops</option>
+						<option value="3"${strategy.planned_stops === 3 ? ' selected' : ''}>3 stops</option>
+					</select>
+				</div>
+			</div>
+			<div class="race-strategy-plan">
+				<span class="race-summary-label">Planned Laps</span>
+				<strong>${plannedPitLaps.map((lap) => `Lap ${lap}`).join(', ') || 'No stops planned'}</strong>
+			</div>
+			<button class="btn-secondary race-strategy-regenerate-btn" data-driver-id="${strategy.driver_id}">Regenerate</button>
+		</div>
+	`;
+}
+
+export function renderRaceStrategyScreen(data = currentRaceWeekendData) {
+	if (!data) return;
+	currentRaceWeekendData = data;
+	const weekendPanel = document.getElementById('race-weekend-panel');
+	const strategyPanel = document.getElementById('race-strategy-panel');
+	const resultsContainer = document.getElementById('race-results-container');
+	const eventDisplay = document.getElementById('race-strategy-event-display');
+	const cards = document.getElementById('race-strategy-cards');
+	const startBtn = document.getElementById('race-strategy-start-btn');
+	const strategies = Array.isArray(data.player_strategies) ? data.player_strategies : [];
+
+	if (eventDisplay) eventDisplay.textContent = data.event_name || data.circuit_name || 'Grand Prix';
+	if (cards) {
+		cards.innerHTML = strategies.map(strategyCardMarkup).join('');
+		if (!strategies.length) {
+			cards.innerHTML = '<div class="placeholder-msg">No player cars are available for strategy setup.</div>';
+		}
+	}
+	if (startBtn) {
+		startBtn.disabled = !data.qualifying_complete || data.race_complete || !strategies.length;
+		startBtn.textContent = 'START RACE';
+	}
+	if (weekendPanel) weekendPanel.style.display = 'none';
+	if (resultsContainer) resultsContainer.style.display = 'none';
+	if (strategyPanel) strategyPanel.style.display = 'grid';
+}
+
+export function openRaceStrategyScreen() {
+	renderRaceStrategyScreen(currentRaceWeekendData);
+}
+
+export function collectRaceStrategySelections() {
+	return Array.from(document.querySelectorAll('.race-strategy-stop-select')).map((select) => ({
+		driver_id: Number(select.dataset.driverId),
+		planned_stops: Number(select.value),
+	}));
 }
 
 function renderLapSnapshot(data, lapIndex) {
@@ -354,9 +427,11 @@ function startRaceAutoplay(data) {
 }
 
 export function renderRaceResults(data) {
+	currentRaceWeekendData = data;
 	const tbody = document.getElementById('race-results-body');
 	const container = document.getElementById('race-results-container');
 	const weekendPanel = document.getElementById('race-weekend-panel');
+	const strategyPanel = document.getElementById('race-strategy-panel');
 	const qualifyingResultsBody = document.getElementById('race-results-qualifying-body');
 	const qualifyingPoleDisplay = document.getElementById('race-results-pole-display');
 	const simulateBtn = document.getElementById('simulate-race-btn');
@@ -461,6 +536,7 @@ export function renderRaceResults(data) {
 	}
 
 	if (weekendPanel) weekendPanel.style.display = 'none';
+	if (strategyPanel) strategyPanel.style.display = 'none';
 	simulateBtn.style.display = 'none';
 	container.style.display = 'block';
 	activateRaceTab('timing');
@@ -468,6 +544,7 @@ export function renderRaceResults(data) {
 
 export function exitRaceView() {
 	stopRaceAutoplay();
+	currentRaceWeekendData = null;
 	const raceView = document.getElementById('race-view');
 	raceView.style.display = 'none';
 

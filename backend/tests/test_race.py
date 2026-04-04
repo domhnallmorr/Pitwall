@@ -352,12 +352,14 @@ def test_simulate_race_can_include_mechanical_outs_with_player_team():
 
 
 def test_simulate_race_marks_lapped_cars_on_timing_screen():
+    random.seed(7)
     state = create_race_state()
-    state.circuits[0].laps = 40
+    state.circuits[0].laps = 60
     state.drivers[0].speed = 100
     state.teams[0].car_speed = 100
+    state.drivers[2].speed = 5
     state.drivers[3].speed = 5
-    state.teams[1].car_speed = 5
+    state.teams[1].car_speed = 1
     manager = RaceManager()
     manager._pick_crash_count = lambda _: 0
 
@@ -583,6 +585,36 @@ def test_simulate_race_emits_pit_stop_events():
 
     assert len(pit_events) == 4
     assert all(event["lap"] == 4 for event in pit_events)
+
+
+def test_simulate_race_uses_saved_player_pit_strategy():
+    state = create_race_state()
+    state.player_team_id = 1
+    manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
+    event_key = f"{state.year}_{state.calendar.current_week}_Test GP"
+    state.player_pit_strategies_by_event[event_key] = {
+        1: {"planned_stops": 1, "planned_pit_laps": [3]},
+        2: {"planned_stops": 2, "planned_pit_laps": [2, 5]},
+    }
+
+    result = manager.simulate_race(state)
+
+    driver_one_stops = [
+        event["lap"]
+        for lap in result["lap_history"]
+        for event in lap.get("events", [])
+        if event.get("type") == "pit_stop" and event.get("driver_id") == 1
+    ]
+    driver_two_stops = [
+        event["lap"]
+        for lap in result["lap_history"]
+        for event in lap.get("events", [])
+        if event.get("type") == "pit_stop" and event.get("driver_id") == 2
+    ]
+
+    assert driver_one_stops == [3]
+    assert driver_two_stops == [2, 5]
 
 
 def test_pit_stop_resets_tyre_wear_for_next_lap():

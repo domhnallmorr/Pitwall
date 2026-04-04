@@ -18,6 +18,7 @@ const API = {
 	skipEvent: () => window.electronAPI.sendToPython({ type: 'skip_event' }),
 	attendTest: (kms) => window.electronAPI.sendToPython({ type: 'attend_test', kms }),
 	getRaceWeekend: () => window.electronAPI.sendToPython({ type: 'get_race_weekend' }),
+	setRaceStrategy: (strategies) => window.electronAPI.sendToPython({ type: 'set_race_strategy', strategies }),
 	simulateQualifying: () => window.electronAPI.sendToPython({ type: 'simulate_qualifying' }),
 	simulateRace: () => window.electronAPI.sendToPython({ type: 'simulate_race' }),
 	getEmails: () => window.electronAPI.sendToPython({ type: 'get_emails' }),

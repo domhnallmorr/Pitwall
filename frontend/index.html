@@ -575,6 +575,29 @@
         </div>
       </div>
 
+      <div id="race-strategy-panel" class="race-strategy-panel" style="display: none;">
+        <div class="race-strategy-header">
+          <div>
+            <p class="race-weekend-kicker">Pre-Race Strategy</p>
+            <h2 class="race-weekend-title">Pit Plans</h2>
+            <p class="race-weekend-status">Lock in the planned number of fuel stops for both cars before the race begins.</p>
+          </div>
+          <div class="race-weekend-metric">
+            <span class="race-summary-label">Race</span>
+            <strong id="race-strategy-event-display">-</strong>
+          </div>
+        </div>
+
+        <div id="race-strategy-cards" class="race-strategy-cards">
+          <!-- JS populated -->
+        </div>
+
+        <div class="race-controls race-strategy-actions">
+          <button id="race-strategy-back-btn" class="btn-secondary btn-weekend">BACK</button>
+          <button id="race-strategy-start-btn" class="btn-simulate">START RACE</button>
+        </div>
+      </div>
+
       <div id="race-results-container" style="display: none;">
         <div class="race-tab-bar">
           <button id="race-tab-timing" class="tab-btn race-tab-btn active" data-race-tab="timing">Timing</button>

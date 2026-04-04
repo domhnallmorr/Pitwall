@@ -17,12 +17,15 @@ import FinanceView from './views/finance.js';
 import FacilitiesView from './views/facilities.js';
 import { renderLayoutPartials } from './layout/partials.js';
 import {
+	collectRaceStrategySelections,
 	enterRaceView,
 	exitRaceView,
 	handleGameStart,
+	openRaceStrategyScreen,
 	openDriverProfile,
 	refreshVisibleViews,
 	renderRaceResults,
+	renderRaceStrategyScreen,
 	renderRaceWeekend,
 	showTeamSelect,
 	updateDashboard,
@@ -232,6 +235,8 @@ function setupEventListeners() {
 	// Race View Controls
 	const qualifyingBtn = document.getElementById('simulate-qualifying-btn');
 	const simulateBtn = document.getElementById('simulate-race-btn');
+	const strategyBackBtn = document.getElementById('race-strategy-back-btn');
+	const strategyStartBtn = document.getElementById('race-strategy-start-btn');
 	const returnBtn = document.getElementById('return-dashboard-btn');
 
 	if (qualifyingBtn) {
@@ -245,12 +250,40 @@ function setupEventListeners() {
 
 	if (simulateBtn) {
 		simulateBtn.addEventListener('click', () => {
+			openRaceStrategyScreen();
+		});
+	}
+
+	if (strategyBackBtn) {
+		strategyBackBtn.addEventListener('click', () => {
+			renderRaceWeekend();
+		});
+	}
+
+	if (strategyStartBtn) {
+		strategyStartBtn.addEventListener('click', () => {
 			console.log("Simulating Race...");
-			simulateBtn.disabled = true;
-			simulateBtn.textContent = "SIMULATING...";
+			strategyStartBtn.disabled = true;
+			strategyStartBtn.textContent = "SIMULATING...";
 			API.simulateRace();
 		});
 	}
+
+	document.addEventListener('change', (event) => {
+		const target = event.target;
+		if (!(target instanceof HTMLElement) || !target.classList.contains('race-strategy-stop-select')) {
+			return;
+		}
+		API.setRaceStrategy(collectRaceStrategySelections());
+	});
+
+	document.addEventListener('click', (event) => {
+		const target = event.target;
+		if (!(target instanceof HTMLElement) || !target.classList.contains('race-strategy-regenerate-btn')) {
+			return;
+		}
+		API.setRaceStrategy(collectRaceStrategySelections());
+	});
 
 	if (returnBtn) {
 		returnBtn.addEventListener('click', () => {
@@ -326,6 +359,8 @@ function setupIPC() {
 				renderRaceWeekend(parsed.data);
 			} else if (parsed.type === 'qualifying_result') {
 				renderRaceWeekend(parsed.data);
+			} else if (parsed.type === 'race_strategy_updated') {
+				renderRaceStrategyScreen(parsed.data);
 			} else if (parsed.type === 'email_data') {
 				emailView.render(parsed.data);
 			} else if (parsed.type === 'email_read') {

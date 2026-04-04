@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 from app.commands.race_commands import (
     _build_race_weekend_payload,
     handle_get_race_weekend,
+    handle_set_race_strategy,
     handle_simulate_qualifying,
     handle_simulate_race,
 )
@@ -64,6 +65,29 @@ def test_build_race_weekend_payload_includes_qualifying_and_processed_status():
     assert payload["qualifying_complete"] is True
     assert payload["race_complete"] is True
     assert payload["qualifying_results"] == [{"position": 1, "driver_name": "Driver One"}]
+    assert len(payload["player_strategies"]) == 2
+
+
+def test_handle_set_race_strategy_updates_player_plans():
+    state = create_state()
+    logger = Mock()
+
+    returned_state, response = handle_set_race_strategy(
+        state,
+        logger,
+        [
+            {"driver_id": 1, "planned_stops": 3},
+            {"driver_id": 2, "planned_stops": 1},
+        ],
+    )
+
+    assert returned_state is state
+    assert response["status"] == "success"
+    assert response["type"] == "race_strategy_updated"
+    strategies = response["data"]["player_strategies"]
+    assert [row["planned_stops"] for row in strategies] == [3, 1]
+    assert len(strategies[0]["planned_pit_laps"]) == 3
+    assert len(strategies[1]["planned_pit_laps"]) == 1
 
 
 def test_handle_get_race_weekend_returns_error_when_no_weekend():

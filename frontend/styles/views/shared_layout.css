@@ -231,6 +231,95 @@
   box-shadow: 0 24px 44px rgba(0, 0, 0, 0.28);
 }
 
+.race-strategy-panel {
+  width: 100%;
+  display: grid;
+  gap: 18px;
+  padding: 22px 24px 24px;
+  border: 1px solid rgba(100, 255, 218, 0.14);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(18, 41, 72, 0.94), rgba(6, 16, 30, 0.96)),
+    radial-gradient(circle at top right, rgba(100, 255, 218, 0.12), transparent 42%);
+  box-shadow: 0 24px 44px rgba(0, 0, 0, 0.28);
+}
+
+.race-strategy-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(220px, 320px);
+  gap: 18px;
+  align-items: start;
+}
+
+.race-strategy-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.race-strategy-card {
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(100, 255, 218, 0.12);
+  background: rgba(7, 18, 33, 0.64);
+  display: grid;
+  gap: 14px;
+}
+
+.race-strategy-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: start;
+}
+
+.race-strategy-card-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.race-strategy-card-head p {
+  margin: 6px 0 0;
+  color: #9eb1d4;
+  font-size: 0.88rem;
+}
+
+.race-strategy-stop-block {
+  min-width: 120px;
+  display: grid;
+  gap: 6px;
+}
+
+.race-strategy-stop-block label {
+  color: #8892b0;
+  font-size: 0.75rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.race-strategy-stop-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid rgba(100, 255, 218, 0.2);
+  background: rgba(17, 34, 64, 0.88);
+  color: var(--text-color);
+  font: inherit;
+}
+
+.race-strategy-plan {
+  display: grid;
+  gap: 6px;
+}
+
+.race-strategy-actions {
+  justify-content: flex-end;
+}
+
+.race-strategy-regenerate-btn {
+  justify-self: start;
+}
+
 .race-weekend-hero {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
@@ -635,6 +724,11 @@
   }
 
   .race-weekend-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .race-strategy-header,
+  .race-strategy-cards {
     grid-template-columns: 1fr;
   }
 

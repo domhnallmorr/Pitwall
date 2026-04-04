@@ -40,6 +40,8 @@ class RaceManager:
 
 	def __init__(self):
 		self.stats_manager = DriverStatsManager()
+		self._active_player_team_id: int | None = None
+		self._active_player_pit_strategies: dict[int, dict[str, Any]] = {}
 
 	def _get_performance_weight(self, driver_speed: int, car_speed: int) -> int:
 		return get_performance_weight(driver_speed, car_speed)
@@ -83,6 +85,99 @@ class RaceManager:
 		if event is None:
 			return None
 		return f"{state.year}_{event.week}_{event.name}"
+
+	def _generate_pit_laps(self, planned_stops: int, circuit: Circuit) -> list[int]:
+		windows = strategy_windows(planned_stops, circuit.laps)
+		pit_laps: list[int] = []
+		previous_stop = 1
+		for start, end in windows:
+			start = max(start, previous_stop + 2)
+			end = max(start, end)
+			stop_lap = random.randint(start, end)
+			pit_laps.append(stop_lap)
+			previous_stop = stop_lap
+		return pit_laps
+
+	def _apply_fuel_strategy(
+		self,
+		entrant: dict[str, Any],
+		circuit: Circuit,
+		planned_stops: int,
+		planned_pit_laps: list[int],
+	):
+		entrant["planned_stops"] = planned_stops
+		entrant["planned_pit_laps"] = list(planned_pit_laps)
+		entrant["completed_stops"] = 0
+		entrant["stint_laps"] = 0
+		first_stint_end = planned_pit_laps[0] if planned_pit_laps else circuit.laps
+		entrant["fuel_kg"] = fuel_for_stint(circuit, first_stint_end)
+
+	def _player_strategy_entries(
+		self,
+		state: GameState,
+		qualifying_results: list[dict[str, Any]] | None = None,
+	) -> list[dict[str, Any]]:
+		if state.player_team is None:
+			return []
+
+		event_key = self._current_event_key(state)
+		if event_key is None:
+			return []
+
+		circuit = self._get_circuit(state)
+		strategy_map = state.player_pit_strategies_by_event.setdefault(event_key, {})
+		driver_lookup = {driver.id: driver for driver in state.drivers}
+		qualifying_lookup = {
+			row["driver_id"]: row["position"]
+			for row in (qualifying_results or state.qualifying_results_by_event.get(event_key, []))
+			if "driver_id" in row and "position" in row
+		}
+		rows: list[dict[str, Any]] = []
+
+		for driver_id in [state.player_team.driver1_id, state.player_team.driver2_id]:
+			if not driver_id or driver_id not in driver_lookup:
+				continue
+			driver = driver_lookup[driver_id]
+			entry = strategy_map.get(driver_id)
+			if not entry:
+				planned_stops = self._pick_planned_stops()
+				entry = {
+					"planned_stops": planned_stops,
+					"planned_pit_laps": self._generate_pit_laps(planned_stops, circuit),
+				}
+				strategy_map[driver_id] = entry
+			rows.append({
+				"driver_id": driver_id,
+				"driver_name": driver.name,
+				"team_id": state.player_team.id,
+				"team_name": state.player_team.name,
+				"grid_position": qualifying_lookup.get(driver_id),
+				"planned_stops": entry["planned_stops"],
+				"planned_pit_laps": list(entry["planned_pit_laps"]),
+			})
+
+		return rows
+
+	def update_player_pit_strategies(
+		self,
+		state: GameState,
+		strategies: list[dict[str, Any]],
+	) -> list[dict[str, Any]]:
+		event_key = self._current_event_key(state)
+		if event_key is None:
+			return []
+
+		circuit = self._get_circuit(state)
+		strategy_map = state.player_pit_strategies_by_event.setdefault(event_key, {})
+		for row in strategies:
+			driver_id = int(row["driver_id"])
+			planned_stops = max(1, min(3, int(row.get("planned_stops", 1))))
+			strategy_map[driver_id] = {
+				"planned_stops": planned_stops,
+				"planned_pit_laps": self._generate_pit_laps(planned_stops, circuit),
+			}
+
+		return self._player_strategy_entries(state)
 
 	def _build_participants(self, state: GameState) -> tuple[list[dict[str, Any]], Circuit]:
 		participants: list[dict[str, Any]] = []
@@ -154,6 +249,19 @@ class RaceManager:
 		return strategy_windows(stop_count, total_laps)
 
 	def _assign_fuel_strategy(self, entrant: dict[str, Any], circuit: Circuit):
+		if (
+			self._active_player_team_id is not None
+			and entrant.get("team_id") == self._active_player_team_id
+			and entrant.get("driver_id") in self._active_player_pit_strategies
+		):
+			strategy = self._active_player_pit_strategies[entrant["driver_id"]]
+			self._apply_fuel_strategy(
+				entrant,
+				circuit,
+				int(strategy["planned_stops"]),
+				list(strategy["planned_pit_laps"]),
+			)
+			return
 		assign_fuel_strategy(entrant, circuit)
 
 	def _prepare_participants(
@@ -258,8 +366,19 @@ class RaceManager:
 			qualifying_results = self._simulate_qualifying(participants, circuit)
 			if event_key is not None:
 				state.qualifying_results_by_event[event_key] = qualifying_results
+		self._player_strategy_entries(state, qualifying_results)
 		starting_grid = [row["driver_id"] for row in qualifying_results]
-		race_run = self._simulate_lap_race(participants, circuit, starting_grid)
+		if event_key is not None:
+			self._active_player_team_id = state.player_team_id
+			self._active_player_pit_strategies = {
+				int(driver_id): dict(strategy)
+				for driver_id, strategy in state.player_pit_strategies_by_event.get(event_key, {}).items()
+			}
+		try:
+			race_run = self._simulate_lap_race(participants, circuit, starting_grid)
+		finally:
+			self._active_player_team_id = None
+			self._active_player_pit_strategies = {}
 
 		results = []
 		finishing_position = 1

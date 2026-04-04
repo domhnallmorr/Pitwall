@@ -12,6 +12,7 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 		skipEvent: vi.fn(),
 		attendTest: vi.fn(),
 		getRaceWeekend: vi.fn(),
+		setRaceStrategy: vi.fn(),
 		simulateQualifying: vi.fn(),
 		simulateRace: vi.fn(),
 		getEmails: vi.fn(),
@@ -124,17 +125,22 @@ describe('renderer smoke', () => {
 			<button id="test-km-confirm-btn"></button>
 			<button id="simulate-race-btn"></button>
 			<button id="simulate-qualifying-btn"></button>
+			<button id="race-strategy-back-btn"></button>
+			<button id="race-strategy-start-btn"></button>
 			<button id="return-dashboard-btn"></button>
 			<div id="race-view" style="display:none;"></div>
 			<div id="race-event-name"></div>
 			<div id="race-week-display"></div>
 			<div id="race-weekend-panel"></div>
+			<div id="race-strategy-panel" style="display:none;"></div>
 			<div id="race-circuit-display"></div>
 			<div id="race-location-display"></div>
 			<div id="race-laps-display"></div>
 			<div id="race-pole-display"></div>
 			<div id="race-weekend-status"></div>
 			<div id="race-status-chip"></div>
+			<div id="race-strategy-event-display"></div>
+			<div id="race-strategy-cards"></div>
 			<table><tbody id="race-qualifying-body"></tbody></table>
 			<div id="race-lap-counter"></div>
 			<div id="race-leader-display"></div>
@@ -498,6 +504,7 @@ describe('renderer smoke', () => {
 				qualifying_complete: false,
 				race_complete: false,
 				qualifying_results: [],
+				player_strategies: [],
 			},
 		}));
 
@@ -521,9 +528,14 @@ describe('renderer smoke', () => {
 				circuit_country: 'Monaco',
 				laps: 78,
 				qualifying_complete: true,
+				race_complete: false,
 				qualifying_results: [
 					{ position: 1, driver_name: 'A', team_name: 'T1', best_lap_ms: 80000 },
 					{ position: 2, driver_name: 'B', team_name: 'T2', best_lap_ms: 80200 },
+				],
+				player_strategies: [
+					{ driver_id: 1, driver_name: 'A', planned_stops: 2, planned_pit_laps: [18, 39], grid_position: 1 },
+					{ driver_id: 2, driver_name: 'B', planned_stops: 1, planned_pit_laps: [31], grid_position: 2 },
 				],
 			},
 		}));
@@ -534,9 +546,31 @@ describe('renderer smoke', () => {
 		expect(document.getElementById('race-qualifying-body').children).toHaveLength(2);
 
 		simulateBtn.click();
+		expect(document.getElementById('race-strategy-panel').style.display).toBe('grid');
+		document.getElementById('race-strategy-stops-1').value = '3';
+		document.getElementById('race-strategy-stops-1').dispatchEvent(new window.Event('change', { bubbles: true }));
+		expect(apiMock.setRaceStrategy).toHaveBeenCalledWith([
+			{ driver_id: 1, planned_stops: 3 },
+			{ driver_id: 2, planned_stops: 1 },
+		]);
+		ipcHandler(JSON.stringify({
+			type: 'race_strategy_updated',
+			status: 'success',
+			data: {
+				event_name: 'Monaco Grand Prix',
+				qualifying_complete: true,
+				race_complete: false,
+				player_strategies: [
+					{ driver_id: 1, driver_name: 'A', planned_stops: 3, planned_pit_laps: [16, 34, 51], grid_position: 1 },
+					{ driver_id: 2, driver_name: 'B', planned_stops: 1, planned_pit_laps: [31], grid_position: 2 },
+				],
+			},
+		}));
+		expect(document.getElementById('race-strategy-cards').textContent).toContain('Lap 51');
+		document.getElementById('race-strategy-start-btn').click();
 		expect(apiMock.simulateRace).toHaveBeenCalledTimes(1);
-		expect(simulateBtn.disabled).toBe(true);
-		expect(simulateBtn.textContent).toBe('SIMULATING...');
+		expect(document.getElementById('race-strategy-start-btn').disabled).toBe(true);
+		expect(document.getElementById('race-strategy-start-btn').textContent).toBe('SIMULATING...');
 
 		advanceBtn.classList.add('event-active');
 		document.getElementById('return-dashboard-btn').click();

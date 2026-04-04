@@ -16,6 +16,7 @@ from app.commands.game_commands import (
     handle_repair_car_wear,
     handle_load_roster,
     handle_get_race_weekend,
+    handle_set_race_strategy,
     handle_replace_commercial_manager,
     handle_replace_engine_supplier,
     handle_replace_technical_director,
@@ -206,6 +207,14 @@ def process_command(command):
         if not CURRENT_STATE:
             return {"status": "error", "message": "Game not started"}
         CURRENT_STATE, response = handle_get_race_weekend(CURRENT_STATE, logging)
+        return response
+
+    if cmd_type == 'set_race_strategy':
+        if not CURRENT_STATE:
+            return {"status": "error", "message": "Game not started"}
+        CURRENT_STATE, response = handle_set_race_strategy(CURRENT_STATE, logging, command.get("strategies"))
+        if response.get("status") == "success":
+            save_game(CURRENT_STATE)
         return response
 
     if cmd_type == 'simulate_qualifying':

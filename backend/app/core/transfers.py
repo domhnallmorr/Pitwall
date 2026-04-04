@@ -16,6 +16,7 @@ class TransferManager:
         announced = list(state.announced_ai_signings)
         blocked_seats = {(s["team_id"], s["seat"]) for s in announced}
         blocked_drivers = {s["driver_id"] for s in announced}
+        teams_by_id = {team.id: team for team in state.teams}
 
         vacancies = self._get_ai_vacancies_for_next_season(state, blocked_seats)
         available = self._get_available_next_season_drivers(state, blocked_drivers)
@@ -34,10 +35,14 @@ class TransferManager:
         min_announce_week = min(min_announce_week, max_week)
 
         for vacancy in vacancies:
-            pool = [d for d in available if d.id not in taken_drivers]
+            team = teams_by_id.get(vacancy["team_id"])
+            pool = [
+                d for d in available
+                if d.id not in taken_drivers and d.id != vacancy.get("outgoing_driver_id")
+            ]
             if not pool:
                 break
-            driver = random.choice(pool)
+            driver = self._pick_driver_for_vacancy(team, vacancy, pool)
             taken_drivers.add(driver.id)
             planned.append(
                 {
@@ -55,6 +60,117 @@ class TransferManager:
 
         state.planned_ai_signings = planned
         return planned
+
+    def _pick_driver_for_vacancy(self, team: Any, vacancy: Dict[str, Any], pool: List[Any]) -> Any:
+        scored_pool = sorted(
+            pool,
+            key=lambda driver: self._score_driver_for_vacancy(team, vacancy, driver),
+            reverse=True,
+        )
+        shortlist = scored_pool[: min(3, len(scored_pool))]
+        return random.choice(shortlist)
+
+    def _team_desirability(self, state: GameState, team: Any) -> int:
+        current_strength = getattr(team, "car_speed", 50)
+        baseline_strength = next(
+            (
+                snapshot.get("CarRating", current_strength)
+                for snapshot in state.grid_snapshots.get(1998, [])
+                if snapshot.get("Team") == getattr(team, "name", None)
+            ),
+            current_strength,
+        )
+        principal_skill = 50
+        principal_id = getattr(team, "team_principal_id", None)
+        if principal_id is not None:
+            principal = next((p for p in state.team_principals if p.id == principal_id), None)
+            if principal is not None:
+                principal_skill = principal.skill
+
+        desirability = round((current_strength * 0.5) + (baseline_strength * 0.35) + (principal_skill * 0.15))
+        return desirability
+
+    def _vacancy_strategy(self, team: Any, vacancy: Dict[str, Any]) -> str:
+        team_strength = vacancy.get("team_desirability", getattr(team, "car_speed", 50) if team is not None else 50)
+        lead_seat = vacancy.get("seat") == "driver1_id"
+        outgoing_speed = vacancy.get("outgoing_driver_speed", 0)
+        outgoing_pay_driver = vacancy.get("outgoing_driver_pay_driver", False)
+
+        if not lead_seat and team_strength <= 45:
+            return "cash_seat"
+        if outgoing_pay_driver and not lead_seat:
+            return "cash_seat"
+        if lead_seat and (team_strength >= 60 or outgoing_speed < max(58, team_strength - 6)):
+            return "upgrade"
+        if not lead_seat and outgoing_speed < max(48, team_strength - 10):
+            return "upgrade"
+        return "hold"
+
+    def _score_driver_for_vacancy(self, team: Any, vacancy: Dict[str, Any], driver: Any) -> int:
+        lead_seat = vacancy.get("seat") == "driver1_id"
+        team_strength = vacancy.get("team_desirability", getattr(team, "car_speed", 50) if team is not None else 50)
+        strategy = self._vacancy_strategy(team, vacancy)
+
+        if strategy == "upgrade":
+            target_speed = max(50, team_strength + (7 if lead_seat else 0))
+        elif strategy == "cash_seat":
+            target_speed = max(42, team_strength - (8 if lead_seat else 12))
+        else:
+            outgoing_speed = vacancy.get("outgoing_driver_speed", team_strength)
+            target_speed = max(45, outgoing_speed + (2 if lead_seat else -1))
+
+        score = driver.speed * 4
+        if driver.speed < target_speed:
+            score -= (target_speed - driver.speed) * 8
+        else:
+            score += min(10, driver.speed - target_speed) * 3
+
+        if driver.age <= 25:
+            score += 8
+        elif driver.age <= 31:
+            score += 4
+        elif driver.age >= 39:
+            score -= 16
+        elif driver.age >= 36:
+            score -= 8
+
+        if driver.pay_driver:
+            if strategy == "cash_seat" and not lead_seat:
+                score += 18 if team_strength <= 45 else 10
+            elif lead_seat:
+                score -= 18
+            elif team_strength <= 45:
+                score += 16
+            elif team_strength <= 55:
+                score += 4
+            else:
+                score -= 10
+
+        if driver.team_id is None:
+            score += 3
+
+        outgoing_speed = vacancy.get("outgoing_driver_speed")
+        if strategy == "hold" and outgoing_speed is not None:
+            score -= abs(driver.speed - outgoing_speed) * 8
+        elif strategy == "upgrade" and outgoing_speed is not None and driver.speed > outgoing_speed:
+            score += min(12, driver.speed - outgoing_speed) * 2
+
+        return score
+
+    def _should_retain_driver(self, team: Any, seat: str, driver: Any) -> bool:
+        if not driver.active:
+            return False
+
+        team_strength = getattr(team, "car_speed", 50)
+        lead_seat = seat == "driver1_id"
+        minimum_speed = max(58, team_strength - 2) if lead_seat else max(50, team_strength - 8)
+        age_limit = 34 if lead_seat else 36
+
+        if driver.pay_driver and (lead_seat or team_strength >= 55):
+            return False
+        if driver.age > age_limit:
+            return False
+        return driver.speed >= minimum_speed
 
     def publish_due_announcements(self, state: GameState) -> List[Dict[str, Any]]:
         due = [
@@ -271,10 +387,28 @@ class TransferManager:
                     continue
                 driver_id = getattr(team, seat)
                 driver = drivers_by_id.get(driver_id)
-                if driver is None or not self._is_driver_retained_next_season(driver, state.year):
+                if driver is None:
                     vacancies.append(
                         {"team_id": team.id, "team_name": team.name, "seat": seat, "seat_label": seat_label}
                     )
+                    continue
+                if driver.contract_length == 1 and self._should_retain_driver(team, seat, driver):
+                    continue
+                if self._is_driver_retained_next_season(driver, state.year):
+                    continue
+                vacancies.append(
+                    {
+                        "team_id": team.id,
+                        "team_name": team.name,
+                        "seat": seat,
+                        "seat_label": seat_label,
+                        "team_desirability": self._team_desirability(state, team),
+                        "outgoing_driver_id": driver.id,
+                        "outgoing_driver_name": driver.name,
+                        "outgoing_driver_speed": driver.speed,
+                        "outgoing_driver_pay_driver": driver.pay_driver,
+                    }
+                )
 
         return vacancies
 

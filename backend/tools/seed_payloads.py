@@ -41,6 +41,11 @@ DRIVER_SPEEDS = {
     "Eugenio Boldini": 59,
     "Kasper Rimmanen": 89,
     "Teodoro Marcello": 62,
+    "Toshiro Sakamoto": 73,
+    "Alistair Maclean": 68,
+    "Mason Wyatt": 79,
+    "Arthur Dalton": 72,
+    "Fabrizio Moreira": 76,
 }
 
 DRIVER_RACE_STARTS = {
@@ -86,6 +91,11 @@ DRIVER_RACE_STARTS = {
     "Eugenio Boldini": 0,
     "Kasper Rimmanen": 0,
     "Teodoro Marcello": 0,
+    "Toshiro Sakamoto": 0,
+    "Alistair Maclean": 0,
+    "Mason Wyatt": 0,
+    "Arthur Dalton": 0,
+    "Fabrizio Moreira": 0,
 }
 
 DRIVER_WINS = {
@@ -131,6 +141,11 @@ DRIVER_WINS = {
     "Eugenio Boldini": 0,
     "Kasper Rimmanen": 0,
     "Teodoro Marcello": 0,
+    "Toshiro Sakamoto": 0,
+    "Alistair Maclean": 0,
+    "Mason Wyatt": 0,
+    "Arthur Dalton": 0,
+    "Fabrizio Moreira": 0,
 }
 
 DRIVER_CONTRACT_LENGTHS = {
@@ -162,6 +177,11 @@ DRIVER_CONTRACT_LENGTHS = {
     "Eugenio Boldini": 0,
     "Kasper Rimmanen": 0,
     "Teodoro Marcello": 0,
+    "Toshiro Sakamoto": 0,
+    "Alistair Maclean": 0,
+    "Mason Wyatt": 0,
+    "Arthur Dalton": 0,
+    "Fabrizio Moreira": 0,
 }
 
 TEAM_SPEEDS = {
@@ -464,6 +484,11 @@ FUTURE_DRIVERS_DATA = [
     (2000, "Eugenio Boldini", 21, "Brazil", 0, 0),
     (2000, "Kasper Rimmanen", 20, "Finland", 0, 0),
     (2000, "Teodoro Marcello", 24, "Brazil", 0, 1),
+    (2001, "Toshiro Sakamoto", 25, "Japan", 0, 0),
+    (2001, "Alistair Maclean", 31, "United Kingdom", 0, 0),
+    (2001, "Mason Wyatt", 25, "Australia", 0, 0),
+    (2001, "Arthur Dalton", 22, "United Kingdom", 0, 0),
+    (2001, "Fabrizio Moreira", 20, "Brazil", 0, 0),
 ]
 
 CALENDAR_EVENTS_BASE = [
@@ -529,6 +554,11 @@ DRIVERS_DATA = [
     (2000, "Eugenio Boldini", 21, "Brazil", 0, 0),
     (2000, "Kasper Rimmanen", 20, "Finland", 0, 0),
     (2000, "Teodoro Marcello", 24, "Brazil", 0, 1),
+    (2001, "Toshiro Sakamoto", 25, "Japan", 0, 0),
+    (2001, "Alistair Maclean", 31, "United Kingdom", 0, 0),
+    (2001, "Mason Wyatt", 25, "Australia", 0, 0),
+    (2001, "Arthur Dalton", 22, "United Kingdom", 0, 0),
+    (2001, "Fabrizio Moreira", 20, "Brazil", 0, 0),
 ]
 
 TEAMS_DATA = [
