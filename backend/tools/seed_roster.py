@@ -129,6 +129,8 @@ def seed_data(conn):
             )
             conn.commit()
 
+        sync_seed_table_names(conn, "drivers", DRIVERS_DATA)
+
         # Always refresh speed values for known names in existing DBs.
         c.executemany(
             'UPDATE drivers SET speed = ? WHERE name = ?',

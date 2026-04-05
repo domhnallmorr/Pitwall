@@ -13,6 +13,17 @@ def create_seeded_db():
 
 
 @patch("app.core.roster.get_connection")
+def test_load_roster_excludes_1999_future_drivers_from_1998(mock_get_conn):
+    mock_get_conn.return_value = create_seeded_db()
+
+    _, drivers, year, _, _ = load_roster(year=1998)
+
+    assert year == 1998
+    names = {driver.name for driver in drivers}
+    assert "Luisano Burci" not in names
+
+
+@patch("app.core.roster.get_connection")
 def test_load_roster_includes_2000_future_drivers_with_supported_fields(mock_get_conn):
     mock_get_conn.return_value = create_seeded_db()
 
@@ -54,6 +65,24 @@ def test_load_roster_includes_2000_future_drivers_with_supported_fields(mock_get
 
     assert all(driver.race_starts == 0 for driver in [tobias, adrian, faustino, eugenio, kasper, teodoro])
     assert all(driver.wins == 0 for driver in [tobias, adrian, faustino, eugenio, kasper, teodoro])
+
+
+@patch("app.core.roster.get_connection")
+def test_load_roster_includes_1999_future_driver_luisano_burci(mock_get_conn):
+    mock_get_conn.return_value = create_seeded_db()
+
+    _, drivers, year, _, _ = load_roster(year=1999)
+
+    assert year == 1999
+    by_name = {driver.name: driver for driver in drivers}
+    luisano = by_name["Luisano Burci"]
+
+    assert luisano.age == 24
+    assert luisano.country == "Italy"
+    assert luisano.speed == 61
+    assert luisano.contract_length == 0
+    assert luisano.wage == 0
+    assert luisano.pay_driver is False
 
 
 @patch("app.core.roster.get_connection")
