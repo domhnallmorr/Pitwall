@@ -13,7 +13,10 @@ from app.core.management_transfers import (
 from app.core.ai_car_development import AICarDevelopmentManager
 from app.core.player_car_development import PlayerCarDevelopmentManager
 from app.core.testing import TestSessionManager
+from app.core.standings import StandingsManager
 from app.models.email import EmailCategory
+
+FINAL_SEASON = 2004
 
 class GameEngine:
     """
@@ -37,6 +40,9 @@ class GameEngine:
         Advances the game by one week.
         Returns a summary of what happened.
         """
+        if state.game_completed:
+            return self.get_week_summary(state)
+
         state.calendar.advance_week()
 
         # Process weekly finances
@@ -54,6 +60,38 @@ class GameEngine:
 
         # Check for season end
         if state.calendar.season_over:
+            if state.year >= FINAL_SEASON:
+                standings = StandingsManager()
+                final_drivers = [
+                    {"name": d.name, "points": d.points}
+                    for d in standings.get_driver_standings(state)
+                    if d.points > 0
+                ]
+                final_constructors = [
+                    {"name": t.name, "points": t.points}
+                    for t in standings.get_constructor_standings(state)
+                    if t.points > 0
+                ]
+                state.game_completed = True
+                state.completion_year = state.year
+                champion = final_drivers[0]["name"] if final_drivers else "Unknown"
+                state.add_email(
+                    sender="Board of Directors",
+                    subject=f"Career Complete: End of {state.year}",
+                    body=(
+                        f"You have reached the end of the playable era with the completion of the {state.year} season.\n\n"
+                        f"Drivers' Champion: {champion}\n"
+                        f"Your career save is now complete and can be reviewed, but progression beyond {state.year} is closed."
+                    ),
+                    category=EmailCategory.SEASON,
+                )
+                summary = self.get_week_summary(state)
+                summary["game_completed"] = True
+                summary["completion_year"] = state.completion_year
+                summary["final_driver_standings"] = final_drivers
+                summary["final_constructor_standings"] = final_constructors
+                return summary
+
             rollover_info = self.rollover_manager.process_rollover(state)
             summary = self.get_week_summary(state)
             summary["season_rollover"] = True
@@ -67,6 +105,20 @@ class GameEngine:
         event = state.calendar.current_event
         event_active = False
         button_text = "ADVANCE"
+        next_event_display = state.next_event_display
+
+        if state.game_completed:
+            return {
+                "week": state.calendar.current_week,
+                "year": state.year,
+                "new_date_display": state.week_display,
+                "next_event_display": "Career Complete",
+                "event_active": False,
+                "button_text": "CAREER COMPLETE",
+                "balance": state.finance.balance,
+                "game_completed": True,
+                "completion_year": state.completion_year,
+            }
 
         if event:
             event_id = f"{event.week}_{event.name}"
@@ -81,7 +133,7 @@ class GameEngine:
             "week": state.calendar.current_week,
             "year": state.year,
             "new_date_display": state.week_display,
-            "next_event_display": state.next_event_display,
+            "next_event_display": next_event_display,
             "event_active": event_active,
             "button_text": button_text,
             "balance": state.finance.balance

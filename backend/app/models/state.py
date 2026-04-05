@@ -73,6 +73,8 @@ class GameState(BaseModel):
     announced_ai_tyre_supplier_signings: List[Dict[str, Any]] = Field(default_factory=list)
     planned_ai_car_updates: List[Dict[str, Any]] = Field(default_factory=list)
     player_car_development: PlayerCarDevelopment | None = None
+    game_completed: bool = False
+    completion_year: int | None = None
 
     def add_email(self, sender: str, subject: str, body: str, 
                   category: EmailCategory = EmailCategory.GENERAL) -> Email:

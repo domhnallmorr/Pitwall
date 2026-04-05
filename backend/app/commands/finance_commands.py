@@ -1,7 +1,15 @@
 from app.core.finance_reporting import build_finance_report
 from app.core.sponsorships import SponsorshipManager
+from app.core.transport import COUNTRY_COST_TIER, TransportCosts
+from app.core.workforce_costs import WorkforceCostManager
+from app.models.calendar import EventType
 from app.models.finance import TransactionCategory
 from app.models.state import GameState
+
+
+def _find_circuit_country(state: GameState, event_name: str) -> str:
+    circuit = next((c for c in state.circuits if c.name == event_name), None)
+    return circuit.country if circuit else "Unknown"
 
 
 def build_finance_payload(state: GameState):
@@ -44,6 +52,9 @@ def build_finance_payload(state: GameState):
     )
     sponsor_remaining = max(sponsor_yearly - sponsor_paid_so_far, 0) if sponsor_name else 0
     other_sponsorship_remaining = max(other_sponsorship_yearly - other_sponsorship_paid_so_far, 0)
+    workforce_manager = WorkforceCostManager()
+    workforce_race_cost = workforce_manager.calculate_race_cost(player_team.workforce, race_count) if player_team else 0
+    workforce_annual_projection = max(0, int(getattr(player_team, "workforce", 0) or 0)) * workforce_manager.annual_avg_wage if player_team else 0
 
     engine_supplier_name = player_team.engine_supplier_name if player_team else None
     engine_supplier_yearly = player_team.engine_supplier_yearly_cost if player_team else 0
@@ -83,17 +94,160 @@ def build_finance_payload(state: GameState):
         -t.amount for t in state.finance.transactions
         if t.category == TransactionCategory.FACILITIES and t.amount < 0
     )
+    facilities_remaining = max(state.finance.facilities_upgrade_total_cost - state.finance.facilities_upgrade_paid, 0)
+    facilities_installment = int(round(state.finance.facilities_upgrade_total_cost / max(1, state.finance.facilities_upgrade_total_races))) if state.finance.facilities_upgrade_active and state.finance.facilities_upgrade_total_races else 0
+    remaining_races = max(race_count - int(state.finance.prize_money_races_paid or 0), 0)
+
+    summary = report["summary"]
+    driver_wages_paid_so_far = sum(
+        -t.amount for t in state.finance.transactions
+        if t.category == TransactionCategory.DRIVER_WAGES and t.year == state.year and t.amount < 0
+    )
+    driver_wages_received_so_far = sum(
+        t.amount for t in state.finance.transactions
+        if t.category == TransactionCategory.DRIVER_WAGES and t.year == state.year and t.amount > 0
+    )
+    projected_driver_expense_remaining = max(
+        sum(max(0, int(getattr(driver, "wage", 0) or 0)) for driver in state.drivers if driver.team_id == state.player_team_id)
+        - driver_wages_paid_so_far,
+        0,
+    )
+    projected_driver_income_remaining = max(
+        sum(max(0, abs(int(getattr(driver, "wage", 0) or 0))) for driver in state.drivers if driver.team_id == state.player_team_id and int(getattr(driver, "wage", 0) or 0) < 0)
+        - driver_wages_received_so_far,
+        0,
+    )
+    projected_workforce_remaining = max(workforce_annual_projection - int(summary.get("workforce_total", 0) or 0), 0)
+    prize_remaining = max(state.finance.prize_money_entitlement - state.finance.prize_money_paid, 0)
+    next_race_prize_income = int(round(prize_remaining / max(1, remaining_races))) if remaining_races else 0
+    transport_events_remaining = []
+    for event in state.calendar.events:
+        if event.week < state.calendar.current_week:
+            continue
+        if event.type not in {EventType.RACE, EventType.TEST}:
+            continue
+        already_charged = any(
+            t.year == state.year
+            and t.category == TransactionCategory.TRANSPORT
+            and t.event_name == event.name
+            for t in state.finance.transactions
+        )
+        if not already_charged:
+            transport_events_remaining.append(event)
+
+    projected_transport_remaining = sum(
+        COUNTRY_COST_TIER.get(_find_circuit_country(state, event.name), TransportCosts.MEDIUM)
+        for event in transport_events_remaining
+    )
+
+    next_race_event = next(
+        (
+            event for event in state.calendar.events
+            if event.week >= state.calendar.current_week and event.type == EventType.RACE
+            and not any(
+                t.year == state.year
+                and t.category == TransactionCategory.TRANSPORT
+                and t.event_name == event.name
+                for t in state.finance.transactions
+            )
+        ),
+        None,
+    )
+    next_race_transport = 0
+    next_race_driver_income = 0
+    next_race_driver_cost = 0
+    if next_race_event is not None:
+        next_race_transport = COUNTRY_COST_TIER.get(_find_circuit_country(state, next_race_event.name), TransportCosts.MEDIUM)
+        for driver in state.drivers:
+            if driver.team_id != state.player_team_id:
+                continue
+            race_wage = int(round(abs(int(getattr(driver, "wage", 0) or 0)) / max(1, race_count)))
+            if int(getattr(driver, "wage", 0) or 0) < 0:
+                next_race_driver_income += race_wage
+            else:
+                next_race_driver_cost += race_wage
+
+    next_race_income = sponsor_installment + other_sponsorship_installment + next_race_prize_income
+    next_race_income += next_race_driver_income
+    if fuel_supplier_yearly < 0:
+        next_race_income += fuel_supplier_installment
+
+    next_race_outgoings = (
+        workforce_race_cost
+        + engine_supplier_installment
+        + tyre_supplier_installment
+        + facilities_installment
+        + next_race_transport
+        + next_race_driver_cost
+    )
+    if fuel_supplier_yearly > 0:
+        next_race_outgoings += fuel_supplier_installment
+    next_race_net = next_race_income - next_race_outgoings
+
+    projected_end_balance = state.finance.balance + prize_remaining + sponsor_remaining + other_sponsorship_remaining
+    projected_end_balance += projected_driver_income_remaining
+    projected_end_balance -= (
+        engine_supplier_remaining
+        + tyre_supplier_remaining
+        + projected_workforce_remaining
+        + projected_driver_expense_remaining
+        + projected_transport_remaining
+        + facilities_remaining
+    )
+    if fuel_supplier_yearly < 0:
+        projected_end_balance += fuel_supplier_remaining
+    else:
+        projected_end_balance -= fuel_supplier_remaining
+
+    contract_alerts = []
+    if sponsor_name and int(getattr(player_team, "title_sponsor_contract_length", 0) or 0) <= 1:
+        contract_alerts.append("Title sponsor deal expires after this season.")
+    if engine_supplier_name:
+        if bool(getattr(player_team, "builds_own_engine", False)):
+            contract_alerts.append("Engine programme is locked in-house.")
+        elif int(getattr(player_team, "engine_supplier_contract_length", 0) or 0) <= 1:
+            contract_alerts.append("Engine supplier deal expires after this season.")
+    if tyre_supplier_name and int(getattr(player_team, "tyre_supplier_contract_length", 0) or 0) <= 1:
+        contract_alerts.append("Tyre supplier deal expires after this season.")
+    if state.finance.facilities_upgrade_active and facilities_remaining > 0:
+        contract_alerts.append(
+            f"Facilities financing has {max(int(state.finance.facilities_upgrade_total_races or 0) - int(state.finance.facilities_upgrade_races_paid or 0), 0)} installments left."
+        )
+    if not contract_alerts:
+        contract_alerts.append("No immediate contract risks.")
+
+    if remaining_races > 0:
+        prize_outlook = (
+            f"${prize_remaining:,} of constructor prize money remains to be paid "
+            f"across {remaining_races} race weekends."
+        )
+    else:
+        prize_outlook = "All constructor prize installments have been paid for this season."
 
     return {
         "balance": state.finance.balance,
         "prize_money_entitlement": state.finance.prize_money_entitlement,
         "prize_money_paid": state.finance.prize_money_paid,
-        "prize_money_remaining": max(state.finance.prize_money_entitlement - state.finance.prize_money_paid, 0),
+        "prize_money_remaining": prize_remaining,
         "prize_money_races_paid": state.finance.prize_money_races_paid,
         "prize_money_total_races": state.finance.prize_money_total_races,
         "transactions": transactions,
-        "summary": report["summary"],
+        "summary": summary,
         "track_profit_loss": report["track_profit_loss"],
+        "overview": {
+            "projected_end_balance": projected_end_balance,
+            "next_race_income": next_race_income,
+            "next_race_outgoings": next_race_outgoings,
+            "next_race_net": next_race_net,
+            "prize_outlook": prize_outlook,
+            "contract_alerts": contract_alerts,
+            "facilities_status": (
+                f"${facilities_remaining:,} remaining over "
+                f"{max(int(state.finance.facilities_upgrade_total_races or 0) - int(state.finance.facilities_upgrade_races_paid or 0), 0)} installments."
+                if state.finance.facilities_upgrade_active and facilities_remaining > 0
+                else "No active facilities financing."
+            ),
+        },
         "sponsor": {
             "name": sponsor_name,
             "annual_value": sponsor_yearly,

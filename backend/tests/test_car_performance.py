@@ -78,3 +78,15 @@ def test_ai_team_principal_modifier_is_neutral_at_fifty_and_clamped():
     assert manager._ai_team_principal_modifier(80) == 2
     assert manager._ai_team_principal_modifier(99) == 3
     assert manager._ai_team_principal_modifier(5) == -3
+
+
+def test_resource_soft_cap_compresses_low_resource_ai_peaks():
+    manager = CarPerformanceManager()
+
+    assert manager._resource_soft_cap(workforce=90, facilities=20, technical_director_skill=80) == 69
+    assert manager._compress_to_resource_cap(
+        speed=82,
+        workforce=90,
+        facilities=20,
+        technical_director_skill=80,
+    ) == 74

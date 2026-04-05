@@ -10,9 +10,9 @@ def create_state() -> GameState:
     return GameState(
         year=1998,
         teams=[
-            Team(id=1, name="Player Team", country="United Kingdom", car_speed=80, workforce=250),
-            Team(id=2, name="AI Team A", country="Italy", car_speed=60, workforce=250),
-            Team(id=3, name="AI Team B", country="France", car_speed=98, workforce=250),
+            Team(id=1, name="Player Team", country="United Kingdom", car_speed=80, workforce=250, facilities=75),
+            Team(id=2, name="AI Team A", country="Italy", car_speed=60, workforce=250, facilities=75),
+            Team(id=3, name="AI Team B", country="France", car_speed=84, workforce=250, facilities=75),
         ],
         drivers=[],
         calendar=Calendar(
@@ -75,14 +75,14 @@ def test_apply_for_week_updates_speed_and_sends_email():
     team_a = next(t for t in state.teams if t.id == 2)
     team_b = next(t for t in state.teams if t.id == 3)
     assert team_a.car_speed == 61
-    assert team_b.car_speed == 103
+    assert team_b.car_speed == 87
     assert len(applied) == 2
     assert all(u.get("applied") is True for u in state.planned_ai_car_updates)
 
     email = next((e for e in state.emails if e.subject == "AI Car Development Updates: Week 6"), None)
     assert email is not None
     assert "AI Team A: Minor (+1) 60 -> 61" in email.body
-    assert "AI Team B: Major (+5) 98 -> 103" in email.body
+    assert "AI Team B: Major (+5) 84 -> 87" in email.body
 
 
 @patch("app.core.ai_car_development.random.randint", return_value=1)
@@ -114,6 +114,17 @@ def test_workforce_time_multiplier_and_development_weeks_are_bounded():
     assert manager._development_weeks_for_team("minor", 250) == 4
     assert manager._development_weeks_for_team("minor", 0) == 8
     assert manager._development_weeks_for_team("major", 0) == 20
+
+
+def test_update_weights_and_soft_cap_favor_better_resourced_teams():
+    manager = AICarDevelopmentManager()
+
+    low_weights = manager._update_weights_for_team(90, 20)
+    high_weights = manager._update_weights_for_team(250, 90)
+
+    assert low_weights[0] > high_weights[0]
+    assert low_weights[2] < high_weights[2]
+    assert manager._resource_soft_cap(90, 20) < manager._resource_soft_cap(250, 90)
 
 
 @patch("app.core.ai_car_development.random.choice", side_effect=lambda seq: seq[0])
@@ -189,3 +200,28 @@ def test_apply_for_week_handles_empty_due_updates_and_missing_team():
     assert applied == []
     assert state.planned_ai_car_updates[0]["applied"] is True
     assert state.emails == []
+
+
+def test_apply_for_week_compresses_low_resource_team_speed_growth():
+    state = create_state()
+    state.calendar.current_week = 6
+    low_resource_team = next(t for t in state.teams if t.id == 2)
+    low_resource_team.workforce = 90
+    low_resource_team.facilities = 20
+    low_resource_team.car_speed = 72
+    state.planned_ai_car_updates = [
+        {
+            "year": 1998,
+            "team_id": 2,
+            "team_name": "AI Team A",
+            "week": 6,
+            "update_type": "major",
+            "delta": 5,
+            "applied": False,
+        },
+    ]
+
+    applied = AICarDevelopmentManager().apply_for_week(state)
+
+    assert applied[0]["new_speed"] == 72
+    assert low_resource_team.car_speed == 72

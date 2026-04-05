@@ -7,6 +7,7 @@ from app.models.state import GameState
 
 class AICarDevelopmentManager:
     MAX_WORKFORCE = 250
+    MAX_FACILITIES = 100
     BASE_DEVELOPMENT_WEEKS = {
         "minor": 4,
         "medium": 7,
@@ -18,6 +19,9 @@ class AICarDevelopmentManager:
         "major": 5,
     }
     UPDATE_WEIGHTS = [0.5, 0.35, 0.15]
+    RESOURCE_CAP_BASE = 55
+    RESOURCE_CAP_RANGE = 35
+    RESOURCE_CAP_EXCESS_RETENTION = 0.35
 
     def _race_weeks(self, state: GameState) -> list[int]:
         return sorted({e.week for e in state.calendar.events if e.type == EventType.RACE})
@@ -32,6 +36,33 @@ class AICarDevelopmentManager:
         base_weeks = self.BASE_DEVELOPMENT_WEEKS[update_type]
         scaled = int(round(base_weeks * self._workforce_time_multiplier(workforce)))
         return max(base_weeks, min(base_weeks * 2, scaled))
+
+    def _resource_score(self, workforce: int, facilities: int) -> float:
+        bounded_workforce = max(0, min(int(workforce or 0), self.MAX_WORKFORCE))
+        bounded_facilities = max(0, min(int(facilities or 0), self.MAX_FACILITIES))
+        workforce_score = bounded_workforce / self.MAX_WORKFORCE
+        facilities_score = bounded_facilities / self.MAX_FACILITIES
+        return (workforce_score + facilities_score) / 2
+
+    def _update_weights_for_team(self, workforce: int, facilities: int) -> list[float]:
+        resource_score = self._resource_score(workforce, facilities)
+        return [
+            0.70 - (0.25 * resource_score),
+            0.23 + (0.10 * resource_score),
+            0.07 + (0.15 * resource_score),
+        ]
+
+    def _resource_soft_cap(self, workforce: int, facilities: int) -> int:
+        resource_score = self._resource_score(workforce, facilities)
+        return int(round(self.RESOURCE_CAP_BASE + (self.RESOURCE_CAP_RANGE * resource_score)))
+
+    def _compress_to_resource_cap(self, speed: int, workforce: int, facilities: int) -> int:
+        soft_cap = self._resource_soft_cap(workforce, facilities)
+        if speed <= soft_cap:
+            return max(1, speed)
+        excess = speed - soft_cap
+        compressed = soft_cap + int(round(excess * self.RESOURCE_CAP_EXCESS_RETENTION))
+        return max(1, compressed)
 
     def _pick_spread_weeks(self, weeks: list[int], count: int) -> list[int]:
         if count <= 0 or not weeks:
@@ -77,7 +108,7 @@ class AICarDevelopmentManager:
             for _ in range(target_updates):
                 update_type = random.choices(
                     ["minor", "medium", "major"],
-                    weights=self.UPDATE_WEIGHTS,
+                    weights=self._update_weights_for_team(team.workforce, team.facilities),
                     k=1,
                 )[0]
                 development_weeks = self._development_weeks_for_team(update_type, team.workforce)
@@ -131,7 +162,11 @@ class AICarDevelopmentManager:
                 continue
 
             old_speed = team.car_speed
-            team.car_speed = max(1, old_speed + int(update["delta"]))
+            proposed_speed = max(1, old_speed + int(update["delta"]))
+            team.car_speed = max(
+                old_speed,
+                self._compress_to_resource_cap(proposed_speed, team.workforce, team.facilities),
+            )
             update["applied"] = True
             applied_updates.append(
                 {

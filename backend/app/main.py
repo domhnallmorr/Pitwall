@@ -388,10 +388,12 @@ def process_command(command):
                 "data": {
                     "team_name": player_team.name if player_team else "Unknown",
                     "week_display": CURRENT_STATE.week_display,
-                    "next_event_display": CURRENT_STATE.next_event_display,
+                    "next_event_display": "Career Complete" if CURRENT_STATE.game_completed else CURRENT_STATE.next_event_display,
                     "year": CURRENT_STATE.year,
                     "balance": CURRENT_STATE.finance.balance,
-                    "unread_count": sum(1 for e in CURRENT_STATE.emails if not e.read)
+                    "unread_count": sum(1 for e in CURRENT_STATE.emails if not e.read),
+                    "game_completed": CURRENT_STATE.game_completed,
+                    "completion_year": CURRENT_STATE.completion_year,
                 }
             }
         except FileNotFoundError:

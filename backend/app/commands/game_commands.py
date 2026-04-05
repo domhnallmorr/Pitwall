@@ -161,6 +161,8 @@ def handle_start_career(state: GameState | None, logger: logging.Logger, team_na
                 "year": current_state.year,
                 "balance": current_state.finance.balance,
                 "unread_count": sum(1 for e in current_state.emails if not e.read),
+                "game_completed": current_state.game_completed,
+                "completion_year": current_state.completion_year,
             },
         }
     except Exception as e:

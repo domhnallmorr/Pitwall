@@ -1,28 +1,39 @@
 /**
  * Finance View
- * Displays team balance and transaction log.
+ * Displays team balance, commercial deals, suppliers, and ledger data.
  */
 
 export default class FinanceView {
 	constructor() {
 		this.tabBtns = document.querySelectorAll('.finance-tab-btn');
-		this.mainContent = document.getElementById('finance-content-main');
-		this.trackerContent = document.getElementById('finance-content-tracker');
-		this.logContent = document.getElementById('finance-content-log');
+		this.panels = {
+			overview: document.getElementById('finance-content-overview'),
+			commercial: document.getElementById('finance-content-commercial'),
+			suppliers: document.getElementById('finance-content-suppliers'),
+			ledger: document.getElementById('finance-content-ledger'),
+		};
 		this.balanceEl = document.getElementById('finance-balance-value');
+		this.netPlEl = document.getElementById('finance-net-pl');
+		this.projectedBalanceEl = document.getElementById('finance-projected-balance');
+		this.nextRaceNetEl = document.getElementById('finance-next-race-net');
+		this.nextRaceIncomeEl = document.getElementById('finance-next-race-income');
+		this.nextRaceOutgoingsEl = document.getElementById('finance-next-race-outgoings');
 		this.prizeEntitlementEl = document.getElementById('finance-prize-entitlement');
 		this.prizePaidEl = document.getElementById('finance-prize-paid');
 		this.prizeRemainingEl = document.getElementById('finance-prize-remaining');
+		this.prizeProgressEl = document.getElementById('finance-prize-progress');
+		this.prizeOutlookEl = document.getElementById('finance-prize-outlook');
+		this.facilitiesStatusEl = document.getElementById('finance-facilities-status');
+		this.contractAlertsEl = document.getElementById('finance-contract-alerts');
 		this.incomeTotalEl = document.getElementById('finance-income-total');
 		this.expenseTotalEl = document.getElementById('finance-expense-total');
-		this.netPlEl = document.getElementById('finance-net-pl');
 		this.transportTotalEl = document.getElementById('finance-transport-total');
+		this.testingTotalEl = document.getElementById('finance-testing-total');
 		this.workforceTotalEl = document.getElementById('finance-workforce-total');
 		this.engineSupplierTotalEl = document.getElementById('finance-engine-supplier-total');
 		this.tyreSupplierTotalEl = document.getElementById('finance-tyre-supplier-total');
 		this.fuelSupplierTotalEl = document.getElementById('finance-fuel-supplier-total');
 		this.sponsorshipTotalEl = document.getElementById('finance-sponsorship-total');
-		this.prizeProgressEl = document.getElementById('finance-prize-progress');
 		this.sponsorNameEl = document.getElementById('finance-sponsor-name');
 		this.sponsorReplaceBtn = document.getElementById('finance-sponsor-replace-btn');
 		this.engineSupplierReplaceBtn = document.getElementById('finance-engine-supplier-replace-btn');
@@ -80,6 +91,24 @@ export default class FinanceView {
 		this.onReplaceEngineSupplier = handler;
 	}
 
+	formatMoney(value, { signed = false } = {}) {
+		const amount = Number(value || 0);
+		const formatted = `$${Math.abs(amount).toLocaleString()}`;
+		if (!signed) {
+			return amount < 0 ? `-${formatted}` : formatted;
+		}
+		return amount >= 0 ? `+${formatted}` : `-${formatted}`;
+	}
+
+	applyMoneyState(element, value, { signed = false } = {}) {
+		if (!element) return;
+		element.textContent = this.formatMoney(value, { signed });
+		const amount = Number(value || 0);
+		element.className = amount < 0
+			? 'finance-balance-amount finance-negative'
+			: 'finance-balance-amount';
+	}
+
 	setSupplierLogo(targetWrap, supplierName) {
 		if (!targetWrap) return;
 		if (!supplierName) {
@@ -100,16 +129,10 @@ export default class FinanceView {
 
 	bindTabs() {
 		if (!this.tabBtns.length) return;
-		const panelByType = {
-			main: this.mainContent,
-			tracker: this.trackerContent,
-			log: this.logContent,
-		};
 		const showPanel = (panel) => {
 			if (!panel) return;
 			panel.style.display = 'block';
 			panel.classList.remove('finance-tab-enter');
-			// Force reflow so the animation can replay on repeated tab changes.
 			void panel.offsetWidth;
 			panel.classList.add('finance-tab-enter');
 		};
@@ -117,11 +140,10 @@ export default class FinanceView {
 			btn.addEventListener('click', () => {
 				this.tabBtns.forEach((b) => b.classList.remove('active'));
 				btn.classList.add('active');
-				const type = btn.getAttribute('data-type');
-				if (this.mainContent) this.mainContent.style.display = 'none';
-				if (this.trackerContent) this.trackerContent.style.display = 'none';
-				if (this.logContent) this.logContent.style.display = 'none';
-				showPanel(panelByType[type]);
+				Object.values(this.panels).forEach((panel) => {
+					if (panel) panel.style.display = 'none';
+				});
+				showPanel(this.panels[btn.getAttribute('data-type')]);
 			});
 		});
 	}
@@ -153,67 +175,42 @@ export default class FinanceView {
 		}
 	}
 
-	render(data) {
-		// Update balance display
-		const balance = data.balance || 0;
-		const formatted = '$' + Math.abs(balance).toLocaleString();
-		this.balanceEl.textContent = balance < 0 ? '-' + formatted : formatted;
-		this.balanceEl.className = balance < 0
-			? 'finance-balance-amount finance-negative'
-			: 'finance-balance-amount';
+	renderOverview(overview = {}, summary = {}, prizeMeta = {}) {
+		this.applyMoneyState(this.balanceEl, prizeMeta.balance || 0);
+		this.applyMoneyState(this.netPlEl, summary.net_profit_loss || 0);
+		this.applyMoneyState(this.projectedBalanceEl, overview.projected_end_balance || 0);
+		this.applyMoneyState(this.nextRaceNetEl, overview.next_race_net || 0);
+		if (this.nextRaceIncomeEl) this.nextRaceIncomeEl.textContent = this.formatMoney(overview.next_race_income || 0);
+		if (this.nextRaceOutgoingsEl) this.nextRaceOutgoingsEl.textContent = this.formatMoney(-(overview.next_race_outgoings || 0));
+		if (this.prizeEntitlementEl) this.prizeEntitlementEl.textContent = this.formatMoney(prizeMeta.entitlement || 0);
+		if (this.prizePaidEl) this.prizePaidEl.textContent = this.formatMoney(prizeMeta.paid || 0);
+		if (this.prizeRemainingEl) this.prizeRemainingEl.textContent = this.formatMoney(prizeMeta.remaining || 0);
+		if (this.prizeProgressEl) this.prizeProgressEl.textContent = `Race installments: ${prizeMeta.racesPaid || 0} / ${prizeMeta.totalRaces || 0}`;
+		if (this.prizeOutlookEl) this.prizeOutlookEl.textContent = overview.prize_outlook || '-';
+		if (this.facilitiesStatusEl) this.facilitiesStatusEl.textContent = overview.facilities_status || '-';
+		if (this.incomeTotalEl) this.incomeTotalEl.textContent = this.formatMoney(summary.income_total || 0);
+		if (this.expenseTotalEl) this.expenseTotalEl.textContent = this.formatMoney(summary.expense_total || 0);
+		if (this.transportTotalEl) this.transportTotalEl.textContent = this.formatMoney(summary.transport_total || 0);
+		if (this.testingTotalEl) this.testingTotalEl.textContent = this.formatMoney(summary.testing_total || 0);
+		if (this.workforceTotalEl) this.workforceTotalEl.textContent = this.formatMoney(summary.workforce_total || 0);
+		if (this.engineSupplierTotalEl) this.engineSupplierTotalEl.textContent = this.formatMoney(summary.engine_supplier_total || 0);
+		if (this.tyreSupplierTotalEl) this.tyreSupplierTotalEl.textContent = this.formatMoney(summary.tyre_supplier_total || 0);
+		if (this.fuelSupplierTotalEl) this.fuelSupplierTotalEl.textContent = this.formatMoney(summary.fuel_supplier_total || 0, { signed: true });
+		if (this.sponsorshipTotalEl) this.sponsorshipTotalEl.textContent = this.formatMoney(summary.sponsorship_total || 0);
 
-		const entitlement = data.prize_money_entitlement || 0;
-		const paid = data.prize_money_paid || 0;
-		const remaining = data.prize_money_remaining || 0;
-		const racesPaid = data.prize_money_races_paid || 0;
-		const totalRaces = data.prize_money_total_races || 0;
-
-		if (this.prizeEntitlementEl) this.prizeEntitlementEl.textContent = '$' + entitlement.toLocaleString();
-		if (this.prizePaidEl) this.prizePaidEl.textContent = '$' + paid.toLocaleString();
-		if (this.prizeRemainingEl) this.prizeRemainingEl.textContent = '$' + remaining.toLocaleString();
-		if (this.prizeProgressEl) this.prizeProgressEl.textContent = `Race installments: ${racesPaid} / ${totalRaces}`;
-
-		const summary = data.summary || {};
-		const incomeTotal = summary.income_total || 0;
-		const expenseTotal = summary.expense_total || 0;
-		const netPl = summary.net_profit_loss || 0;
-		const transportTotal = summary.transport_total || 0;
-		const workforceTotal = summary.workforce_total || 0;
-		const sponsorshipTotal = summary.sponsorship_total || 0;
-		const engineSupplierTotal = summary.engine_supplier_total || 0;
-		const tyreSupplierTotal = summary.tyre_supplier_total || 0;
-		const fuelSupplierTotal = summary.fuel_supplier_total || 0;
-
-		if (this.incomeTotalEl) this.incomeTotalEl.textContent = '$' + incomeTotal.toLocaleString();
-		if (this.expenseTotalEl) this.expenseTotalEl.textContent = '$' + expenseTotal.toLocaleString();
-		if (this.transportTotalEl) this.transportTotalEl.textContent = '$' + transportTotal.toLocaleString();
-		if (this.workforceTotalEl) this.workforceTotalEl.textContent = '$' + workforceTotal.toLocaleString();
-		if (this.engineSupplierTotalEl) this.engineSupplierTotalEl.textContent = '$' + engineSupplierTotal.toLocaleString();
-		if (this.tyreSupplierTotalEl) this.tyreSupplierTotalEl.textContent = '$' + tyreSupplierTotal.toLocaleString();
-		if (this.fuelSupplierTotalEl) {
-			const absFuelTotal = '$' + Math.abs(fuelSupplierTotal).toLocaleString();
-			this.fuelSupplierTotalEl.textContent = fuelSupplierTotal >= 0 ? '+' + absFuelTotal : '-' + absFuelTotal;
-			this.fuelSupplierTotalEl.className = fuelSupplierTotal >= 0
-				? 'finance-balance-amount'
-				: 'finance-balance-amount finance-negative';
+		if (this.contractAlertsEl) {
+			const alerts = Array.isArray(overview.contract_alerts) ? overview.contract_alerts : [];
+			this.contractAlertsEl.innerHTML = alerts.length
+				? alerts.map((alert) => `<li class="finance-alert-item">${alert}</li>`).join('')
+				: '<li class="finance-alert-item">No immediate contract risks.</li>';
 		}
-		if (this.sponsorshipTotalEl) this.sponsorshipTotalEl.textContent = '$' + sponsorshipTotal.toLocaleString();
-		if (this.netPlEl) {
-			const netFormatted = '$' + Math.abs(netPl).toLocaleString();
-			this.netPlEl.textContent = netPl < 0 ? '-' + netFormatted : netFormatted;
-			this.netPlEl.className = netPl < 0
-				? 'finance-balance-amount finance-negative'
-				: 'finance-balance-amount';
-		}
+	}
 
+	renderCommercial(data) {
 		const sponsor = data.sponsor || {};
 		const sponsorName = sponsor.name || 'Unassigned';
 		const sponsorContractLength = sponsor.contract_length || 0;
 		const sponsorPendingReplacement = Boolean(sponsor.pending_replacement);
-		const annualValue = sponsor.annual_value || 0;
-		const installment = sponsor.installment || 0;
-		const paidSoFar = sponsor.paid_so_far || 0;
-		const sponsorRemaining = sponsor.remaining || 0;
 
 		if (this.sponsorNameEl) this.sponsorNameEl.textContent = sponsorName;
 		if (this.sponsorReplaceBtn) {
@@ -225,10 +222,10 @@ export default class FinanceView {
 				this.sponsorReplaceBtn.removeAttribute('data-sponsor-name');
 			}
 		}
-		if (this.sponsorAnnualEl) this.sponsorAnnualEl.textContent = '$' + annualValue.toLocaleString();
-		if (this.sponsorInstallmentEl) this.sponsorInstallmentEl.textContent = '$' + installment.toLocaleString();
-		if (this.sponsorPaidEl) this.sponsorPaidEl.textContent = '$' + paidSoFar.toLocaleString();
-		if (this.sponsorRemainingEl) this.sponsorRemainingEl.textContent = '$' + sponsorRemaining.toLocaleString();
+		if (this.sponsorAnnualEl) this.sponsorAnnualEl.textContent = this.formatMoney(sponsor.annual_value || 0);
+		if (this.sponsorInstallmentEl) this.sponsorInstallmentEl.textContent = this.formatMoney(sponsor.installment || 0);
+		if (this.sponsorPaidEl) this.sponsorPaidEl.textContent = this.formatMoney(sponsor.paid_so_far || 0);
+		if (this.sponsorRemainingEl) this.sponsorRemainingEl.textContent = this.formatMoney(sponsor.remaining || 0);
 		if (this.sponsorLogoWrap) {
 			if (!sponsor.name) {
 				this.sponsorLogoWrap.innerHTML = '';
@@ -244,28 +241,20 @@ export default class FinanceView {
 		}
 
 		const otherSponsorship = data.other_sponsorship || {};
-		const otherAnnual = otherSponsorship.annual_value || 0;
-		const otherInstallment = otherSponsorship.installment || 0;
-		const otherPaid = otherSponsorship.paid_so_far || 0;
-		const otherRemaining = otherSponsorship.remaining || 0;
-
 		if (this.otherSponsorshipNameEl) this.otherSponsorshipNameEl.textContent = 'Minor Sponsors';
-		if (this.otherSponsorshipAnnualEl) this.otherSponsorshipAnnualEl.textContent = '$' + otherAnnual.toLocaleString();
-		if (this.otherSponsorshipInstallmentEl) this.otherSponsorshipInstallmentEl.textContent = '$' + otherInstallment.toLocaleString();
-		if (this.otherSponsorshipPaidEl) this.otherSponsorshipPaidEl.textContent = '$' + otherPaid.toLocaleString();
-		if (this.otherSponsorshipRemainingEl) this.otherSponsorshipRemainingEl.textContent = '$' + otherRemaining.toLocaleString();
+		if (this.otherSponsorshipAnnualEl) this.otherSponsorshipAnnualEl.textContent = this.formatMoney(otherSponsorship.annual_value || 0);
+		if (this.otherSponsorshipInstallmentEl) this.otherSponsorshipInstallmentEl.textContent = this.formatMoney(otherSponsorship.installment || 0);
+		if (this.otherSponsorshipPaidEl) this.otherSponsorshipPaidEl.textContent = this.formatMoney(otherSponsorship.paid_so_far || 0);
+		if (this.otherSponsorshipRemainingEl) this.otherSponsorshipRemainingEl.textContent = this.formatMoney(otherSponsorship.remaining || 0);
 		if (this.otherSponsorshipLogoWrap) this.otherSponsorshipLogoWrap.innerHTML = '';
+	}
 
+	renderSuppliers(data) {
 		const engineSupplier = data.engine_supplier || {};
 		const engineSupplierName = engineSupplier.name || 'Unassigned';
-		const engineSupplierDeal = engineSupplier.deal || '-';
 		const engineSupplierContractLength = engineSupplier.contract_length || 0;
 		const engineSupplierPendingReplacement = Boolean(engineSupplier.pending_replacement);
 		const engineSupplierBuildsOwnEngine = Boolean(engineSupplier.builds_own_engine);
-		const engineSupplierAnnual = engineSupplier.annual_value || 0;
-		const engineSupplierInstallment = engineSupplier.installment || 0;
-		const engineSupplierPaid = engineSupplier.paid_so_far || 0;
-		const engineSupplierRemaining = engineSupplier.remaining || 0;
 
 		if (this.engineSupplierNameEl) this.engineSupplierNameEl.textContent = engineSupplierName;
 		if (this.engineSupplierReplaceBtn) {
@@ -277,22 +266,17 @@ export default class FinanceView {
 				this.engineSupplierReplaceBtn.removeAttribute('data-supplier-name');
 			}
 		}
-		if (this.engineSupplierDealEl) this.engineSupplierDealEl.textContent = engineSupplierDeal;
-		if (this.engineSupplierAnnualEl) this.engineSupplierAnnualEl.textContent = '$' + engineSupplierAnnual.toLocaleString();
-		if (this.engineSupplierInstallmentEl) this.engineSupplierInstallmentEl.textContent = '$' + engineSupplierInstallment.toLocaleString();
-		if (this.engineSupplierPaidEl) this.engineSupplierPaidEl.textContent = '$' + engineSupplierPaid.toLocaleString();
-		if (this.engineSupplierRemainingEl) this.engineSupplierRemainingEl.textContent = '$' + engineSupplierRemaining.toLocaleString();
+		if (this.engineSupplierDealEl) this.engineSupplierDealEl.textContent = engineSupplier.deal || '-';
+		if (this.engineSupplierAnnualEl) this.engineSupplierAnnualEl.textContent = this.formatMoney(engineSupplier.annual_value || 0);
+		if (this.engineSupplierInstallmentEl) this.engineSupplierInstallmentEl.textContent = this.formatMoney(engineSupplier.installment || 0);
+		if (this.engineSupplierPaidEl) this.engineSupplierPaidEl.textContent = this.formatMoney(engineSupplier.paid_so_far || 0);
+		if (this.engineSupplierRemainingEl) this.engineSupplierRemainingEl.textContent = this.formatMoney(engineSupplier.remaining || 0);
 		this.setSupplierLogo(this.engineSupplierLogoWrap, engineSupplier.name);
 
 		const tyreSupplier = data.tyre_supplier || {};
 		const tyreSupplierName = tyreSupplier.name || 'Unassigned';
-		const tyreSupplierDeal = tyreSupplier.deal || '-';
 		const tyreSupplierContractLength = tyreSupplier.contract_length || 0;
 		const tyreSupplierPendingReplacement = Boolean(tyreSupplier.pending_replacement);
-		const tyreSupplierAnnual = tyreSupplier.annual_value || 0;
-		const tyreSupplierInstallment = tyreSupplier.installment || 0;
-		const tyreSupplierPaid = tyreSupplier.paid_so_far || 0;
-		const tyreSupplierRemaining = tyreSupplier.remaining || 0;
 
 		if (this.tyreSupplierNameEl) this.tyreSupplierNameEl.textContent = tyreSupplierName;
 		if (this.tyreSupplierReplaceBtn) {
@@ -304,40 +288,35 @@ export default class FinanceView {
 				this.tyreSupplierReplaceBtn.removeAttribute('data-supplier-name');
 			}
 		}
-		if (this.tyreSupplierDealEl) this.tyreSupplierDealEl.textContent = tyreSupplierDeal;
-		if (this.tyreSupplierAnnualEl) this.tyreSupplierAnnualEl.textContent = '$' + tyreSupplierAnnual.toLocaleString();
-		if (this.tyreSupplierInstallmentEl) this.tyreSupplierInstallmentEl.textContent = '$' + tyreSupplierInstallment.toLocaleString();
-		if (this.tyreSupplierPaidEl) this.tyreSupplierPaidEl.textContent = '$' + tyreSupplierPaid.toLocaleString();
-		if (this.tyreSupplierRemainingEl) this.tyreSupplierRemainingEl.textContent = '$' + tyreSupplierRemaining.toLocaleString();
+		if (this.tyreSupplierDealEl) this.tyreSupplierDealEl.textContent = tyreSupplier.deal || '-';
+		if (this.tyreSupplierAnnualEl) this.tyreSupplierAnnualEl.textContent = this.formatMoney(tyreSupplier.annual_value || 0);
+		if (this.tyreSupplierInstallmentEl) this.tyreSupplierInstallmentEl.textContent = this.formatMoney(tyreSupplier.installment || 0);
+		if (this.tyreSupplierPaidEl) this.tyreSupplierPaidEl.textContent = this.formatMoney(tyreSupplier.paid_so_far || 0);
+		if (this.tyreSupplierRemainingEl) this.tyreSupplierRemainingEl.textContent = this.formatMoney(tyreSupplier.remaining || 0);
 		this.setSupplierLogo(this.tyreSupplierLogoWrap, tyreSupplier.name);
 
 		const fuelSupplier = data.fuel_supplier || {};
-		const fuelSupplierName = fuelSupplier.name || 'Unassigned';
-		const fuelSupplierDeal = fuelSupplier.deal || '-';
-		const fuelSupplierAnnual = fuelSupplier.annual_value || 0;
-		const fuelSupplierInstallment = fuelSupplier.installment || 0;
-		const fuelSupplierPaid = fuelSupplier.paid_so_far || 0;
-		const fuelSupplierRemaining = fuelSupplier.remaining || 0;
-		const fuelDirection = fuelSupplier.direction || (fuelSupplierAnnual < 0 ? 'income' : 'expense');
-		const annualSign = fuelSupplierAnnual < 0 ? '+' : '-';
-
-		if (this.fuelSupplierNameEl) this.fuelSupplierNameEl.textContent = fuelSupplierName;
-		if (this.fuelSupplierDealEl) this.fuelSupplierDealEl.textContent = fuelSupplierDeal;
-		if (this.fuelSupplierAnnualEl) this.fuelSupplierAnnualEl.textContent = `${annualSign}$${Math.abs(fuelSupplierAnnual).toLocaleString()}`;
-		if (this.fuelSupplierInstallmentEl) this.fuelSupplierInstallmentEl.textContent = `${fuelDirection === 'income' ? '+' : '-'}$${fuelSupplierInstallment.toLocaleString()}`;
-		if (this.fuelSupplierPaidEl) this.fuelSupplierPaidEl.textContent = '$' + fuelSupplierPaid.toLocaleString();
-		if (this.fuelSupplierRemainingEl) this.fuelSupplierRemainingEl.textContent = '$' + fuelSupplierRemaining.toLocaleString();
+		const annualSign = (fuelSupplier.annual_value || 0) < 0 ? '+' : '-';
+		const installmentSign = fuelSupplier.direction === 'income' ? '+' : '-';
+		if (this.fuelSupplierNameEl) this.fuelSupplierNameEl.textContent = fuelSupplier.name || 'Unassigned';
+		if (this.fuelSupplierDealEl) this.fuelSupplierDealEl.textContent = fuelSupplier.deal || '-';
+		if (this.fuelSupplierAnnualEl) this.fuelSupplierAnnualEl.textContent = `${annualSign}$${Math.abs(fuelSupplier.annual_value || 0).toLocaleString()}`;
+		if (this.fuelSupplierInstallmentEl) this.fuelSupplierInstallmentEl.textContent = `${installmentSign}$${Math.abs(fuelSupplier.installment || 0).toLocaleString()}`;
+		if (this.fuelSupplierPaidEl) this.fuelSupplierPaidEl.textContent = this.formatMoney(fuelSupplier.paid_so_far || 0);
+		if (this.fuelSupplierRemainingEl) this.fuelSupplierRemainingEl.textContent = this.formatMoney(fuelSupplier.remaining || 0);
 		this.setSupplierLogo(this.fuelSupplierLogoWrap, fuelSupplier.name);
+	}
 
-		// Track P/L table
+	renderLedger(data) {
 		if (this.trackPlBody) {
 			this.trackPlBody.innerHTML = '';
 			const trackRows = data.track_profit_loss || [];
-			trackRows.forEach(rowData => {
+			trackRows.forEach((rowData) => {
 				const row = document.createElement('tr');
 				const netClass = rowData.net >= 0 ? 'finance-amount-positive' : 'finance-amount-negative';
 				row.innerHTML = `
 					<td>${rowData.track}</td>
+					<td>${rowData.type || '-'}</td>
 					<td>${rowData.country}</td>
 					<td class="finance-amount-positive">$${(rowData.income || 0).toLocaleString()}</td>
 					<td class="finance-amount-negative">$${(rowData.expense || 0).toLocaleString()}</td>
@@ -345,36 +324,51 @@ export default class FinanceView {
 				`;
 				this.trackPlBody.appendChild(row);
 			});
-
 			if (trackRows.length === 0) {
-				this.trackPlBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b;">No track-linked finance yet.</td></tr>';
+				this.trackPlBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">No track-linked finance yet.</td></tr>';
 			}
 		}
 
-		// Render transactions (most recent first)
-		this.tbody.innerHTML = '';
-		const transactions = data.transactions || [];
-		const reversed = [...transactions].reverse();
+		if (this.tbody) {
+			this.tbody.innerHTML = '';
+			const transactions = data.transactions || [];
+			const reversed = [...transactions].reverse();
+			reversed.forEach((t) => {
+				const row = document.createElement('tr');
+				const amountFormatted = '$' + Math.abs(t.amount).toLocaleString();
+				const amountClass = t.amount >= 0 ? 'finance-amount-positive' : 'finance-amount-negative';
+				const amountDisplay = t.amount >= 0 ? '+' + amountFormatted : '-' + amountFormatted;
+				const categoryLabel = t.category.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+				const categoryClass = t.category === 'transport' ? 'finance-category-badge finance-category-transport' : 'finance-category-badge';
 
-		reversed.forEach(t => {
-			const row = document.createElement('tr');
-			const amountFormatted = '$' + Math.abs(t.amount).toLocaleString();
-			const amountClass = t.amount >= 0 ? 'finance-amount-positive' : 'finance-amount-negative';
-			const amountDisplay = t.amount >= 0 ? '+' + amountFormatted : '-' + amountFormatted;
-			const categoryLabel = t.category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-			const categoryClass = t.category === 'transport' ? 'finance-category-badge finance-category-transport' : 'finance-category-badge';
+				row.innerHTML = `
+					<td>Week ${t.week}, ${t.year}</td>
+					<td>${t.description}</td>
+					<td><span class="${categoryClass}">${categoryLabel}</span></td>
+					<td class="${amountClass}">${amountDisplay}</td>
+				`;
+				this.tbody.appendChild(row);
+			});
 
-			row.innerHTML = `
-				<td>Week ${t.week}, ${t.year}</td>
-				<td>${t.description}</td>
-				<td><span class="${categoryClass}">${categoryLabel}</span></td>
-				<td class="${amountClass}">${amountDisplay}</td>
-			`;
-			this.tbody.appendChild(row);
-		});
-
-		if (transactions.length === 0) {
-			this.tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">No transactions yet.</td></tr>';
+			if (transactions.length === 0) {
+				this.tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">No transactions yet.</td></tr>';
+			}
 		}
+	}
+
+	render(data) {
+		const summary = data.summary || {};
+		const overview = data.overview || {};
+		this.renderOverview(overview, summary, {
+			balance: data.balance || 0,
+			entitlement: data.prize_money_entitlement || 0,
+			paid: data.prize_money_paid || 0,
+			remaining: data.prize_money_remaining || 0,
+			racesPaid: data.prize_money_races_paid || 0,
+			totalRaces: data.prize_money_total_races || 0,
+		});
+		this.renderCommercial(data);
+		this.renderSuppliers(data);
+		this.renderLedger(data);
 	}
 }

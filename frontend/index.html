@@ -394,54 +394,86 @@
         <!-- Finance View -->
         <div id="finance-view" class="view-section" style="display: none;">
           <div class="tabs">
-            <button class="tab-btn finance-tab-btn active" data-type="main">Main</button>
-            <button class="tab-btn finance-tab-btn" data-type="tracker">Tracker</button>
-            <button class="tab-btn finance-tab-btn" data-type="log">Log</button>
+            <button class="tab-btn finance-tab-btn active" data-type="overview">Overview</button>
+            <button class="tab-btn finance-tab-btn" data-type="commercial">Commercial</button>
+            <button class="tab-btn finance-tab-btn" data-type="suppliers">Suppliers</button>
+            <button class="tab-btn finance-tab-btn" data-type="ledger">Ledger</button>
           </div>
 
-          <div id="finance-content-main">
+          <div id="finance-content-overview">
             <div id="finance-summary" class="finance-summary"></div>
-            <div id="finance-prize-progress" class="finance-prize-progress">Race installments: 0 / 0</div>
-            <div id="finance-supplier-sections"></div>
+            <div class="finance-overview-grid">
+              <section class="finance-sponsor-card finance-overview-card">
+                <div class="finance-overview-heading">
+                  <div>
+                    <div class="finance-balance-label">Season Position</div>
+                    <div class="finance-section-title">Operating Snapshot</div>
+                  </div>
+                  <div id="finance-prize-progress" class="finance-prize-progress">Race installments: 0 / 0</div>
+                </div>
+                <div id="finance-overview-breakdown" class="finance-overview-breakdown"></div>
+              </section>
+
+              <section class="finance-sponsor-card finance-overview-card">
+                <div class="finance-overview-heading">
+                  <div class="finance-balance-label">Planning</div>
+                  <div class="finance-section-title">Cashflow Outlook</div>
+                </div>
+                <div id="finance-overview-planning" class="finance-overview-planning"></div>
+                <div class="finance-overview-alerts">
+                  <div class="finance-balance-label">Contract Alerts</div>
+                  <ul id="finance-contract-alerts" class="finance-alert-list"></ul>
+                </div>
+              </section>
+            </div>
           </div>
 
-          <div id="finance-content-tracker" style="display:none;">
-            <div class="finance-track-pl">
-            <h3 class="finance-section-title">Track Profit/Loss</h3>
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Track</th>
-                  <th>Country</th>
-                  <th>Income</th>
-                  <th>Expense</th>
-                  <th>Net</th>
-                </tr>
-              </thead>
-              <tbody id="finance-track-pl-body">
-                <!-- JS populated -->
-              </tbody>
-            </table>
-          </div>
+          <div id="finance-content-commercial" style="display:none;">
+            <div id="finance-commercial-sections" class="finance-card-stack"></div>
           </div>
 
-          <div id="finance-content-log" style="display:none;">
-            <div class="finance-transactions">
-            <h3 class="finance-section-title">Transaction Log</h3>
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Week</th>
-                  <th>Description</th>
-                  <th>Category</th>
-                  <th>Amount</th>
-                </tr>
-              </thead>
-              <tbody id="finance-transactions-body">
-                <!-- JS populated -->
-              </tbody>
-            </table>
+          <div id="finance-content-suppliers" style="display:none;">
+            <div id="finance-supplier-sections" class="finance-card-stack"></div>
           </div>
+
+          <div id="finance-content-ledger" style="display:none;">
+            <div class="finance-ledger-grid">
+              <div class="finance-track-pl">
+                <h3 class="finance-section-title">Track Profit/Loss</h3>
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Track</th>
+                      <th>Type</th>
+                      <th>Country</th>
+                      <th>Income</th>
+                      <th>Expense</th>
+                      <th>Net</th>
+                    </tr>
+                  </thead>
+                  <tbody id="finance-track-pl-body">
+                    <!-- JS populated -->
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="finance-transactions">
+                <h3 class="finance-section-title">Transaction Log</h3>
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Week</th>
+                      <th>Description</th>
+                      <th>Category</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody id="finance-transactions-body">
+                    <!-- JS populated -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -17,7 +17,7 @@
 .finance-summary {
   margin-bottom: 16px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 14px;
 }
 
@@ -25,7 +25,7 @@
   background: rgba(10, 25, 47, 0.82);
   border: 1px solid #233554;
   border-radius: 12px;
-  padding: 20px 24px;
+  padding: 18px 20px;
 }
 
 .finance-balance-label {
@@ -49,26 +49,100 @@
 .finance-section-title {
   font-size: 1rem;
   color: var(--text-color);
-  margin-bottom: 12px;
   font-weight: 600;
 }
 
-.finance-transactions {
+.finance-overview-grid,
+.finance-ledger-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.finance-card-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.finance-overview-card {
+  margin-top: 0;
+}
+
+.finance-overview-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.finance-overview-breakdown,
+.finance-overview-planning {
+  display: grid;
+  gap: 10px;
+}
+
+.finance-overview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(100, 116, 139, 0.14);
+}
+
+.finance-overview-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.finance-overview-row-wide {
+  display: block;
+}
+
+.finance-overview-value {
+  color: #e2e8f0;
+  font-size: 1rem;
+}
+
+.finance-overview-copy {
+  color: #cbd5e1;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.finance-overview-alerts {
   margin-top: 16px;
 }
 
+.finance-alert-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #cbd5e1;
+}
+
+.finance-alert-item + .finance-alert-item {
+  margin-top: 8px;
+}
+
+.finance-transactions {
+  margin-top: 0;
+}
+
 .finance-track-pl {
-  margin-top: 20px;
+  margin-top: 0;
 }
 
 .finance-prize-progress {
   font-size: 0.9rem;
   color: #94a3b8;
-  margin-bottom: 8px;
+  margin-bottom: 0;
+  max-width: 220px;
+  text-align: right;
 }
 
 .finance-sponsor-card {
-  margin-top: 14px;
+  margin-top: 0;
   background: rgba(10, 25, 47, 0.82);
   border: 1px solid #233554;
   border-radius: 12px;
@@ -151,6 +225,18 @@
 .finance-category-transport {
   background: rgba(249, 115, 22, 0.16);
   color: #fb923c;
+}
+
+@media (max-width: 860px) {
+  .finance-overview-heading {
+    display: block;
+  }
+
+  .finance-prize-progress {
+    margin-top: 8px;
+    max-width: none;
+    text-align: left;
+  }
 }
 
 

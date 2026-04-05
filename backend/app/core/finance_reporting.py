@@ -18,14 +18,16 @@ def build_finance_report(state: GameState) -> dict[str, Any]:
     fuel_supplier_total = sum(t.amount for t in transactions if t.category == TransactionCategory.FUEL_SUPPLIER)
     facilities_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.FACILITIES and t.amount < 0)
     sponsorship_total = sum(t.amount for t in transactions if t.category == TransactionCategory.SPONSORSHIP and t.amount > 0)
+    testing_total = sum(-t.amount for t in transactions if t.amount < 0 and t.event_type == "TEST")
 
-    per_track = defaultdict(lambda: {"track": "", "country": "Unknown", "income": 0, "expense": 0, "net": 0})
+    per_track = defaultdict(lambda: {"track": "", "type": "", "country": "Unknown", "income": 0, "expense": 0, "net": 0})
     for t in transactions:
         if not t.event_name:
             continue
-        key = t.event_name
+        key = (t.event_name, t.event_type or "")
         row = per_track[key]
         row["track"] = t.event_name
+        row["type"] = "Grand Prix" if t.event_type == "RACE" else ("Test" if t.event_type == "TEST" else (t.event_type or "Other"))
         row["country"] = t.circuit_country or "Unknown"
         if t.amount >= 0:
             row["income"] += t.amount
@@ -51,6 +53,7 @@ def build_finance_report(state: GameState) -> dict[str, Any]:
             "fuel_supplier_total": fuel_supplier_total,
             "facilities_total": facilities_total,
             "sponsorship_total": sponsorship_total,
+            "testing_total": testing_total,
         },
         "track_profit_loss": track_profit_loss,
     }

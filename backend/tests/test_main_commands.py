@@ -172,19 +172,148 @@ def test_get_finance_returns_summary_and_track_profit_loss():
     assert result["type"] == "finance_data"
     assert "summary" in result["data"]
     assert "track_profit_loss" in result["data"]
+    assert "overview" in result["data"]
     assert result["data"]["summary"]["transport_total"] == 200_000
+    assert result["data"]["summary"]["testing_total"] == 0
     assert "workforce_total" in result["data"]["summary"]
     assert "engine_supplier_total" in result["data"]["summary"]
     assert "tyre_supplier_total" in result["data"]["summary"]
     assert "fuel_supplier_total" in result["data"]["summary"]
     assert "sponsorship_total" in result["data"]["summary"]
     assert len(result["data"]["track_profit_loss"]) == 1
+    assert result["data"]["track_profit_loss"][0]["type"] == "Grand Prix"
     assert result["data"]["sponsor"]["name"] == "Windale"
     assert result["data"]["other_sponsorship"]["annual_value"] == 9_500_000
     assert result["data"]["engine_supplier"]["name"] == "Mechatron"
     assert result["data"]["engine_supplier"]["contract_length"] == 1
     assert result["data"]["tyre_supplier"]["name"] == "Greatday"
     assert result["data"]["fuel_supplier"]["name"] == "Brasoil"
+    assert "contract_alerts" in result["data"]["overview"]
+
+
+def test_get_finance_projection_includes_remaining_driver_wages_and_transport():
+    state = create_state()
+    state.calendar.events = [
+        Event(name="Albert Park", week=10, type=EventType.RACE),
+        Event(name="Monaco", week=12, type=EventType.RACE),
+    ]
+    state.circuits.append(
+        Circuit(
+            id=2,
+            name="Monaco",
+            country="Monaco",
+            location="Monte Carlo",
+            laps=78,
+            base_laptime_ms=79000,
+            length_km=3.367,
+            overtaking_delta=1400,
+            power_factor=4,
+        )
+    )
+    state.finance.balance = 1_000_000
+    state.drivers[0].wage = 1_600_000
+    state.drivers[1].wage = 800_000
+    state.finance.add_transaction(
+        week=10,
+        year=1998,
+        amount=-100_000,
+        category=TransactionCategory.TRANSPORT,
+        description="Transport to Albert Park",
+        event_name="Albert Park",
+        event_type="RACE",
+        circuit_country="Australia",
+    )
+    state.finance.add_transaction(
+        week=10,
+        year=1998,
+        amount=-100_000,
+        category=TransactionCategory.DRIVER_WAGES,
+        description="Race wage: John Newhouse",
+        event_name="Albert Park",
+        event_type="RACE",
+        circuit_country="Australia",
+    )
+    state.finance.add_transaction(
+        week=10,
+        year=1998,
+        amount=-50_000,
+        category=TransactionCategory.DRIVER_WAGES,
+        description="Race wage: Henrik Friedrich",
+        event_name="Albert Park",
+        event_type="RACE",
+        circuit_country="Australia",
+    )
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "get_finance"})
+
+    assert result["status"] == "success"
+    assert result["data"]["overview"]["projected_end_balance"] < 43_500_000
+    assert result["data"]["overview"]["next_race_outgoings"] >= 440_000
+
+
+def test_get_finance_reports_testing_total():
+    state = create_state()
+    state.finance.add_transaction(
+        week=5,
+        year=1998,
+        amount=-350_000,
+        category=TransactionCategory.TRANSPORT,
+        description="Transport to Silverstone Test",
+        event_name="Silverstone Test",
+        event_type="TEST",
+        circuit_country="United Kingdom",
+    )
+    state.finance.add_transaction(
+        week=5,
+        year=1998,
+        amount=-120_000,
+        category=TransactionCategory.WORKFORCE_WAGES,
+        description="Test payroll",
+        event_name="Silverstone Test",
+        event_type="TEST",
+        circuit_country="United Kingdom",
+    )
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "get_finance"})
+
+    assert result["status"] == "success"
+    assert result["data"]["summary"]["testing_total"] == 470_000
+
+
+def test_get_finance_separates_test_and_race_rows_for_same_circuit():
+    state = create_state()
+    state.finance.add_transaction(
+        week=10,
+        year=1998,
+        amount=100_000,
+        category=TransactionCategory.PRIZE_MONEY,
+        description="Albert Park Prize",
+        event_name="Albert Park",
+        event_type="RACE",
+        circuit_country="Australia",
+    )
+    state.finance.add_transaction(
+        week=5,
+        year=1998,
+        amount=-350_000,
+        category=TransactionCategory.TRANSPORT,
+        description="Transport to Albert Park Test",
+        event_name="Albert Park",
+        event_type="TEST",
+        circuit_country="Australia",
+    )
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "get_finance"})
+
+    assert result["status"] == "success"
+    rows = result["data"]["track_profit_loss"]
+    assert len(rows) == 2
+    row_types = {(row["track"], row["type"]) for row in rows}
+    assert ("Albert Park", "Grand Prix") in row_types
+    assert ("Albert Park", "Test") in row_types
 
 
 def test_get_emails_and_read_email_updates_unread_count():
