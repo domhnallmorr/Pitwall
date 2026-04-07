@@ -15,8 +15,9 @@ describe('FinanceView', () => {
 				<button class="finance-tab-btn" data-type="ledger"></button>
 				<div id="finance-content-overview">
 					<div id="finance-summary"></div>
-					<div id="finance-overview-breakdown"></div>
-					<div id="finance-overview-planning"></div>
+					<div id="finance-overview-income"></div>
+					<div id="finance-overview-expenditure"></div>
+					<div id="finance-overview-net"></div>
 					<div id="finance-prize-progress"></div>
 					<ul id="finance-contract-alerts"></ul>
 				</div>
@@ -59,12 +60,24 @@ describe('FinanceView', () => {
 				income_total: 5000,
 				expense_total: 1200,
 				net_profit_loss: 3800,
+				prize_money_total: 100,
+				driver_wage_expense_total: 220000,
+				pay_driver_income_total: 0,
+				engine_supplier_income_total: 0,
+				management_salary_total: 5160000,
 				transport_total: 400,
+				crash_damage_total: 25000,
+				maintenance_total: 12000,
 				testing_total: 120,
 				workforce_total: 700,
+				factory_overhead_total: 400000,
 				engine_supplier_total: 281250,
+				engine_supplier_expense_total: 281250,
 				tyre_supplier_total: 0,
+				fuel_income_total: 0,
+				fuel_expense_total: 75000,
 				fuel_supplier_total: -75000,
+				facilities_total: 0,
 				sponsorship_total: 900,
 			},
 			sponsor: {
@@ -89,6 +102,7 @@ describe('FinanceView', () => {
 				paid_so_far: 281250,
 				remaining: 4218750,
 				contract_length: 1,
+				direction: 'expense',
 			},
 			tyre_supplier: {
 				name: 'Greatday',
@@ -118,11 +132,17 @@ describe('FinanceView', () => {
 
 		expect(document.getElementById('finance-projected-balance').textContent).toBe('$8,500')
 		expect(document.getElementById('finance-next-race-net').textContent).toBe('$2,200,000')
-		expect(document.getElementById('finance-next-race-income').textContent).toBe('$2,600,000')
 		expect(document.getElementById('finance-prize-outlook').textContent).toContain('Test prize outlook')
+		expect(document.getElementById('finance-prize-money-total').textContent).toBe('$100')
+		expect(document.getElementById('finance-driver-wages-total').textContent).toBe('$220,000')
+		expect(document.getElementById('finance-management-salary-total').textContent).toBe('$5,160,000')
+		expect(document.getElementById('finance-engine-income-total').textContent).toBe('$0')
+		expect(document.getElementById('finance-crash-damage-total').textContent).toBe('$25,000')
+		expect(document.getElementById('finance-maintenance-total').textContent).toBe('$12,000')
 		expect(document.getElementById('finance-income-total').textContent).toBe('$5,000')
-		expect(document.getElementById('finance-fuel-supplier-total').textContent).toBe('-$75,000')
+		expect(document.getElementById('finance-fuel-expense-total').textContent).toBe('$75,000')
 		expect(document.getElementById('finance-testing-total').textContent).toBe('$120')
+		expect(document.getElementById('finance-factory-overhead-total').textContent).toBe('$400,000')
 		expect(document.getElementById('finance-sponsor-name').textContent).toBe('Windale')
 		expect(document.getElementById('finance-sponsor-replace-btn').disabled).toBe(false)
 		expect(document.getElementById('finance-engine-supplier-name').textContent).toBe('Mechatron')
@@ -152,17 +172,29 @@ describe('FinanceView', () => {
 				income_total: 0,
 				expense_total: 0,
 				net_profit_loss: -100,
+				prize_money_total: 0,
+				driver_wage_expense_total: 0,
+				pay_driver_income_total: 0,
+				engine_supplier_income_total: 0,
+				management_salary_total: 0,
 				transport_total: 0,
+				crash_damage_total: 0,
+				maintenance_total: 0,
 				testing_total: 0,
 				workforce_total: 0,
+				factory_overhead_total: 0,
 				engine_supplier_total: 0,
+				engine_supplier_expense_total: 0,
 				tyre_supplier_total: 0,
+				fuel_income_total: 10,
+				fuel_expense_total: 0,
 				fuel_supplier_total: 10,
+				facilities_total: 0,
 				sponsorship_total: 0,
 			},
 			sponsor: { name: null, annual_value: 0, installment: 0, paid_so_far: 0, remaining: 0 },
 			other_sponsorship: { annual_value: 0, installment: 0, paid_so_far: 0, remaining: 0 },
-			engine_supplier: { name: null, deal: '-', annual_value: 0, installment: 0, paid_so_far: 0, remaining: 0 },
+			engine_supplier: { name: null, deal: '-', annual_value: 0, installment: 0, paid_so_far: 0, remaining: 0, direction: 'expense' },
 			tyre_supplier: { name: null, deal: '-', annual_value: 0, installment: 0, paid_so_far: 0, remaining: 0 },
 			fuel_supplier: { name: null, deal: '-', annual_value: -1000, installment: 50, paid_so_far: 0, remaining: 950, direction: 'income' },
 			track_profit_loss: [],
@@ -170,7 +202,7 @@ describe('FinanceView', () => {
 		})
 
 		expect(document.getElementById('finance-balance-value').textContent).toBe('-$100')
-		expect(document.getElementById('finance-fuel-supplier-total').textContent).toBe('+$10')
+		expect(document.getElementById('finance-fuel-income-total').textContent).toBe('$10')
 		expect(document.getElementById('finance-fuel-supplier-installment').textContent).toBe('+$50')
 		expect(document.getElementById('finance-track-pl-body').textContent).toContain('No track-linked finance yet')
 		expect(document.getElementById('finance-transactions-body').textContent).toContain('No transactions yet')
@@ -184,6 +216,56 @@ describe('FinanceView', () => {
 		ledgerBtn.click()
 		expect(document.getElementById('finance-content-overview').style.display).toBe('none')
 		expect(document.getElementById('finance-content-ledger').style.display).toBe('block')
+	})
+
+	it('renders engine supplier works income with positive signs', () => {
+		financeView.render({
+			overview: {},
+			summary: {
+				income_total: 750000,
+				expense_total: 0,
+				net_profit_loss: 750000,
+				prize_money_total: 0,
+				driver_wage_expense_total: 0,
+				pay_driver_income_total: 0,
+				engine_supplier_income_total: 750000,
+				management_salary_total: 0,
+				transport_total: 0,
+				crash_damage_total: 0,
+				maintenance_total: 0,
+				testing_total: 0,
+				workforce_total: 0,
+				factory_overhead_total: 0,
+				engine_supplier_total: 750000,
+				engine_supplier_expense_total: 0,
+				tyre_supplier_total: 0,
+				fuel_income_total: 0,
+				fuel_expense_total: 0,
+				fuel_supplier_total: 0,
+				facilities_total: 0,
+				sponsorship_total: 0,
+			},
+			sponsor: {},
+			other_sponsorship: {},
+			engine_supplier: {
+				name: 'Ferano',
+				deal: 'works',
+				annual_value: -12000000,
+				installment: 750000,
+				paid_so_far: 750000,
+				remaining: 11250000,
+				contract_length: 1,
+				direction: 'income',
+			},
+			tyre_supplier: {},
+			fuel_supplier: {},
+			track_profit_loss: [],
+			transactions: [],
+		})
+
+		expect(document.getElementById('finance-engine-income-total').textContent).toBe('$750,000')
+		expect(document.getElementById('finance-engine-supplier-annual').textContent).toBe('+$12,000,000')
+		expect(document.getElementById('finance-engine-supplier-installment').textContent).toBe('+$750,000')
 	})
 
 	it('triggers title sponsor replace handler when enabled', () => {

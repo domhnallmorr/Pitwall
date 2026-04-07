@@ -3,8 +3,10 @@ import logging
 from app.core.crash_damage import CrashDamageManager
 from app.core.driver_wages import DriverWageManager
 from app.core.engine_supplier_costs import EngineSupplierCostManager
+from app.core.factory_overhead_costs import FactoryOverheadCostManager
 from app.core.facilities_upgrades import FacilitiesUpgradeManager
 from app.core.fuel_supplier_costs import FuelSupplierCostManager
+from app.core.management_salaries import ManagementSalaryManager
 from app.core.prize_money import PrizeMoneyManager
 from app.core.sponsorships import SponsorshipManager
 from app.core.transport import TransportManager
@@ -84,7 +86,9 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
         PrizeMoneyManager().process_race_payout(state)
         sponsorship_charge = SponsorshipManager().apply_for_event(state, current_event)
         DriverWageManager().charge_for_event(state, current_event)
+        management_salary_charges = ManagementSalaryManager().charge_for_event(state, current_event)
         workforce_charge = WorkforceCostManager().charge_for_event(state, current_event)
+        factory_overhead_charge = FactoryOverheadCostManager().charge_for_event(state, current_event)
         engine_supplier_charge = EngineSupplierCostManager().charge_for_event(state, current_event)
         tyre_supplier_charge = TyreSupplierCostManager().charge_for_event(state, current_event)
         fuel_supplier_charge = FuelSupplierCostManager().charge_for_event(state, current_event)
@@ -129,16 +133,44 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
                 ),
                 category=EmailCategory.GENERAL,
             )
+        if management_salary_charges:
+            total_management_salary = sum(charge.applied_cost for charge in management_salary_charges)
+            lines = "\n".join(
+                f"- {charge.role_name}: {charge.staff_name} (${charge.applied_cost:,})"
+                for charge in management_salary_charges
+            )
+            state.add_email(
+                sender="HR & Operations",
+                subject=f"Management Payroll Processed: {event_name}",
+                body=(
+                    f"Management payroll has been processed for {event_name}.\n\n"
+                    f"{lines}\n\n"
+                    f"Total this race: ${total_management_salary:,}"
+                ),
+                category=EmailCategory.GENERAL,
+            )
+        if factory_overhead_charge:
+            state.add_email(
+                sender="Finance Department",
+                subject=f"Factory Overhead Charged: {factory_overhead_charge.event_name}",
+                body=(
+                    f"Factory overhead has been allocated for {factory_overhead_charge.event_name}.\n\n"
+                    f"Cost this race: ${factory_overhead_charge.applied_cost:,}\n"
+                    f"Annual overhead: ${factory_overhead_charge.yearly_cost:,}"
+                ),
+                category=EmailCategory.GENERAL,
+            )
         if engine_supplier_charge:
+            is_income = engine_supplier_charge.applied_amount > 0
             state.add_email(
                 sender="Procurement Department",
-                subject=f"Engine Supplier Invoice: {engine_supplier_charge.event_name}",
+                subject=f"Engine Supplier Settlement: {engine_supplier_charge.event_name}",
                 body=(
-                    f"Engine supplier race fee has been processed for {engine_supplier_charge.event_name}.\n\n"
+                    f"Engine supplier settlement has been processed for {engine_supplier_charge.event_name}.\n\n"
                     f"Supplier: {engine_supplier_charge.supplier_name}\n"
                     f"Deal: {engine_supplier_charge.deal_type}\n"
-                    f"Cost this race: ${engine_supplier_charge.applied_cost:,}\n"
-                    f"Annual contract value: ${engine_supplier_charge.yearly_cost:,}"
+                    f"This race: {'+' if is_income else '-'}${abs(engine_supplier_charge.applied_amount):,}\n"
+                    f"Annual contract value: {'+' if engine_supplier_charge.yearly_cost < 0 else '-'}${abs(engine_supplier_charge.yearly_cost):,}"
                 ),
                 category=EmailCategory.GENERAL,
             )
@@ -206,7 +238,9 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
             prize_total = category_total(TransactionCategory.PRIZE_MONEY)
             sponsorship_total = category_total(TransactionCategory.SPONSORSHIP)
             driver_wage_total = category_total(TransactionCategory.DRIVER_WAGES)
+            management_salary_total = category_total(TransactionCategory.MANAGEMENT_SALARIES)
             workforce_total = category_total(TransactionCategory.WORKFORCE_WAGES)
+            factory_overhead_total = category_total(TransactionCategory.FACTORY_OVERHEAD)
             engine_supplier_total = category_total(TransactionCategory.ENGINE_SUPPLIER)
             tyre_supplier_total = category_total(TransactionCategory.TYRE_SUPPLIER)
             fuel_supplier_total = category_total(TransactionCategory.FUEL_SUPPLIER)
@@ -221,7 +255,9 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
                     f"Prize money: {'+' if prize_total >= 0 else '-'}${abs(prize_total):,}\n"
                     f"Sponsorship: {'+' if sponsorship_total >= 0 else '-'}${abs(sponsorship_total):,}\n"
                     f"Driver wages: {'+' if driver_wage_total >= 0 else '-'}${abs(driver_wage_total):,}\n"
+                    f"Management salaries: {'+' if management_salary_total >= 0 else '-'}${abs(management_salary_total):,}\n"
                     f"Workforce payroll: {'+' if workforce_total >= 0 else '-'}${abs(workforce_total):,}\n"
+                    f"Factory overhead: {'+' if factory_overhead_total >= 0 else '-'}${abs(factory_overhead_total):,}\n"
                     f"Engine supplier: {'+' if engine_supplier_total >= 0 else '-'}${abs(engine_supplier_total):,}\n"
                     f"Tyre supplier: {'+' if tyre_supplier_total >= 0 else '-'}${abs(tyre_supplier_total):,}\n"
                     f"Fuel supplier: {'+' if fuel_supplier_total >= 0 else '-'}${abs(fuel_supplier_total):,}\n"

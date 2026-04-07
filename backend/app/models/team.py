@@ -32,3 +32,4 @@ class Team(BaseModel):
     balance: int = 0
     facilities: int = 0
     car_wear: int = 0
+    factory_overhead_yearly: int = 0

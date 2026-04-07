@@ -150,6 +150,11 @@ class GridManager:
             for s in state.announced_ai_td_signings
             if s.get("status") == "announced"
         }
+        announced_tp_by_team = {
+            s.get("team_id"): s.get("principal_id")
+            for s in state.announced_ai_tp_signings
+            if s.get("status") == "announced"
+        }
         tp_lookup = {tp.id: tp for tp in state.team_principals}
         announced_title_sponsor_by_team = {
             s.get("team_id"): s
@@ -179,8 +184,10 @@ class GridManager:
                 d1 = d1 if self._is_projected_driver_available(d1, state.year) else None
             if not announced_d2_id:
                 d2 = d2 if self._is_projected_driver_available(d2, state.year) else None
-            tp = tp_lookup.get(team.team_principal_id)
-            tp = tp if self._is_projected_team_principal_available(tp) else None
+            announced_tp_id = announced_tp_by_team.get(team.id)
+            tp = tp_lookup.get(announced_tp_id) if announced_tp_id else tp_lookup.get(team.team_principal_id)
+            if not announced_tp_id:
+                tp = tp if self._is_projected_team_principal_available(tp) else None
             announced_td_id = announced_td_by_team.get(team.id)
             td = td_lookup.get(announced_td_id) if announced_td_id else td_lookup.get(team.technical_director_id)
             if not announced_td_id:

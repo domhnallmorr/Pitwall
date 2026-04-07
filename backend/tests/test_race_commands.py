@@ -127,7 +127,7 @@ def test_handle_simulate_qualifying_handles_exceptions():
     logger.error.assert_called_once()
 
 
-def test_handle_simulate_race_emits_tyre_facilities_and_finance_emails():
+def test_handle_simulate_race_emits_tyre_facilities_management_and_finance_emails():
     state = create_state()
     logger = Mock()
     event_name = "Test GP"
@@ -160,6 +160,33 @@ def test_handle_simulate_race_emits_tyre_facilities_and_finance_emails():
         event_name=event_name,
         event_type="RACE",
     )
+    state.finance.add_transaction(
+        week=state.calendar.current_week,
+        year=state.year,
+        amount=-25,
+        category=TransactionCategory.FACTORY_OVERHEAD,
+        description="Factory overhead",
+        event_name=event_name,
+        event_type="RACE",
+    )
+    state.finance.add_transaction(
+        week=state.calendar.current_week,
+        year=state.year,
+        amount=-300,
+        category=TransactionCategory.MANAGEMENT_SALARIES,
+        description="Race salary: Peter Heed (Technical Director)",
+        event_name=event_name,
+        event_type="RACE",
+    )
+    state.finance.add_transaction(
+        week=state.calendar.current_week,
+        year=state.year,
+        amount=-60,
+        category=TransactionCategory.MANAGEMENT_SALARIES,
+        description="Race salary: Jace Whitman (Commercial Manager)",
+        event_name=event_name,
+        event_type="RACE",
+    )
 
     race_result = {
         "event_name": event_name,
@@ -182,13 +209,26 @@ def test_handle_simulate_race_emits_tyre_facilities_and_finance_emails():
         races_paid=1,
         total_races=10,
     )
+    factory_overhead_charge = SimpleNamespace(
+        event_name=event_name,
+        applied_cost=25,
+        yearly_cost=400_000,
+    )
 
     with (
         patch("app.commands.race_commands.RaceManager.simulate_race", return_value=race_result),
         patch("app.commands.race_commands.PrizeMoneyManager.process_race_payout"),
         patch("app.commands.race_commands.SponsorshipManager.apply_for_event", return_value=None),
         patch("app.commands.race_commands.DriverWageManager.charge_for_event"),
+        patch(
+            "app.commands.race_commands.ManagementSalaryManager.charge_for_event",
+            return_value=[
+                SimpleNamespace(role_name="Technical Director", staff_name="Peter Heed", applied_cost=300),
+                SimpleNamespace(role_name="Commercial Manager", staff_name="Jace Whitman", applied_cost=60),
+            ],
+        ),
         patch("app.commands.race_commands.WorkforceCostManager.charge_for_event", return_value=None),
+        patch("app.commands.race_commands.FactoryOverheadCostManager.charge_for_event", return_value=factory_overhead_charge),
         patch("app.commands.race_commands.EngineSupplierCostManager.charge_for_event", return_value=None),
         patch("app.commands.race_commands.TyreSupplierCostManager.charge_for_event", return_value=tyre_charge),
         patch("app.commands.race_commands.FuelSupplierCostManager.charge_for_event", return_value=None),
@@ -203,10 +243,14 @@ def test_handle_simulate_race_emits_tyre_facilities_and_finance_emails():
     assert response["type"] == "race_result"
     subjects = [email.subject for email in state.emails]
     assert f"Tyre Supplier Invoice: {event_name}" in subjects
+    assert f"Management Payroll Processed: {event_name}" in subjects
+    assert f"Factory Overhead Charged: {event_name}" in subjects
     assert f"Facilities Upgrade Installment: {event_name}" in subjects
     assert f"Race Finance Summary: {event_name}" in subjects
     assert f"Race Report: {event_name}" in subjects
     finance_email = next(email for email in state.emails if email.subject == f"Race Finance Summary: {event_name}")
+    assert "Management salaries: -$360" in finance_email.body
+    assert "Factory overhead: -$25" in finance_email.body
     assert "Tyre supplier: -$20" in finance_email.body
     assert "Facilities financing: -$15" in finance_email.body
     assert current_event is not None

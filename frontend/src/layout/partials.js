@@ -19,42 +19,63 @@ function renderFinanceSummaryCards() {
 }
 
 function renderFinanceOverviewSections() {
-	const breakdown = document.getElementById('finance-overview-breakdown');
-	const planning = document.getElementById('finance-overview-planning');
+	const income = document.getElementById('finance-overview-income');
+	const expenditure = document.getElementById('finance-overview-expenditure');
+	const net = document.getElementById('finance-overview-net');
 	const alerts = document.getElementById('finance-contract-alerts');
-	if (breakdown) {
+	if (income) {
 		const rows = [
-			{ label: 'Season Income', id: 'finance-income-total', defaultValue: '$0' },
-			{ label: 'Season Expenses', id: 'finance-expense-total', defaultValue: '$0' },
-			{ label: 'Transport', id: 'finance-transport-total', defaultValue: '$0' },
-			{ label: 'Testing', id: 'finance-testing-total', defaultValue: '$0' },
-			{ label: 'Workforce', id: 'finance-workforce-total', defaultValue: '$0' },
-			{ label: 'Engine Supplier', id: 'finance-engine-supplier-total', defaultValue: '$0' },
-			{ label: 'Tyre Supplier', id: 'finance-tyre-supplier-total', defaultValue: '$0' },
-			{ label: 'Fuel Supplier', id: 'finance-fuel-supplier-total', defaultValue: '$0' },
-			{ label: 'Sponsorship', id: 'finance-sponsorship-total', defaultValue: '$0' },
-			{ label: 'Prize Paid', id: 'finance-prize-paid', defaultValue: '$0' },
-			{ label: 'Prize Entitlement', id: 'finance-prize-entitlement', defaultValue: '$0' },
+				{ label: 'Sponsorship', id: 'finance-sponsorship-total', defaultValue: '$0' },
+				{ label: 'Prize Money', id: 'finance-prize-money-total', defaultValue: '$0' },
+				{ label: 'Pay Drivers', id: 'finance-pay-driver-total', defaultValue: '$0' },
+				{ label: 'Engine Support', id: 'finance-engine-income-total', defaultValue: '$0' },
+				{ label: 'Fuel Income', id: 'finance-fuel-income-total', defaultValue: '$0' },
+				{ label: 'Total Income', id: 'finance-income-total', defaultValue: '$0', total: true },
 		];
-		breakdown.innerHTML = rows.map((row) => `
-			<div class="finance-overview-row">
+		income.innerHTML = rows.map((row) => `
+			<div class="finance-overview-row ${row.total ? 'finance-overview-row-total' : ''}">
 				<span class="finance-balance-label">${row.label}</span>
 				<strong id="${row.id}" class="finance-overview-value">${row.defaultValue}</strong>
 			</div>
 		`).join('');
 	}
 
-	if (planning) {
+	if (expenditure) {
 		const items = [
-			{ label: 'Next Race Income', id: 'finance-next-race-income', defaultValue: '$0' },
-			{ label: 'Next Race Outgoings', id: 'finance-next-race-outgoings', defaultValue: '$0' },
+			{ label: 'Driver Payroll', id: 'finance-driver-wages-total', defaultValue: '$0' },
+			{ label: 'Management Salaries', id: 'finance-management-salary-total', defaultValue: '$0' },
+			{ label: 'Workforce', id: 'finance-workforce-total', defaultValue: '$0' },
+			{ label: 'Factory Overhead', id: 'finance-factory-overhead-total', defaultValue: '$0' },
+			{ label: 'Engine Supplier', id: 'finance-engine-supplier-total', defaultValue: '$0' },
+			{ label: 'Tyre Supplier', id: 'finance-tyre-supplier-total', defaultValue: '$0' },
+			{ label: 'Fuel Supplier', id: 'finance-fuel-expense-total', defaultValue: '$0' },
+			{ label: 'Transport', id: 'finance-transport-total', defaultValue: '$0' },
+			{ label: 'Crash Damage', id: 'finance-crash-damage-total', defaultValue: '$0' },
+			{ label: 'Wear Repairs', id: 'finance-maintenance-total', defaultValue: '$0' },
+			{ label: 'Testing', id: 'finance-testing-total', defaultValue: '$0' },
+			{ label: 'Facilities', id: 'finance-facilities-total', defaultValue: '$0' },
+			{ label: 'Total Expenditure', id: 'finance-expense-total', defaultValue: '$0', total: true },
+		];
+		expenditure.innerHTML = items.map((item) => `
+			<div class="finance-overview-row ${item.total ? 'finance-overview-row-total' : ''}">
+				<span class="finance-balance-label">${item.label}</span>
+				<div id="${item.id}" class="finance-overview-value">${item.defaultValue}</div>
+			</div>
+		`).join('');
+	}
+
+	if (net) {
+		const rows = [
+			{ label: 'Season Income', id: 'finance-net-income-total', defaultValue: '$0' },
+			{ label: 'Season Expenditure', id: 'finance-net-expense-total', defaultValue: '$0' },
+			{ label: 'Net Profit / Loss', id: 'finance-net-pl-breakdown', defaultValue: '$0' },
 			{ label: 'Prize Outlook', id: 'finance-prize-outlook', defaultValue: '-' },
 			{ label: 'Facilities Status', id: 'finance-facilities-status', defaultValue: '-' },
 		];
-		planning.innerHTML = items.map((item) => `
-			<div class="finance-overview-row finance-overview-row-wide">
-				<span class="finance-balance-label">${item.label}</span>
-				<div id="${item.id}" class="finance-overview-copy">${item.defaultValue}</div>
+		net.innerHTML = rows.map((row) => `
+			<div class="finance-overview-row ${row.id === 'finance-prize-outlook' || row.id === 'finance-facilities-status' ? 'finance-overview-row-wide' : ''}">
+				<span class="finance-balance-label">${row.label}</span>
+				<div id="${row.id}" class="${row.id === 'finance-net-pl-breakdown' ? 'finance-overview-value finance-overview-net' : 'finance-overview-copy'}">${row.defaultValue}</div>
 			</div>
 		`).join('');
 	}
@@ -135,7 +156,7 @@ function renderFinanceSupplierSections() {
 			actionButtonLabel: 'Replace',
 			rows: [
 				{ label: 'Deal', id: 'finance-engine-supplier-deal', defaultValue: '-' },
-				{ label: 'Annual Cost', id: 'finance-engine-supplier-annual', defaultValue: '$0' },
+				{ label: 'Annual Net', id: 'finance-engine-supplier-annual', defaultValue: '$0' },
 				{ label: 'Per Race', id: 'finance-engine-supplier-installment', defaultValue: '$0' },
 				{ label: 'Paid So Far', id: 'finance-engine-supplier-paid', defaultValue: '$0' },
 				{ label: 'Remaining', id: 'finance-engine-supplier-remaining', defaultValue: '$0' },

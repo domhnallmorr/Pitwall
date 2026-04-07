@@ -22,6 +22,7 @@ try:
         TEAM_BUILDS_OWN_ENGINE,
         TEAM_ENGINE_SUPPLIERS,
         TEAM_ENGINE_SUPPLIER_CONTRACT_LENGTHS,
+        TEAM_FACTORY_OVERHEAD,
         TEAM_OTHER_SPONSORSHIP,
         TEAM_SPEEDS,
         TEAM_TITLE_SPONSORS,
@@ -55,6 +56,7 @@ except ModuleNotFoundError:
         TEAM_BUILDS_OWN_ENGINE,
         TEAM_ENGINE_SUPPLIERS,
         TEAM_ENGINE_SUPPLIER_CONTRACT_LENGTHS,
+        TEAM_FACTORY_OVERHEAD,
         TEAM_OTHER_SPONSORSHIP,
         TEAM_SPEEDS,
         TEAM_TITLE_SPONSORS,
@@ -159,6 +161,10 @@ def seed_data(conn):
         c.executemany(
             'UPDATE teams SET balance = ? WHERE name = ? AND start_year = 0',
             [(balance, name) for name, balance in TEAM_BALANCES.items()]
+        )
+        c.executemany(
+            'UPDATE teams SET factory_overhead_yearly = ? WHERE name = ? AND start_year = 0',
+            [(amount, name) for name, amount in TEAM_FACTORY_OVERHEAD.items()]
         )
         c.executemany(
             'UPDATE teams SET title_sponsor_name = ?, title_sponsor_yearly = ?, title_sponsor_contract_length = ? WHERE name = ?',
@@ -365,6 +371,10 @@ def seed_data(conn):
         [(amount, name) for name, amount in TEAM_OTHER_SPONSORSHIP.items()]
     )
     c.executemany(
+        'UPDATE teams SET factory_overhead_yearly = ? WHERE name = ?',
+        [(amount, name) for name, amount in TEAM_FACTORY_OVERHEAD.items()]
+    )
+    c.executemany(
         'UPDATE teams SET engine_supplier_name = ?, engine_supplier_deal = ?, engine_supplier_yearly_cost = ?, engine_supplier_contract_length = ?, builds_own_engine = ? WHERE name = ?',
         [
             (s[0], s[1], s[2], TEAM_ENGINE_SUPPLIER_CONTRACT_LENGTHS.get(team_name, 0), TEAM_BUILDS_OWN_ENGINE.get(team_name, 0), team_name)
@@ -450,6 +460,10 @@ def seed_data(conn):
     c.executemany(
         'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed, workforce, title_sponsor_name, title_sponsor_yearly, title_sponsor_contract_length, other_sponsorship_yearly) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         teams_data_with_attrs
+    )
+    c.executemany(
+        'UPDATE teams SET factory_overhead_yearly = ? WHERE name = ?',
+        [(amount, name) for name, amount in TEAM_FACTORY_OVERHEAD.items()]
     )
     c.executemany(
         'UPDATE teams SET engine_supplier_name = ?, engine_supplier_deal = ?, engine_supplier_yearly_cost = ?, engine_supplier_contract_length = ?, builds_own_engine = ? WHERE name = ?',

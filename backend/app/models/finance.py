@@ -5,6 +5,7 @@ from enum import Enum
 
 class TransactionCategory(str, Enum):
     DRIVER_WAGES = "driver_wages"
+    MANAGEMENT_SALARIES = "management_salaries"
     WORKFORCE_WAGES = "workforce_wages"
     PRIZE_MONEY = "prize_money"
     TRANSPORT = "transport"
@@ -18,6 +19,7 @@ class TransactionCategory(str, Enum):
     TESTING = "testing"
     MAINTENANCE = "maintenance"
     FACILITIES = "facilities"
+    FACTORY_OVERHEAD = "factory_overhead"
     OTHER = "other"
 
 

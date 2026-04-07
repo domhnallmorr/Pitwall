@@ -11,11 +11,22 @@ def build_finance_report(state: GameState) -> dict[str, Any]:
     income_total = sum(t.amount for t in transactions if t.amount > 0)
     expense_total = sum(-t.amount for t in transactions if t.amount < 0)
     net_profit_loss = income_total - expense_total
+    prize_money_total = sum(t.amount for t in transactions if t.category == TransactionCategory.PRIZE_MONEY and t.amount > 0)
+    driver_wage_expense_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.DRIVER_WAGES and t.amount < 0)
+    management_salary_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.MANAGEMENT_SALARIES and t.amount < 0)
+    pay_driver_income_total = sum(t.amount for t in transactions if t.category == TransactionCategory.DRIVER_WAGES and t.amount > 0)
     transport_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.TRANSPORT and t.amount < 0)
+    crash_damage_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.CRASH_DAMAGE and t.amount < 0)
+    maintenance_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.MAINTENANCE and t.amount < 0)
     workforce_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.WORKFORCE_WAGES and t.amount < 0)
-    engine_supplier_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.ENGINE_SUPPLIER and t.amount < 0)
+    factory_overhead_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.FACTORY_OVERHEAD and t.amount < 0)
+    engine_supplier_income_total = sum(t.amount for t in transactions if t.category == TransactionCategory.ENGINE_SUPPLIER and t.amount > 0)
+    engine_supplier_expense_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.ENGINE_SUPPLIER and t.amount < 0)
+    engine_supplier_total = engine_supplier_income_total - engine_supplier_expense_total
     tyre_supplier_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.TYRE_SUPPLIER and t.amount < 0)
-    fuel_supplier_total = sum(t.amount for t in transactions if t.category == TransactionCategory.FUEL_SUPPLIER)
+    fuel_income_total = sum(t.amount for t in transactions if t.category == TransactionCategory.FUEL_SUPPLIER and t.amount > 0)
+    fuel_expense_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.FUEL_SUPPLIER and t.amount < 0)
+    fuel_supplier_total = fuel_income_total - fuel_expense_total
     facilities_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.FACILITIES and t.amount < 0)
     sponsorship_total = sum(t.amount for t in transactions if t.category == TransactionCategory.SPONSORSHIP and t.amount > 0)
     testing_total = sum(-t.amount for t in transactions if t.amount < 0 and t.event_type == "TEST")
@@ -46,10 +57,21 @@ def build_finance_report(state: GameState) -> dict[str, Any]:
             "income_total": income_total,
             "expense_total": expense_total,
             "net_profit_loss": net_profit_loss,
+            "prize_money_total": prize_money_total,
+            "driver_wage_expense_total": driver_wage_expense_total,
+            "management_salary_total": management_salary_total,
+            "pay_driver_income_total": pay_driver_income_total,
             "transport_total": transport_total,
+            "crash_damage_total": crash_damage_total,
+            "maintenance_total": maintenance_total,
             "workforce_total": workforce_total,
+            "factory_overhead_total": factory_overhead_total,
+            "engine_supplier_income_total": engine_supplier_income_total,
+            "engine_supplier_expense_total": engine_supplier_expense_total,
             "engine_supplier_total": engine_supplier_total,
             "tyre_supplier_total": tyre_supplier_total,
+            "fuel_income_total": fuel_income_total,
+            "fuel_expense_total": fuel_expense_total,
             "fuel_supplier_total": fuel_supplier_total,
             "facilities_total": facilities_total,
             "sponsorship_total": sponsorship_total,

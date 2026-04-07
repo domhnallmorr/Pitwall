@@ -40,6 +40,7 @@ def create_state() -> GameState:
             fuel_supplier_name="Brasoil",
             fuel_supplier_deal="partner",
             fuel_supplier_yearly_cost=150_000,
+            factory_overhead_yearly=6_400_000,
         ),
         Team(id=2, name="Ferano", country="Italy", driver1_id=3, driver2_id=4, car_speed=84),
     ]
@@ -176,6 +177,13 @@ def test_get_finance_returns_summary_and_track_profit_loss():
     assert result["data"]["summary"]["transport_total"] == 200_000
     assert result["data"]["summary"]["testing_total"] == 0
     assert "workforce_total" in result["data"]["summary"]
+    assert "factory_overhead_total" in result["data"]["summary"]
+    assert "driver_wage_expense_total" in result["data"]["summary"]
+    assert "management_salary_total" in result["data"]["summary"]
+    assert "prize_money_total" in result["data"]["summary"]
+    assert "pay_driver_income_total" in result["data"]["summary"]
+    assert "crash_damage_total" in result["data"]["summary"]
+    assert "maintenance_total" in result["data"]["summary"]
     assert "engine_supplier_total" in result["data"]["summary"]
     assert "tyre_supplier_total" in result["data"]["summary"]
     assert "fuel_supplier_total" in result["data"]["summary"]
@@ -249,7 +257,7 @@ def test_get_finance_projection_includes_remaining_driver_wages_and_transport():
 
     assert result["status"] == "success"
     assert result["data"]["overview"]["projected_end_balance"] < 43_500_000
-    assert result["data"]["overview"]["next_race_outgoings"] >= 440_000
+    assert result["data"]["overview"]["next_race_outgoings"] >= 840_000
 
 
 def test_get_finance_reports_testing_total():
@@ -280,6 +288,92 @@ def test_get_finance_reports_testing_total():
 
     assert result["status"] == "success"
     assert result["data"]["summary"]["testing_total"] == 470_000
+
+
+def test_get_finance_reports_factory_overhead_total():
+    state = create_state()
+    state.finance.add_transaction(
+        week=10,
+        year=1998,
+        amount=-400_000,
+        category=TransactionCategory.FACTORY_OVERHEAD,
+        description="Factory overhead allocation",
+        event_name="Albert Park",
+        event_type="RACE",
+        circuit_country="Australia",
+    )
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "get_finance"})
+
+    assert result["status"] == "success"
+    assert result["data"]["summary"]["factory_overhead_total"] == 400_000
+
+
+def test_get_finance_reports_crash_and_maintenance_totals():
+    state = create_state()
+    state.finance.add_transaction(
+        week=10,
+        year=1998,
+        amount=-75_000,
+        category=TransactionCategory.CRASH_DAMAGE,
+        description="Crash repair",
+        event_name="Albert Park",
+        event_type="RACE",
+        circuit_country="Australia",
+    )
+    state.finance.add_transaction(
+        week=10,
+        year=1998,
+        amount=-12_000,
+        category=TransactionCategory.MAINTENANCE,
+        description="Car wear repair",
+        event_name="Albert Park",
+        event_type="RACE",
+        circuit_country="Australia",
+    )
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "get_finance"})
+
+    assert result["status"] == "success"
+    assert result["data"]["summary"]["crash_damage_total"] == 75_000
+    assert result["data"]["summary"]["maintenance_total"] == 12_000
+
+
+def test_get_finance_reports_management_salary_total():
+    app_main.CURRENT_STATE = create_state()
+
+    result = process_command({"type": "get_finance"})
+
+    assert result["status"] == "success"
+    assert result["data"]["summary"]["management_salary_total"] == 0
+
+
+def test_get_finance_reports_engine_supplier_income_for_works_deal():
+    state = create_state()
+    state.teams[0].engine_supplier_deal = "works"
+    state.teams[0].engine_supplier_yearly_cost = -12_000_000
+    state.finance.prize_money_total_races = 16
+    state.finance.add_transaction(
+        week=10,
+        year=1998,
+        amount=750_000,
+        category=TransactionCategory.ENGINE_SUPPLIER,
+        description="Engine supplier settlement: Ferano (works)",
+        event_name="Albert Park",
+        event_type="RACE",
+        circuit_country="Australia",
+    )
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "get_finance"})
+
+    assert result["status"] == "success"
+    assert result["data"]["summary"]["engine_supplier_income_total"] == 750_000
+    assert result["data"]["summary"]["engine_supplier_expense_total"] == 0
+    assert result["data"]["engine_supplier"]["direction"] == "income"
+    assert result["data"]["engine_supplier"]["installment"] == 750_000
 
 
 def test_get_finance_separates_test_and_race_rows_for_same_circuit():

@@ -10,6 +10,7 @@ from app.core.transfers import TransferManager
 from app.core.management_transfers import (
     CommercialManagerTransferManager,
     EngineSupplierTransferManager,
+    TeamPrincipalTransferManager,
     TechnicalDirectorTransferManager,
     TitleSponsorTransferManager,
     TyreSupplierTransferManager,
@@ -146,6 +147,7 @@ def handle_start_career(state: GameState | None, logger: logging.Logger, team_na
         GridManager().capture_season_snapshot(current_state, year=current_state.year)
         TransferManager().recompute_ai_signings(current_state)
         CommercialManagerTransferManager().recompute_ai_signings(current_state)
+        TeamPrincipalTransferManager().recompute_ai_signings(current_state)
         TechnicalDirectorTransferManager().recompute_ai_signings(current_state)
         TitleSponsorTransferManager().recompute_ai_signings(current_state)
         EngineSupplierTransferManager().recompute_ai_signings(current_state)

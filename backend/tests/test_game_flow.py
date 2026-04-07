@@ -131,7 +131,7 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     assert len(sponsorship_emails) >= 1
     payroll_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Workforce Payroll Processed:")]
     assert len(payroll_emails) >= 1
-    engine_supplier_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Engine Supplier Invoice:")]
+    engine_supplier_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Engine Supplier Settlement:")]
     assert len(engine_supplier_emails) >= 1
     fuel_supplier_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Fuel Supplier Settlement:")]
     assert len(fuel_supplier_emails) >= 1
@@ -147,7 +147,7 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     assert 'track_profit_loss' in finance_response['data']
     assert finance_response['data']['summary']['transport_total'] > 0
     assert finance_response['data']['summary']['workforce_total'] > 0
-    assert finance_response['data']['summary']['engine_supplier_total'] > 0
+    assert finance_response['data']['summary']['engine_supplier_total'] < 0
     assert 'tyre_supplier_total' in finance_response['data']['summary']
     assert 'fuel_supplier_total' in finance_response['data']['summary']
     assert finance_response['data']['summary']['sponsorship_total'] > 0

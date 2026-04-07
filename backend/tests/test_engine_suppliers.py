@@ -40,6 +40,10 @@ def test_team_records_include_seeded_engine_supplier_deals(mock_get_conn):
     teams, *_ = load_roster(year=1998)
     warrick = next(t for t in teams if t.name == "Warrick")
     schweizer = next(t for t in teams if t.name == "Schweizer")
+    ferano = next(t for t in teams if t.name == "Ferano")
+    mcalister = next(t for t in teams if t.name == "McAlister")
+    pascal = next(t for t in teams if t.name == "Pascal")
+    strathmore = next(t for t in teams if t.name == "Strathmore")
 
     assert warrick.engine_supplier_name == "Mechatron"
     assert warrick.engine_supplier_deal == "customer"
@@ -47,6 +51,10 @@ def test_team_records_include_seeded_engine_supplier_deals(mock_get_conn):
     assert schweizer.engine_supplier_name == "Ferano"
     assert schweizer.engine_supplier_deal == "customer"
     assert schweizer.engine_supplier_yearly_cost == 9_500_000
+    assert ferano.engine_supplier_yearly_cost == -12_000_000
+    assert mcalister.engine_supplier_yearly_cost == -11_800_000
+    assert pascal.engine_supplier_yearly_cost == -10_200_000
+    assert strathmore.engine_supplier_yearly_cost == -9_800_000
 
 
 @patch("app.core.roster.get_connection")

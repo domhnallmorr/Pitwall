@@ -76,6 +76,7 @@ def load_teams(cursor, start_year: int, driver_map: Dict[str, Driver]) -> List[T
     has_fuel_supplier_name = "fuel_supplier_name" in team_columns
     has_fuel_supplier_deal = "fuel_supplier_deal" in team_columns
     has_fuel_supplier_yearly_cost = "fuel_supplier_yearly_cost" in team_columns
+    has_factory_overhead_yearly = "factory_overhead_yearly" in team_columns
     car_speed_expr = "car_speed" if has_car_speed else "50"
     workforce_expr = "workforce" if has_workforce else "0"
     title_sponsor_name_expr = "title_sponsor_name" if has_title_sponsor_name else "NULL"
@@ -94,13 +95,15 @@ def load_teams(cursor, start_year: int, driver_map: Dict[str, Driver]) -> List[T
     fuel_supplier_name_expr = "fuel_supplier_name" if has_fuel_supplier_name else "NULL"
     fuel_supplier_deal_expr = "fuel_supplier_deal" if has_fuel_supplier_deal else "NULL"
     fuel_supplier_yearly_cost_expr = "fuel_supplier_yearly_cost" if has_fuel_supplier_yearly_cost else "0"
+    factory_overhead_yearly_expr = "factory_overhead_yearly" if has_factory_overhead_yearly else "0"
 
     cursor.execute(
         f"SELECT id, name, country, driver1_name, driver2_name, balance, facilities, {car_speed_expr} AS car_speed, {workforce_expr} AS workforce, "
         f"{title_sponsor_name_expr} AS title_sponsor_name, {title_sponsor_yearly_expr} AS title_sponsor_yearly, {title_sponsor_contract_length_expr} AS title_sponsor_contract_length, {other_sponsorship_yearly_expr} AS other_sponsorship_yearly, "
         f"{engine_supplier_name_expr} AS engine_supplier_name, {engine_supplier_deal_expr} AS engine_supplier_deal, {engine_supplier_yearly_cost_expr} AS engine_supplier_yearly_cost, {engine_supplier_contract_length_expr} AS engine_supplier_contract_length, {builds_own_engine_expr} AS builds_own_engine, "
         f"{tyre_supplier_name_expr} AS tyre_supplier_name, {tyre_supplier_deal_expr} AS tyre_supplier_deal, {tyre_supplier_yearly_cost_expr} AS tyre_supplier_yearly_cost, {tyre_supplier_contract_length_expr} AS tyre_supplier_contract_length, "
-        f"{fuel_supplier_name_expr} AS fuel_supplier_name, {fuel_supplier_deal_expr} AS fuel_supplier_deal, {fuel_supplier_yearly_cost_expr} AS fuel_supplier_yearly_cost "
+        f"{fuel_supplier_name_expr} AS fuel_supplier_name, {fuel_supplier_deal_expr} AS fuel_supplier_deal, {fuel_supplier_yearly_cost_expr} AS fuel_supplier_yearly_cost, "
+        f"{factory_overhead_yearly_expr} AS factory_overhead_yearly "
         "FROM teams WHERE start_year = ? OR start_year = 0 ORDER BY id ASC",
         (start_year,),
     )
@@ -130,6 +133,7 @@ def load_teams(cursor, start_year: int, driver_map: Dict[str, Driver]) -> List[T
             fuel_supplier_name=row[22] if row[22] is not None else None,
             fuel_supplier_deal=row[23] if row[23] is not None else None,
             fuel_supplier_yearly_cost=row[24] if row[24] is not None else 0,
+            factory_overhead_yearly=row[25] if row[25] is not None else 0,
         )
 
         d1_name = row[3]

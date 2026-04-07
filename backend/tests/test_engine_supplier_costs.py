@@ -50,7 +50,8 @@ def create_state() -> GameState:
 
 def test_calculate_race_cost_splits_engine_supplier_cost():
     manager = EngineSupplierCostManager()
-    assert manager.calculate_race_cost(yearly_cost=4_500_000, races_in_season=16) == 281_250
+    assert manager.calculate_race_amount(yearly_cost=4_500_000, races_in_season=16) == -281_250
+    assert manager.calculate_race_amount(yearly_cost=-12_000_000, races_in_season=16) == 750_000
 
 
 def test_charge_for_race_adds_engine_supplier_transaction():
@@ -60,7 +61,22 @@ def test_charge_for_race_adds_engine_supplier_transaction():
     charge = manager.charge_for_event(state, state.calendar.current_event)
 
     assert charge is not None
-    assert charge.applied_cost == 2_250_000
+    assert charge.applied_amount == -2_250_000
     txs = [t for t in state.finance.transactions if t.category == TransactionCategory.ENGINE_SUPPLIER]
     assert len(txs) == 1
     assert txs[0].amount == -2_250_000
+
+
+def test_charge_for_race_adds_engine_supplier_income_transaction_for_works_deal():
+    state = create_state()
+    state.teams[0].engine_supplier_deal = "works"
+    state.teams[0].engine_supplier_yearly_cost = -12_000_000
+    manager = EngineSupplierCostManager()
+
+    charge = manager.charge_for_event(state, state.calendar.current_event)
+
+    assert charge is not None
+    assert charge.applied_amount == 6_000_000
+    txs = [t for t in state.finance.transactions if t.category == TransactionCategory.ENGINE_SUPPLIER]
+    assert len(txs) == 1
+    assert txs[0].amount == 6_000_000

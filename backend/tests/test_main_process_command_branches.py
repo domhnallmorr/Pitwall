@@ -119,6 +119,8 @@ def test_load_game_success_and_errors():
         year=1998,
         finance=SimpleNamespace(balance=123),
         emails=[fake_email_1, fake_email_2],
+        game_completed=False,
+        completion_year=None,
     )
 
     with patch("app.main.load_game_file", return_value=loaded):

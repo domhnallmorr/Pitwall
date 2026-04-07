@@ -5,6 +5,7 @@ from app.core.grid import GridManager
 from app.core.management_transfers import (
     CommercialManagerTransferManager,
     EngineSupplierTransferManager,
+    TeamPrincipalTransferManager,
     TechnicalDirectorTransferManager,
     TitleSponsorTransferManager,
     TyreSupplierTransferManager,
@@ -16,6 +17,7 @@ from app.models.driver import Driver
 from app.models.engine_supplier import EngineSupplier
 from app.models.state import GameState
 from app.models.team import Team
+from app.models.team_principal import TeamPrincipal
 from app.models.technical_director import TechnicalDirector
 from app.models.title_sponsor import TitleSponsor
 from app.models.tyre_supplier import TyreSupplier
@@ -78,10 +80,18 @@ def create_transfer_state() -> GameState:
     ]
     teams[0].technical_director_id = 1
     teams[1].technical_director_id = 2
+    team_principals = [
+        TeamPrincipal(id=1, name="Player Owner", country="UK", age=45, skill=75, contract_length=99, team_id=1, owns_team=True),
+        TeamPrincipal(id=2, name="AI Expiring TP", country="IT", age=50, skill=72, contract_length=1, team_id=2),
+        TeamPrincipal(id=3, name="Free TP", country="DE", age=44, skill=69, contract_length=0, team_id=None),
+    ]
+    teams[0].team_principal_id = 1
+    teams[1].team_principal_id = 2
     return GameState(
         year=1998,
         teams=teams,
         drivers=drivers,
+        team_principals=team_principals,
         technical_directors=technical_directors,
         commercial_managers=commercial_managers,
         title_sponsors=[
@@ -500,6 +510,135 @@ def test_apply_new_season_cm_transfers_moves_announced_manager_and_sets_contract
     assert incoming.contract_length == 2
     assert outgoing.team_id is None
     assert any(s["manager_id"] == 3 for s in outcome["applied_signings"])
+
+
+@patch("app.core.management_transfer_markets.team_principal.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfer_markets.team_principal.random.randint", return_value=6)
+@patch("app.core.management_transfer_markets.team_principal.random.choice", side_effect=lambda choices: choices[0])
+def test_recompute_ai_tp_signings_plans_only_ai_vacancies(mock_choice, mock_randint, mock_shuffle):
+    state = create_transfer_state()
+
+    planned = TeamPrincipalTransferManager().recompute_ai_signings(state)
+
+    assert len(planned) == 1
+    assert planned[0]["team_id"] == 2
+    assert planned[0]["seat"] == "team_principal_id"
+    assert planned[0]["principal_id"] in {2, 3}
+    assert planned[0]["status"] == "planned"
+    assert planned[0]["announce_week"] == 6
+
+
+def test_publish_due_tp_announcements_moves_planned_to_announced_and_emails():
+    state = create_transfer_state()
+    state.calendar.current_week = 3
+    state.planned_ai_tp_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "team_principal_id",
+            "seat_label": "Team Principal",
+            "principal_id": 3,
+            "principal_name": "Free TP",
+            "announce_week": 3,
+            "announce_year": 1998,
+            "status": "planned",
+        }
+    ]
+
+    published = TeamPrincipalTransferManager().publish_due_announcements(state)
+
+    assert len(published) == 1
+    assert len(state.planned_ai_tp_signings) == 0
+    assert len(state.announced_ai_tp_signings) == 1
+    assert state.announced_ai_tp_signings[0]["status"] == "announced"
+    assert any(e.subject == "Team Principal Signing Confirmed: Free TP to AI Team" for e in state.emails)
+
+
+def test_engine_advance_week_publishes_due_tp_transfer_announcements():
+    state = create_transfer_state()
+    state.planned_ai_tp_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "team_principal_id",
+            "seat_label": "Team Principal",
+            "principal_id": 3,
+            "principal_name": "Free TP",
+            "announce_week": 2,
+            "announce_year": 1998,
+            "status": "planned",
+        }
+    ]
+
+    GameEngine().advance_week(state)
+
+    assert len(state.announced_ai_tp_signings) == 1
+    assert len(state.planned_ai_tp_signings) == 0
+    assert any(e.subject == "Team Principal Signing Confirmed: Free TP to AI Team" for e in state.emails)
+
+
+def test_grid_next_year_projection_uses_announced_tp_signings():
+    state = create_transfer_state()
+    state.announced_ai_tp_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "team_principal_id",
+            "seat_label": "Team Principal",
+            "principal_id": 3,
+            "principal_name": "Free TP",
+            "announce_week": 2,
+            "announce_year": 1998,
+            "status": "announced",
+        }
+    ]
+
+    df = GridManager().get_grid_dataframe(state, year=1999)
+    row = df[df["Team"] == "AI Team"].iloc[0]
+    assert row["TeamPrincipal"] == "Free TP"
+    assert row["TeamPrincipalCountry"] == "DE"
+
+
+def test_apply_new_season_tp_transfers_moves_announced_principal_and_sets_contract():
+    state = create_transfer_state()
+    state.announced_ai_tp_signings = [
+        {
+            "team_id": 2,
+            "team_name": "AI Team",
+            "seat": "team_principal_id",
+            "seat_label": "Team Principal",
+            "principal_id": 3,
+            "principal_name": "Free TP",
+            "announce_week": 20,
+            "announce_year": 1998,
+            "status": "announced",
+        }
+    ]
+
+    outcome = TeamPrincipalTransferManager().apply_new_season_transfers(state, announced_year=1998)
+
+    ai_team = next(t for t in state.teams if t.id == 2)
+    incoming = next(p for p in state.team_principals if p.id == 3)
+    outgoing = next(p for p in state.team_principals if p.id == 2)
+    assert ai_team.team_principal_id == 3
+    assert incoming.team_id == 2
+    assert incoming.contract_length == 2
+    assert outgoing.team_id is None
+    assert any(s["principal_id"] == 3 for s in outcome["applied_signings"])
+
+
+@patch("app.core.management_transfer_markets.team_principal.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfer_markets.team_principal.random.randint", return_value=6)
+@patch("app.core.management_transfer_markets.team_principal.random.choice", side_effect=lambda choices: choices[0])
+def test_recompute_ai_tp_signings_excludes_owner_principals(mock_choice, mock_randint, mock_shuffle):
+    state = create_transfer_state()
+    owner = next(p for p in state.team_principals if p.id == 1)
+    owner.team_id = None
+
+    planned = TeamPrincipalTransferManager().recompute_ai_signings(state)
+
+    assert len(planned) == 1
+    assert planned[0]["principal_id"] == 2
 
 
 @patch("app.core.management_transfer_markets.technical_director.random.shuffle", side_effect=lambda x: None)

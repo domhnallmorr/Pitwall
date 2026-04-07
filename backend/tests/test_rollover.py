@@ -1,10 +1,11 @@
 from app.core.rollover import SeasonRolloverManager
 from app.core.engine import GameEngine
-from app.core.management_retirement import TechnicalDirectorRetirementManager
+from app.core.management_retirement import TeamPrincipalRetirementManager, TechnicalDirectorRetirementManager
 from app.models.state import GameState
 from app.models.calendar import Calendar, Event, EventType
 from app.models.driver import Driver
 from app.models.team import Team
+from app.models.team_principal import TeamPrincipal
 from app.models.technical_director import TechnicalDirector
 from app.models.commercial_manager import CommercialManager
 from app.models.title_sponsor import TitleSponsor
@@ -430,6 +431,103 @@ def test_rollover_retires_eligible_commercial_manager(mock_load_roster, mock_cm_
     email = next((e for e in state.emails if e.subject == "Management Retirements Confirmed: End of 1998"), None)
     assert email is not None
     assert "CM Veteran" in email.body
+
+
+@patch("app.core.management_retirement.random.random", return_value=0.0)
+@patch("app.core.rollover.load_roster", return_value=([], [], 1999, [], []))
+def test_rollover_retires_eligible_team_principal(mock_load_roster, mock_tp_random):
+    teams = [
+        Team(id=1, name="Team A", country="UK", driver1_id=1, driver2_id=2, team_principal_id=30, points=50),
+    ]
+    drivers = [
+        Driver(id=1, name="Driver A1", age=30, country="UK", team_id=1, role="DRIVER_1", points=30),
+        Driver(id=2, name="Driver A2", age=29, country="FR", team_id=1, role="DRIVER_2", points=20),
+    ]
+    team_principals = [
+        TeamPrincipal(id=30, name="TP Veteran", country="UK", age=52, skill=70, contract_length=3, team_id=1, owns_team=False),
+    ]
+    events = [Event(name="Race 2", week=3, type=EventType.RACE)]
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        team_principals=team_principals,
+        calendar=Calendar(events=events, current_week=3),
+        circuits=[],
+        events_processed=["3_Race 2"],
+    )
+
+    result = SeasonRolloverManager().process_rollover(state)
+
+    principal = state.team_principals[0]
+    assert principal.active is False
+    assert principal.team_id is None
+    assert state.teams[0].team_principal_id is None
+    assert any(m["name"] == "TP Veteran" for m in result["retired_team_principals"])
+    email = next((e for e in state.emails if e.subject == "Team Principal Retirements Confirmed: End of 1998"), None)
+    assert email is not None
+    assert "TP Veteran" in email.body
+
+
+@patch("app.core.management_retirement.random.random", return_value=1.0)
+@patch("app.core.rollover.load_roster", return_value=([], [], 1999, [], []))
+def test_rollover_applies_announced_team_principal_transfer(mock_load_roster, mock_management_random):
+    teams = [
+        Team(id=1, name="Player Team", country="UK", driver1_id=1, driver2_id=2, team_principal_id=None, points=10),
+        Team(id=2, name="AI Team", country="IT", driver1_id=3, driver2_id=4, team_principal_id=20, points=8),
+    ]
+    drivers = [
+        Driver(id=1, name="P1", age=30, country="UK", team_id=1),
+        Driver(id=2, name="P2", age=29, country="UK", team_id=1),
+        Driver(id=3, name="A1", age=28, country="IT", team_id=2),
+        Driver(id=4, name="A2", age=27, country="IT", team_id=2),
+    ]
+    team_principals = [
+        TeamPrincipal(id=20, name="AI Expiring TP", country="IT", age=50, skill=78, contract_length=1, team_id=2, owns_team=False),
+        TeamPrincipal(id=30, name="Free TP", country="DE", age=43, skill=80, contract_length=0, team_id=None, owns_team=False),
+    ]
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        team_principals=team_principals,
+        calendar=Calendar(events=[Event(name="Race 2", week=3, type=EventType.RACE)], current_week=3),
+        circuits=[],
+        events_processed=["3_Race 2"],
+        announced_ai_tp_signings=[
+            {
+                "team_id": 2,
+                "team_name": "AI Team",
+                "seat": "team_principal_id",
+                "seat_label": "Team Principal",
+                "principal_id": 30,
+                "principal_name": "Free TP",
+                "announce_week": 2,
+                "announce_year": 1998,
+                "status": "announced",
+            }
+        ],
+    )
+
+    result = SeasonRolloverManager().process_rollover(state)
+
+    ai_team = next(t for t in state.teams if t.id == 2)
+    incoming = next(tp for tp in state.team_principals if tp.id == 30)
+    outgoing = next(tp for tp in state.team_principals if tp.id == 20)
+    assert ai_team.team_principal_id == 30
+    assert incoming.team_id == 2
+    assert incoming.contract_length == 2
+    assert outgoing.team_id is None
+    assert outgoing.contract_length == 0
+    assert any(s["principal_id"] == 30 for s in result["team_principal_transfer_outcome"]["applied_signings"])
+
+
+def test_team_principal_retirement_probability_bounds():
+    manager = TeamPrincipalRetirementManager()
+
+    assert manager._retirement_probability(49) == 0.0
+    assert manager._retirement_probability(50) == 0.05
+    assert manager._retirement_probability(65) == 1.0
 
 
 @patch("app.core.management_retirement.random.random", return_value=1.0)

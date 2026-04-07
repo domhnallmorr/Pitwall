@@ -16,23 +16,33 @@ export default class FinanceView {
 		this.netPlEl = document.getElementById('finance-net-pl');
 		this.projectedBalanceEl = document.getElementById('finance-projected-balance');
 		this.nextRaceNetEl = document.getElementById('finance-next-race-net');
-		this.nextRaceIncomeEl = document.getElementById('finance-next-race-income');
-		this.nextRaceOutgoingsEl = document.getElementById('finance-next-race-outgoings');
-		this.prizeEntitlementEl = document.getElementById('finance-prize-entitlement');
-		this.prizePaidEl = document.getElementById('finance-prize-paid');
 		this.prizeRemainingEl = document.getElementById('finance-prize-remaining');
 		this.prizeProgressEl = document.getElementById('finance-prize-progress');
 		this.prizeOutlookEl = document.getElementById('finance-prize-outlook');
 		this.facilitiesStatusEl = document.getElementById('finance-facilities-status');
 		this.contractAlertsEl = document.getElementById('finance-contract-alerts');
 		this.incomeTotalEl = document.getElementById('finance-income-total');
+		this.netIncomeTotalEl = document.getElementById('finance-net-income-total');
+		this.netExpenseTotalEl = document.getElementById('finance-net-expense-total');
+		this.netPlBreakdownEl = document.getElementById('finance-net-pl-breakdown');
 		this.expenseTotalEl = document.getElementById('finance-expense-total');
+		this.prizeMoneyTotalEl = document.getElementById('finance-prize-money-total');
+		this.payDriverTotalEl = document.getElementById('finance-pay-driver-total');
+		this.engineIncomeTotalEl = document.getElementById('finance-engine-income-total');
 		this.transportTotalEl = document.getElementById('finance-transport-total');
+		this.crashDamageTotalEl = document.getElementById('finance-crash-damage-total');
+		this.maintenanceTotalEl = document.getElementById('finance-maintenance-total');
 		this.testingTotalEl = document.getElementById('finance-testing-total');
+		this.driverWagesTotalEl = document.getElementById('finance-driver-wages-total');
+		this.managementSalaryTotalEl = document.getElementById('finance-management-salary-total');
 		this.workforceTotalEl = document.getElementById('finance-workforce-total');
+		this.factoryOverheadTotalEl = document.getElementById('finance-factory-overhead-total');
 		this.engineSupplierTotalEl = document.getElementById('finance-engine-supplier-total');
 		this.tyreSupplierTotalEl = document.getElementById('finance-tyre-supplier-total');
 		this.fuelSupplierTotalEl = document.getElementById('finance-fuel-supplier-total');
+		this.fuelIncomeTotalEl = document.getElementById('finance-fuel-income-total');
+		this.fuelExpenseTotalEl = document.getElementById('finance-fuel-expense-total');
+		this.facilitiesTotalEl = document.getElementById('finance-facilities-total');
 		this.sponsorshipTotalEl = document.getElementById('finance-sponsorship-total');
 		this.sponsorNameEl = document.getElementById('finance-sponsor-name');
 		this.sponsorReplaceBtn = document.getElementById('finance-sponsor-replace-btn');
@@ -180,22 +190,32 @@ export default class FinanceView {
 		this.applyMoneyState(this.netPlEl, summary.net_profit_loss || 0);
 		this.applyMoneyState(this.projectedBalanceEl, overview.projected_end_balance || 0);
 		this.applyMoneyState(this.nextRaceNetEl, overview.next_race_net || 0);
-		if (this.nextRaceIncomeEl) this.nextRaceIncomeEl.textContent = this.formatMoney(overview.next_race_income || 0);
-		if (this.nextRaceOutgoingsEl) this.nextRaceOutgoingsEl.textContent = this.formatMoney(-(overview.next_race_outgoings || 0));
-		if (this.prizeEntitlementEl) this.prizeEntitlementEl.textContent = this.formatMoney(prizeMeta.entitlement || 0);
-		if (this.prizePaidEl) this.prizePaidEl.textContent = this.formatMoney(prizeMeta.paid || 0);
 		if (this.prizeRemainingEl) this.prizeRemainingEl.textContent = this.formatMoney(prizeMeta.remaining || 0);
 		if (this.prizeProgressEl) this.prizeProgressEl.textContent = `Race installments: ${prizeMeta.racesPaid || 0} / ${prizeMeta.totalRaces || 0}`;
 		if (this.prizeOutlookEl) this.prizeOutlookEl.textContent = overview.prize_outlook || '-';
 		if (this.facilitiesStatusEl) this.facilitiesStatusEl.textContent = overview.facilities_status || '-';
 		if (this.incomeTotalEl) this.incomeTotalEl.textContent = this.formatMoney(summary.income_total || 0);
+		if (this.netIncomeTotalEl) this.netIncomeTotalEl.textContent = this.formatMoney(summary.income_total || 0);
+		if (this.netExpenseTotalEl) this.netExpenseTotalEl.textContent = this.formatMoney(summary.expense_total || 0);
+		if (this.netPlBreakdownEl) this.netPlBreakdownEl.textContent = this.formatMoney(summary.net_profit_loss || 0, { signed: true });
 		if (this.expenseTotalEl) this.expenseTotalEl.textContent = this.formatMoney(summary.expense_total || 0);
+		if (this.prizeMoneyTotalEl) this.prizeMoneyTotalEl.textContent = this.formatMoney(summary.prize_money_total || 0);
+		if (this.payDriverTotalEl) this.payDriverTotalEl.textContent = this.formatMoney(summary.pay_driver_income_total || 0);
+		if (this.engineIncomeTotalEl) this.engineIncomeTotalEl.textContent = this.formatMoney(summary.engine_supplier_income_total || 0);
 		if (this.transportTotalEl) this.transportTotalEl.textContent = this.formatMoney(summary.transport_total || 0);
+		if (this.crashDamageTotalEl) this.crashDamageTotalEl.textContent = this.formatMoney(summary.crash_damage_total || 0);
+		if (this.maintenanceTotalEl) this.maintenanceTotalEl.textContent = this.formatMoney(summary.maintenance_total || 0);
 		if (this.testingTotalEl) this.testingTotalEl.textContent = this.formatMoney(summary.testing_total || 0);
+		if (this.driverWagesTotalEl) this.driverWagesTotalEl.textContent = this.formatMoney(summary.driver_wage_expense_total || 0);
+		if (this.managementSalaryTotalEl) this.managementSalaryTotalEl.textContent = this.formatMoney(summary.management_salary_total || 0);
 		if (this.workforceTotalEl) this.workforceTotalEl.textContent = this.formatMoney(summary.workforce_total || 0);
-		if (this.engineSupplierTotalEl) this.engineSupplierTotalEl.textContent = this.formatMoney(summary.engine_supplier_total || 0);
+		if (this.factoryOverheadTotalEl) this.factoryOverheadTotalEl.textContent = this.formatMoney(summary.factory_overhead_total || 0);
+		if (this.engineSupplierTotalEl) this.engineSupplierTotalEl.textContent = this.formatMoney(summary.engine_supplier_expense_total || 0);
 		if (this.tyreSupplierTotalEl) this.tyreSupplierTotalEl.textContent = this.formatMoney(summary.tyre_supplier_total || 0);
 		if (this.fuelSupplierTotalEl) this.fuelSupplierTotalEl.textContent = this.formatMoney(summary.fuel_supplier_total || 0, { signed: true });
+		if (this.fuelIncomeTotalEl) this.fuelIncomeTotalEl.textContent = this.formatMoney(summary.fuel_income_total || 0);
+		if (this.fuelExpenseTotalEl) this.fuelExpenseTotalEl.textContent = this.formatMoney(summary.fuel_expense_total || 0);
+		if (this.facilitiesTotalEl) this.facilitiesTotalEl.textContent = this.formatMoney(summary.facilities_total || 0);
 		if (this.sponsorshipTotalEl) this.sponsorshipTotalEl.textContent = this.formatMoney(summary.sponsorship_total || 0);
 
 		if (this.contractAlertsEl) {
@@ -255,6 +275,8 @@ export default class FinanceView {
 		const engineSupplierContractLength = engineSupplier.contract_length || 0;
 		const engineSupplierPendingReplacement = Boolean(engineSupplier.pending_replacement);
 		const engineSupplierBuildsOwnEngine = Boolean(engineSupplier.builds_own_engine);
+		const engineAnnualSign = (engineSupplier.annual_value || 0) < 0 ? '+' : '-';
+		const engineInstallmentSign = engineSupplier.direction === 'income' ? '+' : '-';
 
 		if (this.engineSupplierNameEl) this.engineSupplierNameEl.textContent = engineSupplierName;
 		if (this.engineSupplierReplaceBtn) {
@@ -267,8 +289,8 @@ export default class FinanceView {
 			}
 		}
 		if (this.engineSupplierDealEl) this.engineSupplierDealEl.textContent = engineSupplier.deal || '-';
-		if (this.engineSupplierAnnualEl) this.engineSupplierAnnualEl.textContent = this.formatMoney(engineSupplier.annual_value || 0);
-		if (this.engineSupplierInstallmentEl) this.engineSupplierInstallmentEl.textContent = this.formatMoney(engineSupplier.installment || 0);
+		if (this.engineSupplierAnnualEl) this.engineSupplierAnnualEl.textContent = `${engineAnnualSign}$${Math.abs(engineSupplier.annual_value || 0).toLocaleString()}`;
+		if (this.engineSupplierInstallmentEl) this.engineSupplierInstallmentEl.textContent = `${engineInstallmentSign}$${Math.abs(engineSupplier.installment || 0).toLocaleString()}`;
 		if (this.engineSupplierPaidEl) this.engineSupplierPaidEl.textContent = this.formatMoney(engineSupplier.paid_so_far || 0);
 		if (this.engineSupplierRemainingEl) this.engineSupplierRemainingEl.textContent = this.formatMoney(engineSupplier.remaining || 0);
 		this.setSupplierLogo(this.engineSupplierLogoWrap, engineSupplier.name);

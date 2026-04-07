@@ -226,6 +226,20 @@ TEAM_BALANCES = {
     "Marchetti": 890_000,
 }
 
+TEAM_FACTORY_OVERHEAD = {
+    "Warrick": 6_400_000,
+    "Ferano": 6_400_000,
+    "Benedetti": 4_800_000,
+    "McAlister": 6_400_000,
+    "Joyce": 1_600_000,
+    "Pascal": 3_200_000,
+    "Schweizer": 4_800_000,
+    "Swords": 1_600_000,
+    "Strathmore": 3_200_000,
+    "Tarnwell": 1_600_000,
+    "Marchetti": 1_600_000,
+}
+
 TEAM_TITLE_SPONSORS = {
     "Warrick": ("Windale", 32_500_000),
     "Ferano": ("Marbano", 31_500_000),
@@ -270,14 +284,14 @@ TEAM_OTHER_SPONSORSHIP = {
 
 TEAM_ENGINE_SUPPLIERS = {
     "Warrick": ("Mechatron", "customer", 4_500_000),
-    "Ferano": ("Ferano", "works", 0),
+    "Ferano": ("Ferano", "works", -12_000_000),
     "Benedetti": ("Mechatron", "customer", 4_500_000),
-    "McAlister": ("Marcado", "works", 0),
+    "McAlister": ("Marcado", "works", -11_800_000),
     "Joyce": ("Hundo-Mondai", "partner", 0),
-    "Pascal": ("Pezhout", "works", 0),
+    "Pascal": ("Pezhout", "works", -10_200_000),
     "Schweizer": ("Ferano", "customer", 9_500_000),
     "Swords": ("Hartek", "works", 0),
-    "Strathmore": ("Frost", "works", 0),
+    "Strathmore": ("Frost", "works", -9_800_000),
     "Tarnwell": ("Frost", "customer", 7_500_000),
     "Marchetti": ("Frost", "customer", 7_500_000),
 }

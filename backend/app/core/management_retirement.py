@@ -111,3 +111,57 @@ class TechnicalDirectorRetirementManager:
         if age >= self.GUARANTEED_RETIREMENT_AGE:
             return 1.0
         return min(1.0, (age - self.MIN_RETIREMENT_AGE + 1) * 0.05)
+
+
+class TeamPrincipalRetirementManager:
+    """
+    Handles non-owner team principal retirements.
+    """
+
+    MIN_RETIREMENT_AGE = 50
+    GUARANTEED_RETIREMENT_AGE = 65
+
+    def retire_due_principals(self, state: GameState, completed_year: int) -> List[Dict[str, Any]]:
+        retired: List[Dict[str, Any]] = []
+
+        for principal in state.team_principals:
+            if not getattr(principal, "active", True):
+                continue
+            if getattr(principal, "owns_team", False):
+                continue
+
+            probability = self._retirement_probability(principal.age)
+            if probability <= 0:
+                continue
+            if random.random() > probability:
+                continue
+
+            team_name = "Free Agent"
+            old_team_id = principal.team_id
+            for team in state.teams:
+                if team.id == old_team_id:
+                    team_name = team.name
+                    if team.team_principal_id == principal.id:
+                        team.team_principal_id = None
+                    break
+
+            principal.active = False
+            principal.team_id = None
+            principal.contract_length = 0
+
+            retired.append(
+                {
+                    "name": principal.name,
+                    "age": principal.age,
+                    "team_name": team_name,
+                }
+            )
+
+        return retired
+
+    def _retirement_probability(self, age: int) -> float:
+        if age < self.MIN_RETIREMENT_AGE:
+            return 0.0
+        if age >= self.GUARANTEED_RETIREMENT_AGE:
+            return 1.0
+        return min(1.0, (age - self.MIN_RETIREMENT_AGE + 1) * 0.05)

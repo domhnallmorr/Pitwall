@@ -55,6 +55,13 @@ def build_finance_payload(state: GameState):
     workforce_manager = WorkforceCostManager()
     workforce_race_cost = workforce_manager.calculate_race_cost(player_team.workforce, race_count) if player_team else 0
     workforce_annual_projection = max(0, int(getattr(player_team, "workforce", 0) or 0)) * workforce_manager.annual_avg_wage if player_team else 0
+    factory_overhead_yearly = int(getattr(player_team, "factory_overhead_yearly", 0) or 0) if player_team else 0
+    factory_overhead_installment = int(round(max(0, factory_overhead_yearly) / max(1, race_count))) if player_team else 0
+    factory_overhead_paid_so_far = sum(
+        -t.amount for t in state.finance.transactions
+        if t.category == TransactionCategory.FACTORY_OVERHEAD and t.year == state.year and t.amount < 0
+    )
+    factory_overhead_remaining = max(factory_overhead_yearly - factory_overhead_paid_so_far, 0) if player_team else 0
 
     engine_supplier_name = player_team.engine_supplier_name if player_team else None
     engine_supplier_yearly = player_team.engine_supplier_yearly_cost if player_team else 0
@@ -62,12 +69,12 @@ def build_finance_payload(state: GameState):
         s.get("status") == "announced" and s.get("team_id") == player_team.id
         for s in state.announced_ai_engine_supplier_signings
     ) if player_team else False
-    engine_supplier_installment = int(round(max(0, engine_supplier_yearly) / max(1, race_count))) if engine_supplier_name else 0
+    engine_supplier_installment = int(round(abs(engine_supplier_yearly) / max(1, race_count))) if engine_supplier_name else 0
     engine_supplier_paid_so_far = sum(
-        -t.amount for t in state.finance.transactions
-        if t.category == TransactionCategory.ENGINE_SUPPLIER and t.year == state.year and t.amount < 0
+        abs(t.amount) for t in state.finance.transactions
+        if t.category == TransactionCategory.ENGINE_SUPPLIER and t.year == state.year
     )
-    engine_supplier_remaining = max(engine_supplier_yearly - engine_supplier_paid_so_far, 0) if engine_supplier_name else 0
+    engine_supplier_remaining = max(abs(engine_supplier_yearly) - engine_supplier_paid_so_far, 0) if engine_supplier_name else 0
 
     tyre_supplier_name = player_team.tyre_supplier_name if player_team else None
     tyre_supplier_yearly = player_team.tyre_supplier_yearly_cost if player_team else 0
@@ -169,17 +176,21 @@ def build_finance_payload(state: GameState):
 
     next_race_income = sponsor_installment + other_sponsorship_installment + next_race_prize_income
     next_race_income += next_race_driver_income
+    if engine_supplier_yearly < 0:
+        next_race_income += engine_supplier_installment
     if fuel_supplier_yearly < 0:
         next_race_income += fuel_supplier_installment
 
     next_race_outgoings = (
         workforce_race_cost
-        + engine_supplier_installment
+        + factory_overhead_installment
         + tyre_supplier_installment
         + facilities_installment
         + next_race_transport
         + next_race_driver_cost
     )
+    if engine_supplier_yearly > 0:
+        next_race_outgoings += engine_supplier_installment
     if fuel_supplier_yearly > 0:
         next_race_outgoings += fuel_supplier_installment
     next_race_net = next_race_income - next_race_outgoings
@@ -187,13 +198,17 @@ def build_finance_payload(state: GameState):
     projected_end_balance = state.finance.balance + prize_remaining + sponsor_remaining + other_sponsorship_remaining
     projected_end_balance += projected_driver_income_remaining
     projected_end_balance -= (
-        engine_supplier_remaining
-        + tyre_supplier_remaining
+        tyre_supplier_remaining
         + projected_workforce_remaining
+        + factory_overhead_remaining
         + projected_driver_expense_remaining
         + projected_transport_remaining
         + facilities_remaining
     )
+    if engine_supplier_yearly < 0:
+        projected_end_balance += engine_supplier_remaining
+    else:
+        projected_end_balance -= engine_supplier_remaining
     if fuel_supplier_yearly < 0:
         projected_end_balance += fuel_supplier_remaining
     else:
@@ -273,6 +288,7 @@ def build_finance_payload(state: GameState):
             "contract_length": int(player_team.engine_supplier_contract_length or 0) if player_team else 0,
             "pending_replacement": engine_supplier_pending_replacement,
             "builds_own_engine": bool(getattr(player_team, "builds_own_engine", False)) if player_team else False,
+            "direction": "income" if engine_supplier_yearly < 0 else "expense",
         },
         "tyre_supplier": {
             "name": tyre_supplier_name,
