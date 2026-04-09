@@ -24,6 +24,44 @@ def test_load_roster_excludes_1999_future_drivers_from_1998(mock_get_conn):
 
 
 @patch("app.core.roster.get_connection")
+def test_load_roster_includes_default_free_agents_from_1998(mock_get_conn):
+    mock_get_conn.return_value = create_seeded_db()
+
+    _, drivers, year, _, _ = load_roster(year=1998)
+
+    assert year == 1998
+    by_name = {driver.name: driver for driver in drivers}
+
+    assert by_name["Javier Perez Mendoza"].country == "Colombia"
+    assert by_name["Javier Perez Mendoza"].speed == 79
+    assert by_name["Leonardo Badei"].race_starts == 34
+    assert by_name["Jan van der Veen"].race_starts == 48
+    assert by_name["Pablo del Rosario"].country == "Spain"
+    assert by_name["Stefan Sarrien"].age == 22
+    assert by_name["Jorn Maller"].country == "Germany"
+    assert by_name["Jean-Claude Boulain"].country == "France"
+    assert by_name["Alex Zanetto"].race_starts == 25
+    assert by_name["Marco Genoa"].speed == 64
+    assert by_name["Rico Zanda"].country == "Brazil"
+
+    for name in [
+        "Javier Perez Mendoza",
+        "Leonardo Badei",
+        "Jan van der Veen",
+        "Pablo del Rosario",
+        "Stefan Sarrien",
+        "Jorn Maller",
+        "Jean-Claude Boulain",
+        "Alex Zanetto",
+        "Marco Genoa",
+        "Rico Zanda",
+    ]:
+        assert by_name[name].contract_length == 0
+        assert by_name[name].wage == 0
+        assert by_name[name].team_id is None
+
+
+@patch("app.core.roster.get_connection")
 def test_load_roster_includes_2000_future_drivers_with_supported_fields(mock_get_conn):
     mock_get_conn.return_value = create_seeded_db()
 
@@ -125,3 +163,50 @@ def test_load_roster_includes_2001_future_drivers_with_supported_fields(mock_get
     assert all(driver.pay_driver is False for driver in [toshiro, alistair, mason, arthur, fabrizio])
     assert all(driver.race_starts == 0 for driver in [toshiro, alistair, mason, arthur, fabrizio])
     assert all(driver.wins == 0 for driver in [toshiro, alistair, mason, arthur, fabrizio])
+
+
+@patch("app.core.roster.get_connection")
+def test_load_roster_includes_2002_future_drivers_with_supported_fields(mock_get_conn):
+    mock_get_conn.return_value = create_seeded_db()
+
+    _, drivers, year, _, _ = load_roster(year=2002)
+
+    assert year == 2002
+    by_name = {driver.name: driver for driver in drivers}
+
+    rupert = by_name["Rupert Finnegan"]
+    zoltan = by_name["Zoltan Berenyi"]
+    adriano = by_name["Adriano Pantanal"]
+    james = by_name["James Wentworth"]
+    niklas = by_name["Niklas Klint"]
+    caio = by_name["Caio de Moura"]
+
+    assert rupert.age == 27
+    assert rupert.country == "Ireland"
+    assert rupert.speed == 55
+
+    assert zoltan.age == 21
+    assert zoltan.country == "Hungary"
+    assert zoltan.speed == 50
+
+    assert adriano.age == 22
+    assert adriano.country == "Brazil"
+    assert adriano.speed == 66
+
+    assert james.age == 24
+    assert james.country == "United Kingdom"
+    assert james.speed == 65
+
+    assert niklas.age == 24
+    assert niklas.country == "Denmark"
+    assert niklas.speed == 50
+
+    assert caio.age == 29
+    assert caio.country == "Brazil"
+    assert caio.speed == 64
+
+    assert all(driver.contract_length == 0 for driver in [rupert, zoltan, adriano, james, niklas, caio])
+    assert all(driver.wage == 0 for driver in [rupert, zoltan, adriano, james, niklas, caio])
+    assert all(driver.pay_driver is False for driver in [rupert, zoltan, adriano, james, niklas, caio])
+    assert all(driver.race_starts == 0 for driver in [rupert, zoltan, adriano, james, niklas, caio])
+    assert all(driver.wins == 0 for driver in [rupert, zoltan, adriano, james, niklas, caio])

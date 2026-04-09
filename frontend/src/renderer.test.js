@@ -5,6 +5,7 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 		startCareer: vi.fn(),
 		loadGame: vi.fn(),
 		checkSave: vi.fn(),
+		getHome: vi.fn(),
 		getGrid: vi.fn(),
 		getCalendar: vi.fn(),
 		getStandings: vi.fn(),
@@ -24,6 +25,7 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 		getTitleSponsorReplacementCandidates: vi.fn(),
 		getEngineSupplierReplacementCandidates: vi.fn(),
 		getTyreSupplierReplacementCandidates: vi.fn(),
+		offerDriver: vi.fn(),
 		replaceDriver: vi.fn(),
 		replaceCommercialManager: vi.fn(),
 		replaceTechnicalDirector: vi.fn(),
@@ -56,6 +58,7 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 			emailUnread: vi.fn(),
 			staffRender: vi.fn(),
 			driverMarketRender: vi.fn(),
+			driverMarketOfferResult: vi.fn(),
 			driverRender: vi.fn(),
 			carRender: vi.fn(),
 			financeRender: vi.fn(),
@@ -82,7 +85,7 @@ vi.mock('./views/calendar.js', () => ({ default: class { render(...args) { viewF
 vi.mock('./views/email.js', () => ({ default: class { render(...args) { viewFns.emailRender(...args); } updateUnreadBadge(...args) { viewFns.emailUnread(...args); } } }));
 vi.mock('./views/staff.js', () => ({ default: class { setReplaceDriverHandler() {} setReplaceCommercialManagerHandler() {} setReplaceTechnicalDirectorHandler() {} setUpdateWorkforceHandler() {} render(...args) { viewFns.staffRender(...args); } } }));
 vi.mock('./views/driver.js', () => ({ default: class { constructor() { this.currentDriverName = null; } render(...args) { viewFns.driverRender(...args); } } }));
-vi.mock('./views/driver_market.js', () => ({ default: class { setBackHandler() {} setSignHandler() {} render(...args) { viewFns.driverMarketRender(...args); } } }));
+vi.mock('./views/driver_market.js', () => ({ default: class { setBackHandler() {} setSignHandler() {} render(...args) { viewFns.driverMarketRender(...args); } showOfferResult(...args) { viewFns.driverMarketOfferResult(...args); return true; } } }));
 vi.mock('./views/car.js', () => ({ default: class { setStartDevelopmentHandler() {} setRepairWearHandler() {} render(...args) { viewFns.carRender(...args); } } }));
 vi.mock('./views/finance.js', () => ({ default: class { setReplaceTitleSponsorHandler() {} setReplaceEngineSupplierHandler() {} setReplaceTyreSupplierHandler() {} render(...args) { viewFns.financeRender(...args); } } }));
 vi.mock('./views/facilities.js', () => ({
@@ -99,6 +102,7 @@ describe('renderer smoke', () => {
 	beforeEach(() => {
 		vi.resetModules();
 		vi.clearAllMocks();
+		window.alert = vi.fn();
 		document.body.innerHTML = `
 			<div id="title-screen"></div>
 			<div id="game-dashboard" style="display:none;"></div>
@@ -252,6 +256,7 @@ describe('renderer smoke', () => {
 				unread_count: 2,
 			},
 		}));
+		expect(apiMock.getHome).toHaveBeenCalled();
 		expect(apiMock.getStandings).toHaveBeenCalled();
 		expect(apiMock.getGrid).toHaveBeenCalledWith(1998);
 		expect(apiMock.getGrid).toHaveBeenCalledWith(1999);
@@ -586,6 +591,7 @@ describe('renderer smoke', () => {
 		await import('./renderer.js');
 
 		ipcHandler(JSON.stringify({ type: 'game_loaded', status: 'success', data: { team_name: 'Warrick', week_display: 'Week 1 1998', next_event_display: 'Next: A - Week 2', year: 1998, balance: 1, unread_count: 0 } }));
+		ipcHandler(JSON.stringify({ type: 'home_data', data: { top_summary: {}, next_up: {}, alerts: [], season_snapshot: {}, team_snapshot: {}, finance_snapshot: {}, recent_news: [] } }));
 		ipcHandler(JSON.stringify({ type: 'grid_data', data: { rows: [] }, year: 1998 }));
 		ipcHandler(JSON.stringify({ type: 'standings_data', data: { drivers: [], constructors: [] } }));
 		ipcHandler(JSON.stringify({ type: 'calendar_data', data: [] }));
@@ -593,6 +599,7 @@ describe('renderer smoke', () => {
 		ipcHandler(JSON.stringify({ type: 'email_read', data: { unread_count: 1 } }));
 		ipcHandler(JSON.stringify({ type: 'staff_data', data: { drivers: [] } }));
 		ipcHandler(JSON.stringify({ type: 'replacement_candidates', data: { candidates: [] } }));
+		ipcHandler(JSON.stringify({ type: 'driver_offer_result', data: { accepted: false, message: 'Rejected' } }));
 		ipcHandler(JSON.stringify({ type: 'driver_replaced', status: 'success' }));
 		ipcHandler(JSON.stringify({ type: 'driver_data', data: { name: 'Driver X' } }));
 		ipcHandler(JSON.stringify({ type: 'car_data', data: { teams: [] } }));
@@ -615,5 +622,7 @@ describe('renderer smoke', () => {
 		expect(viewFns.facilitiesRender).toHaveBeenCalled();
 		expect(facilitiesFns.renderPreview).toHaveBeenCalled();
 		expect(apiMock.getGrid).toHaveBeenCalled();
+		expect(viewFns.driverMarketOfferResult).toHaveBeenCalled();
+		expect(window.alert).not.toHaveBeenCalledWith('Rejected');
 	});
 });

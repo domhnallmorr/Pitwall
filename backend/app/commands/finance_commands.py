@@ -13,7 +13,8 @@ def _find_circuit_country(state: GameState, event_name: str) -> str:
 
 
 def build_finance_payload(state: GameState):
-    transactions = [t.model_dump() for t in state.finance.transactions]
+    season_transactions = [t for t in state.finance.transactions if t.year == state.year]
+    transactions = [t.model_dump() for t in season_transactions]
     report = build_finance_report(state)
     player_team = state.player_team
     sponsor_name = player_team.title_sponsor_name if player_team else None

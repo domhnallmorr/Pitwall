@@ -24,6 +24,7 @@ import {
 	openRaceStrategyScreen,
 	openDriverProfile,
 	refreshVisibleViews,
+	renderHomeView,
 	renderRaceResults,
 	renderRaceStrategyScreen,
 	renderRaceWeekend,
@@ -99,7 +100,7 @@ function init() {
 		if (navigation) navigation.showView('staff');
 		API.getStaff();
 	});
-	driverMarketView.setSignHandler((outgoingId, incomingId, marketType = 'driver') => {
+	driverMarketView.setSignHandler((outgoingId, incomingId, marketType = 'driver', offer = null) => {
 		if (marketType === 'commercial_manager') {
 			API.replaceCommercialManager(outgoingId, incomingId);
 			return;
@@ -118,6 +119,10 @@ function init() {
 		}
 		if (marketType === 'tyre_supplier') {
 			API.replaceTyreSupplier(outgoingId, incomingId);
+			return;
+		}
+		if (offer) {
+			API.offerDriver(outgoingId, incomingId, offer.salary, offer.contract_length);
 			return;
 		}
 		API.replaceDriver(outgoingId, incomingId);
@@ -330,6 +335,8 @@ function setupIPC() {
 				}
 			} else if (parsed.type === 'grid_data') {
 				gridView.render(parsed.data, parsed.year);
+			} else if (parsed.type === 'home_data') {
+				renderHomeView(parsed.data);
 			} else if (parsed.type === 'standings_data') {
 				standingsView.render(parsed.data);
 				gridView.setDriverCountryMap(parsed.data.drivers);
@@ -395,6 +402,26 @@ function setupIPC() {
 				API.getGrid(gridView.getActiveYear());
 				API.getGrid(gridView.baseYear + 1);
 				API.getEmails();
+			} else if (parsed.type === 'driver_offer_result') {
+				const didShowResult = driverMarketView?.showOfferResult?.(parsed.data || {}, () => {
+					if (parsed.data?.accepted) {
+						if (navigation) navigation.showView('staff');
+						API.getStaff();
+						API.getGrid(gridView.getActiveYear());
+						API.getGrid(gridView.baseYear + 1);
+						API.getEmails();
+					}
+				});
+				if (!didShowResult) {
+					window.alert(parsed.data?.message || 'Driver offer processed.');
+					if (parsed.data?.accepted) {
+						if (navigation) navigation.showView('staff');
+						API.getStaff();
+						API.getGrid(gridView.getActiveYear());
+						API.getGrid(gridView.baseYear + 1);
+						API.getEmails();
+					}
+				}
 			} else if (parsed.type === 'commercial_manager_replaced') {
 				if (navigation) navigation.showView('staff');
 				API.getStaff();

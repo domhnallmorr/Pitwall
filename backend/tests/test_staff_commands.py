@@ -1,6 +1,7 @@
 from unittest.mock import Mock, patch
 
 from app.commands.staff_commands import (
+    handle_offer_driver,
     handle_get_engine_supplier_replacement_candidates,
     handle_get_technical_director_replacement_candidates,
     handle_get_manager_replacement_candidates,
@@ -109,6 +110,25 @@ def test_get_replacement_candidates_handles_transfer_errors():
         result = handle_get_replacement_candidates(state, logger, driver_id=1)
     assert result["status"] == "error"
     assert result["message"] == "nope"
+    assert logger.error.called
+
+
+def test_offer_driver_validates_and_handles_errors():
+    state = create_state()
+    logger = Mock()
+
+    _, result = handle_offer_driver(state, logger, driver_id=None, incoming_driver_id=3, salary_offer=500000, contract_length=2)
+    assert result["status"] == "error"
+
+    with patch("app.commands.staff_market_commands.PlayerDriverNegotiationManager.submit_offer", side_effect=ValueError("blocked")):
+        _, result = handle_offer_driver(state, logger, driver_id=1, incoming_driver_id=3, salary_offer=500000, contract_length=2)
+    assert result["status"] == "error"
+    assert result["message"] == "blocked"
+
+    with patch("app.commands.staff_market_commands.PlayerDriverNegotiationManager.submit_offer", side_effect=RuntimeError("boom")):
+        _, result = handle_offer_driver(state, logger, driver_id=1, incoming_driver_id=3, salary_offer=500000, contract_length=2)
+    assert result["status"] == "error"
+    assert result["message"] == "boom"
     assert logger.error.called
 
 

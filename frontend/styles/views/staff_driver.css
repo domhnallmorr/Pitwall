@@ -249,6 +249,407 @@
   background: rgba(34, 197, 94, 0.3);
 }
 
+.driver-market-sign-btn:disabled {
+  border-color: #4b5563;
+  background: rgba(75, 85, 99, 0.2);
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.driver-market-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+}
+
+.driver-market-status.is-free-agent {
+  color: #dcfce7;
+  border-color: rgba(34, 197, 94, 0.45);
+  background: rgba(34, 197, 94, 0.16);
+}
+
+.driver-market-status.is-expiring {
+  color: #fef3c7;
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.16);
+}
+
+.driver-market-status.is-unavailable {
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.driver-market-ask {
+  display: grid;
+  gap: 3px;
+}
+
+.driver-market-meta {
+  color: #94a3b8;
+  font-size: 0.76rem;
+}
+
+.driver-market-offer-stack {
+  display: grid;
+  gap: 8px;
+  min-width: 150px;
+}
+
+.driver-market-offer-row {
+  display: grid;
+  gap: 4px;
+}
+
+.driver-market-offer-row label {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.driver-market-offer-select,
+.driver-market-offer-input {
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(100, 255, 218, 0.16);
+  background: rgba(10, 25, 47, 0.55);
+  color: var(--text-color);
+  font: inherit;
+}
+
+.driver-market-offer-select:disabled,
+.driver-market-offer-input:disabled {
+  border-color: rgba(75, 85, 99, 0.5);
+  background: rgba(75, 85, 99, 0.18);
+  color: #9ca3af;
+}
+
+.driver-market-workspace {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+#driver-market-view {
+  background-image: linear-gradient(rgba(5, 14, 26, 0.72), rgba(5, 14, 26, 0.72)), url('../../assets/images/driver_replace_background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: -16px -16px 0;
+  height: calc(100vh - 150px);
+  overflow-y: auto;
+}
+
+.driver-market-sidebar,
+.driver-market-detail {
+  border: 1px solid rgba(35, 53, 84, 0.78);
+  border-radius: 12px;
+  background: rgba(10, 25, 47, 0.45);
+  padding: 18px;
+}
+
+.driver-market-sidebar {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  max-height: calc(100vh - 220px);
+  position: sticky;
+  top: 0;
+}
+
+.driver-market-sidebar-head h3,
+.driver-market-detail h3 {
+  margin: 0 0 8px;
+}
+
+.driver-market-sidebar-head p,
+.driver-market-offer-inline-note,
+.driver-market-empty,
+.driver-market-detail-subline {
+  color: #94a3b8;
+}
+
+.driver-market-driver-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.driver-market-list-item {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(35, 53, 84, 0.82);
+  background: rgba(10, 25, 47, 0.35);
+  color: var(--text-color);
+  display: grid;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+}
+
+.driver-market-list-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.driver-market-list-item:hover {
+  border-color: rgba(59, 130, 246, 0.68);
+  background: rgba(10, 25, 47, 0.5);
+  transform: translateY(-1px);
+}
+
+.driver-market-list-item.is-active {
+  border-color: rgba(100, 255, 218, 0.55);
+  background: rgba(17, 34, 64, 0.72);
+}
+
+.driver-market-list-name {
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.driver-market-list-age {
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+.driver-market-list-rating {
+  display: inline-flex;
+  align-items: center;
+}
+
+.driver-market-inline-flag {
+  flex: 0 0 auto;
+}
+
+.driver-market-detail {
+  display: grid;
+  gap: 18px;
+}
+
+.driver-market-detail-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.driver-market-detail-portrait {
+  width: 128px;
+  height: 128px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(35, 53, 84, 0.8);
+  background: rgba(10, 25, 47, 0.38);
+  flex: 0 0 auto;
+}
+
+.driver-market-detail-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.driver-market-detail-head h3 {
+  font-size: 1.5rem;
+  color: #f8fafc;
+}
+
+.driver-market-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.driver-market-detail-card {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(35, 53, 84, 0.7);
+  background: rgba(10, 25, 47, 0.35);
+  display: grid;
+  gap: 8px;
+}
+
+.driver-market-detail-label {
+  color: #94a3b8;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.driver-market-detail-card strong {
+  color: #f8fafc;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.driver-market-detail-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.driver-market-offer-btn:disabled {
+  cursor: not-allowed;
+}
+
+.driver-market-offer-modal-content {
+  text-align: left;
+  max-width: 440px;
+}
+
+.driver-market-result-modal-content {
+  text-align: left;
+  max-width: 500px;
+  border: 1px solid rgba(100, 255, 218, 0.18);
+  background: linear-gradient(180deg, rgba(10, 25, 47, 0.96), rgba(7, 18, 33, 0.96));
+}
+
+.driver-market-offer-modal-body {
+  display: grid;
+  gap: 16px;
+}
+
+.driver-market-result-head {
+  margin-bottom: 14px;
+}
+
+.driver-market-result-head h2 {
+  margin: 0;
+  color: #e0e6ed;
+}
+
+.driver-market-result-body {
+  display: grid;
+  gap: 16px;
+}
+
+.driver-market-result-message {
+  margin: 0;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.driver-market-result-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.driver-market-result-meta div {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(59, 130, 246, 0.16);
+  background: rgba(10, 25, 47, 0.42);
+}
+
+.driver-market-result-meta span {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.driver-market-result-meta strong {
+  color: #e0e6ed;
+  font-size: 0.95rem;
+}
+
+.driver-market-offer-summary {
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(10, 25, 47, 0.35);
+  border: 1px solid rgba(35, 53, 84, 0.78);
+  display: grid;
+  gap: 5px;
+}
+
+.driver-market-offer-driver {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.driver-market-offer-status {
+  color: #cbd5e1;
+}
+
+.driver-market-offer-fields {
+  display: grid;
+  gap: 8px;
+}
+
+.driver-market-offer-fields label {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.driver-market-offer-fields select,
+.driver-market-offer-fields input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(100, 255, 218, 0.18);
+  background: rgba(10, 25, 47, 0.55);
+  color: var(--text-color);
+  font: inherit;
+}
+
+.driver-market-offer-note {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 980px) {
+  .driver-market-workspace,
+  .driver-market-detail-grid,
+  .driver-market-detail-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .driver-market-sidebar {
+    max-height: none;
+    position: static;
+  }
+
+  .driver-market-driver-list {
+    overflow-y: visible;
+    padding-right: 0;
+  }
+
+  .driver-market-detail-actions {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .driver-market-result-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
 .driver-link {
   background: none;
   border: none;

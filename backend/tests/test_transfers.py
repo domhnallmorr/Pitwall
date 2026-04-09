@@ -10,6 +10,7 @@ from app.core.management_transfers import (
     TitleSponsorTransferManager,
     TyreSupplierTransferManager,
 )
+from app.core.player_driver_negotiations import PlayerDriverNegotiationManager
 from app.core.transfers import TransferManager
 from app.models.calendar import Calendar, Event, EventType
 from app.models.commercial_manager import CommercialManager
@@ -240,6 +241,77 @@ def test_player_replacement_rejects_driver_with_two_or_more_years():
         assert False, "Expected ValueError"
     except ValueError as ve:
         assert "2 or more years" in str(ve)
+
+
+@patch("app.core.player_driver_negotiations.random.randint", return_value=0)
+def test_player_driver_offer_accepts_free_agent_and_replans_ai(mock_randint):
+    state = create_transfer_state()
+    state.teams[0].car_speed = 72
+    state.teams[1].car_speed = 52
+
+    result = PlayerDriverNegotiationManager().submit_offer(
+        state,
+        outgoing_driver_id=1,
+        incoming_driver_id=5,
+        salary_offer=1_400_000,
+        contract_length=3,
+    )
+
+    assert result["accepted"] is True
+    assert result["driver_id"] == 5
+    assert result["salary"] == 1_400_000
+    assert result["contract_length"] == 3
+    assert any(s["driver_id"] == 5 and s["origin"] == "player_offer" for s in state.announced_ai_signings)
+    assert any(email.subject == "Driver Offer Accepted: Free Agent" for email in state.emails)
+
+
+@patch("app.core.player_driver_negotiations.random.randint", return_value=0)
+def test_player_driver_offer_rejects_low_offer_for_expiring_ai_driver(mock_randint):
+    state = create_transfer_state()
+    state.teams[0].car_speed = 45
+    state.teams[1].car_speed = 78
+    ai_expiring = next(driver for driver in state.drivers if driver.id == 3)
+    ai_expiring.speed = 92
+    ai_expiring.wage = 8_000_000
+
+    result = PlayerDriverNegotiationManager().submit_offer(
+        state,
+        outgoing_driver_id=1,
+        incoming_driver_id=3,
+        salary_offer=5_000_000,
+        contract_length=1,
+    )
+
+    assert result["accepted"] is False
+    assert result["interest_band"] in {"Unlikely", "Not Interested"}
+    assert all(signing["driver_id"] != 3 for signing in state.announced_ai_signings)
+
+
+def test_apply_new_season_transfers_uses_agreed_salary_and_contract():
+    state = create_transfer_state()
+    state.announced_ai_signings = [
+        {
+            "team_id": 1,
+            "team_name": "Player Team",
+            "seat": "driver1_id",
+            "seat_label": "Driver 1",
+            "driver_id": 5,
+            "driver_name": "Free Agent",
+            "announce_week": 1,
+            "announce_year": 1998,
+            "status": "announced",
+            "origin": "player_offer",
+            "salary": 2_200_000,
+            "contract_length": 3,
+        }
+    ]
+
+    TransferManager().apply_new_season_transfers(state, announced_year=1998)
+
+    incoming = next(d for d in state.drivers if d.id == 5)
+    assert incoming.team_id == 1
+    assert incoming.contract_length == 3
+    assert incoming.wage == 2_200_000
 
 
 def test_apply_new_season_transfers_moves_announced_driver_and_sets_contract():

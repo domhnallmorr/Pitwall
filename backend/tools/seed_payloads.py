@@ -46,6 +46,12 @@ DRIVER_SPEEDS = {
     "Mason Wyatt": 79,
     "Arthur Dalton": 72,
     "Fabrizio Moreira": 76,
+    "Rupert Finnegan": 55,
+    "Zoltan Berenyi": 50,
+    "Adriano Pantanal": 66,
+    "James Wentworth": 65,
+    "Niklas Klint": 50,
+    "Caio de Moura": 64,
 }
 
 DRIVER_RACE_STARTS = {
@@ -96,6 +102,12 @@ DRIVER_RACE_STARTS = {
     "Mason Wyatt": 0,
     "Arthur Dalton": 0,
     "Fabrizio Moreira": 0,
+    "Rupert Finnegan": 0,
+    "Zoltan Berenyi": 0,
+    "Adriano Pantanal": 0,
+    "James Wentworth": 0,
+    "Niklas Klint": 0,
+    "Caio de Moura": 0,
 }
 
 DRIVER_WINS = {
@@ -146,6 +158,12 @@ DRIVER_WINS = {
     "Mason Wyatt": 0,
     "Arthur Dalton": 0,
     "Fabrizio Moreira": 0,
+    "Rupert Finnegan": 0,
+    "Zoltan Berenyi": 0,
+    "Adriano Pantanal": 0,
+    "James Wentworth": 0,
+    "Niklas Klint": 0,
+    "Caio de Moura": 0,
 }
 
 DRIVER_CONTRACT_LENGTHS = {
@@ -171,6 +189,16 @@ DRIVER_CONTRACT_LENGTHS = {
     "Toshiro Tanaka": 1,
     "Kazuki Nakamura": 1,
     "Eduardo Torres": 1,
+    "Javier Perez Mendoza": 0,
+    "Leonardo Badei": 0,
+    "Jan van der Veen": 0,
+    "Pablo del Rosario": 0,
+    "Stefan Sarrien": 0,
+    "Jorn Maller": 0,
+    "Jean-Claude Boulain": 0,
+    "Alex Zanetto": 0,
+    "Marco Genoa": 0,
+    "Rico Zanda": 0,
     "Tobias Eagle": 0,
     "Adrian Youth": 0,
     "Faustino Asturias": 0,
@@ -182,6 +210,12 @@ DRIVER_CONTRACT_LENGTHS = {
     "Mason Wyatt": 0,
     "Arthur Dalton": 0,
     "Fabrizio Moreira": 0,
+    "Rupert Finnegan": 0,
+    "Zoltan Berenyi": 0,
+    "Adriano Pantanal": 0,
+    "James Wentworth": 0,
+    "Niklas Klint": 0,
+    "Caio de Moura": 0,
 }
 
 TEAM_SPEEDS = {
@@ -504,6 +538,12 @@ FUTURE_DRIVERS_DATA = [
     (2001, "Mason Wyatt", 25, "Australia", 0, 0),
     (2001, "Arthur Dalton", 22, "United Kingdom", 0, 0),
     (2001, "Fabrizio Moreira", 20, "Brazil", 0, 0),
+    (2002, "Rupert Finnegan", 27, "Ireland", 0, 0),
+    (2002, "Zoltan Berenyi", 21, "Hungary", 0, 0),
+    (2002, "Adriano Pantanal", 22, "Brazil", 0, 0),
+    (2002, "James Wentworth", 24, "United Kingdom", 0, 0),
+    (2002, "Niklas Klint", 24, "Denmark", 0, 0),
+    (2002, "Caio de Moura", 29, "Brazil", 0, 0),
 ]
 
 CALENDAR_EVENTS_BASE = [
@@ -560,6 +600,16 @@ DRIVERS_DATA = [
     (0, "Toshiro Tanaka", 24, "Japan", -6400000, 1),
     (0, "Kazuki Nakamura", 27, "Japan", -2900000, 1),
     (0, "Eduardo Torres", 20, "Argentina", -3700000, 1),
+    (0, "Javier Perez Mendoza", 22, "Colombia", 0, 0),
+    (0, "Leonardo Badei", 26, "Italy", 0, 0),
+    (0, "Jan van der Veen", 25, "Netherlands", 0, 0),
+    (0, "Pablo del Rosario", 26, "Spain", 0, 0),
+    (0, "Stefan Sarrien", 22, "France", 0, 0),
+    (0, "Jorn Maller", 28, "Germany", 0, 0),
+    (0, "Jean-Claude Boulain", 28, "France", 0, 0),
+    (0, "Alex Zanetto", 32, "Italy", 0, 0),
+    (0, "Marco Genoa", 24, "Spain", 0, 0),
+    (0, "Rico Zanda", 22, "Brazil", 0, 0),
     (1999, "Jamie Brenton", 19, "United Kingdom", 0, 0),
     (1999, "Nico Heidmann", 22, "Germany", 0, 0),
     (1999, "Gustav Mazzane", 24, "Argentina", 0, 1),
@@ -575,6 +625,12 @@ DRIVERS_DATA = [
     (2001, "Mason Wyatt", 25, "Australia", 0, 0),
     (2001, "Arthur Dalton", 22, "United Kingdom", 0, 0),
     (2001, "Fabrizio Moreira", 20, "Brazil", 0, 0),
+    (2002, "Rupert Finnegan", 27, "Ireland", 0, 0),
+    (2002, "Zoltan Berenyi", 21, "Hungary", 0, 0),
+    (2002, "Adriano Pantanal", 22, "Brazil", 0, 0),
+    (2002, "James Wentworth", 24, "United Kingdom", 0, 0),
+    (2002, "Niklas Klint", 24, "Denmark", 0, 0),
+    (2002, "Caio de Moura", 29, "Brazil", 0, 0),
 ]
 
 TEAMS_DATA = [

@@ -2,6 +2,7 @@ export {
 	handleGameStart,
 	openDriverProfile,
 	refreshVisibleViews,
+	renderHomeView,
 	showTeamSelect,
 	updateDashboard,
 } from './dashboard_helpers.js';

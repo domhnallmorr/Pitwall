@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const { apiMock } = vi.hoisted(() => ({
 	apiMock: {
+		getHome: vi.fn(),
 		getEmails: vi.fn(),
 		getCalendar: vi.fn(),
 		getStandings: vi.fn(),
@@ -107,10 +108,10 @@ describe('Navigation', () => {
 		expect(document.getElementById('facilities-view').style.display).toBe('block');
 	});
 
-	it('navigates to home without API requests', () => {
+	it('navigates to home and requests home data', () => {
 		const btn = document.querySelectorAll('.nav-item')[0];
 		btn.click();
-		expect(apiMock.getEmails).not.toHaveBeenCalled();
+		expect(apiMock.getHome).toHaveBeenCalledTimes(1);
 		expect(document.getElementById('home-view').style.display).toBe('block');
 	});
 });

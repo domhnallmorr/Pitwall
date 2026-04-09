@@ -1,4 +1,5 @@
 import app.main as app_main
+from unittest.mock import patch
 from app.main import process_command
 from app.models.state import GameState
 from app.models.calendar import Calendar, Event, EventType
@@ -113,6 +114,18 @@ def test_get_driver_returns_profile_payload():
     assert result["data"]["season_results"][0]["event_name"] == "Albert Park"
 
 
+def test_get_home_returns_dashboard_payload():
+    app_main.CURRENT_STATE = create_state()
+
+    result = process_command({"type": "get_home"})
+
+    assert result["status"] == "success"
+    assert result["type"] == "home_data"
+    assert result["data"]["top_summary"]["team_name"] == "Warrick"
+    assert result["data"]["next_up"]["sidebar_action"] == "GO TO RACE"
+    assert "Windale" in result["data"]["team_snapshot"]["title_sponsor"]
+
+
 def test_get_car_returns_team_car_speed_data():
     app_main.CURRENT_STATE = create_state()
 
@@ -197,6 +210,41 @@ def test_get_finance_returns_summary_and_track_profit_loss():
     assert result["data"]["tyre_supplier"]["name"] == "Greatday"
     assert result["data"]["fuel_supplier"]["name"] == "Brasoil"
     assert "contract_alerts" in result["data"]["overview"]
+
+
+def test_get_finance_only_reports_current_season_transactions():
+    state = create_state()
+    state.finance.add_transaction(
+        week=16,
+        year=1997,
+        amount=500_000,
+        category=TransactionCategory.PRIZE_MONEY,
+        description="Old prize",
+        event_name="Jerez",
+        event_type="RACE",
+        circuit_country="Spain",
+    )
+    state.finance.add_transaction(
+        week=10,
+        year=1998,
+        amount=-200_000,
+        category=TransactionCategory.TRANSPORT,
+        description="Transport",
+        event_name="Albert Park",
+        event_type="RACE",
+        circuit_country="Australia",
+    )
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "get_finance"})
+
+    assert result["status"] == "success"
+    assert result["data"]["summary"]["income_total"] == 0
+    assert result["data"]["summary"]["transport_total"] == 200_000
+    assert len(result["data"]["transactions"]) == 1
+    assert result["data"]["transactions"][0]["year"] == 1998
+    assert len(result["data"]["track_profit_loss"]) == 1
+    assert result["data"]["track_profit_loss"][0]["track"] == "Albert Park"
 
 
 def test_get_finance_projection_includes_remaining_driver_wages_and_transport():
@@ -460,6 +508,9 @@ def test_replace_driver_respects_contract_rule_and_signs_replacement():
     candidates = process_command({"type": "get_replacement_candidates", "driver_id": 1})
     assert candidates["status"] == "success"
     assert any(d["id"] == 99 for d in candidates["data"]["candidates"])
+    free_agent = next(d for d in candidates["data"]["candidates"] if d["id"] == 99)
+    assert free_agent["contract_length"] == 0
+    assert free_agent["team_name"] is None
 
     success = process_command({"type": "replace_driver", "driver_id": 1, "incoming_driver_id": 99})
     assert success["status"] == "success"
@@ -470,6 +521,30 @@ def test_replace_driver_respects_contract_rule_and_signs_replacement():
     locked = process_command({"type": "replace_driver", "driver_id": 2})
     assert locked["status"] == "error"
     assert "2 or more years" in locked["message"]
+
+
+@patch("app.core.player_driver_negotiations.random.randint", return_value=0)
+def test_offer_driver_accepts_targetable_free_agent(mock_randint):
+    state = create_state()
+    state.teams[0].car_speed = 72
+    state.drivers[0].contract_length = 1
+    state.drivers.append(
+        Driver(id=99, name="Free Agent", age=24, country="Germany", team_id=None, contract_length=0, wage=0, speed=78)
+    )
+    app_main.CURRENT_STATE = state
+
+    result = process_command({
+        "type": "offer_driver",
+        "driver_id": 1,
+        "incoming_driver_id": 99,
+        "salary_offer": 1_600_000,
+        "contract_length": 3,
+    })
+
+    assert result["status"] == "success"
+    assert result["type"] == "driver_offer_result"
+    assert result["data"]["accepted"] is True
+    assert result["data"]["contract_length"] == 3
 
 
 def test_replace_commercial_manager_respects_contract_rule_and_signs_replacement():

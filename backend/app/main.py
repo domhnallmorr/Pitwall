@@ -10,6 +10,7 @@ from app.commands.game_commands import (
     handle_get_technical_director_replacement_candidates,
     handle_get_engine_supplier_replacement_candidates,
     handle_get_manager_replacement_candidates,
+    handle_offer_driver,
     handle_get_tyre_supplier_replacement_candidates,
     handle_get_title_sponsor_replacement_candidates,
     handle_get_replacement_candidates,
@@ -36,6 +37,7 @@ from app.commands.query_commands import (
     get_emails_payload,
     get_facilities_payload,
     get_grid_payload,
+    get_home_payload,
     get_staff_payload,
     get_standings_payload,
     read_email_payload,
@@ -86,6 +88,19 @@ def process_command(command):
             }
         except Exception as e:
             logging.error(f"Error getting grid: {e}")
+            return {"status": "error", "message": str(e)}
+
+    if cmd_type == 'get_home':
+        try:
+            if not CURRENT_STATE:
+                return {"status": "error", "message": "Game not started"}
+            return {
+                "type": "home_data",
+                "status": "success",
+                "data": get_home_payload(CURRENT_STATE),
+            }
+        except Exception as e:
+            logging.error(f"Error getting home data: {e}")
             return {"status": "error", "message": str(e)}
 
     if cmd_type == 'get_calendar':
@@ -235,6 +250,21 @@ def process_command(command):
             command.get("incoming_driver_id"),
         )
         if response.get("status") == "success":
+            save_game(CURRENT_STATE)
+        return response
+
+    if cmd_type == 'offer_driver':
+        if not CURRENT_STATE:
+            return {"status": "error", "message": "Game not started"}
+        CURRENT_STATE, response = handle_offer_driver(
+            CURRENT_STATE,
+            logging,
+            command.get("driver_id"),
+            command.get("incoming_driver_id"),
+            command.get("salary_offer"),
+            command.get("contract_length"),
+        )
+        if response.get("status") == "success" and response.get("data", {}).get("accepted"):
             save_game(CURRENT_STATE)
         return response
 

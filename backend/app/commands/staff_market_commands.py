@@ -7,6 +7,7 @@ from app.core.management_transfers import (
     TitleSponsorTransferManager,
     TyreSupplierTransferManager,
 )
+from app.core.player_driver_negotiations import PlayerDriverNegotiationManager
 from app.core.transfers import TransferManager
 from app.models.state import GameState
 
@@ -43,6 +44,12 @@ def handle_get_replacement_candidates(state: GameState, logger: logging.Logger, 
             return {"status": "error", "message": "Driver not found"}
 
         candidates = TransferManager().get_player_replacement_candidates(state, int(driver_id))
+        driver_team_lookup = {}
+        for team in state.teams:
+            if team.driver1_id is not None:
+                driver_team_lookup[team.driver1_id] = team.name
+            if team.driver2_id is not None:
+                driver_team_lookup[team.driver2_id] = team.name
         payload = {
             "outgoing_driver": {
                 "id": outgoing.id,
@@ -58,6 +65,8 @@ def handle_get_replacement_candidates(state: GameState, logger: logging.Logger, 
                     "speed": d.speed,
                     "wage": d.wage,
                     "pay_driver": d.pay_driver,
+                    "contract_length": d.contract_length,
+                    "team_name": driver_team_lookup.get(d.id),
                 }
                 for d in candidates
             ],
@@ -68,6 +77,39 @@ def handle_get_replacement_candidates(state: GameState, logger: logging.Logger, 
     except Exception as e:
         logger.error(f"Error loading replacement candidates: {e}")
         return {"status": "error", "message": str(e)}
+
+
+def handle_offer_driver(
+    state: GameState,
+    logger: logging.Logger,
+    driver_id: int | None,
+    incoming_driver_id: int | None,
+    salary_offer: int | None,
+    contract_length: int | None,
+):
+    try:
+        if driver_id is None:
+            return state, {"status": "error", "message": "Driver id is required"}
+        if incoming_driver_id is None:
+            return state, {"status": "error", "message": "Incoming driver id is required"}
+        if salary_offer is None:
+            return state, {"status": "error", "message": "Salary offer is required"}
+        if contract_length is None:
+            return state, {"status": "error", "message": "Contract length is required"}
+
+        result = PlayerDriverNegotiationManager().submit_offer(
+            state,
+            outgoing_driver_id=int(driver_id),
+            incoming_driver_id=int(incoming_driver_id),
+            salary_offer=int(salary_offer),
+            contract_length=int(contract_length),
+        )
+        return state, {"type": "driver_offer_result", "status": "success", "data": result}
+    except ValueError as ve:
+        return state, {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error offering contract to driver: {e}")
+        return state, {"status": "error", "message": str(e)}
 
 
 def handle_replace_commercial_manager(

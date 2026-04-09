@@ -143,8 +143,10 @@
 
         <!-- Home View -->
         <div id="home-view" class="view-section">
-          <h2>Dashboard Home</h2>
-          <p>Welcome to the Pitwall.</p>
+          <div class="view-header">
+            <h2>Home</h2>
+          </div>
+          <div class="placeholder-msg">Loading team dashboard...</div>
         </div>
 
         <!-- Email View -->
@@ -312,21 +314,83 @@
               <button id="driver-market-back-btn" class="btn-secondary">Back to Staff</button>
             </div>
           </div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Driver</th>
-                <th>Age</th>
-                <th>Country</th>
-                <th>Speed</th>
-                <th>Wage</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="driver-market-table-body">
+          <div id="driver-market-driver-workspace" class="driver-market-workspace" style="display:none;">
+            <aside class="driver-market-sidebar">
+              <div class="driver-market-sidebar-head">
+                <h3>Available Drivers</h3>
+                <p>Select a driver to review their profile and make an offer.</p>
+              </div>
+              <div id="driver-market-driver-list" class="driver-market-driver-list">
+                <!-- JS populated -->
+              </div>
+            </aside>
+
+            <section id="driver-market-driver-detail" class="driver-market-detail">
               <!-- JS populated -->
-            </tbody>
-          </table>
+            </section>
+          </div>
+
+          <div id="driver-market-table-wrap" class="driver-market-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Driver</th>
+                  <th>Age</th>
+                  <th>Country</th>
+                  <th>Speed</th>
+                  <th>Wage</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="driver-market-table-body">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="driver-market-offer-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-content driver-market-offer-modal-content">
+              <h2 id="driver-market-offer-title">Make Driver Offer</h2>
+              <div class="driver-market-offer-modal-body">
+                <div class="driver-market-offer-summary">
+                  <div id="driver-market-offer-driver" class="driver-market-offer-driver">-</div>
+                  <div id="driver-market-offer-status" class="driver-market-offer-status">-</div>
+                </div>
+                <div class="driver-market-offer-fields">
+                  <label for="driver-market-offer-contract">Contract Length</label>
+                  <select id="driver-market-offer-contract">
+                    <option value="1">1 year</option>
+                    <option value="2">2 years</option>
+                    <option value="3">3 years</option>
+                  </select>
+
+                  <label for="driver-market-offer-salary">Salary Offer</label>
+                  <input id="driver-market-offer-salary" type="number" min="0" step="50000">
+                </div>
+                <p class="driver-market-offer-note">Negotiation logic will be wired next. This modal is the pre-contract offer UI.</p>
+              </div>
+              <div class="modal-actions">
+                <button id="driver-market-offer-cancel-btn" class="btn-secondary">Cancel</button>
+                <button id="driver-market-offer-confirm-btn" class="btn-primary">Submit Offer</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="driver-market-result-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-content driver-market-result-modal-content">
+              <div class="driver-market-result-head">
+                <p id="driver-market-result-kicker" class="home-kicker">Driver Market</p>
+                <h2 id="driver-market-result-title">Offer Processed</h2>
+              </div>
+              <div class="driver-market-result-body">
+                <p id="driver-market-result-message" class="driver-market-result-message">-</p>
+                <div id="driver-market-result-meta" class="driver-market-result-meta"></div>
+              </div>
+              <div class="modal-actions">
+                <button id="driver-market-result-close-btn" class="btn-primary">Continue</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Car View -->

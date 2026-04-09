@@ -1,6 +1,7 @@
 from app.core.standings import StandingsManager
 from app.core.player_car_development import PlayerCarDevelopmentManager
 from app.core.workforce_costs import WorkforceCostManager
+from app.core.finance_reporting import build_finance_report
 from app.models.calendar import EventType
 from app.models.state import GameState
 
@@ -8,6 +9,133 @@ from app.models.state import GameState
 def get_grid_payload(state: GameState, year: int | None, grid_manager) -> dict:
     grid_json = grid_manager.get_grid_json(state, year=year)
     return {"grid_json": grid_json, "year": year if year is not None else state.year}
+
+
+def get_home_payload(state: GameState) -> dict:
+    player_team = state.player_team
+    if not player_team:
+        raise ValueError("No player team assigned")
+
+    standings_manager = StandingsManager()
+    constructor_standings = standings_manager.get_constructor_standings(state)
+    driver_standings = standings_manager.get_driver_standings(state)
+    finance_report = build_finance_report(state)
+
+    constructors_position = next(
+        (index + 1 for index, team in enumerate(constructor_standings) if team.id == player_team.id),
+        None,
+    )
+    constructors_points = next((team.points for team in constructor_standings if team.id == player_team.id), 0)
+
+    team_driver_ids = {player_team.driver1_id, player_team.driver2_id}
+    lead_driver = next((driver for driver in driver_standings if driver.id in team_driver_ids), None)
+    lead_driver_position = next(
+        (index + 1 for index, driver in enumerate(driver_standings) if lead_driver and driver.id == lead_driver.id),
+        None,
+    )
+
+    season_results = state.driver_season_results.get(state.year, {})
+    player_results = []
+    for driver_id in team_driver_ids:
+        player_results.extend(season_results.get(driver_id, []))
+    player_results.sort(key=lambda result: result.get("round", 0))
+    wins = sum(1 for result in player_results if result.get("position") == 1)
+    podiums = sum(1 for result in player_results if 1 <= int(result.get("position", 99) or 99) <= 3)
+    latest_result = player_results[-1] if player_results else None
+
+    technical_director = next((td for td in state.technical_directors if td.team_id == player_team.id), None)
+    commercial_manager = next((cm for cm in state.commercial_managers if cm.team_id == player_team.id), None)
+    team_principal = next((tp for tp in state.team_principals if tp.team_id == player_team.id), None)
+
+    event = state.calendar.current_event
+    event_active = False
+    sidebar_action = "ADVANCE"
+    if event:
+        event_id = f"{event.week}_{event.name}"
+        if event_id not in state.events_processed:
+            event_active = True
+            sidebar_action = "GO TO RACE" if event.type == EventType.RACE else "GO TO TEST"
+
+    alerts = []
+    unread_count = sum(1 for email in state.emails if not email.read)
+    if unread_count:
+        alerts.append(f"{unread_count} unread email{'s' if unread_count != 1 else ''}")
+    for driver in state.drivers:
+        if driver.team_id != player_team.id:
+            continue
+        if getattr(driver, "contract_length", 0) == 1:
+            alerts.append(f"{driver.name} contract expires this season")
+    if technical_director and technical_director.contract_length == 1:
+        alerts.append(f"{technical_director.name} contract expires this season")
+    if commercial_manager and commercial_manager.contract_length == 1:
+        alerts.append(f"{commercial_manager.name} contract expires this season")
+    if player_team.title_sponsor_name and getattr(player_team, "title_sponsor_contract_length", 0) == 1:
+        alerts.append(f"{player_team.title_sponsor_name} title sponsor deal expires this season")
+    if player_team.engine_supplier_name and not getattr(player_team, "builds_own_engine", False) and getattr(player_team, "engine_supplier_contract_length", 0) == 1:
+        alerts.append(f"{player_team.engine_supplier_name} engine deal expires this season")
+    if player_team.tyre_supplier_name and getattr(player_team, "tyre_supplier_contract_length", 0) == 1:
+        alerts.append(f"{player_team.tyre_supplier_name} tyre deal expires this season")
+    if int(getattr(player_team, "car_wear", 0) or 0) > 0:
+        alerts.append(f"Car wear at {int(player_team.car_wear)} points")
+    if state.finance.facilities_upgrade_active:
+        alerts.append("Facilities upgrade installments in progress")
+
+    recent_news = [
+        {
+            "subject": email.subject,
+            "sender": email.sender,
+            "week": email.week,
+            "year": email.year,
+        }
+        for email in list(reversed(state.emails))[:5]
+    ]
+
+    return {
+        "top_summary": {
+            "team_name": player_team.name,
+            "week_display": state.week_display,
+            "balance": state.finance.balance,
+            "constructors_position": constructors_position,
+            "constructors_points": constructors_points,
+            "next_event_display": state.next_event_display,
+        },
+        "next_up": {
+            "sidebar_action": sidebar_action,
+            "event_active": event_active,
+            "event_name": event.name if event else None,
+            "event_type": event.type.value if event else None,
+        },
+        "alerts": alerts,
+        "season_snapshot": {
+            "lead_driver_name": lead_driver.name if lead_driver else None,
+            "lead_driver_position": lead_driver_position,
+            "lead_driver_points": lead_driver.points if lead_driver else 0,
+            "wins": wins,
+            "podiums": podiums,
+            "latest_result": latest_result,
+        },
+        "team_snapshot": {
+            "drivers": [
+                driver.name
+                for driver in state.drivers
+                if driver.team_id == player_team.id
+            ],
+            "team_principal": team_principal.name if team_principal else "You",
+            "technical_director": technical_director.name if technical_director else "VACANT",
+            "commercial_manager": commercial_manager.name if commercial_manager else "VACANT",
+            "title_sponsor": player_team.title_sponsor_name or "VACANT",
+            "engine_supplier": player_team.engine_supplier_name or "VACANT",
+            "tyre_supplier": player_team.tyre_supplier_name or "VACANT",
+            "fuel_supplier": player_team.fuel_supplier_name or "VACANT",
+        },
+        "finance_snapshot": {
+            "balance": state.finance.balance,
+            "season_net": finance_report["summary"]["net_profit_loss"],
+            "prize_money_total": finance_report["summary"]["prize_money_total"],
+            "sponsorship_total": finance_report["summary"]["sponsorship_total"],
+        },
+        "recent_news": recent_news,
+    }
 
 
 def get_standings_payload(state: GameState) -> dict:

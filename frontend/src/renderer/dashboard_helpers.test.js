@@ -4,6 +4,7 @@ import {
 	handleGameStart,
 	openDriverProfile,
 	refreshVisibleViews,
+	renderHomeView,
 	showTeamSelect,
 	updateDashboard,
 } from './dashboard_helpers.js';
@@ -12,6 +13,7 @@ describe('dashboard_helpers', () => {
 	beforeEach(() => {
 		document.body.innerHTML = `
 			<div id="advance-btn"></div>
+			<div id="home-view" style="display:none;"></div>
 			<div id="grid-view" style="display:none;"></div>
 			<div id="staff-view" style="display:none;"></div>
 			<div id="car-view" style="display:none;"></div>
@@ -24,7 +26,7 @@ describe('dashboard_helpers', () => {
 
 	it('handles start and dashboard refresh branches', () => {
 		const gridView = { baseYear: 1998, setSeasonBase: vi.fn(), getActiveYear: vi.fn(() => 1998) };
-		const api = { getStandings: vi.fn(), getGrid: vi.fn(), getDriver: vi.fn(), getFinance: vi.fn(), getFacilities: vi.fn(), getStaff: vi.fn(), getCar: vi.fn() };
+		const api = { getHome: vi.fn(), getStandings: vi.fn(), getGrid: vi.fn(), getDriver: vi.fn(), getFinance: vi.fn(), getFacilities: vi.fn(), getStaff: vi.fn(), getCar: vi.fn() };
 		const emailView = { updateUnreadBadge: vi.fn() };
 		const titleScreen = document.createElement('div');
 		const dashboard = document.createElement('div');
@@ -49,8 +51,10 @@ describe('dashboard_helpers', () => {
 		expect(titleScreen.style.display).toBe('none');
 		expect(dashboard.style.display).toBe('flex');
 		expect(emailView.updateUnreadBadge).not.toHaveBeenCalled();
+		expect(api.getHome).toHaveBeenCalledTimes(1);
 
 		const advanceBtn = document.getElementById('advance-btn');
+		document.getElementById('home-view').style.display = 'block';
 		updateDashboard({
 			data: {
 				new_date_display: 'Week 2',
@@ -72,6 +76,7 @@ describe('dashboard_helpers', () => {
 		expect(gridView.setSeasonBase).toHaveBeenCalledWith(1999);
 		expect(api.getGrid).toHaveBeenCalledWith(1999);
 		expect(api.getGrid).toHaveBeenCalledWith(2000);
+		expect(api.getHome).toHaveBeenCalledTimes(1);
 		expect(balanceEl.textContent).toContain('$1,234');
 		expect(balanceEl.className).toContain('balance-negative');
 	});
@@ -82,6 +87,7 @@ describe('dashboard_helpers', () => {
 		const teamSelectButtons = document.createElement('div');
 		const api = {
 			startCareer: vi.fn(),
+			getHome: vi.fn(),
 			getGrid: vi.fn(),
 			getStaff: vi.fn(),
 			getCar: vi.fn(),
@@ -107,6 +113,7 @@ describe('dashboard_helpers', () => {
 		expect(api.startCareer).toHaveBeenCalledWith('A');
 
 		document.getElementById('grid-view').style.display = 'block';
+		document.getElementById('home-view').style.display = 'block';
 		document.getElementById('staff-view').style.display = 'block';
 		document.getElementById('car-view').style.display = 'block';
 		document.getElementById('standings-view').style.display = 'block';
@@ -117,6 +124,7 @@ describe('dashboard_helpers', () => {
 		refreshVisibleViews({ gridView, driverView, api });
 
 		expect(api.getGrid).toHaveBeenCalledWith(2001);
+		expect(api.getHome).toHaveBeenCalled();
 		expect(api.getStaff).toHaveBeenCalled();
 		expect(api.getCar).toHaveBeenCalled();
 		expect(api.getStandings).toHaveBeenCalled();
@@ -134,5 +142,37 @@ describe('dashboard_helpers', () => {
 
 		openDriverProfile('Driver Y', null, api);
 		expect(api.getDriver).toHaveBeenCalledWith('Driver Y');
+	});
+
+	it('renders home view payload', () => {
+		document.body.innerHTML += '<div id="home-view"></div>';
+		renderHomeView({
+			top_summary: {
+				week_display: 'Week 1 1998',
+				balance: 1000000,
+				constructors_position: 3,
+				constructors_points: 12,
+				next_event_display: 'Next: Albert Park - Week 10',
+			},
+			next_up: { sidebar_action: 'GO TO RACE', event_name: 'Albert Park' },
+			alerts: ['1 unread email'],
+			season_snapshot: { lead_driver_name: 'John Newhouse', lead_driver_position: 4, wins: 1, podiums: 2 },
+			team_snapshot: {
+				drivers: ['John Newhouse', 'Henrik Friedrich'],
+				team_principal: 'You',
+				technical_director: 'Peter Heed',
+				commercial_manager: 'Jace Whitman',
+				title_sponsor: 'Windale',
+				engine_supplier: 'Mechatron',
+				tyre_supplier: 'Greatday',
+				fuel_supplier: 'Brasoil',
+			},
+			finance_snapshot: { balance: 1000000, season_net: -250000, prize_money_total: 0, sponsorship_total: 0 },
+			recent_news: [{ subject: 'Welcome', sender: 'Board', week: 1, year: 1998 }],
+		});
+
+		expect(document.getElementById('home-view').textContent).toContain('GO TO RACE');
+		expect(document.getElementById('home-view').textContent).toContain('John Newhouse');
+		expect(document.getElementById('home-view').textContent).toContain('Welcome');
 	});
 });

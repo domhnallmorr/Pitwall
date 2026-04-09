@@ -27,6 +27,7 @@ from app.commands.race_commands import (
     handle_simulate_race,
 )
 from app.commands.staff_commands import (
+    handle_offer_driver,
     handle_get_technical_director_replacement_candidates,
     handle_get_engine_supplier_replacement_candidates,
     handle_get_manager_replacement_candidates,

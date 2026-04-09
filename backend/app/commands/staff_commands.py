@@ -8,6 +8,7 @@ from app.core.management_transfers import (
 from app.core.player_car_development import PlayerCarDevelopmentManager
 from app.core.transfers import TransferManager
 from app.commands.staff_market_commands import (
+    handle_offer_driver,
     handle_get_engine_supplier_replacement_candidates,
     handle_get_manager_replacement_candidates,
     handle_get_replacement_candidates,

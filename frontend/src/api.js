@@ -9,6 +9,7 @@ const API = {
 	),
 	loadGame: () => window.electronAPI.sendToPython({ type: 'load_game' }),
 	checkSave: () => window.electronAPI.sendToPython({ type: 'check_save' }),
+	getHome: () => window.electronAPI.sendToPython({ type: 'get_home' }),
 	getGrid: (year) => window.electronAPI.sendToPython(
 		year !== undefined ? { type: 'get_grid', year } : { type: 'get_grid' }
 	),
@@ -31,6 +32,13 @@ const API = {
 	getTitleSponsorReplacementCandidates: (sponsorName) => window.electronAPI.sendToPython({ type: 'get_title_sponsor_replacement_candidates', sponsor_name: sponsorName }),
 	getEngineSupplierReplacementCandidates: (supplierName) => window.electronAPI.sendToPython({ type: 'get_engine_supplier_replacement_candidates', supplier_name: supplierName }),
 	getTyreSupplierReplacementCandidates: (supplierName) => window.electronAPI.sendToPython({ type: 'get_tyre_supplier_replacement_candidates', supplier_name: supplierName }),
+	offerDriver: (driverId, incomingDriverId, salaryOffer, contractLength) => window.electronAPI.sendToPython({
+		type: 'offer_driver',
+		driver_id: driverId,
+		incoming_driver_id: incomingDriverId,
+		salary_offer: salaryOffer,
+		contract_length: contractLength
+	}),
 	replaceDriver: (driverId, incomingDriverId) => window.electronAPI.sendToPython({
 		type: 'replace_driver',
 		driver_id: driverId,

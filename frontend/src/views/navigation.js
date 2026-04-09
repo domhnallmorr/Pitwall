@@ -43,6 +43,7 @@ export default class Navigation {
 		// 0: Home, 1: Email, 2: Calendar, 3: Grid, 4: Staff, 5: Car, 6: Finance, 7: Facilities, 8: Standings
 		if (index === 0) { // Home
 			this.showView('home');
+			API.getHome();
 		} else if (index === 1) { // Email
 			this.showView('email');
 			console.log("Requesting Email Data...");

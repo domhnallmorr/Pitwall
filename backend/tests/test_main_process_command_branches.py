@@ -26,6 +26,7 @@ def test_commands_require_game_started_return_error():
         {"type": "attend_test"},
         {"type": "simulate_race"},
         {"type": "replace_driver"},
+        {"type": "offer_driver"},
         {"type": "replace_commercial_manager"},
         {"type": "replace_technical_director"},
         {"type": "replace_title_sponsor"},
@@ -38,6 +39,7 @@ def test_commands_require_game_started_return_error():
         {"type": "get_engine_supplier_replacement_candidates"},
         {"type": "get_tyre_supplier_replacement_candidates"},
         {"type": "get_staff"},
+        {"type": "get_home"},
         {"type": "get_driver", "name": "John Newhouse"},
         {"type": "get_facilities"},
         {"type": "get_car"},
@@ -64,12 +66,18 @@ def test_get_driver_requires_name():
     assert "Driver name is required" in result["message"]
 
 
-def test_grid_calendar_and_standings_exception_paths():
+def test_grid_calendar_home_and_standings_exception_paths():
     app_main.CURRENT_STATE = SimpleNamespace(calendar=SimpleNamespace(), circuits=[])
     with patch("app.main.get_grid_payload", side_effect=RuntimeError("grid boom")):
         result = app_main.process_command({"type": "get_grid"})
         assert result["status"] == "error"
         assert result["message"] == "grid boom"
+
+    app_main.CURRENT_STATE = SimpleNamespace()
+    with patch("app.main.get_home_payload", side_effect=RuntimeError("home boom")):
+        result = app_main.process_command({"type": "get_home"})
+        assert result["status"] == "error"
+        assert result["message"] == "home boom"
 
     app_main.CURRENT_STATE = SimpleNamespace(
         calendar=SimpleNamespace(get_schedule_data=Mock(side_effect=RuntimeError("cal boom"))),
@@ -107,6 +115,21 @@ def test_advance_skip_and_attend_test_paths():
         result = app_main.process_command({"type": "attend_test", "kms": 1000})
     assert result["status"] == "error"
     assert result["message"] == "test boom"
+
+
+def test_offer_driver_command_saves_only_when_offer_is_accepted():
+    fake_state = SimpleNamespace()
+    app_main.CURRENT_STATE = fake_state
+
+    with patch("app.main.handle_offer_driver", return_value=(fake_state, {"type": "driver_offer_result", "status": "success", "data": {"accepted": True}})), patch("app.main.save_game") as save_mock:
+        result = app_main.process_command({"type": "offer_driver", "driver_id": 1, "incoming_driver_id": 5, "salary_offer": 1000000, "contract_length": 2})
+    assert result["type"] == "driver_offer_result"
+    save_mock.assert_called_once_with(fake_state)
+
+    with patch("app.main.handle_offer_driver", return_value=(fake_state, {"type": "driver_offer_result", "status": "success", "data": {"accepted": False}})), patch("app.main.save_game") as save_mock:
+        result = app_main.process_command({"type": "offer_driver", "driver_id": 1, "incoming_driver_id": 5, "salary_offer": 1000000, "contract_length": 2})
+    assert result["type"] == "driver_offer_result"
+    save_mock.assert_not_called()
 
 
 def test_load_game_success_and_errors():

@@ -114,13 +114,11 @@ def seed_data(conn):
         print("Driver data already exists. Checking metadata...")
         # Ensure metadata exists even if drivers do
         c.execute('INSERT OR IGNORE INTO metadata (key, value) VALUES (?, ?)', ('start_year', '1998'))
-        # Ensure future-season drivers exist for existing DBs
-        future_drivers_data = FUTURE_DRIVERS_DATA
         c.execute('SELECT name, start_year FROM drivers')
         existing_driver_keys = {(row[0], row[1]) for row in c.fetchall()}
-        drivers_to_insert = [d for d in future_drivers_data if (d[1], d[0]) not in existing_driver_keys]
+        drivers_to_insert = [d for d in DRIVERS_DATA if (d[1], d[0]) not in existing_driver_keys]
         if drivers_to_insert:
-            print(f"Seeding {len(drivers_to_insert)} future driver(s)...")
+            print(f"Seeding {len(drivers_to_insert)} missing driver(s)...")
             drivers_to_insert_with_attrs = [
                 (*d, DRIVER_CONTRACT_LENGTHS.get(d[1], 0 if d[0] > 0 else 2), DRIVER_SPEEDS.get(d[1], 50), DRIVER_RACE_STARTS.get(d[1], 0), DRIVER_WINS.get(d[1], 0))
                 for d in drivers_to_insert

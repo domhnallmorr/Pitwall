@@ -6,7 +6,7 @@ from app.models.finance import TransactionCategory
 
 
 def build_finance_report(state: GameState) -> dict[str, Any]:
-    transactions = state.finance.transactions
+    transactions = [t for t in state.finance.transactions if t.year == state.year]
 
     income_total = sum(t.amount for t in transactions if t.amount > 0)
     expense_total = sum(-t.amount for t in transactions if t.amount < 0)

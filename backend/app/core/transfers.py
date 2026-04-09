@@ -353,8 +353,9 @@ class TransferManager:
             setattr(team, seat, incoming.id)
             incoming.team_id = team.id
             incoming.role = DriverRole.DRIVER_1 if seat == "driver1_id" else DriverRole.DRIVER_2
-            # Keep it simple for now: fresh signing receives a default 2-year deal.
-            incoming.contract_length = 2
+            incoming.contract_length = int(signing.get("contract_length", 2) or 2)
+            if "salary" in signing and signing.get("salary") is not None:
+                incoming.wage = int(signing["salary"])
             applied_signings.append(
                 {
                     "team_id": team.id,
