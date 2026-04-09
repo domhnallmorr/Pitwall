@@ -46,10 +46,10 @@ def create_state() -> GameState:
         Team(id=2, name="Ferano", country="Italy", driver1_id=3, driver2_id=4, car_speed=84),
     ]
     drivers = [
-        Driver(id=1, name="John Newhouse", age=27, country="Canada", team_id=1, speed=84, race_starts=33, wins=11),
-        Driver(id=2, name="Henrik Friedrich", age=31, country="Germany", team_id=1, speed=72, race_starts=65, wins=1),
-        Driver(id=3, name="Marco Schneider", age=29, country="Germany", team_id=2, speed=98, race_starts=101, wins=28),
-        Driver(id=4, name="Evan Irving", age=33, country="United Kingdom", team_id=2, speed=75, race_starts=65, wins=0),
+        Driver(id=1, name="John Newhouse", age=27, country="Canada", team_id=1, speed=84, race_starts=33, wins=11, podiums=19, poles=13, fastest_laps=9, championships=1),
+        Driver(id=2, name="Henrik Friedrich", age=31, country="Germany", team_id=1, speed=72, race_starts=65, wins=1, podiums=8, poles=1, fastest_laps=6, championships=0),
+        Driver(id=3, name="Marco Schneider", age=29, country="Germany", team_id=2, speed=98, race_starts=101, wins=28, podiums=54, poles=17, fastest_laps=28, championships=2),
+        Driver(id=4, name="Evan Irving", age=33, country="United Kingdom", team_id=2, speed=75, race_starts=65, wins=0, podiums=7, poles=0, fastest_laps=0, championships=0),
     ]
     circuits = [
         Circuit(
@@ -110,6 +110,10 @@ def test_get_driver_returns_profile_payload():
     assert result["type"] == "driver_data"
     assert result["data"]["wins"] == 11
     assert result["data"]["race_starts"] == 33
+    assert result["data"]["podiums"] == 19
+    assert result["data"]["poles"] == 13
+    assert result["data"]["fastest_laps"] == 9
+    assert result["data"]["championships"] == 1
     assert len(result["data"]["season_results"]) == 1
     assert result["data"]["season_results"][0]["event_name"] == "Albert Park"
 

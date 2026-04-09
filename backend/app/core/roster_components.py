@@ -20,14 +20,22 @@ def load_drivers(cursor, start_year: int) -> tuple[List[Driver], Dict[str, Drive
     has_speed = "speed" in driver_columns
     has_race_starts = "race_starts" in driver_columns
     has_wins = "wins" in driver_columns
+    has_podiums = "podiums" in driver_columns
+    has_poles = "poles" in driver_columns
+    has_fastest_laps = "fastest_laps" in driver_columns
+    has_championships = "championships" in driver_columns
     has_contract_length = "contract_length" in driver_columns
 
     speed_expr = "speed" if has_speed else "50"
     race_starts_expr = "race_starts" if has_race_starts else "0"
     wins_expr = "wins" if has_wins else "0"
+    podiums_expr = "podiums" if has_podiums else "0"
+    poles_expr = "poles" if has_poles else "0"
+    fastest_laps_expr = "fastest_laps" if has_fastest_laps else "0"
+    championships_expr = "championships" if has_championships else "0"
     contract_length_expr = "contract_length" if has_contract_length else "2"
     cursor.execute(
-        f"SELECT id, name, age, country, wage, pay_driver, {speed_expr} AS speed, {race_starts_expr} AS race_starts, {wins_expr} AS wins, {contract_length_expr} AS contract_length "
+        f"SELECT id, name, age, country, wage, pay_driver, {speed_expr} AS speed, {race_starts_expr} AS race_starts, {wins_expr} AS wins, {podiums_expr} AS podiums, {poles_expr} AS poles, {fastest_laps_expr} AS fastest_laps, {championships_expr} AS championships, {contract_length_expr} AS contract_length "
         "FROM drivers WHERE start_year = ? OR start_year = 0 ORDER BY id ASC",
         (start_year,),
     )
@@ -37,7 +45,11 @@ def load_drivers(cursor, start_year: int) -> tuple[List[Driver], Dict[str, Drive
         speed = row[6] if row[6] is not None else 50
         race_starts = row[7] if row[7] is not None else 0
         wins = row[8] if row[8] is not None else 0
-        contract_length = row[9] if row[9] is not None else 2
+        podiums = row[9] if row[9] is not None else 0
+        poles = row[10] if row[10] is not None else 0
+        fastest_laps = row[11] if row[11] is not None else 0
+        championships = row[12] if row[12] is not None else 0
+        contract_length = row[13] if row[13] is not None else 2
         driver = Driver(
             id=row[0],
             name=row[1],
@@ -48,6 +60,10 @@ def load_drivers(cursor, start_year: int) -> tuple[List[Driver], Dict[str, Drive
             speed=speed,
             race_starts=race_starts,
             wins=wins,
+            podiums=podiums,
+            poles=poles,
+            fastest_laps=fastest_laps,
+            championships=championships,
             contract_length=contract_length,
         )
         drivers.append(driver)

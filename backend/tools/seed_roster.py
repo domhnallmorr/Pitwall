@@ -7,6 +7,10 @@ try:
         CALENDAR_EVENTS_EXTRA_TESTS,
         COMMERCIAL_MANAGERS_DATA,
         DRIVER_CONTRACT_LENGTHS,
+        DRIVER_CHAMPIONSHIPS,
+        DRIVER_FASTEST_LAPS,
+        DRIVER_POLES,
+        DRIVER_PODIUMS,
         DRIVER_RACE_STARTS,
         DRIVER_SPEEDS,
         DRIVER_WINS,
@@ -41,6 +45,10 @@ except ModuleNotFoundError:
         CALENDAR_EVENTS_EXTRA_TESTS,
         COMMERCIAL_MANAGERS_DATA,
         DRIVER_CONTRACT_LENGTHS,
+        DRIVER_CHAMPIONSHIPS,
+        DRIVER_FASTEST_LAPS,
+        DRIVER_POLES,
+        DRIVER_PODIUMS,
         DRIVER_RACE_STARTS,
         DRIVER_SPEEDS,
         DRIVER_WINS,
@@ -120,11 +128,21 @@ def seed_data(conn):
         if drivers_to_insert:
             print(f"Seeding {len(drivers_to_insert)} missing driver(s)...")
             drivers_to_insert_with_attrs = [
-                (*d, DRIVER_CONTRACT_LENGTHS.get(d[1], 0 if d[0] > 0 else 2), DRIVER_SPEEDS.get(d[1], 50), DRIVER_RACE_STARTS.get(d[1], 0), DRIVER_WINS.get(d[1], 0))
+                (
+                    *d,
+                    DRIVER_CONTRACT_LENGTHS.get(d[1], 0 if d[0] > 0 else 2),
+                    DRIVER_SPEEDS.get(d[1], 50),
+                    DRIVER_RACE_STARTS.get(d[1], 0),
+                    DRIVER_WINS.get(d[1], 0),
+                    DRIVER_PODIUMS.get(d[1], 0),
+                    DRIVER_POLES.get(d[1], 0),
+                    DRIVER_FASTEST_LAPS.get(d[1], 0),
+                    DRIVER_CHAMPIONSHIPS.get(d[1], 0),
+                )
                 for d in drivers_to_insert
             ]
             c.executemany(
-                'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, contract_length, speed, race_starts, wins) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, contract_length, speed, race_starts, wins, podiums, poles, fastest_laps, championships) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 drivers_to_insert_with_attrs
             )
             conn.commit()
@@ -143,6 +161,22 @@ def seed_data(conn):
         c.executemany(
             'UPDATE drivers SET wins = ? WHERE name = ?',
             [(wins, name) for name, wins in DRIVER_WINS.items()]
+        )
+        c.executemany(
+            'UPDATE drivers SET podiums = ? WHERE name = ?',
+            [(podiums, name) for name, podiums in DRIVER_PODIUMS.items()]
+        )
+        c.executemany(
+            'UPDATE drivers SET poles = ? WHERE name = ?',
+            [(poles, name) for name, poles in DRIVER_POLES.items()]
+        )
+        c.executemany(
+            'UPDATE drivers SET fastest_laps = ? WHERE name = ?',
+            [(fastest_laps, name) for name, fastest_laps in DRIVER_FASTEST_LAPS.items()]
+        )
+        c.executemany(
+            'UPDATE drivers SET championships = ? WHERE name = ?',
+            [(championships, name) for name, championships in DRIVER_CHAMPIONSHIPS.items()]
         )
         c.executemany(
             'UPDATE drivers SET contract_length = ? WHERE name = ?',
@@ -434,11 +468,21 @@ def seed_data(conn):
     drivers_data = DRIVERS_DATA
 
     drivers_data_with_attrs = [
-        (*d, DRIVER_CONTRACT_LENGTHS.get(d[1], 0 if d[0] > 0 else 2), DRIVER_SPEEDS.get(d[1], 50), DRIVER_RACE_STARTS.get(d[1], 0), DRIVER_WINS.get(d[1], 0))
+        (
+            *d,
+            DRIVER_CONTRACT_LENGTHS.get(d[1], 0 if d[0] > 0 else 2),
+            DRIVER_SPEEDS.get(d[1], 50),
+            DRIVER_RACE_STARTS.get(d[1], 0),
+            DRIVER_WINS.get(d[1], 0),
+            DRIVER_PODIUMS.get(d[1], 0),
+            DRIVER_POLES.get(d[1], 0),
+            DRIVER_FASTEST_LAPS.get(d[1], 0),
+            DRIVER_CHAMPIONSHIPS.get(d[1], 0),
+        )
         for d in drivers_data
     ]
     c.executemany(
-        'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, contract_length, speed, race_starts, wins) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, contract_length, speed, race_starts, wins, podiums, poles, fastest_laps, championships) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         drivers_data_with_attrs
     )
 

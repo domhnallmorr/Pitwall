@@ -87,6 +87,7 @@ def test_simulate_qualifying_stores_results_for_current_event():
     assert result["qualifying_complete"] is True
     assert len(result["qualifying_results"]) == 4
     assert state.qualifying_results_by_event[event_key] == result["qualifying_results"]
+    assert sum(driver.poles for driver in state.drivers) == 1
 
 
 def test_simulate_race_awards_points():
@@ -148,6 +149,24 @@ def test_simulate_race_increments_wins_for_winner_only():
     for driver in state.drivers:
         expected = before[driver.id] + (1 if driver.id == winner_id else 0)
         assert driver.wins == expected
+
+
+def test_simulate_race_increments_podiums_and_fastest_laps():
+    state = create_race_state()
+    manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
+
+    result = manager.simulate_race(state)
+    podium_ids = {
+        row["driver_id"]
+        for row in result["results"]
+        if isinstance(row.get("position"), int) and row["position"] <= 3
+    }
+    fastest_lap_ids = {row["driver_id"] for row in result["results"] if row.get("fastest_lap")}
+
+    for driver in state.drivers:
+        assert driver.podiums == (1 if driver.id in podium_ids else 0)
+        assert driver.fastest_laps == (1 if driver.id in fastest_lap_ids else 0)
 
 
 def test_simulate_race_records_driver_season_results():

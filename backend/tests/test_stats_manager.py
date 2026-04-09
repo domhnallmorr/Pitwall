@@ -43,6 +43,10 @@ def test_apply_race_results_upserts_same_round_without_duplicate_entries():
     assert len(season[2]) == 1
     assert season[1][0]["round"] == 1
     assert season[1][0]["position"] == 1
+    assert state.drivers[0].race_starts == 34
+    assert state.drivers[0].wins == 12
+    assert state.drivers[0].podiums == 1
+    assert state.drivers[1].podiums == 1
 
 
 def test_apply_race_results_without_current_event_skips_result_history():
@@ -66,3 +70,44 @@ def test_apply_race_results_persists_status_for_dnf_entries():
     season = state.driver_season_results[1998]
     assert season[1][0]["status"] == "DNF"
     assert season[1][0]["position"] is None
+
+
+def test_apply_qualifying_results_awards_pole_without_double_counting():
+    state = create_state_with_race_event()
+    manager = DriverStatsManager()
+
+    manager.apply_qualifying_results(
+        state,
+        [
+            {"driver_id": 1, "position": 1},
+            {"driver_id": 2, "position": 2},
+        ],
+    )
+    manager.apply_qualifying_results(
+        state,
+        [
+            {"driver_id": 1, "position": 1},
+            {"driver_id": 2, "position": 2},
+        ],
+    )
+
+    assert state.drivers[0].poles == 1
+    assert state.drivers[1].poles == 0
+
+
+def test_apply_race_results_tracks_podiums_and_fastest_lap():
+    state = create_state_with_race_event()
+    manager = DriverStatsManager()
+
+    manager.apply_race_results(
+        state,
+        [
+            {"driver_id": 1, "position": 1, "fastest_lap": True},
+            {"driver_id": 2, "position": 3},
+        ],
+    )
+
+    assert state.drivers[0].wins == 12
+    assert state.drivers[0].podiums == 1
+    assert state.drivers[0].fastest_laps == 1
+    assert state.drivers[1].podiums == 1

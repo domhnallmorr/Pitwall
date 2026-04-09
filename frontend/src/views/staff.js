@@ -18,6 +18,7 @@ export default class StaffView {
 		this.workforceApplyBtn = document.getElementById('staff-workforce-apply-btn');
 		this.workforcePayroll = document.getElementById('staff-workforce-payroll');
 		this.workforceTableBody = document.getElementById('staff-workforce-table-body');
+		this.onSelectDriver = null;
 		this.onReplaceDriver = null;
 		this.onReplaceCommercialManager = null;
 		this.onReplaceTechnicalDirector = null;
@@ -28,6 +29,10 @@ export default class StaffView {
 
 	setReplaceDriverHandler(handler) {
 		this.onReplaceDriver = handler;
+	}
+
+	setDriverSelectHandler(handler) {
+		this.onSelectDriver = handler;
 	}
 
 	setReplaceCommercialManagerHandler(handler) {
@@ -263,7 +268,7 @@ export default class StaffView {
 				<div class="staff-card-portrait">
 					<img src="assets/drivers/${portraitFile}" alt="${driver.name}" onerror="this.style.display='none'">
 				</div>
-				<h3 class="staff-card-name">${driver.name}</h3>
+				<h3 class="staff-card-name"><button type="button" class="driver-link staff-driver-link" data-driver-name="${driver.name}">${driver.name}</button></h3>
 				<div class="staff-card-details">
 					<div class="staff-detail-row">
 						<span class="staff-detail-label">Age</span>
@@ -304,6 +309,15 @@ export default class StaffView {
 				const driverId = Number(btn.getAttribute('data-driver-id'));
 				if (!Number.isFinite(driverId)) return;
 				this.onReplaceDriver(driverId);
+			});
+		});
+
+		this.container.querySelectorAll('.staff-driver-link').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				if (!this.onSelectDriver) return;
+				const driverName = btn.getAttribute('data-driver-name');
+				if (!driverName) return;
+				this.onSelectDriver(driverName);
 			});
 		});
 

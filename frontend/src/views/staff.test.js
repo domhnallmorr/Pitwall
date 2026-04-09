@@ -217,6 +217,22 @@ describe('StaffView', () => {
 		expect(onReplace).toHaveBeenCalledTimes(1);
 	});
 
+	it('opens driver profile when clicking a driver name', () => {
+		const onSelect = vi.fn();
+		staffView.setDriverSelectHandler(onSelect);
+		staffView.render({
+			drivers: [
+				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, wage: 1000, pay_driver: false, contract_length: 1 },
+			],
+			technical_director: null,
+			commercial_manager: null,
+			teams: [],
+		});
+
+		document.querySelector('.staff-driver-link').click();
+		expect(onSelect).toHaveBeenCalledWith('Driver A');
+	});
+
 	it('disables replace buttons when a pending replacement exists', () => {
 		staffView.render({
 			drivers: [

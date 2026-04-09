@@ -88,43 +88,67 @@ export default class DriverView {
 		const portraitFile = data.name.toLowerCase() + '.png';
 
 		this.container.innerHTML = `
-			<div class="staff-driver-card driver-profile-card">
-				<div class="staff-card-portrait">
-					<img src="assets/drivers/${portraitFile}" alt="${data.name}" onerror="this.style.display='none'">
+			<div class="driver-profile-layout">
+				<div class="staff-driver-card driver-profile-card driver-profile-card--bio">
+					<div class="staff-card-portrait">
+						<img src="assets/drivers/${portraitFile}" alt="${data.name}" onerror="this.style.display='none'">
+					</div>
+					<h3 class="staff-card-name">${data.name}</h3>
+					<div class="staff-card-details">
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Team</span>
+							<span class="staff-detail-value">${data.team_name || 'Free Agent'}</span>
+						</div>
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Age</span>
+							<span class="staff-detail-value">${data.age}</span>
+						</div>
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Country</span>
+							<span class="staff-detail-value">${renderFlagLabel(data.country, data.country)}</span>
+						</div>
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Speed</span>
+							<span class="staff-detail-value">${this.renderSpeedBlocks(data.speed)}</span>
+						</div>
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Wage</span>
+							<span class="staff-detail-value">${wageDisplay}</span>
+						</div>
+					</div>
 				</div>
-				<h3 class="staff-card-name">${data.name}</h3>
-				<div class="staff-card-details">
-					<div class="staff-detail-row">
-						<span class="staff-detail-label">Team</span>
-						<span class="staff-detail-value">${data.team_name || 'Free Agent'}</span>
-					</div>
-					<div class="staff-detail-row">
-						<span class="staff-detail-label">Age</span>
-						<span class="staff-detail-value">${data.age}</span>
-					</div>
-					<div class="staff-detail-row">
-						<span class="staff-detail-label">Country</span>
-						<span class="staff-detail-value">${renderFlagLabel(data.country, data.country)}</span>
-					</div>
-					<div class="staff-detail-row">
-						<span class="staff-detail-label">Speed</span>
-						<span class="staff-detail-value">${this.renderSpeedBlocks(data.speed)}</span>
-					</div>
-					<div class="staff-detail-row">
-						<span class="staff-detail-label">Race Starts</span>
-						<span class="staff-detail-value">${(data.race_starts || 0).toLocaleString()}</span>
-					</div>
-					<div class="staff-detail-row">
-						<span class="staff-detail-label">Wins</span>
-						<span class="staff-detail-value">${(data.wins || 0).toLocaleString()}</span>
-					</div>
-					<div class="staff-detail-row">
-						<span class="staff-detail-label">Points</span>
-						<span class="staff-detail-value">${data.points || 0}</span>
-					</div>
-					<div class="staff-detail-row">
-						<span class="staff-detail-label">Wage</span>
-						<span class="staff-detail-value">${wageDisplay}</span>
+
+				<div class="staff-driver-card driver-profile-card driver-profile-card--stats">
+					<h3 class="staff-card-name">Career Stats</h3>
+					<div class="staff-card-details">
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Race Starts</span>
+							<span class="staff-detail-value">${(data.race_starts || 0).toLocaleString()}</span>
+						</div>
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Wins</span>
+							<span class="staff-detail-value">${(data.wins || 0).toLocaleString()}</span>
+						</div>
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Podiums</span>
+							<span class="staff-detail-value">${(data.podiums || 0).toLocaleString()}</span>
+						</div>
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Poles</span>
+							<span class="staff-detail-value">${(data.poles || 0).toLocaleString()}</span>
+						</div>
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Fastest Laps</span>
+							<span class="staff-detail-value">${(data.fastest_laps || 0).toLocaleString()}</span>
+						</div>
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Championships</span>
+							<span class="staff-detail-value">${(data.championships || 0).toLocaleString()}</span>
+						</div>
+						<div class="staff-detail-row">
+							<span class="staff-detail-label">Points</span>
+							<span class="staff-detail-value">${data.points || 0}</span>
+						</div>
 					</div>
 				</div>
 			</div>

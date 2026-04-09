@@ -48,6 +48,16 @@ def test_rollover_resets_points():
     assert state.teams[0].points == 0
 
 
+def test_rollover_increments_driver_championships_for_season_winner():
+    state = create_end_of_season_state()
+    manager = SeasonRolloverManager()
+
+    manager.process_rollover(state)
+
+    assert state.drivers[0].championships == 1
+    assert state.drivers[1].championships == 0
+
+
 def test_rollover_resets_calendar():
     state = create_end_of_season_state()
     manager = SeasonRolloverManager()

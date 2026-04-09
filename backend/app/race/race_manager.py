@@ -331,6 +331,7 @@ class RaceManager:
 		event_key = self._current_event_key(state)
 		if event_key is not None:
 			state.qualifying_results_by_event[event_key] = qualifying_results
+		self.stats_manager.apply_qualifying_results(state, qualifying_results)
 
 		event = state.calendar.current_event
 		return {
@@ -366,6 +367,7 @@ class RaceManager:
 			qualifying_results = self._simulate_qualifying(participants, circuit)
 			if event_key is not None:
 				state.qualifying_results_by_event[event_key] = qualifying_results
+		self.stats_manager.apply_qualifying_results(state, qualifying_results)
 		self._player_strategy_entries(state, qualifying_results)
 		starting_grid = [row["driver_id"] for row in qualifying_results]
 		if event_key is not None:
@@ -401,6 +403,17 @@ class RaceManager:
 			})
 			if not retired:
 				finishing_position += 1
+
+		fastest_lap_driver_id = None
+		best_lap_ms = None
+		for row in results:
+			lap_ms = row.get("best_lap_ms")
+			if isinstance(lap_ms, int) and lap_ms > 0 and (best_lap_ms is None or lap_ms < best_lap_ms):
+				best_lap_ms = lap_ms
+				fastest_lap_driver_id = row["driver_id"]
+		if fastest_lap_driver_id is not None:
+			for row in results:
+				row["fastest_lap"] = row["driver_id"] == fastest_lap_driver_id
 
 		for row in results:
 			if row["points"] > 0:

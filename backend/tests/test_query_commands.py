@@ -34,7 +34,7 @@ def create_state() -> GameState:
             )
         ],
         drivers=[
-            Driver(id=1, name="John Newhouse", age=27, country="Canada", team_id=1, speed=84, race_starts=1, wins=1),
+            Driver(id=1, name="John Newhouse", age=27, country="Canada", team_id=1, speed=84, race_starts=1, wins=1, podiums=2, poles=1, fastest_laps=1, championships=1),
             Driver(id=2, name="Henrik Friedrich", age=31, country="Germany", team_id=1, speed=72),
         ],
         calendar=Calendar(events=[Event(name="Albert Park", week=10, type=EventType.RACE)], current_week=1),

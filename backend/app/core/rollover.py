@@ -91,6 +91,11 @@ class SeasonRolloverManager:
             for t in standings.get_constructor_standings(state)
             if t.points > 0
         ]
+        if final_drivers:
+            champion_name = final_drivers[0]["name"]
+            champion = next((driver for driver in state.drivers if driver.name == champion_name), None)
+            if champion is not None:
+                champion.championships += 1
 
         # 1b. Set next season prize entitlement from final constructor standings
         next_season_prize_money = self.prize_money_manager.assign_next_season_entitlement_from_standings(state)

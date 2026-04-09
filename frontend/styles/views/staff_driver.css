@@ -666,7 +666,8 @@
 }
 
 .driver-profile-container {
-  max-width: 520px;
+  width: 100%;
+  max-width: none;
 }
 
 #driver-view {
@@ -684,9 +685,26 @@
   margin-top: 8px;
 }
 
+.driver-profile-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.driver-profile-card--stats .staff-card-name {
+  margin-bottom: 16px;
+}
+
 .driver-season-results-container {
   margin-top: 22px;
   width: 100%;
+}
+
+@media (max-width: 980px) {
+  .driver-profile-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .driver-speed-rating {

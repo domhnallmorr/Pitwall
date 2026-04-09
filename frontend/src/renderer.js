@@ -86,6 +86,7 @@ function init() {
 	emailView = new EmailView();
 	staffView = new StaffView();
 	staffView.setReplaceDriverHandler((driverId) => API.getReplacementCandidates(driverId));
+	staffView.setDriverSelectHandler((name) => openDriverProfile(name, navigation, API));
 	staffView.setReplaceCommercialManagerHandler((managerId) => API.getManagerReplacementCandidates(managerId));
 	staffView.setReplaceTechnicalDirectorHandler((directorId) => API.getTechnicalDirectorReplacementCandidates(directorId));
 	staffView.setUpdateWorkforceHandler((workforce) => API.updateWorkforce(workforce));

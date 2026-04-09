@@ -56,6 +56,7 @@ class GameState(BaseModel):
     queued_emails: List[QueuedEmail] = Field(default_factory=list)
     grid_snapshots: Dict[int, List[Dict[str, Any]]] = Field(default_factory=dict)
     driver_season_results: Dict[int, Dict[int, List[Dict[str, Any]]]] = Field(default_factory=dict)
+    driver_stat_awards_by_event: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
     qualifying_results_by_event: Dict[str, List[Dict[str, Any]]] = Field(default_factory=dict)
     player_pit_strategies_by_event: Dict[str, Dict[int, Dict[str, Any]]] = Field(default_factory=dict)
     latest_race_incidents: List[Dict[str, Any]] = Field(default_factory=list)

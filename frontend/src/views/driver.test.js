@@ -25,6 +25,10 @@ describe('DriverView', () => {
 			speed: 84,
 			race_starts: 33,
 			wins: 11,
+			podiums: 19,
+			poles: 13,
+			fastest_laps: 9,
+			championships: 1,
 			points: 10,
 			wage: 9600000,
 			pay_driver: false,
@@ -36,8 +40,14 @@ describe('DriverView', () => {
 		});
 
 		expect(document.getElementById('driver-profile-title').textContent).toBe('John Newhouse');
+		expect(document.querySelectorAll('.driver-profile-layout .driver-profile-card').length).toBe(2);
+		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Career Stats');
 		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Race Starts');
 		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Wins');
+		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Podiums');
+		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Poles');
+		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Fastest Laps');
+		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Championships');
 
 		const seasonHtml = document.getElementById('driver-season-results-container').innerHTML;
 		expect(seasonHtml).toContain('driver-season-table');
@@ -55,6 +65,10 @@ describe('DriverView', () => {
 			speed: 80,
 			race_starts: 1,
 			wins: 0,
+			podiums: 0,
+			poles: 0,
+			fastest_laps: 0,
+			championships: 0,
 			points: 0,
 			wage: 0,
 			pay_driver: false,
@@ -94,6 +108,10 @@ describe('DriverView', () => {
 			speed: 0,
 			race_starts: 0,
 			wins: 0,
+			podiums: 0,
+			poles: 0,
+			fastest_laps: 0,
+			championships: 0,
 			points: 0,
 			wage: -500000,
 			pay_driver: true,

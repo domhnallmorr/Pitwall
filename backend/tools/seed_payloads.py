@@ -166,6 +166,60 @@ DRIVER_WINS = {
     "Caio de Moura": 0,
 }
 
+DRIVER_PODIUMS = {
+    "Mikko Hanninen": 16,
+    "Daniel Caldwell": 15,
+    "Marco Schneider": 54,
+    "Evan Irving": 7,
+    "Henrik Friedrich": 8,
+    "John Newhouse": 19,
+    "Fabrizio Giorgetti": 2,
+    "Andreas Wurst": 1,
+    "Donovan Upland": 41,
+    "Roland Schneider": 1,
+    "Alexis Perrin": 5,
+    "Luca Treno": 0,
+    "Julien Alesso": 31,
+    "Jimmy Hobart": 6,
+    "Mikko Salmi": 0,
+    "Pablo Dinez": 0,
+    "Rodrigo Barros": 3,
+    "Lars Nielsen": 0,
+    "Toshiro Tanaka": 0,
+    "Roberto Rossi": 0,
+    "Kazuki Nakamura": 0,
+    "Eduardo Torres": 0,
+    "Jan van der Veen": 2,
+}
+
+DRIVER_POLES = {
+    "Mikko Hanninen": 1,
+    "Daniel Caldwell": 5,
+    "Marco Schneider": 17,
+    "Henrik Friedrich": 1,
+    "John Newhouse": 13,
+    "Donovan Upland": 20,
+    "Julien Alesso": 2,
+    "Rodrigo Barros": 1,
+}
+
+DRIVER_FASTEST_LAPS = {
+    "Mikko Hanninen": 1,
+    "Daniel Caldwell": 5,
+    "Marco Schneider": 28,
+    "Henrik Friedrich": 6,
+    "John Newhouse": 9,
+    "Fabrizio Giorgetti": 1,
+    "Donovan Upland": 19,
+    "Julien Alesso": 4,
+}
+
+DRIVER_CHAMPIONSHIPS = {
+    "Marco Schneider": 2,
+    "John Newhouse": 1,
+    "Donovan Upland": 1,
+}
+
 DRIVER_CONTRACT_LENGTHS = {
     "John Newhouse": 1,
     "Henrik Friedrich": 1,

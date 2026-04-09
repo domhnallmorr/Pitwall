@@ -19,7 +19,11 @@ def create_schema(conn):
             contract_length INTEGER DEFAULT 2,
             speed INTEGER DEFAULT 50,
             race_starts INTEGER DEFAULT 0,
-            wins INTEGER DEFAULT 0
+            wins INTEGER DEFAULT 0,
+            podiums INTEGER DEFAULT 0,
+            poles INTEGER DEFAULT 0,
+            fastest_laps INTEGER DEFAULT 0,
+            championships INTEGER DEFAULT 0
         )
     '''
     )
@@ -204,6 +208,14 @@ def create_schema(conn):
         c.execute("ALTER TABLE drivers ADD COLUMN race_starts INTEGER DEFAULT 0")
     if "wins" not in driver_columns:
         c.execute("ALTER TABLE drivers ADD COLUMN wins INTEGER DEFAULT 0")
+    if "podiums" not in driver_columns:
+        c.execute("ALTER TABLE drivers ADD COLUMN podiums INTEGER DEFAULT 0")
+    if "poles" not in driver_columns:
+        c.execute("ALTER TABLE drivers ADD COLUMN poles INTEGER DEFAULT 0")
+    if "fastest_laps" not in driver_columns:
+        c.execute("ALTER TABLE drivers ADD COLUMN fastest_laps INTEGER DEFAULT 0")
+    if "championships" not in driver_columns:
+        c.execute("ALTER TABLE drivers ADD COLUMN championships INTEGER DEFAULT 0")
 
     c.execute("PRAGMA table_info(teams)")
     team_columns = {row[1] for row in c.fetchall()}
