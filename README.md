@@ -4,52 +4,48 @@ An F1 Manager game built with Electron (Frontend) and Python (Backend).
 
 ## Current Features
 
-- Playable career mode with team selection at game start.
-- Persistent save/load support.
-- Weekly progression loop with race/test event handling.
-- Race simulation with:
-  - weighted randomness using driver speed and team car speed
-  - random crash outs
-  - crash damage cost modeling and reporting
-- Full 1998-style roster seeding pipeline (drivers, teams, circuits, calendar, staff, suppliers, sponsors).
-- End-of-season rollover with:
-  - points reset and season transition
-  - retirements and new entrants
-  - contract expiry handling for drivers
-  - announced transfer application into next-season seats
-  - AI vacancy recruitment for remaining open seats
-  - offseason car performance recalculation
-- Driver transfer system (initial version):
-  - AI transfer planning + staged announcements by week
-  - transfer announcements start after the first race
-  - player replacement flow from Staff page via a Driver Market page
-  - next-season grid reflects announced transfers
+- Playable career mode with team selection, save/load support, and a weekly progression loop.
+- Full seeded world from 1998 onward, with future drivers/sponsors entering in later seasons.
+- Season simulation through to the end of 2004, including retirements, new entrants, rollover, and offseason car resets.
+- Race weekend flow with:
+  - qualifying simulation that sets the grid
+  - separate pre-race strategy screen for player pit plans
+  - lap-by-lap race replay, timing, commentary, qualifying tab, and lap charts
+  - first-lap logic, pit stops, crash/mechanical DNFs, and supplier effects in the race sim
+- Management and transfer systems for:
+  - drivers
+  - technical directors
+  - commercial managers
+  - team principals
+  - title sponsors
+  - engine suppliers
+  - tyre suppliers
+- Improved AI driver market logic with retention, team desirability, seat role, and protected top-driver handling.
+- Player staff market flows including:
+  - driver replacement and pre-contract driver offers
+  - sponsor replacement
+  - engine and tyre supplier replacement
+  - technical director and commercial manager replacement
 - Finance system with:
-  - transaction log
-  - track-level profit/loss tracker
+  - season-only income/expenditure reporting
+  - projected end-of-season balance
+  - sponsor and supplier contract tracking
+  - transaction log and event-level P/L ledger
   - prize money installments
-  - title sponsorship income
-  - transport costs by event geography with random variance
-  - per-race driver wages and workforce payroll
-  - per-race engine and tyre supplier contract costs
-  - crash damage expenses
-  - race finance summary emails
-- Email inbox system with unread tracking and multiple categories (race/season/general).
-- Dedicated UI pages for:
+  - driver, management, workforce, supplier, transport, testing, repair, and factory overhead costs
+- Team development systems for workforce, facilities, car development, AI facilities/workforce changes, and resource-limited AI car progression.
+- UI pages for:
+  - Home dashboard
+  - Email
   - Calendar
-  - Grid (staff/sponsors/suppliers views, current + next season)
-  - Staff (Drivers / Management / Workforce tabs)
-  - Driver profile (including starts, wins, season results)
-  - Car comparison
-  - Finance (Main / Tracker / Log tabs)
+  - Grid
+  - Staff
+  - Driver profile
+  - Car
+  - Finance
   - Facilities
   - Standings
-- Visual polish features:
-  - multiple themed page backgrounds
-  - tab transition animation on key pages
-  - rating widgets (speed/skill/workforce/engine style comparisons)
-  - supplier/sponsor logos and country flags
-  - app window opens maximized
+- Visual features including custom backgrounds, country flags, supplier/sponsor logos, portraits, rating widgets, and SVG sidebar icons.
 
 ## Project Structure
 
