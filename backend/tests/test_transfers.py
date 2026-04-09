@@ -729,6 +729,44 @@ def test_recompute_ai_td_signings_plans_only_ai_vacancies(mock_choice, mock_rand
     assert planned[0]["announce_week"] == 6
 
 
+@patch("app.core.management_transfer_markets.technical_director.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfer_markets.technical_director.random.randint", return_value=6)
+def test_recompute_ai_td_signings_retains_strong_expiring_director(mock_randint, mock_shuffle):
+    state = create_transfer_state()
+    ai_team = next(team for team in state.teams if team.id == 2)
+    ai_team.car_speed = 86
+    ai_team.facilities = 70
+    ai_team.workforce = 180
+    expiring_td = next(director for director in state.technical_directors if director.id == 2)
+    expiring_td.skill = 91
+    expiring_td.age = 43
+
+    planned = TechnicalDirectorTransferManager().recompute_ai_signings(state)
+
+    assert planned == []
+    assert state.planned_ai_td_signings == []
+
+
+@patch("app.core.management_transfer_markets.technical_director.random.shuffle", side_effect=lambda x: None)
+@patch("app.core.management_transfer_markets.technical_director.random.randint", return_value=6)
+@patch("app.core.management_transfer_markets.technical_director.random.choice", side_effect=lambda choices: choices[0])
+def test_recompute_ai_td_signings_prefers_upgrade_for_strong_team(mock_choice, mock_randint, mock_shuffle):
+    state = create_transfer_state()
+    ai_team = next(team for team in state.teams if team.id == 2)
+    ai_team.car_speed = 88
+    ai_team.facilities = 68
+    ai_team.workforce = 170
+    expiring_td = next(director for director in state.technical_directors if director.id == 2)
+    expiring_td.skill = 70
+    free_td = next(director for director in state.technical_directors if director.id == 3)
+    free_td.skill = 89
+
+    planned = TechnicalDirectorTransferManager().recompute_ai_signings(state)
+
+    assert len(planned) == 1
+    assert planned[0]["director_id"] == 3
+
+
 def test_publish_due_td_announcements_moves_planned_to_announced_and_emails():
     state = create_transfer_state()
     state.calendar.current_week = 3
@@ -1340,8 +1378,7 @@ def test_recompute_ai_td_signings_excludes_retired_directors(mock_choice, mock_r
 
     planned = TechnicalDirectorTransferManager().recompute_ai_signings(state)
 
-    assert len(planned) == 1
-    assert planned[0]["director_id"] == 2
+    assert planned == []
 
 
 @patch("app.core.management_transfer_markets.commercial_manager.random.shuffle", side_effect=lambda x: None)

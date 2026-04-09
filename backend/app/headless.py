@@ -16,6 +16,34 @@ from app.models.calendar import Calendar, EventType
 from app.models.state import GameState
 
 
+def _print_td_rollover_summary(info: dict):
+    retired = info.get("retired_technical_directors") or []
+    applied = info.get("applied_td_signings") or []
+    planned = info.get("planned_td_transfers") or []
+
+    if not retired and not applied and not planned:
+        return
+
+    print("  Technical Director Market:")
+    if retired:
+        retired_names = ", ".join(item.get("name", "Unknown") for item in retired)
+        print(f"    Retired: {retired_names}")
+    if applied:
+        for signing in applied:
+            print(
+                "    Applied: "
+                f"{signing.get('director_name', 'Unknown')} -> {signing.get('team_name', 'Unknown')}"
+            )
+    if planned:
+        for signing in planned:
+            print(
+                "    Planned: "
+                f"{signing.get('director_name', 'Unknown')} -> {signing.get('team_name', 'Unknown')} "
+                f"(week {signing.get('announce_week', '?')})"
+            )
+    print()
+
+
 def run_headless(num_seasons: int = 2):
     print(f"=== Headless Simulation: {num_seasons} Season(s) ===\n")
 
@@ -93,6 +121,7 @@ def run_headless(num_seasons: int = 2):
                 for i, t in enumerate(info["final_constructor_standings"], 1):
                     print(f"    {i:>2}. {t['name']:<25} {t['points']:>4} pts")
                 print()
+                _print_td_rollover_summary(info)
                 break
 
     print(f"=== Simulation Complete ===")
