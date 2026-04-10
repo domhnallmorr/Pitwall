@@ -699,6 +699,25 @@ def test_apply_new_season_tp_transfers_moves_announced_principal_and_sets_contra
     assert any(s["principal_id"] == 3 for s in outcome["applied_signings"])
 
 
+@patch("app.core.management_transfer_markets.team_principal.random.choice", side_effect=lambda choices: choices[0])
+def test_fill_current_tp_vacancies_assigns_free_principal_for_new_season(mock_choice):
+    state = create_transfer_state()
+    ai_team = next(t for t in state.teams if t.id == 2)
+    outgoing = next(p for p in state.team_principals if p.id == 2)
+    outgoing.active = False
+    outgoing.team_id = None
+    outgoing.contract_length = 0
+    ai_team.team_principal_id = None
+
+    filled = TeamPrincipalTransferManager().fill_current_vacancies(state)
+
+    incoming = next(p for p in state.team_principals if p.id == 3)
+    assert len(filled) == 1
+    assert ai_team.team_principal_id == 3
+    assert incoming.team_id == 2
+    assert incoming.contract_length == 2
+
+
 @patch("app.core.management_transfer_markets.team_principal.random.shuffle", side_effect=lambda x: None)
 @patch("app.core.management_transfer_markets.team_principal.random.randint", return_value=6)
 @patch("app.core.management_transfer_markets.team_principal.random.choice", side_effect=lambda choices: choices[0])

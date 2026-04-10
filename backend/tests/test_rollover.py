@@ -503,6 +503,7 @@ def test_rollover_applies_announced_team_principal_transfer(mock_load_roster, mo
         team_principals=team_principals,
         calendar=Calendar(events=[Event(name="Race 2", week=3, type=EventType.RACE)], current_week=3),
         circuits=[],
+        player_team_id=1,
         events_processed=["3_Race 2"],
         announced_ai_tp_signings=[
             {
@@ -538,6 +539,48 @@ def test_team_principal_retirement_probability_bounds():
     assert manager._retirement_probability(49) == 0.0
     assert manager._retirement_probability(50) == 0.05
     assert manager._retirement_probability(65) == 1.0
+
+
+@patch("app.core.management_retirement.random.random", return_value=0.0)
+@patch("app.core.rollover.load_roster", return_value=([], [], 1999, [], []))
+@patch("app.core.management_transfer_markets.team_principal.random.choice", side_effect=lambda choices: choices[0])
+def test_rollover_fills_team_principal_vacancy_after_retirement(mock_choice, mock_load_roster, mock_retirement_random):
+    teams = [
+        Team(id=1, name="Player Team", country="UK", driver1_id=1, driver2_id=2, points=10),
+        Team(id=2, name="Ferano", country="IT", driver1_id=3, driver2_id=4, team_principal_id=20, points=8),
+    ]
+    drivers = [
+        Driver(id=1, name="P1", age=30, country="UK", team_id=1),
+        Driver(id=2, name="P2", age=29, country="UK", team_id=1),
+        Driver(id=3, name="A1", age=28, country="IT", team_id=2),
+        Driver(id=4, name="A2", age=27, country="IT", team_id=2),
+    ]
+    team_principals = [
+        TeamPrincipal(id=20, name="Julien Tissot", country="FR", age=65, skill=99, contract_length=4, team_id=2, owns_team=False),
+        TeamPrincipal(id=30, name="Cedric Palling", country="UK", age=43, skill=30, contract_length=0, team_id=None, owns_team=False),
+    ]
+    state = GameState(
+        year=1998,
+        teams=teams,
+        drivers=drivers,
+        team_principals=team_principals,
+        calendar=Calendar(events=[Event(name="Race 2", week=3, type=EventType.RACE)], current_week=3),
+        circuits=[],
+        player_team_id=1,
+        events_processed=["3_Race 2"],
+    )
+
+    result = SeasonRolloverManager().process_rollover(state)
+
+    ferano = next(t for t in state.teams if t.id == 2)
+    replacement = next(tp for tp in state.team_principals if tp.id == 30)
+    retired = next(tp for tp in state.team_principals if tp.id == 20)
+
+    assert ferano.team_principal_id == 30
+    assert replacement.team_id == 2
+    assert replacement.contract_length == 2
+    assert retired.active is False
+    assert any(fill["principal_id"] == 30 for fill in result["team_principal_transfer_outcome"]["offseason_fillings"])
 
 
 @patch("app.core.management_retirement.random.random", return_value=1.0)

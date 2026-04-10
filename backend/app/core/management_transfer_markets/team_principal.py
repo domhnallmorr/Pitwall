@@ -138,6 +138,44 @@ class TeamPrincipalTransferManager:
 
         return {"applied_signings": applied_signings}
 
+    def fill_current_vacancies(self, state: GameState) -> List[Dict[str, Any]]:
+        principals_by_id = {p.id: p for p in state.team_principals}
+        blocked_principals = {
+            signing["principal_id"]
+            for signing in state.announced_ai_tp_signings
+            if signing.get("status") == "announced"
+        }
+        available = self._get_available_next_season_principals(state, blocked_principals)
+        filled: List[Dict[str, Any]] = []
+        taken_principals = set(blocked_principals)
+
+        for team in state.teams:
+            if team.id == state.player_team_id:
+                continue
+            current = principals_by_id.get(team.team_principal_id)
+            if current is not None and getattr(current, "active", True):
+                continue
+
+            pool = [principal for principal in available if principal.id not in taken_principals]
+            if not pool:
+                break
+
+            principal = random.choice(pool)
+            taken_principals.add(principal.id)
+            principal.team_id = team.id
+            principal.contract_length = max(2, int(getattr(principal, "contract_length", 0) or 0))
+            team.team_principal_id = principal.id
+            filled.append(
+                {
+                    "team_id": team.id,
+                    "team_name": team.name,
+                    "principal_id": principal.id,
+                    "principal_name": principal.name,
+                }
+            )
+
+        return filled
+
     def _get_ai_vacancies_for_next_season(
         self,
         state: GameState,

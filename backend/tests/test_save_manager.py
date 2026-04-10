@@ -202,6 +202,55 @@ def test_load_game_accepts_grid_snapshot_rows_with_integer_values(tmp_path: Path
     assert loaded.grid_snapshots[1998][0]["TitleSponsorContractLength"] == 2
 
 
+def test_load_game_repairs_ai_team_principal_vacancy(tmp_path: Path):
+    state = create_state()
+    state.teams.append(
+        Team(
+            id=2,
+            name="Ferano",
+            country="Italy",
+            driver1_id=None,
+            driver2_id=None,
+            team_principal_id=None,
+        )
+    )
+    state.team_principals.extend(
+        [
+            TeamPrincipal(
+                id=20,
+                name="Julien Tissot",
+                country="France",
+                age=65,
+                skill=99,
+                contract_length=0,
+                team_id=None,
+                owns_team=False,
+                active=False,
+            ),
+            TeamPrincipal(
+                id=30,
+                name="Cedric Palling",
+                country="United Kingdom",
+                age=43,
+                skill=30,
+                contract_length=0,
+                team_id=None,
+                owns_team=False,
+            ),
+        ]
+    )
+    save_path = tmp_path / "autosave.json"
+
+    save_game(state, path=str(save_path))
+    loaded = load_game(path=str(save_path))
+
+    ferano = next(team for team in loaded.teams if team.id == 2)
+    replacement = next(tp for tp in loaded.team_principals if tp.id == 30)
+    assert ferano.team_principal_id == 30
+    assert replacement.team_id == 2
+    assert replacement.contract_length == 2
+
+
 @patch("app.core.save_manager.load_team_principals")
 def test_load_game_backfills_missing_team_principals_for_legacy_save(mock_load_team_principals, tmp_path: Path):
     state = create_state()

@@ -46,10 +46,11 @@ describe('StandingsView', () => {
 	it('renders constructors and toggles back to drivers tab', () => {
 		standingsView.render({
 			drivers: [{ name: 'Driver A', country: 'UK', points: 12 }],
-			constructors: [{ name: 'Team A', country: 'Italy', points: 20 }],
+			constructors: [{ name: 'Team A', country: 'Italy', points: 20, countback_note: 'x1 P4' }],
 		});
 
 		expect(document.getElementById('constructor-standings-body').textContent).toContain('Team A');
+		expect(document.getElementById('constructor-standings-body').textContent).toContain('x1 P4');
 
 		const constructorsBtn = document.querySelector('.standings-tab-btn[data-type="constructors"]');
 		const driversBtn = document.querySelector('.standings-tab-btn[data-type="drivers"]');
@@ -63,11 +64,12 @@ describe('StandingsView', () => {
 
 	it('clicking a driver without a handler does nothing', () => {
 		standingsView.render({
-			drivers: [{ name: 'No Handler Driver', country: 'France', points: 3 }],
+			drivers: [{ name: 'No Handler Driver', country: 'France', points: 3, countback_note: 'x2 P8' }],
 			constructors: [],
 		});
 
 		const link = document.querySelector('.driver-link[data-driver-name="No Handler Driver"]');
+		expect(document.getElementById('driver-standings-body').textContent).toContain('x2 P8');
 		expect(() => link.click()).not.toThrow();
 	});
 });

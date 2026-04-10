@@ -3,6 +3,7 @@ import json
 import logging
 from app.models.state import GameState
 from app.core.roster import load_team_principals
+from app.core.management_transfer_markets.team_principal import TeamPrincipalTransferManager
 
 SAVE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "saves")
 AUTOSAVE_PATH = os.path.join(SAVE_DIR, "autosave.json")
@@ -30,6 +31,15 @@ def _hydrate_missing_team_principals(state: GameState) -> GameState:
         released_principal.team_id = None
         player_team.team_principal_id = None
 
+    return state
+
+
+def _repair_ai_team_principal_vacancies(state: GameState) -> GameState:
+    if not state.team_principals:
+        return state
+
+    manager = TeamPrincipalTransferManager()
+    manager.fill_current_vacancies(state)
     return state
 
 
@@ -63,6 +73,7 @@ def load_game(path: str = None) -> GameState:
 
     state = GameState.model_validate_json(data)
     state = _hydrate_missing_team_principals(state)
+    state = _repair_ai_team_principal_vacancies(state)
     logging.info(f"Game loaded from {load_path}")
     return state
 

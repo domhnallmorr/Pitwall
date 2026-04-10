@@ -75,6 +75,10 @@ def test_get_standings_payload_model_dump_path():
     state = create_state()
     with patch("app.commands.query_commands.StandingsManager.get_driver_standings", return_value=[DumpObj("d1")]), patch(
         "app.commands.query_commands.StandingsManager.get_constructor_standings", return_value=[DumpObj("c1")]
+    ), patch(
+        "app.commands.query_commands.StandingsManager.build_driver_countback_notes", return_value={}
+    ), patch(
+        "app.commands.query_commands.StandingsManager.build_constructor_countback_notes", return_value={}
     ):
         payload = get_standings_payload(state)
     assert payload["drivers"][0]["value"] == "d1"
@@ -85,6 +89,10 @@ def test_get_standings_payload_dict_fallback_path():
     state = create_state()
     with patch("app.commands.query_commands.StandingsManager.get_driver_standings", return_value=[DictOnlyObj("d1")]), patch(
         "app.commands.query_commands.StandingsManager.get_constructor_standings", return_value=[DictOnlyObj("c1")]
+    ), patch(
+        "app.commands.query_commands.StandingsManager.build_driver_countback_notes", return_value={}
+    ), patch(
+        "app.commands.query_commands.StandingsManager.build_constructor_countback_notes", return_value={}
     ):
         payload = get_standings_payload(state)
     assert payload["drivers"][0]["value"] == "d1"

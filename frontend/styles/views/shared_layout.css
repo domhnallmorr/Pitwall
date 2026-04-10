@@ -71,6 +71,13 @@
   color: var(--text-color);
 }
 
+.standings-countback-note {
+  margin-top: 4px;
+  color: #8ea6cc;
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
 .data-table tr:hover {
   background-color: rgba(17, 34, 64, 0.8) !important;
   cursor: default;

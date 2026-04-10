@@ -152,6 +152,10 @@ class SeasonRolloverManager:
             state, announced_year=old_year
         )
 
+        offseason_tp_fillings = self.tp_transfer_manager.fill_current_vacancies(state)
+        if offseason_tp_fillings:
+            team_principal_transfer_outcome["offseason_fillings"] = offseason_tp_fillings
+
         # 13. Fill any remaining vacancies from free agents
         signings = self.recruitment_manager.fill_vacancies(state)
 

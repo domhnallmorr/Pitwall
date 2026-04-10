@@ -57,7 +57,7 @@ export default class StandingsView {
 			tr.innerHTML = `
                 <td>${index + 1}</td>
                 <td><button class="driver-link" data-driver-name="${driver.name}">${renderFlagLabel(driver.country, driver.name)}</button></td>
-                <td>${driver.points}</td>
+                <td>${driver.points}${driver.countback_note ? `<div class="standings-countback-note" title="Ordered by countback">${driver.countback_note}</div>` : ''}</td>
             `;
 			this.driverTableBody.appendChild(tr);
 		});
@@ -78,7 +78,7 @@ export default class StandingsView {
 			tr.innerHTML = `
                 <td>${index + 1}</td>
                 <td>${renderFlagLabel(team.country, team.name)}</td>
-                <td>${team.points}</td>
+                <td>${team.points}${team.countback_note ? `<div class="standings-countback-note" title="Ordered by countback">${team.countback_note}</div>` : ''}</td>
             `;
 			this.constructorTableBody.appendChild(tr);
 		});

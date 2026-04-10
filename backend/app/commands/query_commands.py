@@ -140,12 +140,20 @@ def get_home_payload(state: GameState) -> dict:
 
 def get_standings_payload(state: GameState) -> dict:
     manager = StandingsManager()
+    driver_standings = manager.get_driver_standings(state)
+    constructor_standings = manager.get_constructor_standings(state)
+    driver_countback_notes = manager.build_driver_countback_notes(state, driver_standings)
+    constructor_countback_notes = manager.build_constructor_countback_notes(state, constructor_standings)
     try:
-        d_standings = [d.model_dump() for d in manager.get_driver_standings(state)]
-        c_standings = [t.model_dump() for t in manager.get_constructor_standings(state)]
+        d_standings = [d.model_dump() for d in driver_standings]
+        c_standings = [t.model_dump() for t in constructor_standings]
     except AttributeError:
-        d_standings = [d.dict() for d in manager.get_driver_standings(state)]
-        c_standings = [t.dict() for t in manager.get_constructor_standings(state)]
+        d_standings = [d.dict() for d in driver_standings]
+        c_standings = [t.dict() for t in constructor_standings]
+    for row in d_standings:
+        row["countback_note"] = driver_countback_notes.get(row.get("id")) if isinstance(row, dict) else None
+    for row in c_standings:
+        row["countback_note"] = constructor_countback_notes.get(row.get("id")) if isinstance(row, dict) else None
     return {"drivers": d_standings, "constructors": c_standings}
 
 
