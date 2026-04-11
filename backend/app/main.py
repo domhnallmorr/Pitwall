@@ -8,6 +8,7 @@ from app.commands.game_commands import (
     build_finance_payload,
     handle_facilities_upgrade_preview,
     handle_get_technical_director_replacement_candidates,
+    handle_get_engine_negotiation_market,
     handle_get_engine_supplier_replacement_candidates,
     handle_get_manager_replacement_candidates,
     handle_offer_driver,
@@ -26,9 +27,12 @@ from app.commands.game_commands import (
     handle_replace_driver,
     handle_simulate_qualifying,
     handle_start_car_development,
+    handle_start_engine_negotiation,
     handle_start_facilities_upgrade,
     handle_simulate_race,
     handle_start_career,
+    handle_sign_engine_negotiated_deal,
+    handle_update_engine_negotiation_staff,
     handle_update_workforce,
 )
 from app.commands.query_commands import (
@@ -315,6 +319,47 @@ def process_command(command):
             logging,
             command.get("supplier_name"),
             command.get("incoming_supplier_id"),
+        )
+        if response.get("status") == "success":
+            save_game(CURRENT_STATE)
+        return response
+
+    if cmd_type == 'get_engine_negotiation_market':
+        if not CURRENT_STATE:
+            return {"status": "error", "message": "Game not started"}
+        return handle_get_engine_negotiation_market(CURRENT_STATE, logging)
+
+    if cmd_type == 'start_engine_negotiation':
+        if not CURRENT_STATE:
+            return {"status": "error", "message": "Game not started"}
+        CURRENT_STATE, response = handle_start_engine_negotiation(
+            CURRENT_STATE,
+            logging,
+            command.get("supplier_id"),
+        )
+        if response.get("status") == "success":
+            save_game(CURRENT_STATE)
+        return response
+
+    if cmd_type == 'update_engine_negotiation_staff':
+        if not CURRENT_STATE:
+            return {"status": "error", "message": "Game not started"}
+        CURRENT_STATE, response = handle_update_engine_negotiation_staff(
+            CURRENT_STATE,
+            logging,
+            command.get("assigned_staff"),
+        )
+        if response.get("status") == "success":
+            save_game(CURRENT_STATE)
+        return response
+
+    if cmd_type == 'sign_engine_negotiated_deal':
+        if not CURRENT_STATE:
+            return {"status": "error", "message": "Game not started"}
+        CURRENT_STATE, response = handle_sign_engine_negotiated_deal(
+            CURRENT_STATE,
+            logging,
+            command.get("tier"),
         )
         if response.get("status") == "success":
             save_game(CURRENT_STATE)

@@ -28,6 +28,7 @@ from app.commands.race_commands import (
 )
 from app.commands.staff_commands import (
     handle_offer_driver,
+    handle_get_engine_negotiation_market,
     handle_get_technical_director_replacement_candidates,
     handle_get_engine_supplier_replacement_candidates,
     handle_get_manager_replacement_candidates,
@@ -42,6 +43,9 @@ from app.commands.staff_commands import (
     handle_replace_title_sponsor,
     handle_replace_driver,
     handle_start_car_development,
+    handle_start_engine_negotiation,
+    handle_sign_engine_negotiated_deal,
+    handle_update_engine_negotiation_staff,
     handle_update_workforce,
 )
 from app.models.calendar import Calendar

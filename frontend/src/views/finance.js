@@ -83,11 +83,20 @@ export default class FinanceView {
 		this.fuelSupplierLogoWrap = document.getElementById('finance-fuel-supplier-logo-wrap');
 		this.trackPlBody = document.getElementById('finance-track-pl-body');
 		this.tbody = document.getElementById('finance-transactions-body');
+		this.engineNegotiationModal = document.getElementById('finance-engine-negotiation-modal');
+		this.engineNegotiationCloseBtn = document.getElementById('finance-engine-negotiation-close-btn');
+		this.engineNegotiationSuppliersEl = document.getElementById('finance-engine-negotiation-suppliers');
+		this.engineNegotiationDetailEl = document.getElementById('finance-engine-negotiation-detail');
+		this.engineNegotiationData = null;
 		this.onReplaceTitleSponsor = null;
 		this.onReplaceEngineSupplier = null;
 		this.onReplaceTyreSupplier = null;
+		this.onStartEngineNegotiation = null;
+		this.onUpdateEngineNegotiationStaff = null;
+		this.onSignEngineNegotiatedDeal = null;
 		this.bindTabs();
 		this.bindSponsorActions();
+		this.bindEngineNegotiationModal();
 	}
 
 	setReplaceTitleSponsorHandler(handler) {
@@ -100,6 +109,18 @@ export default class FinanceView {
 
 	setReplaceEngineSupplierHandler(handler) {
 		this.onReplaceEngineSupplier = handler;
+	}
+
+	setStartEngineNegotiationHandler(handler) {
+		this.onStartEngineNegotiation = handler;
+	}
+
+	setUpdateEngineNegotiationStaffHandler(handler) {
+		this.onUpdateEngineNegotiationStaff = handler;
+	}
+
+	setSignEngineNegotiatedDealHandler(handler) {
+		this.onSignEngineNegotiatedDeal = handler;
 	}
 
 	formatMoney(value, { signed = false } = {}) {
@@ -172,8 +193,7 @@ export default class FinanceView {
 			this.engineSupplierReplaceBtn.addEventListener('click', () => {
 				if (!this.onReplaceEngineSupplier) return;
 				const supplierName = this.engineSupplierReplaceBtn.getAttribute('data-supplier-name');
-				if (!supplierName) return;
-				this.onReplaceEngineSupplier(supplierName);
+				this.onReplaceEngineSupplier(supplierName || null);
 			});
 		}
 		if (this.tyreSupplierReplaceBtn) {
@@ -182,6 +202,41 @@ export default class FinanceView {
 				const supplierName = this.tyreSupplierReplaceBtn.getAttribute('data-supplier-name');
 				if (!supplierName) return;
 				this.onReplaceTyreSupplier(supplierName);
+			});
+		}
+	}
+
+	bindEngineNegotiationModal() {
+		if (this.engineNegotiationCloseBtn) {
+			this.engineNegotiationCloseBtn.addEventListener('click', () => this.hideEngineNegotiationModal());
+		}
+		if (this.engineNegotiationModal) {
+			this.engineNegotiationModal.addEventListener('click', (event) => {
+				if (event.target === this.engineNegotiationModal) {
+					this.hideEngineNegotiationModal();
+				}
+			});
+		}
+		if (this.engineNegotiationSuppliersEl) {
+			this.engineNegotiationSuppliersEl.addEventListener('click', (event) => {
+				const button = event.target.closest('[data-engine-supplier-id]');
+				if (!button || !this.onStartEngineNegotiation) return;
+				this.onStartEngineNegotiation(Number(button.getAttribute('data-engine-supplier-id')));
+			});
+		}
+		if (this.engineNegotiationDetailEl) {
+			this.engineNegotiationDetailEl.addEventListener('click', (event) => {
+				const signButton = event.target.closest('[data-engine-tier]');
+				if (signButton && this.onSignEngineNegotiatedDeal) {
+					this.onSignEngineNegotiatedDeal(signButton.getAttribute('data-engine-tier'));
+					return;
+				}
+				const applyButton = event.target.closest('#finance-engine-negotiation-apply-staff');
+				if (applyButton && this.onUpdateEngineNegotiationStaff) {
+					const input = document.getElementById('finance-engine-negotiation-staff');
+					if (!input) return;
+					this.onUpdateEngineNegotiationStaff(Number(input.value || 0));
+				}
 			});
 		}
 	}
@@ -273,6 +328,7 @@ export default class FinanceView {
 
 	renderSuppliers(data) {
 		const engineSupplier = data.engine_supplier || {};
+		const engineNegotiation = data.engine_negotiation || this.engineNegotiationData;
 		const engineSupplierName = engineSupplier.name || 'Unassigned';
 		const engineSupplierContractLength = engineSupplier.contract_length || 0;
 		const engineSupplierPendingReplacement = Boolean(engineSupplier.pending_replacement);
@@ -282,9 +338,9 @@ export default class FinanceView {
 
 		if (this.engineSupplierNameEl) this.engineSupplierNameEl.textContent = engineSupplierName;
 		if (this.engineSupplierReplaceBtn) {
-			const canReplace = Boolean(engineSupplier.name) && !engineSupplierBuildsOwnEngine && engineSupplierContractLength < 2 && !engineSupplierPendingReplacement;
-			this.engineSupplierReplaceBtn.disabled = !canReplace;
-			if (canReplace) {
+			const canNegotiate = Boolean(engineSupplier.name) && !engineSupplierBuildsOwnEngine && engineSupplierContractLength < 2 && !engineSupplierPendingReplacement && !engineNegotiation?.blocked_reason;
+			this.engineSupplierReplaceBtn.disabled = !canNegotiate;
+			if (canNegotiate) {
 				this.engineSupplierReplaceBtn.setAttribute('data-supplier-name', engineSupplier.name);
 			} else {
 				this.engineSupplierReplaceBtn.removeAttribute('data-supplier-name');
@@ -381,6 +437,7 @@ export default class FinanceView {
 	}
 
 	render(data) {
+		this.engineNegotiationData = data.engine_negotiation || null;
 		const summary = data.summary || {};
 		const overview = data.overview || {};
 		this.renderOverview(overview, summary, {
@@ -394,5 +451,120 @@ export default class FinanceView {
 		this.renderCommercial(data);
 		this.renderSuppliers(data);
 		this.renderLedger(data);
+	}
+
+	hideEngineNegotiationModal() {
+		if (this.engineNegotiationModal) {
+			this.engineNegotiationModal.style.display = 'none';
+		}
+	}
+
+	showEngineNegotiationModal(data) {
+		this.engineNegotiationData = data;
+		if (!this.engineNegotiationModal) return;
+		this.renderEngineNegotiationModal(data);
+		this.engineNegotiationModal.style.display = 'flex';
+	}
+
+	renderEngineNegotiationModal(data = {}) {
+		if (this.engineNegotiationSuppliersEl) {
+			const suppliers = Array.isArray(data.suppliers) ? data.suppliers : [];
+			this.engineNegotiationSuppliersEl.innerHTML = suppliers.length
+				? suppliers.map((supplier) => `
+					<div class="finance-engine-supplier-row">
+						<div>
+							<div class="finance-section-title">${supplier.name}</div>
+							<div class="finance-balance-label">${supplier.country} · Power ${supplier.power} · Resources ${supplier.resources}</div>
+						</div>
+						<button class="btn-secondary" data-engine-supplier-id="${supplier.id}" ${supplier.targetable ? '' : 'disabled'}>
+							Approach
+						</button>
+					</div>
+				`).join('')
+				: '<p class="finance-engine-negotiation-empty">No suppliers available.</p>';
+		}
+
+		if (!this.engineNegotiationDetailEl) return;
+
+		if (data.blocked_reason) {
+			this.engineNegotiationDetailEl.innerHTML = `
+				<div class="finance-engine-negotiation-empty">
+					<h3>Negotiations Unavailable</h3>
+					<p>${data.blocked_reason}</p>
+				</div>
+			`;
+			return;
+		}
+
+		const active = data.active_negotiation;
+		if (!active) {
+			this.engineNegotiationDetailEl.innerHTML = `
+				<div class="finance-engine-negotiation-empty">
+					<h3>No Active Negotiation</h3>
+					<p>Select a supplier on the left to open talks. Commercial manager skill and assigned commercial staff will drive progress after each race.</p>
+					<div class="finance-balance-label">Commercial Manager</div>
+					<div>${data.commercial_manager?.name || 'Unassigned'} · Skill ${data.commercial_manager?.skill || 0}</div>
+					<div class="finance-balance-label" style="margin-top:12px;">Commercial Staff Available</div>
+					<div>${data.commercial_staff_total || 0}</div>
+				</div>
+			`;
+			return;
+		}
+
+		const boxes = Array.from({ length: active.total_boxes }, (_, index) => {
+			const boxNumber = index + 1;
+			const marker = boxNumber === active.customer_threshold
+				? 'C'
+				: boxNumber === active.partner_threshold
+					? 'P'
+					: boxNumber === active.works_threshold
+						? 'W'
+						: '';
+			return `
+				<div class="finance-engine-progress-box ${boxNumber <= active.progress_boxes ? 'filled' : ''}">
+					<span>${marker}</span>
+				</div>
+			`;
+		}).join('');
+
+		const tierButtons = ['customer', 'partner', 'works']
+			.filter((tier) => active.available_tiers.includes(tier))
+			.map((tier) => {
+				const unlocked = active.unlocked_tiers.includes(tier);
+				const value = active.annual_values?.[tier] || 0;
+				const sign = value < 0 ? '+' : '-';
+				return `
+					<button class="btn-primary finance-engine-tier-btn" data-engine-tier="${tier}" ${unlocked ? '' : 'disabled'}>
+						Sign ${tier[0].toUpperCase()}${tier.slice(1)} (${sign}$${Math.abs(value).toLocaleString()})
+					</button>
+				`;
+			}).join('');
+
+		this.engineNegotiationDetailEl.innerHTML = `
+			<div class="finance-engine-negotiation-card">
+				<div class="finance-balance-label">Active Negotiation</div>
+				<h3>${active.supplier_name}</h3>
+				<div class="finance-engine-progress-track">${boxes}</div>
+				<div class="finance-balance-label">Progress: ${active.progress_boxes}/${active.total_boxes} boxes</div>
+				<div class="finance-engine-negotiation-meta">
+					<div>
+						<span class="finance-balance-label">Contract Length</span>
+						<div>${active.contract_length} year(s)</div>
+					</div>
+					<div>
+						<span class="finance-balance-label">Unlocked</span>
+						<div>${active.unlocked_tiers.map((tier) => tier[0].toUpperCase() + tier.slice(1)).join(', ') || 'None yet'}</div>
+					</div>
+				</div>
+				<div class="finance-engine-negotiation-staff">
+					<label for="finance-engine-negotiation-staff">Commercial Staff Assigned</label>
+					<div class="finance-engine-negotiation-staff-row">
+						<input id="finance-engine-negotiation-staff" type="number" min="0" max="${data.commercial_staff_total || 0}" value="${active.assigned_staff}">
+						<button id="finance-engine-negotiation-apply-staff" class="btn-secondary">Update Staff</button>
+					</div>
+				</div>
+				<div class="finance-engine-negotiation-tiers">${tierButtons}</div>
+			</div>
+		`;
 	}
 }

@@ -7,6 +7,7 @@ from app.core.management_transfers import (
     TitleSponsorTransferManager,
     TyreSupplierTransferManager,
 )
+from app.core.player_engine_negotiations import PlayerEngineNegotiationManager
 from app.core.player_driver_negotiations import PlayerDriverNegotiationManager
 from app.core.transfers import TransferManager
 from app.models.state import GameState
@@ -422,3 +423,70 @@ def handle_get_engine_supplier_replacement_candidates(
     except Exception as e:
         logger.error(f"Error loading engine supplier replacement candidates: {e}")
         return {"status": "error", "message": str(e)}
+
+
+def handle_get_engine_negotiation_market(
+    state: GameState,
+    logger: logging.Logger,
+):
+    try:
+        payload = PlayerEngineNegotiationManager().get_market_payload(state)
+        return {"type": "engine_negotiation_market", "status": "success", "data": payload}
+    except ValueError as ve:
+        return {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error loading engine negotiation market: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def handle_start_engine_negotiation(
+    state: GameState,
+    logger: logging.Logger,
+    supplier_id: int | None,
+):
+    try:
+        if supplier_id is None:
+            return state, {"status": "error", "message": "Engine supplier id is required"}
+        manager = PlayerEngineNegotiationManager()
+        manager.start_negotiation(state, int(supplier_id))
+        return state, {"type": "engine_negotiation_updated", "status": "success", "data": manager.get_market_payload(state)}
+    except ValueError as ve:
+        return state, {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error starting engine negotiation: {e}")
+        return state, {"status": "error", "message": str(e)}
+
+
+def handle_update_engine_negotiation_staff(
+    state: GameState,
+    logger: logging.Logger,
+    assigned_staff: int | None,
+):
+    try:
+        if assigned_staff is None:
+            return state, {"status": "error", "message": "Assigned staff is required"}
+        manager = PlayerEngineNegotiationManager()
+        manager.update_assigned_staff(state, int(assigned_staff))
+        return state, {"type": "engine_negotiation_updated", "status": "success", "data": manager.get_market_payload(state)}
+    except ValueError as ve:
+        return state, {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error updating engine negotiation staff: {e}")
+        return state, {"status": "error", "message": str(e)}
+
+
+def handle_sign_engine_negotiated_deal(
+    state: GameState,
+    logger: logging.Logger,
+    tier: str | None,
+):
+    try:
+        if not tier:
+            return state, {"status": "error", "message": "Negotiated tier is required"}
+        signing = PlayerEngineNegotiationManager().sign_deal(state, str(tier))
+        return state, {"type": "engine_negotiation_signed", "status": "success", "data": signing}
+    except ValueError as ve:
+        return state, {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error signing negotiated engine deal: {e}")
+        return state, {"status": "error", "message": str(e)}

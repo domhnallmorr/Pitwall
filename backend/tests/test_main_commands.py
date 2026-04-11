@@ -657,6 +657,19 @@ def test_replace_engine_supplier_blocks_self_built_engine_team():
     assert "cannot be replaced" in blocked["message"]
 
 
+def test_start_engine_negotiation_returns_market_payload_with_active_negotiation():
+    state = create_state()
+    state.teams[0].engine_supplier_contract_length = 1
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "start_engine_negotiation", "supplier_id": 42})
+
+    assert result["status"] == "success"
+    assert result["type"] == "engine_negotiation_updated"
+    assert result["data"]["active_negotiation"]["supplier_id"] == 42
+    assert result["data"]["active_negotiation"]["supplier_name"] == "Frost"
+
+
 def test_replace_tyre_supplier_respects_contract_rule_and_signs_replacement():
     state = create_state()
     app_main.CURRENT_STATE = state

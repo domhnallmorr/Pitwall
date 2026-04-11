@@ -133,7 +133,10 @@ function init() {
 	carView.setRepairWearHandler((wearPoints) => API.repairCarWear(wearPoints));
 	financeView = new FinanceView();
 	financeView.setReplaceTitleSponsorHandler((sponsorName) => API.getTitleSponsorReplacementCandidates(sponsorName));
-	financeView.setReplaceEngineSupplierHandler((supplierName) => API.getEngineSupplierReplacementCandidates(supplierName));
+	financeView.setReplaceEngineSupplierHandler(() => API.getEngineNegotiationMarket());
+	financeView.setStartEngineNegotiationHandler((supplierId) => API.startEngineNegotiation(supplierId));
+	financeView.setUpdateEngineNegotiationStaffHandler((assignedStaff) => API.updateEngineNegotiationStaff(assignedStaff));
+	financeView.setSignEngineNegotiatedDealHandler((tier) => API.signEngineNegotiatedDeal(tier));
 	financeView.setReplaceTyreSupplierHandler((supplierName) => API.getTyreSupplierReplacementCandidates(supplierName));
 	facilitiesView = new FacilitiesView();
 	facilitiesView.setPreviewHandler((points, years) => API.previewFacilitiesUpgrade(points, years));
@@ -394,6 +397,8 @@ function setupIPC() {
 			} else if (parsed.type === 'engine_supplier_replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
+			} else if (parsed.type === 'engine_negotiation_market' || parsed.type === 'engine_negotiation_updated') {
+				financeView.showEngineNegotiationModal(parsed.data);
 			} else if (parsed.type === 'tyre_supplier_replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
@@ -442,6 +447,13 @@ function setupIPC() {
 				API.getGrid(gridView.baseYear + 1);
 				API.getEmails();
 			} else if (parsed.type === 'engine_supplier_replaced') {
+				if (navigation) navigation.showView('finance');
+				API.getFinance();
+				API.getGrid(gridView.getActiveYear());
+				API.getGrid(gridView.baseYear + 1);
+				API.getEmails();
+			} else if (parsed.type === 'engine_negotiation_signed') {
+				financeView.hideEngineNegotiationModal();
 				if (navigation) navigation.showView('finance');
 				API.getFinance();
 				API.getGrid(gridView.getActiveYear());

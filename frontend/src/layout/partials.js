@@ -154,7 +154,7 @@ function renderFinanceSupplierSections() {
 			nameId: 'finance-engine-supplier-name',
 			nameDefault: 'Unassigned',
 			actionButtonId: 'finance-engine-supplier-replace-btn',
-			actionButtonLabel: 'Replace',
+			actionButtonLabel: 'Negotiate',
 			rows: [
 				{ label: 'Deal', id: 'finance-engine-supplier-deal', defaultValue: '-' },
 				{ label: 'Annual Net', id: 'finance-engine-supplier-annual', defaultValue: '$0' },

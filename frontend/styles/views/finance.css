@@ -260,6 +260,127 @@
   color: #fb923c;
 }
 
+.finance-engine-negotiation-modal-content {
+  width: min(1160px, calc(100vw - 40px));
+  max-width: min(1160px, calc(100vw - 40px));
+  max-height: min(720px, calc(100vh - 48px));
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 18px;
+  text-align: left;
+}
+
+.finance-engine-negotiation-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.finance-engine-negotiation-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 270px) minmax(0, 1fr);
+  gap: 18px;
+  min-height: 0;
+}
+
+.finance-engine-negotiation-sidebar,
+.finance-engine-negotiation-detail {
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.finance-engine-negotiation-detail {
+  min-width: 0;
+}
+
+.finance-engine-supplier-row,
+.finance-engine-negotiation-card,
+.finance-engine-negotiation-empty {
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.finance-engine-supplier-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.finance-engine-negotiation-empty {
+  min-height: 220px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  line-height: 1.55;
+}
+
+.finance-engine-progress-track {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(36px, 1fr));
+  gap: 8px;
+  margin: 14px 0 10px;
+}
+
+.finance-engine-progress-box {
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(30, 41, 59, 0.85);
+  display: grid;
+  place-items: center;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.finance-engine-progress-box.filled {
+  background: rgba(14, 116, 144, 0.9);
+  color: #e0f2fe;
+  border-color: rgba(34, 211, 238, 0.35);
+}
+
+.finance-engine-negotiation-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.finance-engine-negotiation-card p,
+.finance-engine-negotiation-empty p {
+  max-width: 62ch;
+}
+
+.finance-engine-negotiation-staff {
+  margin: 14px 0;
+}
+
+.finance-engine-negotiation-staff-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.finance-engine-negotiation-staff-row input {
+  flex: 0 0 120px;
+}
+
+.finance-engine-negotiation-tiers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.finance-engine-tier-btn:disabled {
+  opacity: 0.45;
+}
+
 @media (max-width: 860px) {
   .finance-overview-grid,
   .finance-ledger-grid {
@@ -282,6 +403,10 @@
     margin-top: 8px;
     max-width: none;
     text-align: left;
+  }
+
+  .finance-engine-negotiation-layout {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -32,6 +32,10 @@ const API = {
 	getTitleSponsorReplacementCandidates: (sponsorName) => window.electronAPI.sendToPython({ type: 'get_title_sponsor_replacement_candidates', sponsor_name: sponsorName }),
 	getEngineSupplierReplacementCandidates: (supplierName) => window.electronAPI.sendToPython({ type: 'get_engine_supplier_replacement_candidates', supplier_name: supplierName }),
 	getTyreSupplierReplacementCandidates: (supplierName) => window.electronAPI.sendToPython({ type: 'get_tyre_supplier_replacement_candidates', supplier_name: supplierName }),
+	getEngineNegotiationMarket: () => window.electronAPI.sendToPython({ type: 'get_engine_negotiation_market' }),
+	startEngineNegotiation: (supplierId) => window.electronAPI.sendToPython({ type: 'start_engine_negotiation', supplier_id: supplierId }),
+	updateEngineNegotiationStaff: (assignedStaff) => window.electronAPI.sendToPython({ type: 'update_engine_negotiation_staff', assigned_staff: assignedStaff }),
+	signEngineNegotiatedDeal: (tier) => window.electronAPI.sendToPython({ type: 'sign_engine_negotiated_deal', tier }),
 	offerDriver: (driverId, incomingDriverId, salaryOffer, contractLength) => window.electronAPI.sendToPython({
 		type: 'offer_driver',
 		driver_id: driverId,

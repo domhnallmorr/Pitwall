@@ -144,7 +144,7 @@ class EngineSupplierTransferManager:
             team.engine_supplier_name = supplier.name
             team.engine_supplier_deal = signing.get("deal_type")
             team.engine_supplier_yearly_cost = int(signing.get("yearly_cost") or 0)
-            team.engine_supplier_contract_length = 2
+            team.engine_supplier_contract_length = int(signing.get("contract_length") or 2)
             applied_signings.append(
                 {
                     "team_id": team.id,
@@ -207,6 +207,7 @@ class EngineSupplierTransferManager:
             "announce_year": state.year,
             "status": "announced",
             "origin": "player",
+            "contract_length": 2,
         }
         announced.append(signing)
         state.announced_ai_engine_supplier_signings = announced

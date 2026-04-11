@@ -1,5 +1,6 @@
 from app.core.finance_reporting import build_finance_report
 from app.core.commercial_staff_costs import CommercialStaffCostManager
+from app.core.player_engine_negotiations import PlayerEngineNegotiationManager
 from app.core.sponsorships import SponsorshipManager
 from app.core.transport import COUNTRY_COST_TIER, TransportCosts
 from app.core.workforce_costs import WorkforceCostManager
@@ -14,6 +15,7 @@ def _find_circuit_country(state: GameState, event_name: str) -> str:
 
 
 def build_finance_payload(state: GameState):
+    engine_negotiation_manager = PlayerEngineNegotiationManager()
     season_transactions = [t for t in state.finance.transactions if t.year == state.year]
     transactions = [t.model_dump() for t in season_transactions]
     report = build_finance_report(state)
@@ -334,4 +336,5 @@ def build_finance_payload(state: GameState):
             "projected_race_cost": commercial_staff_race_cost,
             "projected_annual_cost": commercial_staff_annual_projection,
         },
+        "engine_negotiation": engine_negotiation_manager.get_market_payload(state) if player_team else None,
     }
