@@ -7,6 +7,7 @@ class Team(BaseModel):
     country: str
     car_speed: int = 50
     workforce: int = 0
+    commercial_staff: int = 0
     title_sponsor_name: str | None = None
     title_sponsor_yearly: int = 0
     title_sponsor_contract_length: int = 0

@@ -1,30 +1,17 @@
 from app.core.standings import StandingsManager
-from app.models.state import GameState
-from app.models.driver import Driver
-from app.models.team import Team
-from app.models.calendar import Calendar
-from unittest.mock import MagicMock
-
-def create_mock_state(year, teams, drivers):
-    return GameState(
-        year=year,
-        teams=teams,
-        drivers=drivers,
-        calendar=Calendar(events=[], current_week=1),
-        circuits=[]
-    )
+from tests.factories import make_driver, make_state, make_team
 
 def test_reset_season():
     # Setup Data with points
     drivers = [
-        Driver(id=1, name="D1", age=20, country="UK", points=10),
-        Driver(id=2, name="D2", age=20, country="UK", points=5)
+        make_driver(id=1, name="D1", age=20, country="UK", points=10),
+        make_driver(id=2, name="D2", age=20, country="UK", points=5),
     ]
     teams = [
-        Team(id=1, name="T1", country="UK", points=20),
-        Team(id=2, name="T2", country="UK", points=15)
+        make_team(id=1, name="T1", country="UK", points=20),
+        make_team(id=2, name="T2", country="UK", points=15),
     ]
-    state = create_mock_state(year=1998, teams=teams, drivers=drivers)
+    state = make_state(year=1998, teams=teams, drivers=drivers)
     
     # Action
     manager = StandingsManager()
@@ -36,15 +23,15 @@ def test_reset_season():
 
 def test_driver_standings_order():
     teams = [
-        Team(id=1, name="Team A", country="UK", points=0),
-        Team(id=2, name="Team B", country="UK", points=0),
+        make_team(id=1, name="Team A", country="UK", points=0),
+        make_team(id=2, name="Team B", country="UK", points=0),
     ]
     drivers = [
-        Driver(id=1, name="Alice", age=20, country="UK", team_id=1, points=10),
-        Driver(id=2, name="Bob", age=20, country="UK", team_id=2, points=20),
-        Driver(id=3, name="Charlie", age=20, country="UK", team_id=2, points=5)
+        make_driver(id=1, name="Alice", age=20, country="UK", team_id=1, points=10),
+        make_driver(id=2, name="Bob", age=20, country="UK", team_id=2, points=20),
+        make_driver(id=3, name="Charlie", age=20, country="UK", team_id=2, points=5),
     ]
-    state = create_mock_state(year=1998, teams=teams, drivers=drivers)
+    state = make_state(year=1998, teams=teams, drivers=drivers)
     
     manager = StandingsManager()
     standings = manager.get_driver_standings(state)
@@ -56,14 +43,14 @@ def test_driver_standings_order():
 
 def test_driver_standings_use_countback_on_tied_points():
     teams = [
-        Team(id=1, name="Team A", country="UK", points=0),
-        Team(id=2, name="Team B", country="IT", points=0),
+        make_team(id=1, name="Team A", country="UK", points=0),
+        make_team(id=2, name="Team B", country="IT", points=0),
     ]
     drivers = [
-        Driver(id=1, name="Alice", age=20, country="UK", team_id=1, points=10),
-        Driver(id=2, name="Bob", age=20, country="UK", team_id=2, points=10),
+        make_driver(id=1, name="Alice", age=20, country="UK", team_id=1, points=10),
+        make_driver(id=2, name="Bob", age=20, country="UK", team_id=2, points=10),
     ]
-    state = create_mock_state(year=1998, teams=teams, drivers=drivers)
+    state = make_state(year=1998, teams=teams, drivers=drivers)
     state.driver_season_results = {
         1998: {
             1: [{"round": 1, "position": 1}],
@@ -79,14 +66,14 @@ def test_driver_standings_use_countback_on_tied_points():
 
 def test_driver_standings_zero_point_tie_uses_best_finish():
     teams = [
-        Team(id=1, name="Team A", country="UK", points=0),
+        make_team(id=1, name="Team A", country="UK", points=0),
     ]
     drivers = [
-        Driver(id=1, name="Alice", age=20, country="UK", team_id=1, points=0),
-        Driver(id=2, name="Bob", age=20, country="UK", team_id=1, points=0),
-        Driver(id=3, name="Charlie", age=20, country="UK", team_id=1, points=0),
+        make_driver(id=1, name="Alice", age=20, country="UK", team_id=1, points=0),
+        make_driver(id=2, name="Bob", age=20, country="UK", team_id=1, points=0),
+        make_driver(id=3, name="Charlie", age=20, country="UK", team_id=1, points=0),
     ]
-    state = create_mock_state(year=1998, teams=teams, drivers=drivers)
+    state = make_state(year=1998, teams=teams, drivers=drivers)
     state.driver_season_results = {
         1998: {
             1: [{"round": 1, "position": 7}],
@@ -101,14 +88,14 @@ def test_driver_standings_zero_point_tie_uses_best_finish():
 
 def test_driver_standings_excludes_unassigned_and_inactive_drivers():
     teams = [
-        Team(id=1, name="Team A", country="UK", points=0),
+        make_team(id=1, name="Team A", country="UK", points=0),
     ]
     drivers = [
-        Driver(id=1, name="Assigned Active", age=25, country="UK", team_id=1, points=8, active=True),
-        Driver(id=2, name="Free Agent", age=28, country="DE", team_id=None, points=99, active=True),
-        Driver(id=3, name="Retired Driver", age=40, country="FR", team_id=None, points=50, active=False),
+        make_driver(id=1, name="Assigned Active", age=25, country="UK", team_id=1, points=8, active=True),
+        make_driver(id=2, name="Free Agent", age=28, country="DE", team_id=None, points=99, active=True),
+        make_driver(id=3, name="Retired Driver", age=40, country="FR", team_id=None, points=50, active=False),
     ]
-    state = create_mock_state(year=1998, teams=teams, drivers=drivers)
+    state = make_state(year=1998, teams=teams, drivers=drivers)
 
     manager = StandingsManager()
     standings = manager.get_driver_standings(state)
@@ -118,10 +105,10 @@ def test_driver_standings_excludes_unassigned_and_inactive_drivers():
 
 def test_constructor_standings_order():
     teams = [
-        Team(id=1, name="Ferrari", country="IT", points=50),
-        Team(id=2, name="McLaren", country="UK", points=80)
+        make_team(id=1, name="Ferrari", country="IT", points=50),
+        make_team(id=2, name="McLaren", country="UK", points=80),
     ]
-    state = create_mock_state(year=1998, teams=teams, drivers=[])
+    state = make_state(year=1998, teams=teams, drivers=[])
     
     manager = StandingsManager()
     standings = manager.get_constructor_standings(state)
@@ -132,16 +119,16 @@ def test_constructor_standings_order():
 
 def test_constructor_standings_uses_countback_on_tied_points():
     teams = [
-        Team(id=1, name="Team A", country="UK", points=10),
-        Team(id=2, name="Team B", country="IT", points=10),
+        make_team(id=1, name="Team A", country="UK", points=10),
+        make_team(id=2, name="Team B", country="IT", points=10),
     ]
     drivers = [
-        Driver(id=1, name="A1", age=25, country="UK", team_id=1),
-        Driver(id=2, name="A2", age=25, country="UK", team_id=1),
-        Driver(id=3, name="B1", age=25, country="IT", team_id=2),
-        Driver(id=4, name="B2", age=25, country="IT", team_id=2),
+        make_driver(id=1, name="A1", age=25, country="UK", team_id=1),
+        make_driver(id=2, name="A2", age=25, country="UK", team_id=1),
+        make_driver(id=3, name="B1", age=25, country="IT", team_id=2),
+        make_driver(id=4, name="B2", age=25, country="IT", team_id=2),
     ]
-    state = create_mock_state(year=1998, teams=teams, drivers=drivers)
+    state = make_state(year=1998, teams=teams, drivers=drivers)
     state.driver_season_results = {
         1998: {
             1: [{"round": 1, "position": 1}],
@@ -159,19 +146,19 @@ def test_constructor_standings_uses_countback_on_tied_points():
 
 def test_constructor_standings_orders_zero_point_teams_by_best_finish():
     teams = [
-        Team(id=1, name="Team A", country="UK", points=0),
-        Team(id=2, name="Team B", country="IT", points=0),
-        Team(id=3, name="Team C", country="DE", points=0),
+        make_team(id=1, name="Team A", country="UK", points=0),
+        make_team(id=2, name="Team B", country="IT", points=0),
+        make_team(id=3, name="Team C", country="DE", points=0),
     ]
     drivers = [
-        Driver(id=1, name="A1", age=25, country="UK", team_id=1),
-        Driver(id=2, name="A2", age=25, country="UK", team_id=1),
-        Driver(id=3, name="B1", age=25, country="IT", team_id=2),
-        Driver(id=4, name="B2", age=25, country="IT", team_id=2),
-        Driver(id=5, name="C1", age=25, country="DE", team_id=3),
-        Driver(id=6, name="C2", age=25, country="DE", team_id=3),
+        make_driver(id=1, name="A1", age=25, country="UK", team_id=1),
+        make_driver(id=2, name="A2", age=25, country="UK", team_id=1),
+        make_driver(id=3, name="B1", age=25, country="IT", team_id=2),
+        make_driver(id=4, name="B2", age=25, country="IT", team_id=2),
+        make_driver(id=5, name="C1", age=25, country="DE", team_id=3),
+        make_driver(id=6, name="C2", age=25, country="DE", team_id=3),
     ]
-    state = create_mock_state(year=1998, teams=teams, drivers=drivers)
+    state = make_state(year=1998, teams=teams, drivers=drivers)
     state.driver_season_results = {
         1998: {
             1: [{"round": 1, "position": 7}],
@@ -187,16 +174,16 @@ def test_constructor_standings_orders_zero_point_teams_by_best_finish():
 
 def test_constructor_countback_notes_show_team_best_result():
     teams = [
-        Team(id=1, name="Team A", country="UK", points=0),
-        Team(id=2, name="Team B", country="IT", points=0),
+        make_team(id=1, name="Team A", country="UK", points=0),
+        make_team(id=2, name="Team B", country="IT", points=0),
     ]
     drivers = [
-        Driver(id=1, name="A1", age=25, country="UK", team_id=1),
-        Driver(id=2, name="A2", age=25, country="UK", team_id=1),
-        Driver(id=3, name="B1", age=25, country="IT", team_id=2),
-        Driver(id=4, name="B2", age=25, country="IT", team_id=2),
+        make_driver(id=1, name="A1", age=25, country="UK", team_id=1),
+        make_driver(id=2, name="A2", age=25, country="UK", team_id=1),
+        make_driver(id=3, name="B1", age=25, country="IT", team_id=2),
+        make_driver(id=4, name="B2", age=25, country="IT", team_id=2),
     ]
-    state = create_mock_state(year=1998, teams=teams, drivers=drivers)
+    state = make_state(year=1998, teams=teams, drivers=drivers)
     state.driver_season_results = {
         1998: {
             1: [{"round": 1, "position": 16}],
@@ -214,13 +201,13 @@ def test_constructor_countback_notes_show_team_best_result():
 
 def test_driver_countback_notes_show_driver_best_result():
     teams = [
-        Team(id=1, name="Team A", country="UK", points=0),
+        make_team(id=1, name="Team A", country="UK", points=0),
     ]
     drivers = [
-        Driver(id=1, name="Alice", age=20, country="UK", team_id=1, points=0),
-        Driver(id=2, name="Bob", age=20, country="UK", team_id=1, points=0),
+        make_driver(id=1, name="Alice", age=20, country="UK", team_id=1, points=0),
+        make_driver(id=2, name="Bob", age=20, country="UK", team_id=1, points=0),
     ]
-    state = create_mock_state(year=1998, teams=teams, drivers=drivers)
+    state = make_state(year=1998, teams=teams, drivers=drivers)
     state.driver_season_results = {
         1998: {
             1: [{"round": 1, "position": 17}],

@@ -70,6 +70,7 @@ describe('FinanceView', () => {
 				maintenance_total: 12000,
 				testing_total: 120,
 				workforce_total: 700,
+				commercial_staff_total: 500,
 				factory_overhead_total: 400000,
 				engine_supplier_total: 281250,
 				engine_supplier_expense_total: 281250,
@@ -136,6 +137,7 @@ describe('FinanceView', () => {
 		expect(document.getElementById('finance-prize-money-total').textContent).toBe('$100')
 		expect(document.getElementById('finance-driver-wages-total').textContent).toBe('$220,000')
 		expect(document.getElementById('finance-management-salary-total').textContent).toBe('$5,160,000')
+		expect(document.getElementById('finance-commercial-staff-total').textContent).toBe('$500')
 		expect(document.getElementById('finance-engine-income-total').textContent).toBe('$0')
 		expect(document.getElementById('finance-crash-damage-total').textContent).toBe('$25,000')
 		expect(document.getElementById('finance-maintenance-total').textContent).toBe('$12,000')
@@ -182,6 +184,7 @@ describe('FinanceView', () => {
 				maintenance_total: 0,
 				testing_total: 0,
 				workforce_total: 0,
+				commercial_staff_total: 0,
 				factory_overhead_total: 0,
 				engine_supplier_total: 0,
 				engine_supplier_expense_total: 0,
@@ -235,6 +238,7 @@ describe('FinanceView', () => {
 				maintenance_total: 0,
 				testing_total: 0,
 				workforce_total: 0,
+				commercial_staff_total: 0,
 				factory_overhead_total: 0,
 				engine_supplier_total: 750000,
 				engine_supplier_expense_total: 0,

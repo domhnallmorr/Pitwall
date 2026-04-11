@@ -23,6 +23,7 @@ describe('layout partials', () => {
 		expect(summary.querySelectorAll('.finance-balance-card').length).toBe(5);
 		expect(document.getElementById('finance-projected-balance')).toBeTruthy();
 		expect(document.getElementById('finance-driver-wages-total')).toBeTruthy();
+		expect(document.getElementById('finance-commercial-staff-total')).toBeTruthy();
 		expect(document.getElementById('finance-net-pl-breakdown')).toBeTruthy();
 
 		const commercialCards = [...commercialSections.querySelectorAll('.finance-sponsor-card')];

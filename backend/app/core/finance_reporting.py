@@ -19,6 +19,7 @@ def build_finance_report(state: GameState) -> dict[str, Any]:
     crash_damage_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.CRASH_DAMAGE and t.amount < 0)
     maintenance_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.MAINTENANCE and t.amount < 0)
     workforce_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.WORKFORCE_WAGES and t.amount < 0)
+    commercial_staff_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.COMMERCIAL_STAFF_WAGES and t.amount < 0)
     factory_overhead_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.FACTORY_OVERHEAD and t.amount < 0)
     engine_supplier_income_total = sum(t.amount for t in transactions if t.category == TransactionCategory.ENGINE_SUPPLIER and t.amount > 0)
     engine_supplier_expense_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.ENGINE_SUPPLIER and t.amount < 0)
@@ -65,6 +66,7 @@ def build_finance_report(state: GameState) -> dict[str, Any]:
             "crash_damage_total": crash_damage_total,
             "maintenance_total": maintenance_total,
             "workforce_total": workforce_total,
+            "commercial_staff_total": commercial_staff_total,
             "factory_overhead_total": factory_overhead_total,
             "engine_supplier_income_total": engine_supplier_income_total,
             "engine_supplier_expense_total": engine_supplier_expense_total,

@@ -1,5 +1,6 @@
 import logging
 
+from app.core.commercial_staff_costs import CommercialStaffCostManager
 from app.core.crash_damage import CrashDamageManager
 from app.core.driver_wages import DriverWageManager
 from app.core.engine_supplier_costs import EngineSupplierCostManager
@@ -88,6 +89,7 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
         DriverWageManager().charge_for_event(state, current_event)
         management_salary_charges = ManagementSalaryManager().charge_for_event(state, current_event)
         workforce_charge = WorkforceCostManager().charge_for_event(state, current_event)
+        commercial_staff_charge = CommercialStaffCostManager().charge_for_event(state, current_event)
         factory_overhead_charge = FactoryOverheadCostManager().charge_for_event(state, current_event)
         engine_supplier_charge = EngineSupplierCostManager().charge_for_event(state, current_event)
         tyre_supplier_charge = TyreSupplierCostManager().charge_for_event(state, current_event)
@@ -130,6 +132,18 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
                     f"Staff count: {workforce_charge.workforce}\n"
                     f"Cost this race: ${workforce_charge.applied_cost:,}\n"
                     f"(Based on average annual wage ${workforce_charge.annual_avg_wage:,})"
+                ),
+                category=EmailCategory.GENERAL,
+            )
+        if commercial_staff_charge:
+            state.add_email(
+                sender="HR & Operations",
+                subject=f"Commercial Staff Payroll Processed: {commercial_staff_charge.event_name}",
+                body=(
+                    f"Commercial staff payroll has been processed for {commercial_staff_charge.event_name}.\n\n"
+                    f"Staff count: {commercial_staff_charge.commercial_staff}\n"
+                    f"Cost this race: ${commercial_staff_charge.applied_cost:,}\n"
+                    f"(Based on average annual wage ${commercial_staff_charge.annual_avg_wage:,})"
                 ),
                 category=EmailCategory.GENERAL,
             )
@@ -240,6 +254,7 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
             driver_wage_total = category_total(TransactionCategory.DRIVER_WAGES)
             management_salary_total = category_total(TransactionCategory.MANAGEMENT_SALARIES)
             workforce_total = category_total(TransactionCategory.WORKFORCE_WAGES)
+            commercial_staff_total = category_total(TransactionCategory.COMMERCIAL_STAFF_WAGES)
             factory_overhead_total = category_total(TransactionCategory.FACTORY_OVERHEAD)
             engine_supplier_total = category_total(TransactionCategory.ENGINE_SUPPLIER)
             tyre_supplier_total = category_total(TransactionCategory.TYRE_SUPPLIER)
@@ -257,6 +272,7 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
                     f"Driver wages: {'+' if driver_wage_total >= 0 else '-'}${abs(driver_wage_total):,}\n"
                     f"Management salaries: {'+' if management_salary_total >= 0 else '-'}${abs(management_salary_total):,}\n"
                     f"Workforce payroll: {'+' if workforce_total >= 0 else '-'}${abs(workforce_total):,}\n"
+                    f"Commercial staff payroll: {'+' if commercial_staff_total >= 0 else '-'}${abs(commercial_staff_total):,}\n"
                     f"Factory overhead: {'+' if factory_overhead_total >= 0 else '-'}${abs(factory_overhead_total):,}\n"
                     f"Engine supplier: {'+' if engine_supplier_total >= 0 else '-'}${abs(engine_supplier_total):,}\n"
                     f"Tyre supplier: {'+' if tyre_supplier_total >= 0 else '-'}${abs(tyre_supplier_total):,}\n"

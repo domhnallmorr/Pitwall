@@ -36,6 +36,7 @@ export default class FinanceView {
 		this.driverWagesTotalEl = document.getElementById('finance-driver-wages-total');
 		this.managementSalaryTotalEl = document.getElementById('finance-management-salary-total');
 		this.workforceTotalEl = document.getElementById('finance-workforce-total');
+		this.commercialStaffTotalEl = document.getElementById('finance-commercial-staff-total');
 		this.factoryOverheadTotalEl = document.getElementById('finance-factory-overhead-total');
 		this.engineSupplierTotalEl = document.getElementById('finance-engine-supplier-total');
 		this.tyreSupplierTotalEl = document.getElementById('finance-tyre-supplier-total');
@@ -209,6 +210,7 @@ export default class FinanceView {
 		if (this.driverWagesTotalEl) this.driverWagesTotalEl.textContent = this.formatMoney(summary.driver_wage_expense_total || 0);
 		if (this.managementSalaryTotalEl) this.managementSalaryTotalEl.textContent = this.formatMoney(summary.management_salary_total || 0);
 		if (this.workforceTotalEl) this.workforceTotalEl.textContent = this.formatMoney(summary.workforce_total || 0);
+		if (this.commercialStaffTotalEl) this.commercialStaffTotalEl.textContent = this.formatMoney(summary.commercial_staff_total || 0);
 		if (this.factoryOverheadTotalEl) this.factoryOverheadTotalEl.textContent = this.formatMoney(summary.factory_overhead_total || 0);
 		if (this.engineSupplierTotalEl) this.engineSupplierTotalEl.textContent = this.formatMoney(summary.engine_supplier_expense_total || 0);
 		if (this.tyreSupplierTotalEl) this.tyreSupplierTotalEl.textContent = this.formatMoney(summary.tyre_supplier_total || 0);

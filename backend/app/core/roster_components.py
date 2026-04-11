@@ -76,6 +76,7 @@ def load_teams(cursor, start_year: int, driver_map: Dict[str, Driver]) -> List[T
     team_columns = {row[1] for row in cursor.fetchall()}
     has_car_speed = "car_speed" in team_columns
     has_workforce = "workforce" in team_columns
+    has_commercial_staff = "commercial_staff" in team_columns
     has_title_sponsor_name = "title_sponsor_name" in team_columns
     has_title_sponsor_yearly = "title_sponsor_yearly" in team_columns
     has_title_sponsor_contract_length = "title_sponsor_contract_length" in team_columns
@@ -95,6 +96,7 @@ def load_teams(cursor, start_year: int, driver_map: Dict[str, Driver]) -> List[T
     has_factory_overhead_yearly = "factory_overhead_yearly" in team_columns
     car_speed_expr = "car_speed" if has_car_speed else "50"
     workforce_expr = "workforce" if has_workforce else "0"
+    commercial_staff_expr = "commercial_staff" if has_commercial_staff else "0"
     title_sponsor_name_expr = "title_sponsor_name" if has_title_sponsor_name else "NULL"
     title_sponsor_yearly_expr = "title_sponsor_yearly" if has_title_sponsor_yearly else "0"
     title_sponsor_contract_length_expr = "title_sponsor_contract_length" if has_title_sponsor_contract_length else "0"
@@ -114,7 +116,7 @@ def load_teams(cursor, start_year: int, driver_map: Dict[str, Driver]) -> List[T
     factory_overhead_yearly_expr = "factory_overhead_yearly" if has_factory_overhead_yearly else "0"
 
     cursor.execute(
-        f"SELECT id, name, country, driver1_name, driver2_name, balance, facilities, {car_speed_expr} AS car_speed, {workforce_expr} AS workforce, "
+        f"SELECT id, name, country, driver1_name, driver2_name, balance, facilities, {car_speed_expr} AS car_speed, {workforce_expr} AS workforce, {commercial_staff_expr} AS commercial_staff, "
         f"{title_sponsor_name_expr} AS title_sponsor_name, {title_sponsor_yearly_expr} AS title_sponsor_yearly, {title_sponsor_contract_length_expr} AS title_sponsor_contract_length, {other_sponsorship_yearly_expr} AS other_sponsorship_yearly, "
         f"{engine_supplier_name_expr} AS engine_supplier_name, {engine_supplier_deal_expr} AS engine_supplier_deal, {engine_supplier_yearly_cost_expr} AS engine_supplier_yearly_cost, {engine_supplier_contract_length_expr} AS engine_supplier_contract_length, {builds_own_engine_expr} AS builds_own_engine, "
         f"{tyre_supplier_name_expr} AS tyre_supplier_name, {tyre_supplier_deal_expr} AS tyre_supplier_deal, {tyre_supplier_yearly_cost_expr} AS tyre_supplier_yearly_cost, {tyre_supplier_contract_length_expr} AS tyre_supplier_contract_length, "
@@ -133,23 +135,24 @@ def load_teams(cursor, start_year: int, driver_map: Dict[str, Driver]) -> List[T
             facilities=row[6],
             car_speed=row[7] if row[7] is not None else 50,
             workforce=row[8] if row[8] is not None else 0,
-            title_sponsor_name=row[9] if row[9] is not None else None,
-            title_sponsor_yearly=row[10] if row[10] is not None else 0,
-            title_sponsor_contract_length=row[11] if row[11] is not None else 0,
-            other_sponsorship_yearly=row[12] if row[12] is not None else 0,
-            engine_supplier_name=row[13] if row[13] is not None else None,
-            engine_supplier_deal=row[14] if row[14] is not None else None,
-            engine_supplier_yearly_cost=row[15] if row[15] is not None else 0,
-            engine_supplier_contract_length=row[16] if row[16] is not None else 0,
-            builds_own_engine=bool(row[17]),
-            tyre_supplier_name=row[18] if row[18] is not None else None,
-            tyre_supplier_deal=row[19] if row[19] is not None else None,
-            tyre_supplier_yearly_cost=row[20] if row[20] is not None else 0,
-            tyre_supplier_contract_length=row[21] if row[21] is not None else 0,
-            fuel_supplier_name=row[22] if row[22] is not None else None,
-            fuel_supplier_deal=row[23] if row[23] is not None else None,
-            fuel_supplier_yearly_cost=row[24] if row[24] is not None else 0,
-            factory_overhead_yearly=row[25] if row[25] is not None else 0,
+            commercial_staff=row[9] if row[9] is not None else 0,
+            title_sponsor_name=row[10] if row[10] is not None else None,
+            title_sponsor_yearly=row[11] if row[11] is not None else 0,
+            title_sponsor_contract_length=row[12] if row[12] is not None else 0,
+            other_sponsorship_yearly=row[13] if row[13] is not None else 0,
+            engine_supplier_name=row[14] if row[14] is not None else None,
+            engine_supplier_deal=row[15] if row[15] is not None else None,
+            engine_supplier_yearly_cost=row[16] if row[16] is not None else 0,
+            engine_supplier_contract_length=row[17] if row[17] is not None else 0,
+            builds_own_engine=bool(row[18]),
+            tyre_supplier_name=row[19] if row[19] is not None else None,
+            tyre_supplier_deal=row[20] if row[20] is not None else None,
+            tyre_supplier_yearly_cost=row[21] if row[21] is not None else 0,
+            tyre_supplier_contract_length=row[22] if row[22] is not None else 0,
+            fuel_supplier_name=row[23] if row[23] is not None else None,
+            fuel_supplier_deal=row[24] if row[24] is not None else None,
+            fuel_supplier_yearly_cost=row[25] if row[25] is not None else 0,
+            factory_overhead_yearly=row[26] if row[26] is not None else 0,
         )
 
         d1_name = row[3]

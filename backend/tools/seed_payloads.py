@@ -287,17 +287,31 @@ TEAM_SPEEDS = {
 }
 
 TEAM_WORKFORCE = {
-    "Warrick": 250,
-    "Ferano": 230,
-    "Benedetti": 190,
-    "McAlister": 240,
-    "Joyce": 138,
-    "Pascal": 110,
-    "Schweizer": 180,
-    "Swords": 97,
-    "Strathmore": 130,
-    "Tarnwell": 105,
-    "Marchetti": 90,
+    "Warrick": 190,
+    "Ferano": 165,
+    "Benedetti": 134,
+    "McAlister": 183,
+    "Joyce": 107,
+    "Pascal": 68,
+    "Schweizer": 131,
+    "Swords": 68,
+    "Strathmore": 92,
+    "Tarnwell": 79,
+    "Marchetti": 71,
+}
+
+TEAM_COMMERCIAL_STAFF = {
+    "Warrick": 60,
+    "Ferano": 65,
+    "Benedetti": 56,
+    "McAlister": 57,
+    "Joyce": 31,
+    "Pascal": 42,
+    "Schweizer": 49,
+    "Swords": 29,
+    "Strathmore": 38,
+    "Tarnwell": 26,
+    "Marchetti": 19,
 }
 
 TEAM_BALANCES = {

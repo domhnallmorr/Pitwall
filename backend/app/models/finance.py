@@ -7,6 +7,7 @@ class TransactionCategory(str, Enum):
     DRIVER_WAGES = "driver_wages"
     MANAGEMENT_SALARIES = "management_salaries"
     WORKFORCE_WAGES = "workforce_wages"
+    COMMERCIAL_STAFF_WAGES = "commercial_staff_wages"
     PRIZE_MONEY = "prize_money"
     TRANSPORT = "transport"
     CRASH_DAMAGE = "crash_damage"

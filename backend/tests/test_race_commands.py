@@ -8,35 +8,19 @@ from app.commands.race_commands import (
     handle_simulate_qualifying,
     handle_simulate_race,
 )
-from app.models.calendar import Calendar, Event, EventType
-from app.models.circuit import Circuit
-from app.models.driver import Driver
 from app.models.finance import TransactionCategory
-from app.models.state import GameState
-from app.models.team import Team
+from tests.factories import make_calendar, make_circuit, make_driver, make_race_event, make_state, make_team
 
 
 def create_state():
-    team = Team(id=1, name="Warrick", country="United Kingdom", driver1_id=1, driver2_id=2)
+    team = make_team(id=1, name="Warrick", country="United Kingdom", driver1_id=1, driver2_id=2)
     drivers = [
-        Driver(id=1, name="Driver One", age=30, country="United Kingdom", team_id=1),
-        Driver(id=2, name="Driver Two", age=29, country="France", team_id=1),
+        make_driver(id=1, name="Driver One", age=30, country="United Kingdom", team_id=1),
+        make_driver(id=2, name="Driver Two", age=29, country="France", team_id=1),
     ]
-    calendar = Calendar(events=[Event(name="Test GP", week=10, type=EventType.RACE)], current_week=10)
-    circuits = [
-        Circuit(
-            id=1,
-            name="Test GP",
-            country="Australia",
-            location="Melbourne",
-            laps=58,
-            base_laptime_ms=86_000,
-            length_km=5.3,
-            overtaking_delta=1.2,
-            power_factor=5.0,
-        )
-    ]
-    return GameState(
+    calendar = make_calendar(events=[make_race_event("Test GP", week=10)], current_week=10)
+    circuits = [make_circuit(name="Test GP", base_laptime_ms=86_000, length_km=5.3, overtaking_delta=1.2, power_factor=5.0)]
+    return make_state(
         year=1998,
         teams=[team],
         drivers=drivers,

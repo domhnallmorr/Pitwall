@@ -1,4 +1,5 @@
 from app.core.finance_reporting import build_finance_report
+from app.core.commercial_staff_costs import CommercialStaffCostManager
 from app.core.sponsorships import SponsorshipManager
 from app.core.transport import COUNTRY_COST_TIER, TransportCosts
 from app.core.workforce_costs import WorkforceCostManager
@@ -54,8 +55,11 @@ def build_finance_payload(state: GameState):
     sponsor_remaining = max(sponsor_yearly - sponsor_paid_so_far, 0) if sponsor_name else 0
     other_sponsorship_remaining = max(other_sponsorship_yearly - other_sponsorship_paid_so_far, 0)
     workforce_manager = WorkforceCostManager()
+    commercial_staff_manager = CommercialStaffCostManager()
     workforce_race_cost = workforce_manager.calculate_race_cost(player_team.workforce, race_count) if player_team else 0
     workforce_annual_projection = max(0, int(getattr(player_team, "workforce", 0) or 0)) * workforce_manager.annual_avg_wage if player_team else 0
+    commercial_staff_race_cost = commercial_staff_manager.calculate_race_cost(player_team.commercial_staff, race_count) if player_team else 0
+    commercial_staff_annual_projection = max(0, int(getattr(player_team, "commercial_staff", 0) or 0)) * commercial_staff_manager.annual_avg_wage if player_team else 0
     factory_overhead_yearly = int(getattr(player_team, "factory_overhead_yearly", 0) or 0) if player_team else 0
     factory_overhead_installment = int(round(max(0, factory_overhead_yearly) / max(1, race_count))) if player_team else 0
     factory_overhead_paid_so_far = sum(
@@ -126,6 +130,7 @@ def build_finance_payload(state: GameState):
         0,
     )
     projected_workforce_remaining = max(workforce_annual_projection - int(summary.get("workforce_total", 0) or 0), 0)
+    projected_commercial_staff_remaining = max(commercial_staff_annual_projection - int(summary.get("commercial_staff_total", 0) or 0), 0)
     prize_remaining = max(state.finance.prize_money_entitlement - state.finance.prize_money_paid, 0)
     next_race_prize_income = int(round(prize_remaining / max(1, remaining_races))) if remaining_races else 0
     transport_events_remaining = []
@@ -184,6 +189,7 @@ def build_finance_payload(state: GameState):
 
     next_race_outgoings = (
         workforce_race_cost
+        + commercial_staff_race_cost
         + factory_overhead_installment
         + tyre_supplier_installment
         + facilities_installment
@@ -201,6 +207,7 @@ def build_finance_payload(state: GameState):
     projected_end_balance -= (
         tyre_supplier_remaining
         + projected_workforce_remaining
+        + projected_commercial_staff_remaining
         + factory_overhead_remaining
         + projected_driver_expense_remaining
         + projected_transport_remaining
@@ -320,5 +327,11 @@ def build_finance_payload(state: GameState):
             "years": state.finance.facilities_upgrade_years,
             "points": state.finance.facilities_upgrade_points,
             "historical_paid_total": facilities_upgrade_paid,
+        },
+        "commercial_staff": {
+            "count": int(getattr(player_team, "commercial_staff", 0) or 0) if player_team else 0,
+            "annual_avg_wage": commercial_staff_manager.annual_avg_wage,
+            "projected_race_cost": commercial_staff_race_cost,
+            "projected_annual_cost": commercial_staff_annual_projection,
         },
     }

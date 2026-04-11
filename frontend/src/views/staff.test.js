@@ -10,9 +10,11 @@ describe('StaffView', () => {
 			<div id="staff-content-drivers"></div>
 			<div id="staff-content-workforce" style="display:none;"></div>
 			<div id="staff-content-management" style="display:none;"></div>
+			<div id="staff-content-commercial" style="display:none;"></div>
 			<button class="staff-tab-btn active" data-type="drivers">Drivers</button>
 			<button class="staff-tab-btn" data-type="workforce">Workforce</button>
 			<button class="staff-tab-btn" data-type="management">Management</button>
+			<button class="staff-tab-btn" data-type="commercial">Commercial</button>
 			<div id="staff-drivers-container"></div>
 			<div id="staff-workforce-summary"></div>
 			<div id="staff-workforce-editor"></div>
@@ -21,6 +23,9 @@ describe('StaffView', () => {
 			<div id="staff-workforce-payroll"></div>
 			<table><tbody id="staff-workforce-table-body"></tbody></table>
 			<div id="staff-management-container"></div>
+			<div id="staff-commercial-summary"></div>
+			<div id="staff-commercial-payroll"></div>
+			<table><tbody id="staff-commercial-table-body"></tbody></table>
 		`);
 		global.document = dom.window.document;
 		global.window = dom.window;
@@ -31,6 +36,7 @@ describe('StaffView', () => {
 		staffView.render({
 			team_name: 'Warrick',
 			player_workforce: 250,
+			player_commercial_staff: 49,
 			teams: [{ name: 'Warrick', country: 'United Kingdom', workforce: 250 }],
 			drivers: [],
 			technical_director: {
@@ -63,6 +69,7 @@ describe('StaffView', () => {
 		staffView.render({
 			team_name: 'Warrick',
 			player_workforce: 250,
+			player_commercial_staff: 49,
 			teams: [{ name: 'Warrick', country: 'United Kingdom', workforce: 250 }],
 			drivers: [
 				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, wage: 1000, pay_driver: false, contract_length: 2 },
@@ -87,9 +94,13 @@ describe('StaffView', () => {
 		staffView.render({
 			team_name: 'Warrick',
 			player_workforce: 200,
+			player_commercial_staff: 49,
 			workforce_limits: { min: 0, max: 250 },
 			projected_workforce_race_cost: 320000,
 			projected_workforce_annual_cost: 5600000,
+			projected_commercial_staff_race_cost: 57647,
+			projected_commercial_staff_annual_cost: 980000,
+			commercial_staff_annual_avg_wage: 20000,
 			races_in_season: 17,
 			teams: [{ name: 'Warrick', country: 'United Kingdom', workforce: 200 }],
 			drivers: [],
@@ -104,6 +115,7 @@ describe('StaffView', () => {
 
 		expect(onUpdate).toHaveBeenCalledWith(215);
 		expect(document.getElementById('staff-workforce-payroll').textContent).toContain('Projected payroll');
+		expect(document.getElementById('staff-commercial-payroll').textContent).toContain('Projected payroll');
 	});
 
 	it('covers guard branches and empty states', () => {
@@ -128,6 +140,29 @@ describe('StaffView', () => {
 		expect(document.getElementById('staff-drivers-container').textContent).toContain('No drivers assigned');
 		expect(document.getElementById('staff-management-container').textContent).toContain('No management staff assigned');
 		expect(document.getElementById('staff-workforce-summary').textContent).toContain('Your team workforce');
+		expect(document.getElementById('staff-commercial-summary').textContent).toContain('Your team commercial staff');
+	});
+
+	it('renders commercial tab content', () => {
+		staffView.render({
+			team_name: 'Schweizer',
+			player_workforce: 131,
+			player_commercial_staff: 49,
+			projected_commercial_staff_race_cost: 57647,
+			projected_commercial_staff_annual_cost: 980000,
+			commercial_staff_annual_avg_wage: 20000,
+			races_in_season: 17,
+			drivers: [],
+			technical_director: null,
+			commercial_manager: null,
+			teams: [],
+		});
+
+		document.querySelector('.staff-tab-btn[data-type="commercial"]').click();
+		expect(document.getElementById('staff-content-commercial').style.display).toBe('block');
+		expect(document.getElementById('staff-commercial-table-body').textContent).toContain('Average');
+		expect(document.getElementById('staff-commercial-table-body').textContent).toContain('49');
+		expect(document.getElementById('staff-commercial-table-body').textContent).toContain('$20,000');
 	});
 
 	it('handles management replace edge cases and management-only rendering', () => {

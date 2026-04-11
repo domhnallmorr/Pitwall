@@ -26,6 +26,7 @@ def create_state() -> GameState:
             commercial_manager_id=11,
             car_speed=80,
             workforce=250,
+            commercial_staff=49,
             title_sponsor_name="Windale",
             title_sponsor_yearly=32_500_000,
             title_sponsor_contract_length=1,
@@ -194,6 +195,7 @@ def test_get_finance_returns_summary_and_track_profit_loss():
     assert result["data"]["summary"]["transport_total"] == 200_000
     assert result["data"]["summary"]["testing_total"] == 0
     assert "workforce_total" in result["data"]["summary"]
+    assert "commercial_staff_total" in result["data"]["summary"]
     assert "factory_overhead_total" in result["data"]["summary"]
     assert "driver_wage_expense_total" in result["data"]["summary"]
     assert "management_salary_total" in result["data"]["summary"]
@@ -214,6 +216,7 @@ def test_get_finance_returns_summary_and_track_profit_loss():
     assert result["data"]["tyre_supplier"]["name"] == "Greatday"
     assert result["data"]["fuel_supplier"]["name"] == "Brasoil"
     assert "contract_alerts" in result["data"]["overview"]
+    assert result["data"]["commercial_staff"]["count"] == 49
 
 
 def test_get_finance_only_reports_current_season_transactions():

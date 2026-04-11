@@ -27,6 +27,7 @@ try:
         TEAM_ENGINE_SUPPLIERS,
         TEAM_ENGINE_SUPPLIER_CONTRACT_LENGTHS,
         TEAM_FACTORY_OVERHEAD,
+        TEAM_COMMERCIAL_STAFF,
         TEAM_OTHER_SPONSORSHIP,
         TEAM_SPEEDS,
         TEAM_TITLE_SPONSORS,
@@ -65,6 +66,7 @@ except ModuleNotFoundError:
         TEAM_ENGINE_SUPPLIERS,
         TEAM_ENGINE_SUPPLIER_CONTRACT_LENGTHS,
         TEAM_FACTORY_OVERHEAD,
+        TEAM_COMMERCIAL_STAFF,
         TEAM_OTHER_SPONSORSHIP,
         TEAM_SPEEDS,
         TEAM_TITLE_SPONSORS,
@@ -189,6 +191,10 @@ def seed_data(conn):
         c.executemany(
             'UPDATE teams SET workforce = ? WHERE name = ?',
             [(workforce, name) for name, workforce in TEAM_WORKFORCE.items()]
+        )
+        c.executemany(
+            'UPDATE teams SET commercial_staff = ? WHERE name = ?',
+            [(count, name) for name, count in TEAM_COMMERCIAL_STAFF.items()]
         )
         c.executemany(
             'UPDATE teams SET balance = ? WHERE name = ? AND start_year = 0',
@@ -488,7 +494,10 @@ def seed_data(conn):
 
     teams_data = TEAMS_DATA
 
-    teams_data_with_attrs = [(*t, TEAM_SPEEDS.get(t[1], 50), TEAM_WORKFORCE.get(t[1], 0)) for t in teams_data]
+    teams_data_with_attrs = [
+        (*t, TEAM_SPEEDS.get(t[1], 50), TEAM_WORKFORCE.get(t[1], 0), TEAM_COMMERCIAL_STAFF.get(t[1], 0))
+        for t in teams_data
+    ]
     teams_data_with_attrs = [
         (
             *row,
@@ -500,7 +509,7 @@ def seed_data(conn):
         for row in teams_data_with_attrs
     ]
     c.executemany(
-        'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed, workforce, title_sponsor_name, title_sponsor_yearly, title_sponsor_contract_length, other_sponsorship_yearly) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed, workforce, commercial_staff, title_sponsor_name, title_sponsor_yearly, title_sponsor_contract_length, other_sponsorship_yearly) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         teams_data_with_attrs
     )
     c.executemany(

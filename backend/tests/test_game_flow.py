@@ -162,6 +162,61 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
 
 
 @patch('app.core.roster.get_connection')
+def test_simulate_race_posts_expected_finance_categories_and_summary(mock_get_conn, test_db):
+    mock_get_conn.return_value = test_db
+    app_main.CURRENT_STATE = None
+
+    start_response = process_command({'type': 'start_career', 'team_name': 'Schweizer'})
+    assert start_response['status'] == 'success'
+    app_main.CURRENT_STATE.calendar.current_week = 10
+
+    race_response = process_command({'type': 'simulate_race'})
+    assert race_response['status'] == 'success'
+
+    finance = app_main.CURRENT_STATE.finance
+    race_transactions = [
+        t for t in finance.transactions
+        if t.year == app_main.CURRENT_STATE.year
+        and t.event_name == 'Albert Park'
+        and t.event_type == 'RACE'
+    ]
+    categories = {t.category for t in race_transactions}
+
+    assert TransactionCategory.PRIZE_MONEY in categories
+    assert TransactionCategory.SPONSORSHIP in categories
+    assert TransactionCategory.DRIVER_WAGES in categories
+    assert TransactionCategory.MANAGEMENT_SALARIES in categories
+    assert TransactionCategory.WORKFORCE_WAGES in categories
+    assert TransactionCategory.COMMERCIAL_STAFF_WAGES in categories
+    assert TransactionCategory.FACTORY_OVERHEAD in categories
+    assert TransactionCategory.ENGINE_SUPPLIER in categories
+    assert TransactionCategory.TYRE_SUPPLIER in categories
+    assert TransactionCategory.FUEL_SUPPLIER in categories
+    assert TransactionCategory.TRANSPORT in categories
+
+    commercial_staff_txs = [t for t in race_transactions if t.category == TransactionCategory.COMMERCIAL_STAFF_WAGES]
+    assert len(commercial_staff_txs) == 1
+    assert commercial_staff_txs[0].amount < 0
+
+    finance_summary_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Race Finance Summary:")]
+    assert len(finance_summary_emails) >= 1
+    assert "Commercial staff payroll:" in finance_summary_emails[-1].body
+
+    finance_response = process_command({'type': 'get_finance'})
+    assert finance_response['status'] == 'success'
+    summary = finance_response['data']['summary']
+    assert summary['prize_money_total'] > 0
+    assert summary['sponsorship_total'] > 0
+    assert summary['driver_wage_expense_total'] > 0
+    assert summary['management_salary_total'] > 0
+    assert summary['workforce_total'] > 0
+    assert summary['commercial_staff_total'] > 0
+    assert summary['factory_overhead_total'] > 0
+    assert summary['engine_supplier_total'] < 0
+    assert summary['transport_total'] > 0
+
+
+@patch('app.core.roster.get_connection')
 @patch('app.race.race_manager.random.sample', side_effect=lambda seq, k: [seq[0]])
 @patch('app.race.race_manager.RaceManager._pick_crash_count', return_value=1)
 @patch(

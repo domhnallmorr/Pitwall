@@ -1,39 +1,23 @@
 from app.core.workforce_costs import WorkforceCostManager
-from app.models.calendar import Calendar, Event, EventType
-from app.models.circuit import Circuit
-from app.models.driver import Driver
 from app.models.finance import TransactionCategory
-from app.models.state import GameState
-from app.models.team import Team
+from tests.factories import make_calendar, make_circuit, make_driver, make_race_event, make_state, make_team, make_test_event
 
 
-def create_state() -> GameState:
+def create_state():
     events = [
-        Event(name="Albert Park", week=10, type=EventType.RACE),
-        Event(name="Interlagos", week=13, type=EventType.RACE),
-        Event(name="Barcelona Test", week=5, type=EventType.TEST),
+        make_race_event("Albert Park", week=10),
+        make_race_event("Interlagos", week=13),
+        make_test_event("Barcelona Test", week=5),
     ]
-    return GameState(
+    return make_state(
         year=1998,
-        teams=[Team(id=1, name="Warrick", country="United Kingdom", workforce=250, driver1_id=1, driver2_id=2)],
+        teams=[make_team(id=1, name="Warrick", country="United Kingdom", workforce=250, driver1_id=1, driver2_id=2)],
         drivers=[
-            Driver(id=1, name="John Newhouse", age=27, country="Canada", team_id=1),
-            Driver(id=2, name="Henrik Friedrich", age=31, country="Germany", team_id=1),
+            make_driver(id=1, name="John Newhouse", age=27, country="Canada", team_id=1),
+            make_driver(id=2, name="Henrik Friedrich", age=31, country="Germany", team_id=1),
         ],
-        calendar=Calendar(events=events, current_week=10),
-        circuits=[
-            Circuit(
-                id=1,
-                name="Albert Park",
-                country="Australia",
-                location="Melbourne",
-                laps=58,
-                base_laptime_ms=84_000,
-                length_km=5.303,
-                overtaking_delta=1_200,
-                power_factor=6,
-            )
-        ],
+        calendar=make_calendar(events=events, current_week=10),
+        circuits=[make_circuit(name="Albert Park")],
         player_team_id=1,
     )
 

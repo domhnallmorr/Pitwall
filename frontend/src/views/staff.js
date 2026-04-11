@@ -11,6 +11,7 @@ export default class StaffView {
 		this.driversContent = document.getElementById('staff-content-drivers');
 		this.workforceContent = document.getElementById('staff-content-workforce');
 		this.managementContent = document.getElementById('staff-content-management');
+		this.commercialContent = document.getElementById('staff-content-commercial');
 		this.managementContainer = document.getElementById('staff-management-container');
 		this.workforceSummary = document.getElementById('staff-workforce-summary');
 		this.workforceEditor = document.getElementById('staff-workforce-editor');
@@ -18,6 +19,9 @@ export default class StaffView {
 		this.workforceApplyBtn = document.getElementById('staff-workforce-apply-btn');
 		this.workforcePayroll = document.getElementById('staff-workforce-payroll');
 		this.workforceTableBody = document.getElementById('staff-workforce-table-body');
+		this.commercialSummary = document.getElementById('staff-commercial-summary');
+		this.commercialPayroll = document.getElementById('staff-commercial-payroll');
+		this.commercialTableBody = document.getElementById('staff-commercial-table-body');
 		this.onSelectDriver = null;
 		this.onReplaceDriver = null;
 		this.onReplaceCommercialManager = null;
@@ -68,14 +72,22 @@ export default class StaffView {
 					if (this.driversContent) this.driversContent.style.display = 'none';
 					if (this.workforceContent) this.workforceContent.style.display = 'block';
 					if (this.managementContent) this.managementContent.style.display = 'none';
+					if (this.commercialContent) this.commercialContent.style.display = 'none';
+				} else if (type === 'commercial') {
+					if (this.driversContent) this.driversContent.style.display = 'none';
+					if (this.workforceContent) this.workforceContent.style.display = 'none';
+					if (this.managementContent) this.managementContent.style.display = 'none';
+					if (this.commercialContent) this.commercialContent.style.display = 'block';
 				} else if (type === 'management') {
 					if (this.driversContent) this.driversContent.style.display = 'none';
 					if (this.workforceContent) this.workforceContent.style.display = 'none';
 					if (this.managementContent) this.managementContent.style.display = 'block';
+					if (this.commercialContent) this.commercialContent.style.display = 'none';
 				} else {
 					if (this.driversContent) this.driversContent.style.display = 'block';
 					if (this.workforceContent) this.workforceContent.style.display = 'none';
 					if (this.managementContent) this.managementContent.style.display = 'none';
+					if (this.commercialContent) this.commercialContent.style.display = 'none';
 				}
 			});
 		});
@@ -154,6 +166,30 @@ export default class StaffView {
 			`;
 			this.workforceTableBody.appendChild(row);
 		});
+	}
+
+	renderCommercial(data) {
+		if (!this.commercialTableBody || !this.commercialSummary) return;
+		const teamName = data?.team_name || 'Your team';
+		const staffCount = Number(data?.player_commercial_staff) || 0;
+		const annualWage = Number(data?.commercial_staff_annual_avg_wage) || 0;
+		const racePayroll = Number(data?.projected_commercial_staff_race_cost) || 0;
+		const annualPayroll = Number(data?.projected_commercial_staff_annual_cost) || 0;
+		const racesInSeason = Number(data?.races_in_season) || 0;
+
+		this.commercialSummary.textContent = `${teamName} commercial staff: ${staffCount.toLocaleString()} staff`;
+		if (this.commercialPayroll) {
+			this.commercialPayroll.textContent = `Projected payroll: $${racePayroll.toLocaleString()} per race (${racesInSeason} races), $${annualPayroll.toLocaleString()} per year`;
+		}
+		this.commercialTableBody.innerHTML = `
+			<tr>
+				<td>Average</td>
+				<td>${staffCount.toLocaleString()}</td>
+				<td>$${annualWage.toLocaleString()}</td>
+				<td>$${annualPayroll.toLocaleString()}</td>
+				<td>$${racePayroll.toLocaleString()}</td>
+			</tr>
+		`;
 	}
 
 	renderManagement(data) {
@@ -326,6 +362,7 @@ export default class StaffView {
 		}
 
 		this.renderWorkforce(data);
+		this.renderCommercial(data);
 		this.renderManagement(data);
 	}
 }

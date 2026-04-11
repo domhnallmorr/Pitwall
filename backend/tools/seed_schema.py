@@ -41,6 +41,7 @@ def create_schema(conn):
             facilities INTEGER DEFAULT 0,
             car_speed INTEGER DEFAULT 50,
             workforce INTEGER DEFAULT 0,
+            commercial_staff INTEGER DEFAULT 0,
             title_sponsor_name TEXT,
             title_sponsor_yearly INTEGER DEFAULT 0,
             title_sponsor_contract_length INTEGER DEFAULT 0,
@@ -223,6 +224,8 @@ def create_schema(conn):
         c.execute("ALTER TABLE teams ADD COLUMN car_speed INTEGER DEFAULT 50")
     if "workforce" not in team_columns:
         c.execute("ALTER TABLE teams ADD COLUMN workforce INTEGER DEFAULT 0")
+    if "commercial_staff" not in team_columns:
+        c.execute("ALTER TABLE teams ADD COLUMN commercial_staff INTEGER DEFAULT 0")
     if "title_sponsor_name" not in team_columns:
         c.execute("ALTER TABLE teams ADD COLUMN title_sponsor_name TEXT")
     if "title_sponsor_yearly" not in team_columns:

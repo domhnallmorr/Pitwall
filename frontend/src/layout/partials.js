@@ -45,6 +45,7 @@ function renderFinanceOverviewSections() {
 			{ label: 'Driver Payroll', id: 'finance-driver-wages-total', defaultValue: '$0' },
 			{ label: 'Management Salaries', id: 'finance-management-salary-total', defaultValue: '$0' },
 			{ label: 'Workforce', id: 'finance-workforce-total', defaultValue: '$0' },
+			{ label: 'Commercial Staff', id: 'finance-commercial-staff-total', defaultValue: '$0' },
 			{ label: 'Factory Overhead', id: 'finance-factory-overhead-total', defaultValue: '$0' },
 			{ label: 'Engine Supplier', id: 'finance-engine-supplier-total', defaultValue: '$0' },
 			{ label: 'Tyre Supplier', id: 'finance-tyre-supplier-total', defaultValue: '$0' },
