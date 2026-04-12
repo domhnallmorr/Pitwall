@@ -52,6 +52,10 @@ DRIVER_SPEEDS = {
     "James Wentworth": 65,
     "Niklas Klint": 50,
     "Caio de Moura": 64,
+    "Caspar Keller": 59,
+    "Giovanni Palermo": 57,
+    "Tobias Ginter": 66,
+    "Giacomo Bellini": 62,
 }
 
 DRIVER_RACE_STARTS = {
@@ -108,6 +112,10 @@ DRIVER_RACE_STARTS = {
     "James Wentworth": 0,
     "Niklas Klint": 0,
     "Caio de Moura": 0,
+    "Caspar Keller": 0,
+    "Giovanni Palermo": 0,
+    "Tobias Ginter": 0,
+    "Giacomo Bellini": 0,
 }
 
 DRIVER_WINS = {
@@ -164,6 +172,10 @@ DRIVER_WINS = {
     "James Wentworth": 0,
     "Niklas Klint": 0,
     "Caio de Moura": 0,
+    "Caspar Keller": 0,
+    "Giovanni Palermo": 0,
+    "Tobias Ginter": 0,
+    "Giacomo Bellini": 0,
 }
 
 DRIVER_PODIUMS = {
@@ -270,6 +282,10 @@ DRIVER_CONTRACT_LENGTHS = {
     "James Wentworth": 0,
     "Niklas Klint": 0,
     "Caio de Moura": 0,
+    "Caspar Keller": 0,
+    "Giovanni Palermo": 0,
+    "Tobias Ginter": 0,
+    "Giacomo Bellini": 0,
 }
 
 TEAM_SPEEDS = {
@@ -612,6 +628,10 @@ FUTURE_DRIVERS_DATA = [
     (2002, "James Wentworth", 24, "United Kingdom", 0, 0),
     (2002, "Niklas Klint", 24, "Denmark", 0, 0),
     (2002, "Caio de Moura", 29, "Brazil", 0, 0),
+    (2003, "Caspar Keller", 20, "Austria", 0, 0),
+    (2003, "Giovanni Palermo", 24, "Italy", 0, 0),
+    (2003, "Tobias Ginter", 21, "Germany", 0, 0),
+    (2003, "Giacomo Bellini", 22, "Italy", 0, 0),
 ]
 
 CALENDAR_EVENTS_BASE = [
@@ -699,6 +719,10 @@ DRIVERS_DATA = [
     (2002, "James Wentworth", 24, "United Kingdom", 0, 0),
     (2002, "Niklas Klint", 24, "Denmark", 0, 0),
     (2002, "Caio de Moura", 29, "Brazil", 0, 0),
+    (2003, "Caspar Keller", 20, "Austria", 0, 0),
+    (2003, "Giovanni Palermo", 24, "Italy", 0, 0),
+    (2003, "Tobias Ginter", 21, "Germany", 0, 0),
+    (2003, "Giacomo Bellini", 22, "Italy", 0, 0),
 ]
 
 TEAMS_DATA = [

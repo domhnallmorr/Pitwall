@@ -210,3 +210,40 @@ def test_load_roster_includes_2002_future_drivers_with_supported_fields(mock_get
     assert all(driver.pay_driver is False for driver in [rupert, zoltan, adriano, james, niklas, caio])
     assert all(driver.race_starts == 0 for driver in [rupert, zoltan, adriano, james, niklas, caio])
     assert all(driver.wins == 0 for driver in [rupert, zoltan, adriano, james, niklas, caio])
+
+
+@patch("app.core.roster.get_connection")
+def test_load_roster_includes_2003_future_drivers_with_supported_fields(mock_get_conn):
+    mock_get_conn.return_value = create_seeded_db()
+
+    _, drivers, year, _, _ = load_roster(year=2003)
+
+    assert year == 2003
+    by_name = {driver.name: driver for driver in drivers}
+
+    caspar = by_name["Caspar Keller"]
+    giovanni = by_name["Giovanni Palermo"]
+    tobias = by_name["Tobias Ginter"]
+    giacomo = by_name["Giacomo Bellini"]
+
+    assert caspar.age == 20
+    assert caspar.country == "Austria"
+    assert caspar.speed == 59
+
+    assert giovanni.age == 24
+    assert giovanni.country == "Italy"
+    assert giovanni.speed == 57
+
+    assert tobias.age == 21
+    assert tobias.country == "Germany"
+    assert tobias.speed == 66
+
+    assert giacomo.age == 22
+    assert giacomo.country == "Italy"
+    assert giacomo.speed == 62
+
+    assert all(driver.contract_length == 0 for driver in [caspar, giovanni, tobias, giacomo])
+    assert all(driver.wage == 0 for driver in [caspar, giovanni, tobias, giacomo])
+    assert all(driver.pay_driver is False for driver in [caspar, giovanni, tobias, giacomo])
+    assert all(driver.race_starts == 0 for driver in [caspar, giovanni, tobias, giacomo])
+    assert all(driver.wins == 0 for driver in [caspar, giovanni, tobias, giacomo])
