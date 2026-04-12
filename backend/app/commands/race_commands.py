@@ -9,6 +9,7 @@ from app.core.facilities_upgrades import FacilitiesUpgradeManager
 from app.core.fuel_supplier_costs import FuelSupplierCostManager
 from app.core.management_salaries import ManagementSalaryManager
 from app.core.player_engine_negotiations import PlayerEngineNegotiationManager
+from app.core.player_title_sponsor_negotiations import PlayerTitleSponsorNegotiationManager
 from app.core.prize_money import PrizeMoneyManager
 from app.core.sponsorships import SponsorshipManager
 from app.core.transport import TransportManager
@@ -99,6 +100,7 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
         crash_damage_charges = CrashDamageManager().charge_for_race(state, race_result, current_event)
         facilities_upgrade_charge = FacilitiesUpgradeManager().charge_for_event(state, current_event)
         PlayerEngineNegotiationManager().progress_after_race(state)
+        PlayerTitleSponsorNegotiationManager().progress_after_race(state)
 
         if transport_charge:
             state.add_email(

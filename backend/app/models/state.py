@@ -75,6 +75,7 @@ class GameState(BaseModel):
     planned_ai_tyre_supplier_signings: List[Dict[str, Any]] = Field(default_factory=list)
     announced_ai_tyre_supplier_signings: List[Dict[str, Any]] = Field(default_factory=list)
     planned_ai_car_updates: List[Dict[str, Any]] = Field(default_factory=list)
+    player_title_sponsor_negotiation: Dict[str, Any] | None = None
     player_engine_negotiation: Dict[str, Any] | None = None
     player_car_development: PlayerCarDevelopment | None = None
     game_completed: bool = False

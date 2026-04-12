@@ -1,6 +1,7 @@
 from app.core.finance_reporting import build_finance_report
 from app.core.commercial_staff_costs import CommercialStaffCostManager
 from app.core.player_engine_negotiations import PlayerEngineNegotiationManager
+from app.core.player_title_sponsor_negotiations import PlayerTitleSponsorNegotiationManager
 from app.core.sponsorships import SponsorshipManager
 from app.core.transport import COUNTRY_COST_TIER, TransportCosts
 from app.core.workforce_costs import WorkforceCostManager
@@ -16,6 +17,7 @@ def _find_circuit_country(state: GameState, event_name: str) -> str:
 
 def build_finance_payload(state: GameState):
     engine_negotiation_manager = PlayerEngineNegotiationManager()
+    title_sponsor_negotiation_manager = PlayerTitleSponsorNegotiationManager()
     season_transactions = [t for t in state.finance.transactions if t.year == state.year]
     transactions = [t.model_dump() for t in season_transactions]
     report = build_finance_report(state)
@@ -282,6 +284,7 @@ def build_finance_payload(state: GameState):
             "contract_length": int(player_team.title_sponsor_contract_length or 0) if player_team else 0,
             "pending_replacement": sponsor_pending_replacement,
         },
+        "title_sponsor_negotiation": title_sponsor_negotiation_manager.get_market_payload(state) if player_team else None,
         "other_sponsorship": {
             "annual_value": other_sponsorship_yearly,
             "installment": other_sponsorship_installment,

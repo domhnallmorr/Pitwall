@@ -8,6 +8,7 @@ from app.core.management_transfers import (
     TyreSupplierTransferManager,
 )
 from app.core.player_engine_negotiations import PlayerEngineNegotiationManager
+from app.core.player_title_sponsor_negotiations import PlayerTitleSponsorNegotiationManager
 from app.core.player_driver_negotiations import PlayerDriverNegotiationManager
 from app.core.transfers import TransferManager
 from app.models.state import GameState
@@ -294,6 +295,70 @@ def handle_get_title_sponsor_replacement_candidates(
     except Exception as e:
         logger.error(f"Error loading title sponsor replacement candidates: {e}")
         return {"status": "error", "message": str(e)}
+
+
+def handle_get_title_sponsor_negotiation_market(
+    state: GameState,
+    logger: logging.Logger,
+):
+    try:
+        payload = PlayerTitleSponsorNegotiationManager().get_market_payload(state)
+        return {"type": "title_sponsor_negotiation_market", "status": "success", "data": payload}
+    except ValueError as ve:
+        return {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error loading title sponsor negotiation market: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def handle_start_title_sponsor_negotiation(
+    state: GameState,
+    logger: logging.Logger,
+    sponsor_id: int | None,
+):
+    try:
+        if sponsor_id is None:
+            return state, {"status": "error", "message": "Title sponsor id is required"}
+        manager = PlayerTitleSponsorNegotiationManager()
+        manager.start_negotiation(state, int(sponsor_id))
+        return state, {"type": "title_sponsor_negotiation_updated", "status": "success", "data": manager.get_market_payload(state)}
+    except ValueError as ve:
+        return state, {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error starting title sponsor negotiation: {e}")
+        return state, {"status": "error", "message": str(e)}
+
+
+def handle_update_title_sponsor_negotiation_staff(
+    state: GameState,
+    logger: logging.Logger,
+    assigned_staff: int | None,
+):
+    try:
+        if assigned_staff is None:
+            return state, {"status": "error", "message": "Assigned staff is required"}
+        manager = PlayerTitleSponsorNegotiationManager()
+        manager.update_assigned_staff(state, int(assigned_staff))
+        return state, {"type": "title_sponsor_negotiation_updated", "status": "success", "data": manager.get_market_payload(state)}
+    except ValueError as ve:
+        return state, {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error updating title sponsor negotiation staff: {e}")
+        return state, {"status": "error", "message": str(e)}
+
+
+def handle_sign_title_sponsor_negotiated_deal(
+    state: GameState,
+    logger: logging.Logger,
+):
+    try:
+        signing = PlayerTitleSponsorNegotiationManager().sign_deal(state)
+        return state, {"type": "title_sponsor_negotiation_signed", "status": "success", "data": signing}
+    except ValueError as ve:
+        return state, {"status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error signing negotiated title sponsor deal: {e}")
+        return state, {"status": "error", "message": str(e)}
 
 
 def handle_replace_tyre_supplier(

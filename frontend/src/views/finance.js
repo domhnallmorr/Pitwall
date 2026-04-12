@@ -83,24 +83,45 @@ export default class FinanceView {
 		this.fuelSupplierLogoWrap = document.getElementById('finance-fuel-supplier-logo-wrap');
 		this.trackPlBody = document.getElementById('finance-track-pl-body');
 		this.tbody = document.getElementById('finance-transactions-body');
+		this.titleSponsorNegotiationModal = document.getElementById('finance-title-sponsor-negotiation-modal');
+		this.titleSponsorNegotiationCloseBtn = document.getElementById('finance-title-sponsor-negotiation-close-btn');
+		this.titleSponsorNegotiationSponsorsEl = document.getElementById('finance-title-sponsor-negotiation-sponsors');
+		this.titleSponsorNegotiationDetailEl = document.getElementById('finance-title-sponsor-negotiation-detail');
 		this.engineNegotiationModal = document.getElementById('finance-engine-negotiation-modal');
 		this.engineNegotiationCloseBtn = document.getElementById('finance-engine-negotiation-close-btn');
 		this.engineNegotiationSuppliersEl = document.getElementById('finance-engine-negotiation-suppliers');
 		this.engineNegotiationDetailEl = document.getElementById('finance-engine-negotiation-detail');
 		this.engineNegotiationData = null;
+		this.titleSponsorNegotiationData = null;
 		this.onReplaceTitleSponsor = null;
 		this.onReplaceEngineSupplier = null;
 		this.onReplaceTyreSupplier = null;
 		this.onStartEngineNegotiation = null;
 		this.onUpdateEngineNegotiationStaff = null;
 		this.onSignEngineNegotiatedDeal = null;
+		this.onStartTitleSponsorNegotiation = null;
+		this.onUpdateTitleSponsorNegotiationStaff = null;
+		this.onSignTitleSponsorNegotiatedDeal = null;
 		this.bindTabs();
 		this.bindSponsorActions();
+		this.bindTitleSponsorNegotiationModal();
 		this.bindEngineNegotiationModal();
 	}
 
 	setReplaceTitleSponsorHandler(handler) {
 		this.onReplaceTitleSponsor = handler;
+	}
+
+	setStartTitleSponsorNegotiationHandler(handler) {
+		this.onStartTitleSponsorNegotiation = handler;
+	}
+
+	setUpdateTitleSponsorNegotiationStaffHandler(handler) {
+		this.onUpdateTitleSponsorNegotiationStaff = handler;
+	}
+
+	setSignTitleSponsorNegotiatedDealHandler(handler) {
+		this.onSignTitleSponsorNegotiatedDeal = handler;
 	}
 
 	setReplaceTyreSupplierHandler(handler) {
@@ -185,8 +206,7 @@ export default class FinanceView {
 			this.sponsorReplaceBtn.addEventListener('click', () => {
 				if (!this.onReplaceTitleSponsor) return;
 				const sponsorName = this.sponsorReplaceBtn.getAttribute('data-sponsor-name');
-				if (!sponsorName) return;
-				this.onReplaceTitleSponsor(sponsorName);
+				this.onReplaceTitleSponsor(sponsorName || null);
 			});
 		}
 		if (this.engineSupplierReplaceBtn) {
@@ -202,6 +222,41 @@ export default class FinanceView {
 				const supplierName = this.tyreSupplierReplaceBtn.getAttribute('data-supplier-name');
 				if (!supplierName) return;
 				this.onReplaceTyreSupplier(supplierName);
+			});
+		}
+	}
+
+	bindTitleSponsorNegotiationModal() {
+		if (this.titleSponsorNegotiationCloseBtn) {
+			this.titleSponsorNegotiationCloseBtn.addEventListener('click', () => this.hideTitleSponsorNegotiationModal());
+		}
+		if (this.titleSponsorNegotiationModal) {
+			this.titleSponsorNegotiationModal.addEventListener('click', (event) => {
+				if (event.target === this.titleSponsorNegotiationModal) {
+					this.hideTitleSponsorNegotiationModal();
+				}
+			});
+		}
+		if (this.titleSponsorNegotiationSponsorsEl) {
+			this.titleSponsorNegotiationSponsorsEl.addEventListener('click', (event) => {
+				const button = event.target.closest('[data-title-sponsor-id]');
+				if (!button || !this.onStartTitleSponsorNegotiation) return;
+				this.onStartTitleSponsorNegotiation(Number(button.getAttribute('data-title-sponsor-id')));
+			});
+		}
+		if (this.titleSponsorNegotiationDetailEl) {
+			this.titleSponsorNegotiationDetailEl.addEventListener('click', (event) => {
+				const signButton = event.target.closest('#finance-title-sponsor-negotiation-sign-btn');
+				if (signButton && this.onSignTitleSponsorNegotiatedDeal) {
+					this.onSignTitleSponsorNegotiatedDeal();
+					return;
+				}
+				const applyButton = event.target.closest('#finance-title-sponsor-negotiation-apply-staff');
+				if (applyButton && this.onUpdateTitleSponsorNegotiationStaff) {
+					const input = document.getElementById('finance-title-sponsor-negotiation-staff');
+					if (!input) return;
+					this.onUpdateTitleSponsorNegotiationStaff(Number(input.value || 0));
+				}
 			});
 		}
 	}
@@ -285,15 +340,16 @@ export default class FinanceView {
 
 	renderCommercial(data) {
 		const sponsor = data.sponsor || {};
+		const titleSponsorNegotiation = data.title_sponsor_negotiation || this.titleSponsorNegotiationData;
 		const sponsorName = sponsor.name || 'Unassigned';
 		const sponsorContractLength = sponsor.contract_length || 0;
 		const sponsorPendingReplacement = Boolean(sponsor.pending_replacement);
 
 		if (this.sponsorNameEl) this.sponsorNameEl.textContent = sponsorName;
 		if (this.sponsorReplaceBtn) {
-			const canReplace = Boolean(sponsor.name) && sponsorContractLength < 2 && !sponsorPendingReplacement;
-			this.sponsorReplaceBtn.disabled = !canReplace;
-			if (canReplace) {
+			const canNegotiate = Boolean(sponsor.name) && sponsorContractLength < 2 && !sponsorPendingReplacement && !titleSponsorNegotiation?.blocked_reason;
+			this.sponsorReplaceBtn.disabled = !canNegotiate;
+			if (canNegotiate) {
 				this.sponsorReplaceBtn.setAttribute('data-sponsor-name', sponsor.name);
 			} else {
 				this.sponsorReplaceBtn.removeAttribute('data-sponsor-name');
@@ -438,6 +494,7 @@ export default class FinanceView {
 
 	render(data) {
 		this.engineNegotiationData = data.engine_negotiation || null;
+		this.titleSponsorNegotiationData = data.title_sponsor_negotiation || null;
 		const summary = data.summary || {};
 		const overview = data.overview || {};
 		this.renderOverview(overview, summary, {
@@ -451,6 +508,98 @@ export default class FinanceView {
 		this.renderCommercial(data);
 		this.renderSuppliers(data);
 		this.renderLedger(data);
+	}
+
+	hideTitleSponsorNegotiationModal() {
+		if (this.titleSponsorNegotiationModal) {
+			this.titleSponsorNegotiationModal.style.display = 'none';
+		}
+	}
+
+	showTitleSponsorNegotiationModal(data) {
+		this.titleSponsorNegotiationData = data;
+		if (!this.titleSponsorNegotiationModal) return;
+		this.renderTitleSponsorNegotiationModal(data);
+		this.titleSponsorNegotiationModal.style.display = 'flex';
+	}
+
+	renderTitleSponsorNegotiationModal(data = {}) {
+		if (this.titleSponsorNegotiationSponsorsEl) {
+			const sponsors = Array.isArray(data.sponsors) ? data.sponsors : [];
+			this.titleSponsorNegotiationSponsorsEl.innerHTML = sponsors.length
+				? sponsors.map((sponsor) => `
+					<div class="finance-engine-supplier-row">
+						<div>
+							<div class="finance-section-title">${sponsor.name}</div>
+							<div class="finance-balance-label">Wealth ${sponsor.wealth}</div>
+						</div>
+						<button class="btn-secondary" data-title-sponsor-id="${sponsor.id}" ${sponsor.targetable ? '' : 'disabled'}>
+							Approach
+						</button>
+					</div>
+				`).join('')
+				: '<p class="finance-engine-negotiation-empty">No sponsors available.</p>';
+		}
+
+		if (!this.titleSponsorNegotiationDetailEl) return;
+		if (data.blocked_reason) {
+			this.titleSponsorNegotiationDetailEl.innerHTML = `
+				<div class="finance-engine-negotiation-empty">
+					<h3>Negotiations Unavailable</h3>
+					<p>${data.blocked_reason}</p>
+				</div>
+			`;
+			return;
+		}
+		const active = data.active_negotiation;
+		if (!active) {
+			this.titleSponsorNegotiationDetailEl.innerHTML = `
+				<div class="finance-engine-negotiation-empty">
+					<h3>No Active Negotiation</h3>
+					<p>Select a sponsor on the left to begin talks. Commercial staff and your commercial manager will determine how quickly the deal progresses.</p>
+					<div class="finance-balance-label">Commercial Manager</div>
+					<div>${data.commercial_manager?.name || 'Unassigned'} · Skill ${data.commercial_manager?.skill || 0}</div>
+					<div class="finance-balance-label" style="margin-top:12px;">Commercial Staff Available</div>
+					<div>${data.commercial_staff_total || 0}</div>
+				</div>
+			`;
+			return;
+		}
+		const boxes = Array.from({ length: active.total_boxes }, (_, index) => `
+			<div class="finance-engine-progress-box ${(index + 1) <= active.progress_boxes ? 'filled' : ''}">
+				<span>${index + 1}</span>
+			</div>
+		`).join('');
+		this.titleSponsorNegotiationDetailEl.innerHTML = `
+			<div class="finance-engine-negotiation-card">
+				<div class="finance-balance-label">Active Negotiation</div>
+				<h3>${active.sponsor_name}</h3>
+				<div class="finance-engine-progress-track">${boxes}</div>
+				<div class="finance-balance-label">Progress: ${active.progress_boxes}/${active.total_boxes} boxes</div>
+				<div class="finance-engine-negotiation-meta">
+					<div>
+						<span class="finance-balance-label">Annual Value</span>
+						<div>$${Math.abs(active.annual_value || 0).toLocaleString()}</div>
+					</div>
+					<div>
+						<span class="finance-balance-label">Contract Length</span>
+						<div>${active.contract_length} year(s)</div>
+					</div>
+				</div>
+				<div class="finance-engine-negotiation-staff">
+					<label for="finance-title-sponsor-negotiation-staff">Commercial Staff Assigned</label>
+					<div class="finance-engine-negotiation-staff-row">
+						<input id="finance-title-sponsor-negotiation-staff" type="number" min="0" max="${data.commercial_staff_total || 0}" value="${active.assigned_staff}">
+						<button id="finance-title-sponsor-negotiation-apply-staff" class="btn-secondary">Update Staff</button>
+					</div>
+				</div>
+				<div class="finance-engine-negotiation-tiers">
+					<button id="finance-title-sponsor-negotiation-sign-btn" class="btn-primary" ${active.ready_to_sign ? '' : 'disabled'}>
+						Sign Deal ($${Math.abs(active.annual_value || 0).toLocaleString()})
+					</button>
+				</div>
+			</div>
+		`;
 	}
 
 	hideEngineNegotiationModal() {

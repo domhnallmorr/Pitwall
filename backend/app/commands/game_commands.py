@@ -27,6 +27,10 @@ from app.commands.race_commands import (
     handle_simulate_race,
 )
 from app.commands.staff_commands import (
+    handle_get_title_sponsor_negotiation_market,
+    handle_sign_title_sponsor_negotiated_deal,
+    handle_start_title_sponsor_negotiation,
+    handle_update_title_sponsor_negotiation_staff,
     handle_offer_driver,
     handle_get_engine_negotiation_market,
     handle_get_technical_director_replacement_candidates,

@@ -121,7 +121,7 @@ function renderFinanceCommercialSections() {
 			nameId: 'finance-sponsor-name',
 			nameDefault: 'Unassigned',
 			actionButtonId: 'finance-sponsor-replace-btn',
-			actionButtonLabel: 'Replace',
+			actionButtonLabel: 'Negotiate',
 			rows: [
 				{ label: 'Annual Value', id: 'finance-sponsor-annual', defaultValue: '$0' },
 				{ label: 'Per Race', id: 'finance-sponsor-installment', defaultValue: '$0' },

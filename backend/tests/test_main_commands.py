@@ -617,6 +617,19 @@ def test_replace_title_sponsor_respects_contract_rule_and_signs_replacement():
     assert "2 or more years" in locked["message"]
 
 
+def test_start_title_sponsor_negotiation_returns_market_payload_with_active_negotiation():
+    state = create_state()
+    state.teams[0].title_sponsor_contract_length = 1
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "start_title_sponsor_negotiation", "sponsor_id": 32})
+
+    assert result["status"] == "success"
+    assert result["type"] == "title_sponsor_negotiation_updated"
+    assert result["data"]["active_negotiation"]["sponsor_id"] == 32
+    assert result["data"]["active_negotiation"]["sponsor_name"] == "Bright Shot"
+
+
 def test_replace_engine_supplier_respects_contract_rule_and_signs_replacement():
     state = create_state()
     app_main.CURRENT_STATE = state

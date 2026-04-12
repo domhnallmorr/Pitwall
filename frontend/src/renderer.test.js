@@ -23,6 +23,10 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 		getManagerReplacementCandidates: vi.fn(),
 		getTechnicalDirectorReplacementCandidates: vi.fn(),
 		getTitleSponsorReplacementCandidates: vi.fn(),
+		getTitleSponsorNegotiationMarket: vi.fn(),
+		startTitleSponsorNegotiation: vi.fn(),
+		updateTitleSponsorNegotiationStaff: vi.fn(),
+		signTitleSponsorNegotiatedDeal: vi.fn(),
 		getEngineSupplierReplacementCandidates: vi.fn(),
 		getTyreSupplierReplacementCandidates: vi.fn(),
 		getEngineNegotiationMarket: vi.fn(),
@@ -91,7 +95,7 @@ vi.mock('./views/staff.js', () => ({ default: class { setReplaceDriverHandler() 
 vi.mock('./views/driver.js', () => ({ default: class { constructor() { this.currentDriverName = null; } render(...args) { viewFns.driverRender(...args); } } }));
 vi.mock('./views/driver_market.js', () => ({ default: class { setBackHandler() {} setSignHandler() {} render(...args) { viewFns.driverMarketRender(...args); } showOfferResult(...args) { viewFns.driverMarketOfferResult(...args); return true; } } }));
 vi.mock('./views/car.js', () => ({ default: class { setStartDevelopmentHandler() {} setRepairWearHandler() {} render(...args) { viewFns.carRender(...args); } } }));
-vi.mock('./views/finance.js', () => ({ default: class { setReplaceTitleSponsorHandler() {} setReplaceEngineSupplierHandler() {} setReplaceTyreSupplierHandler() {} setStartEngineNegotiationHandler() {} setUpdateEngineNegotiationStaffHandler() {} setSignEngineNegotiatedDealHandler() {} showEngineNegotiationModal() {} hideEngineNegotiationModal() {} render(...args) { viewFns.financeRender(...args); } } }));
+vi.mock('./views/finance.js', () => ({ default: class { setReplaceTitleSponsorHandler() {} setStartTitleSponsorNegotiationHandler() {} setUpdateTitleSponsorNegotiationStaffHandler() {} setSignTitleSponsorNegotiatedDealHandler() {} setReplaceEngineSupplierHandler() {} setReplaceTyreSupplierHandler() {} setStartEngineNegotiationHandler() {} setUpdateEngineNegotiationStaffHandler() {} setSignEngineNegotiatedDealHandler() {} showTitleSponsorNegotiationModal() {} hideTitleSponsorNegotiationModal() {} showEngineNegotiationModal() {} hideEngineNegotiationModal() {} render(...args) { viewFns.financeRender(...args); } } }));
 vi.mock('./views/facilities.js', () => ({
 	default: class {
 		setPreviewHandler() {}

@@ -136,8 +136,8 @@ class TitleSponsorTransferManager:
                 continue
 
             team.title_sponsor_name = sponsor.name
-            team.title_sponsor_yearly = sponsor.wealth
-            team.title_sponsor_contract_length = 2
+            team.title_sponsor_yearly = int(signing.get("annual_value") or sponsor.wealth)
+            team.title_sponsor_contract_length = int(signing.get("contract_length") or 2)
             applied_signings.append(
                 {
                     "team_id": team.id,
@@ -198,6 +198,8 @@ class TitleSponsorTransferManager:
             "announce_year": state.year,
             "status": "announced",
             "origin": "player",
+            "annual_value": signed_sponsor.wealth,
+            "contract_length": 2,
         }
         announced.append(signing)
         state.announced_ai_title_sponsor_signings = announced

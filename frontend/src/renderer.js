@@ -132,7 +132,10 @@ function init() {
 	carView.setStartDevelopmentHandler((developmentType) => API.startCarDevelopment(developmentType));
 	carView.setRepairWearHandler((wearPoints) => API.repairCarWear(wearPoints));
 	financeView = new FinanceView();
-	financeView.setReplaceTitleSponsorHandler((sponsorName) => API.getTitleSponsorReplacementCandidates(sponsorName));
+	financeView.setReplaceTitleSponsorHandler(() => API.getTitleSponsorNegotiationMarket());
+	financeView.setStartTitleSponsorNegotiationHandler((sponsorId) => API.startTitleSponsorNegotiation(sponsorId));
+	financeView.setUpdateTitleSponsorNegotiationStaffHandler((assignedStaff) => API.updateTitleSponsorNegotiationStaff(assignedStaff));
+	financeView.setSignTitleSponsorNegotiatedDealHandler(() => API.signTitleSponsorNegotiatedDeal());
 	financeView.setReplaceEngineSupplierHandler(() => API.getEngineNegotiationMarket());
 	financeView.setStartEngineNegotiationHandler((supplierId) => API.startEngineNegotiation(supplierId));
 	financeView.setUpdateEngineNegotiationStaffHandler((assignedStaff) => API.updateEngineNegotiationStaff(assignedStaff));
@@ -394,6 +397,8 @@ function setupIPC() {
 			} else if (parsed.type === 'title_sponsor_replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
+			} else if (parsed.type === 'title_sponsor_negotiation_market' || parsed.type === 'title_sponsor_negotiation_updated') {
+				financeView.showTitleSponsorNegotiationModal(parsed.data);
 			} else if (parsed.type === 'engine_supplier_replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
@@ -441,6 +446,13 @@ function setupIPC() {
 				API.getGrid(gridView.baseYear + 1);
 				API.getEmails();
 			} else if (parsed.type === 'title_sponsor_replaced') {
+				if (navigation) navigation.showView('finance');
+				API.getFinance();
+				API.getGrid(gridView.getActiveYear());
+				API.getGrid(gridView.baseYear + 1);
+				API.getEmails();
+			} else if (parsed.type === 'title_sponsor_negotiation_signed') {
+				financeView.hideTitleSponsorNegotiationModal();
 				if (navigation) navigation.showView('finance');
 				API.getFinance();
 				API.getGrid(gridView.getActiveYear());
