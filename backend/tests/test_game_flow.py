@@ -114,9 +114,15 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     driver_wage_txs = [t for t in finance.transactions if t.category == TransactionCategory.DRIVER_WAGES]
     assert len(driver_wage_txs) == 2
     assert all(t.amount != 0 for t in driver_wage_txs)
-    workforce_txs = [t for t in finance.transactions if t.category == TransactionCategory.WORKFORCE_WAGES]
-    assert len(workforce_txs) == 1
-    assert workforce_txs[0].amount < 0
+    design_staff_txs = [t for t in finance.transactions if t.category == TransactionCategory.DESIGN_STAFF_WAGES]
+    engineering_staff_txs = [t for t in finance.transactions if t.category == TransactionCategory.ENGINEERING_STAFF_WAGES]
+    mechanics_staff_txs = [t for t in finance.transactions if t.category == TransactionCategory.MECHANICS_STAFF_WAGES]
+    assert len(design_staff_txs) == 1
+    assert len(engineering_staff_txs) == 1
+    assert len(mechanics_staff_txs) == 1
+    assert design_staff_txs[0].amount < 0
+    assert engineering_staff_txs[0].amount < 0
+    assert mechanics_staff_txs[0].amount < 0
     engine_supplier_txs = [t for t in finance.transactions if t.category == TransactionCategory.ENGINE_SUPPLIER]
     assert len(engine_supplier_txs) == 1
     assert engine_supplier_txs[0].amount < 0
@@ -129,7 +135,7 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     assert len(transport_emails) >= 1
     sponsorship_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Sponsorship Payment Received:")]
     assert len(sponsorship_emails) >= 1
-    payroll_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Workforce Payroll Processed:")]
+    payroll_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Operational Staff Payroll Processed:")]
     assert len(payroll_emails) >= 1
     engine_supplier_emails = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Engine Supplier Settlement:")]
     assert len(engine_supplier_emails) >= 1
@@ -146,6 +152,9 @@ def test_simulate_race_pays_prize_money_installment(mock_get_conn, test_db):
     assert 'summary' in finance_response['data']
     assert 'track_profit_loss' in finance_response['data']
     assert finance_response['data']['summary']['transport_total'] > 0
+    assert finance_response['data']['summary']['design_staff_total'] > 0
+    assert finance_response['data']['summary']['engineering_staff_total'] > 0
+    assert finance_response['data']['summary']['mechanics_staff_total'] > 0
     assert finance_response['data']['summary']['workforce_total'] > 0
     assert finance_response['data']['summary']['engine_supplier_total'] < 0
     assert 'tyre_supplier_total' in finance_response['data']['summary']
@@ -186,7 +195,9 @@ def test_simulate_race_posts_expected_finance_categories_and_summary(mock_get_co
     assert TransactionCategory.SPONSORSHIP in categories
     assert TransactionCategory.DRIVER_WAGES in categories
     assert TransactionCategory.MANAGEMENT_SALARIES in categories
-    assert TransactionCategory.WORKFORCE_WAGES in categories
+    assert TransactionCategory.DESIGN_STAFF_WAGES in categories
+    assert TransactionCategory.ENGINEERING_STAFF_WAGES in categories
+    assert TransactionCategory.MECHANICS_STAFF_WAGES in categories
     assert TransactionCategory.COMMERCIAL_STAFF_WAGES in categories
     assert TransactionCategory.FACTORY_OVERHEAD in categories
     assert TransactionCategory.ENGINE_SUPPLIER in categories
@@ -209,6 +220,9 @@ def test_simulate_race_posts_expected_finance_categories_and_summary(mock_get_co
     assert summary['sponsorship_total'] > 0
     assert summary['driver_wage_expense_total'] > 0
     assert summary['management_salary_total'] > 0
+    assert summary['design_staff_total'] > 0
+    assert summary['engineering_staff_total'] > 0
+    assert summary['mechanics_staff_total'] > 0
     assert summary['workforce_total'] > 0
     assert summary['commercial_staff_total'] > 0
     assert summary['factory_overhead_total'] > 0

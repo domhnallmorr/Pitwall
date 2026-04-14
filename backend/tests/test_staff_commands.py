@@ -16,7 +16,6 @@ from app.commands.staff_commands import (
     handle_replace_driver,
     handle_repair_car_wear,
     handle_start_car_development,
-    handle_update_workforce,
 )
 from app.models.calendar import Calendar, Event, EventType
 from app.models.commercial_manager import CommercialManager
@@ -341,18 +340,3 @@ def test_repair_car_wear_validates_edge_cases_and_exceptions():
     assert result["status"] == "error"
     assert logger.error.called
 
-
-def test_update_workforce_validates_edge_cases_and_exceptions():
-    state = create_state()
-    logger = Mock()
-    state.player_team_id = None
-    assert handle_update_workforce(state, logger, workforce=100)["status"] == "error"
-
-    state = create_state()
-    assert handle_update_workforce(state, logger, workforce=None)["status"] == "error"
-    assert handle_update_workforce(state, logger, workforce=-1)["status"] == "error"
-    assert handle_update_workforce(state, logger, workforce=251)["status"] == "error"
-
-    result = handle_update_workforce(state, logger, workforce="oops")
-    assert result["status"] == "error"
-    assert logger.error.called

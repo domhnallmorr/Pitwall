@@ -8,18 +8,19 @@ from app.core.factory_overhead_costs import FactoryOverheadCostManager
 from app.core.facilities_upgrades import FacilitiesUpgradeManager
 from app.core.fuel_supplier_costs import FuelSupplierCostManager
 from app.core.management_salaries import ManagementSalaryManager
+from app.core.operational_staff_costs import OperationalStaffCostManager
 from app.core.player_engine_negotiations import PlayerEngineNegotiationManager
 from app.core.player_title_sponsor_negotiations import PlayerTitleSponsorNegotiationManager
 from app.core.prize_money import PrizeMoneyManager
 from app.core.sponsorships import SponsorshipManager
 from app.core.transport import TransportManager
 from app.core.tyre_supplier_costs import TyreSupplierCostManager
-from app.core.workforce_costs import WorkforceCostManager
 from app.models.email import EmailCategory
 from app.models.finance import TransactionCategory
 from app.models.state import GameState
 from app.models.calendar import EventType
 from app.race.race_manager import RaceManager
+from app.core.engine import GameEngine
 
 
 def _build_race_weekend_payload(state: GameState) -> dict:
@@ -80,6 +81,54 @@ def handle_set_race_strategy(state: GameState, logger: logging.Logger, strategie
         return state, {"status": "error", "message": str(e)}
 
 
+def _evaluate_negative_balance_game_over(state: GameState, event_name: str) -> dict | None:
+    player_team = state.player_team
+    if not player_team:
+        return None
+
+    current_balance = int(getattr(state.finance, "balance", 0) or 0)
+    previous_streak = int(getattr(state, "negative_balance_race_streak", 0) or 0)
+
+    if current_balance < 0:
+        state.negative_balance_race_streak = previous_streak + 1
+        if state.negative_balance_race_streak == 1:
+            state.add_email(
+                sender="Board of Directors",
+                subject=f"Financial Warning: {event_name}",
+                body=(
+                    f"{player_team.name} has completed {event_name} with a negative bank balance.\n\n"
+                    f"Current balance: -${abs(current_balance):,}\n\n"
+                    f"Another grand prix weekend finished in debt will end the game."
+                ),
+                category=EmailCategory.GENERAL,
+            )
+            return None
+
+        state.game_over = True
+        state.game_over_reason = "negative_balance"
+        state.add_email(
+            sender="Board of Directors",
+            subject=f"Game Over: {event_name}",
+            body=(
+                f"{player_team.name} has completed two consecutive grand prix weekends with a negative bank balance.\n\n"
+                f"Current balance: -${abs(current_balance):,}\n\n"
+                f"The career is over due to insolvency."
+            ),
+            category=EmailCategory.SEASON,
+        )
+        return {
+            "reason": "negative_balance",
+            "negative_balance_race_streak": state.negative_balance_race_streak,
+            "balance": current_balance,
+            "summary": GameEngine().get_week_summary(state),
+        }
+
+    if previous_streak > 0:
+        state.negative_balance_race_streak = 0
+
+    return None
+
+
 def handle_simulate_race(state: GameState, logger: logging.Logger):
     try:
         race_result = RaceManager().simulate_race(state)
@@ -90,7 +139,7 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
         sponsorship_charge = SponsorshipManager().apply_for_event(state, current_event)
         DriverWageManager().charge_for_event(state, current_event)
         management_salary_charges = ManagementSalaryManager().charge_for_event(state, current_event)
-        workforce_charge = WorkforceCostManager().charge_for_event(state, current_event)
+        operational_staff_charge = OperationalStaffCostManager().charge_for_event(state, current_event)
         commercial_staff_charge = CommercialStaffCostManager().charge_for_event(state, current_event)
         factory_overhead_charge = FactoryOverheadCostManager().charge_for_event(state, current_event)
         engine_supplier_charge = EngineSupplierCostManager().charge_for_event(state, current_event)
@@ -127,15 +176,19 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
                 ),
                 category=EmailCategory.GENERAL,
             )
-        if workforce_charge:
+        if operational_staff_charge:
+            lines = "\n".join(
+                f"- {charge.label}: {charge.staff_count} staff, ${charge.applied_cost:,} (avg wage ${charge.annual_avg_wage:,})"
+                for charge in operational_staff_charge.charges
+            )
             state.add_email(
                 sender="HR & Operations",
-                subject=f"Workforce Payroll Processed: {workforce_charge.event_name}",
+                subject=f"Operational Staff Payroll Processed: {operational_staff_charge.event_name}",
                 body=(
-                    f"Race workforce payroll has been processed for {workforce_charge.event_name}.\n\n"
-                    f"Staff count: {workforce_charge.workforce}\n"
-                    f"Cost this race: ${workforce_charge.applied_cost:,}\n"
-                    f"(Based on average annual wage ${workforce_charge.annual_avg_wage:,})"
+                    f"Operational staff payroll has been processed for {operational_staff_charge.event_name}.\n\n"
+                    f"{lines}\n\n"
+                    f"Total staff: {operational_staff_charge.total_staff}\n"
+                    f"Total cost this race: ${operational_staff_charge.total_cost:,}"
                 ),
                 category=EmailCategory.GENERAL,
             )
@@ -257,7 +310,9 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
             sponsorship_total = category_total(TransactionCategory.SPONSORSHIP)
             driver_wage_total = category_total(TransactionCategory.DRIVER_WAGES)
             management_salary_total = category_total(TransactionCategory.MANAGEMENT_SALARIES)
-            workforce_total = category_total(TransactionCategory.WORKFORCE_WAGES)
+            design_staff_total = category_total(TransactionCategory.DESIGN_STAFF_WAGES)
+            engineering_staff_total = category_total(TransactionCategory.ENGINEERING_STAFF_WAGES)
+            mechanics_staff_total = category_total(TransactionCategory.MECHANICS_STAFF_WAGES)
             commercial_staff_total = category_total(TransactionCategory.COMMERCIAL_STAFF_WAGES)
             factory_overhead_total = category_total(TransactionCategory.FACTORY_OVERHEAD)
             engine_supplier_total = category_total(TransactionCategory.ENGINE_SUPPLIER)
@@ -275,7 +330,9 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
                     f"Sponsorship: {'+' if sponsorship_total >= 0 else '-'}${abs(sponsorship_total):,}\n"
                     f"Driver wages: {'+' if driver_wage_total >= 0 else '-'}${abs(driver_wage_total):,}\n"
                     f"Management salaries: {'+' if management_salary_total >= 0 else '-'}${abs(management_salary_total):,}\n"
-                    f"Workforce payroll: {'+' if workforce_total >= 0 else '-'}${abs(workforce_total):,}\n"
+                    f"Design staff payroll: {'+' if design_staff_total >= 0 else '-'}${abs(design_staff_total):,}\n"
+                    f"Engineering staff payroll: {'+' if engineering_staff_total >= 0 else '-'}${abs(engineering_staff_total):,}\n"
+                    f"Mechanics payroll: {'+' if mechanics_staff_total >= 0 else '-'}${abs(mechanics_staff_total):,}\n"
                     f"Commercial staff payroll: {'+' if commercial_staff_total >= 0 else '-'}${abs(commercial_staff_total):,}\n"
                     f"Factory overhead: {'+' if factory_overhead_total >= 0 else '-'}${abs(factory_overhead_total):,}\n"
                     f"Engine supplier: {'+' if engine_supplier_total >= 0 else '-'}${abs(engine_supplier_total):,}\n"
@@ -301,6 +358,20 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
             body=f"The {event_name} has concluded.\n\nWinner: {winner['driver_name']} ({winner['team_name']})\n\nYour Team Results:{player_lines}",
             category=EmailCategory.RACE_RESULT,
         )
+        game_over = _evaluate_negative_balance_game_over(state, event_name)
+        if game_over:
+            return state, {
+                "type": "game_over",
+                "status": "success",
+                "data": {
+                    "reason": game_over["reason"],
+                    "message": "The team ended two consecutive grand prix weekends with a negative bank balance.",
+                    "balance": game_over["balance"],
+                    "negative_balance_race_streak": game_over["negative_balance_race_streak"],
+                    "race_result": race_result,
+                    "summary": game_over["summary"],
+                },
+            }
         return state, {"type": "race_result", "status": "success", "data": race_result}
     except Exception as e:
         logger.error(f"Error simulating race: {e}")

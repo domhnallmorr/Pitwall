@@ -40,6 +40,10 @@ const loadBtn = document.getElementById('load-game-btn');
 const titleStartActions = document.getElementById('title-start-actions');
 const teamSelectScreen = document.getElementById('team-select-screen');
 const teamSelectButtons = document.getElementById('team-select-buttons');
+const gameOverModal = document.getElementById('game-over-modal');
+const gameOverModalTitle = document.getElementById('game-over-modal-title');
+const gameOverModalBody = document.getElementById('game-over-modal-body');
+const gameOverModalCloseBtn = document.getElementById('game-over-modal-close-btn');
 
 // Dashboard Info
 const teamNameEl = document.getElementById('team-name');
@@ -59,6 +63,16 @@ let driverMarketView;
 let carView;
 let financeView;
 let facilitiesView;
+
+function showGameOverModal({ title = 'Game Over', body = 'The career has ended.' } = {}) {
+	if (gameOverModalTitle) gameOverModalTitle.textContent = title;
+	if (gameOverModalBody) gameOverModalBody.textContent = body;
+	if (gameOverModal) gameOverModal.style.display = 'flex';
+}
+
+function hideGameOverModal() {
+	if (gameOverModal) gameOverModal.style.display = 'none';
+}
 
 const TEAM_OPTIONS = [
 	'Warrick',
@@ -89,7 +103,6 @@ function init() {
 	staffView.setDriverSelectHandler((name) => openDriverProfile(name, navigation, API));
 	staffView.setReplaceCommercialManagerHandler((managerId) => API.getManagerReplacementCandidates(managerId));
 	staffView.setReplaceTechnicalDirectorHandler((directorId) => API.getTechnicalDirectorReplacementCandidates(directorId));
-	staffView.setUpdateWorkforceHandler((workforce) => API.updateWorkforce(workforce));
 	driverView = new DriverView();
 	driverMarketView = new DriverMarketView();
 	driverMarketView.setBackHandler(() => {
@@ -244,6 +257,10 @@ function setupEventListeners() {
 		});
 	}
 
+	if (gameOverModalCloseBtn) {
+		gameOverModalCloseBtn.addEventListener('click', hideGameOverModal);
+	}
+
 	// Race View Controls
 	const qualifyingBtn = document.getElementById('simulate-qualifying-btn');
 	const simulateBtn = document.getElementById('simulate-race-btn');
@@ -323,6 +340,12 @@ function setupIPC() {
 					emailView,
 					api: API,
 				});
+				if (parsed.data?.game_over) {
+					showGameOverModal({
+						title: 'Game Over',
+						body: 'This career save is already over due to insolvency.',
+					});
+				}
 			} else if (parsed.type === 'game_loaded' && parsed.status === 'success') {
 				handleGameStart({
 					data: parsed.data,
@@ -336,6 +359,12 @@ function setupIPC() {
 					emailView,
 					api: API,
 				});
+				if (parsed.data?.game_over) {
+					showGameOverModal({
+						title: 'Game Over',
+						body: 'This career save is already over due to insolvency.',
+					});
+				}
 			} else if (parsed.type === 'save_status') {
 				if (parsed.data.has_save) {
 					loadBtn.disabled = false;
@@ -369,6 +398,27 @@ function setupIPC() {
 				renderRaceResults(parsed.data);
 				refreshVisibleViews({ gridView, driverView, api: API });
 				API.getFinance();
+			} else if (parsed.type === 'game_over') {
+				if (parsed.data?.race_result) {
+					renderRaceResults(parsed.data.race_result);
+				}
+				if (parsed.data?.summary) {
+					updateDashboard({
+						data: parsed.data.summary,
+						weekEl,
+						nextEventEl,
+						balanceEl,
+						gridView,
+						api: API,
+					});
+				}
+				refreshVisibleViews({ gridView, driverView, api: API });
+				API.getFinance();
+				API.getEmails();
+				showGameOverModal({
+					title: 'Game Over',
+					body: parsed.data?.message || 'The career has ended due to insolvency.',
+				});
 			} else if (parsed.type === 'race_weekend') {
 				renderRaceWeekend(parsed.data);
 			} else if (parsed.type === 'qualifying_result') {
@@ -381,13 +431,6 @@ function setupIPC() {
 				emailView.updateUnreadBadge(parsed.data.unread_count);
 			} else if (parsed.type === 'staff_data') {
 				staffView.render(parsed.data);
-			} else if (parsed.type === 'workforce_updated') {
-				if (parsed.status === 'success') {
-					API.getStaff();
-					API.getFinance();
-					API.getCar();
-					API.getEmails();
-				}
 			} else if (parsed.type === 'replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');

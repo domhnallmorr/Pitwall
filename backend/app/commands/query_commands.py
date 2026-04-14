@@ -1,7 +1,8 @@
 from app.core.standings import StandingsManager
 from app.core.commercial_staff_costs import CommercialStaffCostManager
+from app.core.factory_size import get_factory_limits
+from app.core.operational_staff_costs import OperationalStaffCostManager
 from app.core.player_car_development import PlayerCarDevelopmentManager
-from app.core.workforce_costs import WorkforceCostManager
 from app.core.finance_reporting import build_finance_report
 from app.models.calendar import EventType
 from app.models.state import GameState
@@ -197,11 +198,12 @@ def get_staff_payload(state: GameState) -> dict:
     ]
     team_td = next((td for td in state.technical_directors if td.team_id == player_team.id), None)
     team_cm = next((cm for cm in state.commercial_managers if cm.team_id == player_team.id), None)
-    workforce_manager = WorkforceCostManager()
+    factory_limits = get_factory_limits(getattr(player_team, "factory_size", 1))
+    operational_staff_manager = OperationalStaffCostManager()
     commercial_staff_manager = CommercialStaffCostManager()
     races_in_season = max(1, sum(1 for e in state.calendar.events if e.type == EventType.RACE))
-    projected_race_payroll = workforce_manager.calculate_race_cost(player_team.workforce, races_in_season)
-    projected_annual_payroll = max(0, int(player_team.workforce or 0)) * workforce_manager.annual_avg_wage
+    projected_race_payroll = operational_staff_manager.calculate_total_race_cost(player_team, races_in_season)
+    projected_annual_payroll = operational_staff_manager.calculate_total_annual_cost(player_team)
     projected_commercial_race_payroll = commercial_staff_manager.calculate_race_cost(player_team.commercial_staff, races_in_season)
     projected_commercial_annual_payroll = max(0, int(player_team.commercial_staff or 0)) * commercial_staff_manager.annual_avg_wage
 
@@ -238,16 +240,33 @@ def get_staff_payload(state: GameState) -> dict:
         ),
         "player_workforce": player_team.workforce,
         "player_commercial_staff": player_team.commercial_staff,
-        "workforce_limits": {"min": 0, "max": 250},
-        "annual_avg_wage": workforce_manager.annual_avg_wage,
+        "factory_size": factory_limits["factory_size"],
+        "workforce_limits": {"min": 0, "max": factory_limits["workforce"]},
+        "commercial_staff_limits": {"min": 0, "max": factory_limits["commercial_staff"]},
+        "annual_avg_wage": None,
         "projected_workforce_race_cost": projected_race_payroll,
         "projected_workforce_annual_cost": projected_annual_payroll,
+        "operational_staff": {
+            "design_count": int(getattr(player_team, "design_staff", 0) or 0),
+            "engineering_count": int(getattr(player_team, "engineering_staff", 0) or 0),
+            "mechanics_count": int(getattr(player_team, "mechanics_staff", 0) or 0),
+            "design_annual_avg_wage": operational_staff_manager.design_annual_avg_wage,
+            "engineering_annual_avg_wage": operational_staff_manager.engineering_annual_avg_wage,
+            "mechanics_annual_avg_wage": operational_staff_manager.mechanics_annual_avg_wage,
+        },
         "commercial_staff_annual_avg_wage": commercial_staff_manager.annual_avg_wage,
         "projected_commercial_staff_race_cost": projected_commercial_race_payroll,
         "projected_commercial_staff_annual_cost": projected_commercial_annual_payroll,
         "races_in_season": races_in_season,
         "teams": [
-            {"id": t.id, "name": t.name, "country": t.country, "workforce": t.workforce, "commercial_staff": t.commercial_staff}
+            {
+                "id": t.id,
+                "name": t.name,
+                "country": t.country,
+                "factory_size": getattr(t, "factory_size", 1),
+                "workforce": t.workforce,
+                "commercial_staff": t.commercial_staff,
+            }
             for t in state.teams
         ],
     }
@@ -284,9 +303,15 @@ def get_facilities_payload(state: GameState) -> dict:
     player_team = state.player_team
     if not player_team:
         raise ValueError("No player team assigned")
+    factory_limits = get_factory_limits(getattr(player_team, "factory_size", 1))
     return {
         "team_name": player_team.name,
         "facilities": player_team.facilities,
+        "factory_size": factory_limits["factory_size"],
+        "factory_limits": {
+            "workforce": factory_limits["workforce"],
+            "commercial_staff": factory_limits["commercial_staff"],
+        },
         "upgrade_financing": {
             "active": state.finance.facilities_upgrade_active,
             "total_cost": state.finance.facilities_upgrade_total_cost,
@@ -302,6 +327,7 @@ def get_facilities_payload(state: GameState) -> dict:
                 "id": t.id,
                 "name": t.name,
                 "country": t.country,
+                "factory_size": getattr(t, "factory_size", 1),
                 "facilities": t.facilities,
             }
             for t in state.teams
@@ -313,6 +339,10 @@ def get_car_payload(state: GameState) -> dict:
     engine_power_by_supplier = {e.name: e.power for e in state.engine_suppliers}
     player_project = state.player_car_development
     player_team = state.player_team
+    player_design_staff = 250
+    if player_team:
+        design_staff = getattr(player_team, "design_staff", None)
+        player_design_staff = int(design_staff or 0) if design_staff is not None and int(design_staff or 0) > 0 else int(getattr(player_team, "workforce", 250) or 250)
     player_wear = int(player_team.car_wear) if player_team else 0
     player_mech_fail_probability = min(0.35, max(0.0, player_wear * 0.002))
     return {
@@ -328,7 +358,7 @@ def get_car_payload(state: GameState) -> dict:
             for t in state.teams
         ],
         "development_catalog": PlayerCarDevelopmentManager().get_catalog(
-            workforce=player_team.workforce if player_team else 250
+            workforce=player_design_staff
         ),
         "player_team_name": player_team.name if player_team else None,
         "player_car_speed": player_team.car_speed if player_team else 0,

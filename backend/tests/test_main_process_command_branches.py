@@ -56,7 +56,6 @@ def test_commands_require_game_started_return_error():
     assert app_main.process_command({"type": "start_facilities_upgrade"})["status"] == "error"
     assert app_main.process_command({"type": "start_car_development"})["status"] == "error"
     assert app_main.process_command({"type": "repair_car_wear"})["status"] == "error"
-    assert app_main.process_command({"type": "update_workforce"})["status"] == "error"
 
 
 def test_get_driver_requires_name():
@@ -142,6 +141,8 @@ def test_load_game_success_and_errors():
         year=1998,
         finance=SimpleNamespace(balance=123),
         emails=[fake_email_1, fake_email_2],
+        game_over=False,
+        game_over_reason=None,
         game_completed=False,
         completion_year=None,
     )
@@ -288,7 +289,6 @@ def test_replace_and_team_commands_save_only_on_success():
         ("start_facilities_upgrade", "handle_start_facilities_upgrade", {"status": "success", "type": "facilities_upgrade_started"}),
         ("start_car_development", "handle_start_car_development", {"status": "success", "type": "car_development_started"}),
         ("repair_car_wear", "handle_repair_car_wear", {"status": "success", "type": "car_wear_repaired"}),
-        ("update_workforce", "handle_update_workforce", {"status": "success", "type": "workforce_updated"}),
     ]
 
     for command_type, handler_name, payload in response_cases:

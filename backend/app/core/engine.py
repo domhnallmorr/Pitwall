@@ -42,6 +42,8 @@ class GameEngine:
         Advances the game by one week.
         Returns a summary of what happened.
         """
+        if state.game_over:
+            return self.get_week_summary(state)
         if state.game_completed:
             return self.get_week_summary(state)
 
@@ -110,6 +112,19 @@ class GameEngine:
         button_text = "ADVANCE"
         next_event_display = state.next_event_display
 
+        if state.game_over:
+            return {
+                "week": state.calendar.current_week,
+                "year": state.year,
+                "new_date_display": state.week_display,
+                "next_event_display": "Game Over",
+                "event_active": False,
+                "button_text": "GAME OVER",
+                "balance": state.finance.balance,
+                "game_over": True,
+                "game_over_reason": state.game_over_reason,
+            }
+
         if state.game_completed:
             return {
                 "week": state.calendar.current_week,
@@ -139,7 +154,9 @@ class GameEngine:
             "next_event_display": next_event_display,
             "event_active": event_active,
             "button_text": button_text,
-            "balance": state.finance.balance
+            "balance": state.finance.balance,
+            "game_over": False,
+            "game_over_reason": None,
         }
 
     def handle_event_action(self, state: GameState, action: str, test_kms: int | None = None) -> dict:

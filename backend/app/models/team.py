@@ -5,7 +5,11 @@ class Team(BaseModel):
     id: int
     name: str
     country: str
+    factory_size: int = 1
     car_speed: int = 50
+    design_staff: int = 0
+    engineering_staff: int = 0
+    mechanics_staff: int = 0
     workforce: int = 0
     commercial_staff: int = 0
     title_sponsor_name: str | None = None

@@ -1,11 +1,12 @@
 import random
 
+from app.core.factory_size import get_factory_limits
 from app.core.roster import load_roster
 from app.models.state import GameState
 
 
-AI_WORKFORCE_MIN = 90
-AI_WORKFORCE_MAX = 250
+AI_WORKFORCE_MIN = 60
+AI_WORKFORCE_MAX = 400
 
 
 def update_drivers(state: GameState):
@@ -130,13 +131,56 @@ def update_ai_workforce(
     ai_workforce_max: int = AI_WORKFORCE_MAX,
     random_module=random,
 ) -> list[dict]:
+    def _operational_total(team) -> int:
+        design = int(getattr(team, "design_staff", 0) or 0)
+        engineering = int(getattr(team, "engineering_staff", 0) or 0)
+        mechanics = int(getattr(team, "mechanics_staff", 0) or 0)
+        if design or engineering or mechanics:
+            return max(0, design + engineering + mechanics)
+        return max(0, int(team.workforce if team.workforce is not None else 0))
+
+    def _apply_operational_total(team, new_total: int):
+        old_design = max(0, int(getattr(team, "design_staff", 0) or 0))
+        old_engineering = max(0, int(getattr(team, "engineering_staff", 0) or 0))
+        old_mechanics = max(0, int(getattr(team, "mechanics_staff", 0) or 0))
+        old_total = old_design + old_engineering + old_mechanics
+
+        if old_total <= 0:
+            weights = [0.34, 0.33, 0.33]
+        else:
+            weights = [
+                old_design / old_total,
+                old_engineering / old_total,
+                old_mechanics / old_total,
+            ]
+
+        exact_counts = [new_total * weight for weight in weights]
+        base_counts = [int(value) for value in exact_counts]
+        remainder = new_total - sum(base_counts)
+        ordering = sorted(
+            range(3),
+            key=lambda idx: exact_counts[idx] - base_counts[idx],
+            reverse=True,
+        )
+        for idx in ordering[:remainder]:
+            base_counts[idx] += 1
+
+        team.design_staff = base_counts[0]
+        team.engineering_staff = base_counts[1]
+        team.mechanics_staff = base_counts[2]
+        team.workforce = new_total
+
     updates = []
     for team in state.teams:
         if state.player_team_id is not None and team.id == state.player_team_id:
             continue
 
-        old_workforce = int(team.workforce if team.workforce is not None else ai_workforce_min)
-        bounded_old = min(ai_workforce_max, max(ai_workforce_min, old_workforce))
+        team_capacity = get_factory_limits(getattr(team, "factory_size", 1))["workforce"]
+        bounded_max = min(ai_workforce_max, team_capacity)
+        bounded_min = min(bounded_max, ai_workforce_min)
+
+        old_workforce = _operational_total(team)
+        bounded_old = min(bounded_max, max(bounded_min, old_workforce))
 
         trend = random_module.choices(
             ["increase", "decrease", "flat"],
@@ -150,9 +194,9 @@ def update_ai_workforce(
         elif trend == "decrease":
             delta = -random_module.choice([3, 5, 7, 9, 12])
 
-        new_workforce = min(ai_workforce_max, max(ai_workforce_min, bounded_old + delta))
+        new_workforce = min(bounded_max, max(bounded_min, bounded_old + delta))
         applied_delta = new_workforce - bounded_old
-        team.workforce = new_workforce
+        _apply_operational_total(team, new_workforce)
 
         if applied_delta != 0:
             updates.append(

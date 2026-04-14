@@ -302,18 +302,46 @@ TEAM_SPEEDS = {
     "Marchetti": 35,
 }
 
-TEAM_WORKFORCE = {
-    "Warrick": 190,
-    "Ferano": 165,
-    "Benedetti": 134,
-    "McAlister": 183,
-    "Joyce": 107,
-    "Pascal": 68,
-    "Schweizer": 131,
-    "Swords": 68,
-    "Strathmore": 92,
-    "Tarnwell": 79,
-    "Marchetti": 71,
+TEAM_DESIGN_STAFF = {
+    "Warrick": 63,
+    "Ferano": 68,
+    "Benedetti": 57,
+    "McAlister": 54,
+    "Joyce": 37,
+    "Pascal": 45,
+    "Schweizer": 48,
+    "Swords": 30,
+    "Strathmore": 39,
+    "Tarnwell": 23,
+    "Marchetti": 20,
+}
+
+TEAM_ENGINEERING_STAFF = {
+    "Warrick": 61,
+    "Ferano": 64,
+    "Benedetti": 51,
+    "McAlister": 54,
+    "Joyce": 36,
+    "Pascal": 44,
+    "Schweizer": 50,
+    "Swords": 29,
+    "Strathmore": 40,
+    "Tarnwell": 25,
+    "Marchetti": 23,
+}
+
+TEAM_MECHANICS_STAFF = {
+    "Warrick": 58,
+    "Ferano": 62,
+    "Benedetti": 52,
+    "McAlister": 57,
+    "Joyce": 34,
+    "Pascal": 47,
+    "Schweizer": 48,
+    "Swords": 28,
+    "Strathmore": 39,
+    "Tarnwell": 24,
+    "Marchetti": 24,
 }
 
 TEAM_COMMERCIAL_STAFF = {
@@ -356,6 +384,17 @@ TEAM_FACTORY_OVERHEAD = {
     "Strathmore": 3_200_000,
     "Tarnwell": 1_600_000,
     "Marchetti": 1_600_000,
+}
+
+TEAM_FACTORY_SIZES = {
+    name: {
+        1_600_000: 1,
+        3_200_000: 2,
+        4_800_000: 3,
+        6_400_000: 4,
+        8_000_000: 5,
+    }.get(overhead, 1)
+    for name, overhead in TEAM_FACTORY_OVERHEAD.items()
 }
 
 TEAM_TITLE_SPONSORS = {

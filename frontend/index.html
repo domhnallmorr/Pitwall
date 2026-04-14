@@ -257,7 +257,9 @@
           <div class="tabs">
             <button class="tab-btn staff-tab-btn active" data-type="drivers">Drivers</button>
             <button class="tab-btn staff-tab-btn" data-type="management">Management</button>
-            <button class="tab-btn staff-tab-btn" data-type="workforce">Workforce</button>
+            <button class="tab-btn staff-tab-btn" data-type="design">Design</button>
+            <button class="tab-btn staff-tab-btn" data-type="engineering">Engineering</button>
+            <button class="tab-btn staff-tab-btn" data-type="mechanics">Mechanics</button>
             <button class="tab-btn staff-tab-btn" data-type="commercial">Commercial</button>
           </div>
           <div id="staff-content-drivers">
@@ -265,24 +267,20 @@
               <!-- JS populated: two driver cards -->
             </div>
           </div>
-          <div id="staff-content-workforce" style="display: none;">
-            <div id="staff-workforce-summary" class="staff-workforce-summary"></div>
-            <div id="staff-workforce-editor" class="staff-workforce-editor">
-              <label for="staff-workforce-input">Set workforce</label>
-              <input id="staff-workforce-input" type="number" min="0" max="250" step="1" />
-              <button id="staff-workforce-apply-btn" class="staff-workforce-apply-btn">Update</button>
-            </div>
-            <div id="staff-workforce-payroll" class="staff-workforce-payroll"></div>
+          <div id="staff-content-operational" style="display: none;">
+            <div id="staff-operational-summary" class="staff-workforce-summary"></div>
+            <div id="staff-operational-payroll" class="staff-workforce-payroll"></div>
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Pos</th>
-                  <th>Team</th>
-                  <th>Country</th>
-                  <th>Rating</th>
+                  <th>Level</th>
+                  <th>Staff</th>
+                  <th>Annual Wage</th>
+                  <th>Annual Payroll</th>
+                  <th>Race Payroll</th>
                 </tr>
               </thead>
-              <tbody id="staff-workforce-table-body">
+              <tbody id="staff-operational-table-body">
                 <!-- JS populated -->
               </tbody>
             </table>
@@ -905,6 +903,16 @@
       <div class="modal-actions">
         <button id="test-km-cancel-btn" class="btn-secondary">Back</button>
         <button id="test-km-confirm-btn" class="btn-primary">Confirm Plan</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="game-over-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2 id="game-over-modal-title">Game Over</h2>
+      <p id="game-over-modal-body">The career has ended.</p>
+      <div class="modal-actions">
+        <button id="game-over-modal-close-btn" class="btn-secondary">Close</button>
       </div>
     </div>
   </div>

@@ -8,7 +8,7 @@ from app.models.team import Team
 def create_state() -> GameState:
     return GameState(
         year=1998,
-        teams=[Team(id=1, name="Warrick", country="United Kingdom", car_speed=80, workforce=250)],
+        teams=[Team(id=1, name="Warrick", country="United Kingdom", car_speed=80, workforce=250, design_staff=63, engineering_staff=61, mechanics_staff=58)],
         drivers=[],
         calendar=Calendar(events=[Event(name="Race 1", week=2, type=EventType.RACE)], current_week=1),
         circuits=[],
@@ -50,9 +50,9 @@ def test_process_week_charges_weekly_and_completes_with_speed_gain():
     assert sum(-t.amount for t in txs) == 100_000
 
 
-def test_start_scales_duration_with_low_workforce():
+def test_start_scales_duration_with_low_design_staff():
     state = create_state()
-    state.player_team.workforce = 0
+    state.player_team.design_staff = 0
     manager = PlayerCarDevelopmentManager()
 
     project = manager.start(state, "minor")

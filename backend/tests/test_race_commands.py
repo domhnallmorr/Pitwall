@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 from app.commands.race_commands import (
     _build_race_weekend_payload,
+    _evaluate_negative_balance_game_over,
     handle_get_race_weekend,
     handle_set_race_strategy,
     handle_simulate_qualifying,
@@ -211,7 +212,7 @@ def test_handle_simulate_race_emits_tyre_facilities_management_and_finance_email
                 SimpleNamespace(role_name="Commercial Manager", staff_name="Jace Whitman", applied_cost=60),
             ],
         ),
-        patch("app.commands.race_commands.WorkforceCostManager.charge_for_event", return_value=None),
+        patch("app.commands.race_commands.OperationalStaffCostManager.charge_for_event", return_value=None),
         patch("app.commands.race_commands.FactoryOverheadCostManager.charge_for_event", return_value=factory_overhead_charge),
         patch("app.commands.race_commands.EngineSupplierCostManager.charge_for_event", return_value=None),
         patch("app.commands.race_commands.TyreSupplierCostManager.charge_for_event", return_value=tyre_charge),
@@ -251,3 +252,35 @@ def test_handle_simulate_race_handles_exceptions():
     assert response["status"] == "error"
     assert response["message"] == "race failed"
     logger.error.assert_called_once()
+
+
+def test_negative_balance_rule_warns_on_first_strike():
+    state = create_state()
+    state.finance.balance = -125_000
+
+    result = _evaluate_negative_balance_game_over(state, "Test GP")
+
+    assert result is None
+    assert state.negative_balance_race_streak == 1
+    assert state.game_over is False
+    warning_email = next((email for email in state.emails if email.subject == "Financial Warning: Test GP"), None)
+    assert warning_email is not None
+    assert "Another grand prix weekend finished in debt will end the game." in warning_email.body
+
+
+def test_negative_balance_rule_triggers_game_over_on_second_strike():
+    state = create_state()
+    state.finance.balance = -250_000
+    state.negative_balance_race_streak = 1
+
+    result = _evaluate_negative_balance_game_over(state, "Test GP")
+
+    assert result is not None
+    assert result["reason"] == "negative_balance"
+    assert result["summary"]["game_over"] is True
+    assert state.negative_balance_race_streak == 2
+    assert state.game_over is True
+    assert state.game_over_reason == "negative_balance"
+    game_over_email = next((email for email in state.emails if email.subject == "Game Over: Test GP"), None)
+    assert game_over_email is not None
+    assert "two consecutive grand prix weekends" in game_over_email.body

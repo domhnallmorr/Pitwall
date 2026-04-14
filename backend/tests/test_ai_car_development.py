@@ -10,9 +10,9 @@ def create_state() -> GameState:
     return GameState(
         year=1998,
         teams=[
-            Team(id=1, name="Player Team", country="United Kingdom", car_speed=80, workforce=250, facilities=75),
-            Team(id=2, name="AI Team A", country="Italy", car_speed=60, workforce=250, facilities=75),
-            Team(id=3, name="AI Team B", country="France", car_speed=84, workforce=250, facilities=75),
+            Team(id=1, name="Player Team", country="United Kingdom", car_speed=80, workforce=250, design_staff=63, engineering_staff=61, mechanics_staff=58, facilities=75),
+            Team(id=2, name="AI Team A", country="Italy", car_speed=60, workforce=250, design_staff=57, engineering_staff=51, mechanics_staff=52, facilities=75),
+            Team(id=3, name="AI Team B", country="France", car_speed=84, workforce=250, design_staff=68, engineering_staff=64, mechanics_staff=62, facilities=75),
         ],
         drivers=[],
         calendar=Calendar(
@@ -93,6 +93,8 @@ def test_generate_for_season_delays_low_workforce_updates(mock_choices, mock_ran
     team_b = next(t for t in state.teams if t.id == 3)
     team_a.workforce = 250
     team_b.workforce = 0
+    team_b.design_staff = 0
+    team_b.engineering_staff = 1
 
     planned = AICarDevelopmentManager().generate_for_season(state)
     by_team = {p["team_id"]: p for p in planned}
@@ -207,6 +209,8 @@ def test_apply_for_week_compresses_low_resource_team_speed_growth():
     state.calendar.current_week = 6
     low_resource_team = next(t for t in state.teams if t.id == 2)
     low_resource_team.workforce = 90
+    low_resource_team.design_staff = 0
+    low_resource_team.engineering_staff = 1
     low_resource_team.facilities = 20
     low_resource_team.car_speed = 72
     state.planned_ai_car_updates = [

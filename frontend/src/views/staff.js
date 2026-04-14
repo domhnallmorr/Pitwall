@@ -9,16 +9,13 @@ export default class StaffView {
 		this.container = document.getElementById('staff-drivers-container');
 		this.tabBtns = document.querySelectorAll('.staff-tab-btn');
 		this.driversContent = document.getElementById('staff-content-drivers');
-		this.workforceContent = document.getElementById('staff-content-workforce');
+		this.operationalContent = document.getElementById('staff-content-operational');
 		this.managementContent = document.getElementById('staff-content-management');
 		this.commercialContent = document.getElementById('staff-content-commercial');
 		this.managementContainer = document.getElementById('staff-management-container');
-		this.workforceSummary = document.getElementById('staff-workforce-summary');
-		this.workforceEditor = document.getElementById('staff-workforce-editor');
-		this.workforceInput = document.getElementById('staff-workforce-input');
-		this.workforceApplyBtn = document.getElementById('staff-workforce-apply-btn');
-		this.workforcePayroll = document.getElementById('staff-workforce-payroll');
-		this.workforceTableBody = document.getElementById('staff-workforce-table-body');
+		this.operationalSummary = document.getElementById('staff-operational-summary');
+		this.operationalPayroll = document.getElementById('staff-operational-payroll');
+		this.operationalTableBody = document.getElementById('staff-operational-table-body');
 		this.commercialSummary = document.getElementById('staff-commercial-summary');
 		this.commercialPayroll = document.getElementById('staff-commercial-payroll');
 		this.commercialTableBody = document.getElementById('staff-commercial-table-body');
@@ -26,9 +23,9 @@ export default class StaffView {
 		this.onReplaceDriver = null;
 		this.onReplaceCommercialManager = null;
 		this.onReplaceTechnicalDirector = null;
-		this.onUpdateWorkforce = null;
+		this.activeOperationalTab = 'design';
+		this.lastRenderData = null;
 		this.bindTabs();
-		this.bindWorkforceEditor();
 	}
 
 	setReplaceDriverHandler(handler) {
@@ -47,20 +44,6 @@ export default class StaffView {
 		this.onReplaceTechnicalDirector = handler;
 	}
 
-	setUpdateWorkforceHandler(handler) {
-		this.onUpdateWorkforce = handler;
-	}
-
-	bindWorkforceEditor() {
-		if (!this.workforceApplyBtn || !this.workforceInput) return;
-		this.workforceApplyBtn.addEventListener('click', () => {
-			if (!this.onUpdateWorkforce) return;
-			const value = Number(this.workforceInput.value);
-			if (!Number.isFinite(value)) return;
-			this.onUpdateWorkforce(value);
-		});
-	}
-
 	bindTabs() {
 		if (!this.tabBtns.length) return;
 		this.tabBtns.forEach((btn) => {
@@ -68,24 +51,26 @@ export default class StaffView {
 				this.tabBtns.forEach((b) => b.classList.remove('active'));
 				btn.classList.add('active');
 				const type = btn.getAttribute('data-type');
-				if (type === 'workforce') {
+				if (type === 'design' || type === 'engineering' || type === 'mechanics') {
+					this.activeOperationalTab = type;
 					if (this.driversContent) this.driversContent.style.display = 'none';
-					if (this.workforceContent) this.workforceContent.style.display = 'block';
+					if (this.operationalContent) this.operationalContent.style.display = 'block';
 					if (this.managementContent) this.managementContent.style.display = 'none';
 					if (this.commercialContent) this.commercialContent.style.display = 'none';
+					this.renderOperationalDepartment(this.lastRenderData, type);
 				} else if (type === 'commercial') {
 					if (this.driversContent) this.driversContent.style.display = 'none';
-					if (this.workforceContent) this.workforceContent.style.display = 'none';
+					if (this.operationalContent) this.operationalContent.style.display = 'none';
 					if (this.managementContent) this.managementContent.style.display = 'none';
 					if (this.commercialContent) this.commercialContent.style.display = 'block';
 				} else if (type === 'management') {
 					if (this.driversContent) this.driversContent.style.display = 'none';
-					if (this.workforceContent) this.workforceContent.style.display = 'none';
+					if (this.operationalContent) this.operationalContent.style.display = 'none';
 					if (this.managementContent) this.managementContent.style.display = 'block';
 					if (this.commercialContent) this.commercialContent.style.display = 'none';
 				} else {
 					if (this.driversContent) this.driversContent.style.display = 'block';
-					if (this.workforceContent) this.workforceContent.style.display = 'none';
+					if (this.operationalContent) this.operationalContent.style.display = 'none';
 					if (this.managementContent) this.managementContent.style.display = 'none';
 					if (this.commercialContent) this.commercialContent.style.display = 'none';
 				}
@@ -135,49 +120,62 @@ export default class StaffView {
 		return `<span class="staff-workforce-rating" role="img" aria-label="Workforce rating ${rating} out of 5">${blocks}</span>`;
 	}
 
-	renderWorkforce(data) {
-		if (!this.workforceTableBody || !this.workforceSummary) return;
-		const teams = (data?.teams || []).slice().sort((a, b) => (b.workforce ?? 0) - (a.workforce ?? 0));
+	renderOperationalDepartment(data, departmentKey = this.activeOperationalTab) {
+		if (!this.operationalTableBody || !this.operationalSummary) return;
 		const playerTeamName = data?.team_name || 'Your team';
 		const playerWorkforce = Number(data?.player_workforce) || 0;
 		const maxAllowed = Number(data?.workforce_limits?.max) || 250;
-		const maxWorkforce = teams.length > 0 ? Math.max(...teams.map((t) => Number(t.workforce) || 0)) : 1;
-		const perRacePayroll = Number(data?.projected_workforce_race_cost) || 0;
-		const annualPayroll = Number(data?.projected_workforce_annual_cost) || 0;
+		const factorySize = Number(data?.factory_size) || 1;
 		const racesInSeason = Number(data?.races_in_season) || 0;
+		const operational = data?.operational_staff || {};
+		const definitions = {
+			design: {
+				label: 'Design',
+				count: Number(operational.design_count) || 0,
+				annualWage: Number(operational.design_annual_avg_wage) || 0,
+			},
+			engineering: {
+				label: 'Engineering',
+				count: Number(operational.engineering_count) || 0,
+				annualWage: Number(operational.engineering_annual_avg_wage) || 0,
+			},
+			mechanics: {
+				label: 'Mechanics',
+				count: Number(operational.mechanics_count) || 0,
+				annualWage: Number(operational.mechanics_annual_avg_wage) || 0,
+			},
+		};
+		const department = definitions[departmentKey] || definitions.design;
+		const annualPayroll = department.count * department.annualWage;
+		const racePayroll = racesInSeason > 0 ? Math.round(annualPayroll / racesInSeason) : annualPayroll;
 
-		this.workforceSummary.textContent = `${playerTeamName} workforce: ${playerWorkforce.toLocaleString()} staff`;
-		if (this.workforceInput) {
-			this.workforceInput.value = String(playerWorkforce);
-			this.workforceInput.max = String(maxAllowed);
+		this.operationalSummary.textContent = `${playerTeamName} ${department.label.toLowerCase()} staff: ${department.count.toLocaleString()} staff (Factory ${factorySize} star, operational cap ${maxAllowed.toLocaleString()}, total operational staff ${playerWorkforce.toLocaleString()})`;
+		if (this.operationalPayroll) {
+			this.operationalPayroll.textContent = `Projected payroll: $${racePayroll.toLocaleString()} per race (${racesInSeason} races), $${annualPayroll.toLocaleString()} per year`;
 		}
-		if (this.workforcePayroll) {
-			this.workforcePayroll.textContent = `Projected payroll: $${perRacePayroll.toLocaleString()} per race (${racesInSeason} races), $${annualPayroll.toLocaleString()} per year`;
-		}
-		this.workforceTableBody.innerHTML = '';
-
-		teams.forEach((team, index) => {
-			const row = document.createElement('tr');
-			row.innerHTML = `
-				<td>${index + 1}</td>
-				<td>${team.name}</td>
-				<td>${team.country || '-'}</td>
-				<td>${this.renderWorkforceBlocks(team.workforce, maxWorkforce)}</td>
-			`;
-			this.workforceTableBody.appendChild(row);
-		});
+		this.operationalTableBody.innerHTML = `
+			<tr>
+				<td>Average</td>
+				<td>${department.count.toLocaleString()}</td>
+				<td>$${department.annualWage.toLocaleString()}</td>
+				<td>$${annualPayroll.toLocaleString()}</td>
+				<td>$${racePayroll.toLocaleString()}</td>
+			</tr>
+		`;
 	}
 
 	renderCommercial(data) {
 		if (!this.commercialTableBody || !this.commercialSummary) return;
 		const teamName = data?.team_name || 'Your team';
 		const staffCount = Number(data?.player_commercial_staff) || 0;
+		const maxAllowed = Number(data?.commercial_staff_limits?.max) || staffCount;
+		const factorySize = Number(data?.factory_size) || 1;
 		const annualWage = Number(data?.commercial_staff_annual_avg_wage) || 0;
 		const racePayroll = Number(data?.projected_commercial_staff_race_cost) || 0;
 		const annualPayroll = Number(data?.projected_commercial_staff_annual_cost) || 0;
 		const racesInSeason = Number(data?.races_in_season) || 0;
 
-		this.commercialSummary.textContent = `${teamName} commercial staff: ${staffCount.toLocaleString()} staff`;
+		this.commercialSummary.textContent = `${teamName} commercial staff: ${staffCount.toLocaleString()} / ${maxAllowed.toLocaleString()} staff (Factory ${factorySize} star)`;
 		if (this.commercialPayroll) {
 			this.commercialPayroll.textContent = `Projected payroll: $${racePayroll.toLocaleString()} per race (${racesInSeason} races), $${annualPayroll.toLocaleString()} per year`;
 		}
@@ -281,6 +279,7 @@ export default class StaffView {
 
 	render(data) {
 		if (!this.container) return;
+		this.lastRenderData = data;
 		this.container.innerHTML = '';
 
 		const drivers = data.drivers || [];
@@ -361,7 +360,7 @@ export default class StaffView {
 			this.container.innerHTML = '<p style="color: #64748b;">No drivers assigned.</p>';
 		}
 
-		this.renderWorkforce(data);
+		this.renderOperationalDepartment(data, this.activeOperationalTab);
 		this.renderCommercial(data);
 		this.renderManagement(data);
 	}

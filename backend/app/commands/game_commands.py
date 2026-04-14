@@ -50,7 +50,6 @@ from app.commands.staff_commands import (
     handle_start_engine_negotiation,
     handle_sign_engine_negotiated_deal,
     handle_update_engine_negotiation_staff,
-    handle_update_workforce,
 )
 from app.models.calendar import Calendar
 from app.models.email import EmailCategory
@@ -172,6 +171,8 @@ def handle_start_career(state: GameState | None, logger: logging.Logger, team_na
                 "year": current_state.year,
                 "balance": current_state.finance.balance,
                 "unread_count": sum(1 for e in current_state.emails if not e.read),
+                "game_over": current_state.game_over,
+                "game_over_reason": current_state.game_over_reason,
                 "game_completed": current_state.game_completed,
                 "completion_year": current_state.completion_year,
             },

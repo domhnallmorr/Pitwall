@@ -78,6 +78,9 @@ class GameState(BaseModel):
     player_title_sponsor_negotiation: Dict[str, Any] | None = None
     player_engine_negotiation: Dict[str, Any] | None = None
     player_car_development: PlayerCarDevelopment | None = None
+    negative_balance_race_streak: int = 0
+    game_over: bool = False
+    game_over_reason: str | None = None
     game_completed: bool = False
     completion_year: int | None = None
 

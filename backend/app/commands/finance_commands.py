@@ -1,10 +1,10 @@
 from app.core.finance_reporting import build_finance_report
 from app.core.commercial_staff_costs import CommercialStaffCostManager
+from app.core.operational_staff_costs import OperationalStaffCostManager
 from app.core.player_engine_negotiations import PlayerEngineNegotiationManager
 from app.core.player_title_sponsor_negotiations import PlayerTitleSponsorNegotiationManager
 from app.core.sponsorships import SponsorshipManager
 from app.core.transport import COUNTRY_COST_TIER, TransportCosts
-from app.core.workforce_costs import WorkforceCostManager
 from app.models.calendar import EventType
 from app.models.finance import TransactionCategory
 from app.models.state import GameState
@@ -58,10 +58,14 @@ def build_finance_payload(state: GameState):
     )
     sponsor_remaining = max(sponsor_yearly - sponsor_paid_so_far, 0) if sponsor_name else 0
     other_sponsorship_remaining = max(other_sponsorship_yearly - other_sponsorship_paid_so_far, 0)
-    workforce_manager = WorkforceCostManager()
+    operational_staff_manager = OperationalStaffCostManager()
     commercial_staff_manager = CommercialStaffCostManager()
-    workforce_race_cost = workforce_manager.calculate_race_cost(player_team.workforce, race_count) if player_team else 0
-    workforce_annual_projection = max(0, int(getattr(player_team, "workforce", 0) or 0)) * workforce_manager.annual_avg_wage if player_team else 0
+    operational_staff_race_costs = operational_staff_manager.calculate_department_race_costs(player_team, race_count) if player_team else {"design": 0, "engineering": 0, "mechanics": 0}
+    workforce_race_cost = sum(operational_staff_race_costs.values())
+    design_staff_annual_projection = max(0, int(getattr(player_team, "design_staff", 0) or 0)) * operational_staff_manager.design_annual_avg_wage if player_team else 0
+    engineering_staff_annual_projection = max(0, int(getattr(player_team, "engineering_staff", 0) or 0)) * operational_staff_manager.engineering_annual_avg_wage if player_team else 0
+    mechanics_staff_annual_projection = max(0, int(getattr(player_team, "mechanics_staff", 0) or 0)) * operational_staff_manager.mechanics_annual_avg_wage if player_team else 0
+    workforce_annual_projection = design_staff_annual_projection + engineering_staff_annual_projection + mechanics_staff_annual_projection
     commercial_staff_race_cost = commercial_staff_manager.calculate_race_cost(player_team.commercial_staff, race_count) if player_team else 0
     commercial_staff_annual_projection = max(0, int(getattr(player_team, "commercial_staff", 0) or 0)) * commercial_staff_manager.annual_avg_wage if player_team else 0
     factory_overhead_yearly = int(getattr(player_team, "factory_overhead_yearly", 0) or 0) if player_team else 0
@@ -133,7 +137,10 @@ def build_finance_payload(state: GameState):
         - driver_wages_received_so_far,
         0,
     )
-    projected_workforce_remaining = max(workforce_annual_projection - int(summary.get("workforce_total", 0) or 0), 0)
+    projected_design_staff_remaining = max(design_staff_annual_projection - int(summary.get("design_staff_total", 0) or 0), 0)
+    projected_engineering_staff_remaining = max(engineering_staff_annual_projection - int(summary.get("engineering_staff_total", 0) or 0), 0)
+    projected_mechanics_staff_remaining = max(mechanics_staff_annual_projection - int(summary.get("mechanics_staff_total", 0) or 0), 0)
+    projected_workforce_remaining = projected_design_staff_remaining + projected_engineering_staff_remaining + projected_mechanics_staff_remaining
     projected_commercial_staff_remaining = max(commercial_staff_annual_projection - int(summary.get("commercial_staff_total", 0) or 0), 0)
     prize_remaining = max(state.finance.prize_money_entitlement - state.finance.prize_money_paid, 0)
     next_race_prize_income = int(round(prize_remaining / max(1, remaining_races))) if remaining_races else 0
@@ -338,6 +345,22 @@ def build_finance_payload(state: GameState):
             "annual_avg_wage": commercial_staff_manager.annual_avg_wage,
             "projected_race_cost": commercial_staff_race_cost,
             "projected_annual_cost": commercial_staff_annual_projection,
+        },
+        "operational_staff": {
+            "design_count": int(getattr(player_team, "design_staff", 0) or 0) if player_team else 0,
+            "engineering_count": int(getattr(player_team, "engineering_staff", 0) or 0) if player_team else 0,
+            "mechanics_count": int(getattr(player_team, "mechanics_staff", 0) or 0) if player_team else 0,
+            "design_annual_avg_wage": operational_staff_manager.design_annual_avg_wage,
+            "engineering_annual_avg_wage": operational_staff_manager.engineering_annual_avg_wage,
+            "mechanics_annual_avg_wage": operational_staff_manager.mechanics_annual_avg_wage,
+            "projected_design_race_cost": operational_staff_race_costs["design"],
+            "projected_engineering_race_cost": operational_staff_race_costs["engineering"],
+            "projected_mechanics_race_cost": operational_staff_race_costs["mechanics"],
+            "projected_design_annual_cost": design_staff_annual_projection,
+            "projected_engineering_annual_cost": engineering_staff_annual_projection,
+            "projected_mechanics_annual_cost": mechanics_staff_annual_projection,
+            "projected_total_race_cost": workforce_race_cost,
+            "projected_total_annual_cost": workforce_annual_projection,
         },
         "engine_negotiation": engine_negotiation_manager.get_market_payload(state) if player_team else None,
     }

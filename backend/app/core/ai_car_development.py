@@ -6,7 +6,7 @@ from app.models.state import GameState
 
 
 class AICarDevelopmentManager:
-    MAX_WORKFORCE = 250
+    DESIGN_STAFF_BASELINE = 60
     MAX_FACILITIES = 100
     BASE_DEVELOPMENT_WEEKS = {
         "minor": 4,
@@ -23,13 +23,21 @@ class AICarDevelopmentManager:
     RESOURCE_CAP_RANGE = 35
     RESOURCE_CAP_EXCESS_RETENTION = 0.35
 
+    def _design_capacity_for_team(self, team) -> int:
+        design_staff = getattr(team, "design_staff", None)
+        engineering_staff = getattr(team, "engineering_staff", None)
+        mechanics_staff = getattr(team, "mechanics_staff", None)
+        if any(int(value or 0) > 0 for value in (design_staff, engineering_staff, mechanics_staff)):
+            return int(design_staff or 0)
+        return int(getattr(team, "workforce", 0) or 0)
+
     def _race_weeks(self, state: GameState) -> list[int]:
         return sorted({e.week for e in state.calendar.events if e.type == EventType.RACE})
 
     def _workforce_time_multiplier(self, workforce: int) -> float:
-        bounded_workforce = max(0, min(int(workforce or 0), self.MAX_WORKFORCE))
-        normalized = bounded_workforce / self.MAX_WORKFORCE
-        # 250 staff => 1.0x base time, 0 staff => 2.0x base time.
+        bounded_workforce = max(0, min(int(workforce or 0), self.DESIGN_STAFF_BASELINE))
+        normalized = bounded_workforce / self.DESIGN_STAFF_BASELINE
+        # 60 design staff => 1.0x base time, 0 staff => 2.0x base time.
         return 2.0 - normalized
 
     def _development_weeks_for_team(self, update_type: str, workforce: int) -> int:
@@ -38,9 +46,9 @@ class AICarDevelopmentManager:
         return max(base_weeks, min(base_weeks * 2, scaled))
 
     def _resource_score(self, workforce: int, facilities: int) -> float:
-        bounded_workforce = max(0, min(int(workforce or 0), self.MAX_WORKFORCE))
+        bounded_workforce = max(0, min(int(workforce or 0), self.DESIGN_STAFF_BASELINE))
         bounded_facilities = max(0, min(int(facilities or 0), self.MAX_FACILITIES))
-        workforce_score = bounded_workforce / self.MAX_WORKFORCE
+        workforce_score = bounded_workforce / self.DESIGN_STAFF_BASELINE
         facilities_score = bounded_facilities / self.MAX_FACILITIES
         return (workforce_score + facilities_score) / 2
 
@@ -108,10 +116,10 @@ class AICarDevelopmentManager:
             for _ in range(target_updates):
                 update_type = random.choices(
                     ["minor", "medium", "major"],
-                    weights=self._update_weights_for_team(team.workforce, team.facilities),
+                    weights=self._update_weights_for_team(self._design_capacity_for_team(team), team.facilities),
                     k=1,
                 )[0]
-                development_weeks = self._development_weeks_for_team(update_type, team.workforce)
+                development_weeks = self._development_weeks_for_team(update_type, self._design_capacity_for_team(team))
                 earliest_completion_week = max(first_race_week + 1, 1 + development_weeks)
                 candidate_weeks = [w for w in eligible_weeks if w >= earliest_completion_week]
                 gap_candidates = [
@@ -165,7 +173,7 @@ class AICarDevelopmentManager:
             proposed_speed = max(1, old_speed + int(update["delta"]))
             team.car_speed = max(
                 old_speed,
-                self._compress_to_resource_cap(proposed_speed, team.workforce, team.facilities),
+                self._compress_to_resource_cap(proposed_speed, self._design_capacity_for_team(team), team.facilities),
             )
             update["applied"] = True
             applied_updates.append(

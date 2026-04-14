@@ -14,7 +14,7 @@ class DevelopmentSpec:
 
 
 class PlayerCarDevelopmentManager:
-    MAX_WORKFORCE = 250
+    DESIGN_STAFF_BASELINE = 60
     SPECS = {
         "minor": DevelopmentSpec(key="minor", weeks=4, total_cost=100_000, speed_delta=1),
         "medium": DevelopmentSpec(key="medium", weeks=7, total_cost=750_000, speed_delta=3),
@@ -22,16 +22,24 @@ class PlayerCarDevelopmentManager:
     }
 
     def _workforce_time_multiplier(self, workforce: int) -> float:
-        bounded_workforce = max(0, min(int(workforce or 0), self.MAX_WORKFORCE))
-        normalized = bounded_workforce / self.MAX_WORKFORCE
-        # 250 staff => 1.0x base time, 0 staff => 2.0x base time.
+        bounded_workforce = max(0, min(int(workforce or 0), self.DESIGN_STAFF_BASELINE))
+        normalized = bounded_workforce / self.DESIGN_STAFF_BASELINE
+        # 60 design staff => 1.0x base time, 0 staff => 2.0x base time.
         return 2.0 - normalized
 
     def _weeks_for_workforce(self, base_weeks: int, workforce: int) -> int:
         scaled = int(round(base_weeks * self._workforce_time_multiplier(workforce)))
         return max(base_weeks, min(base_weeks * 2, scaled))
 
-    def get_catalog(self, workforce: int = MAX_WORKFORCE) -> list[dict]:
+    def _design_capacity_for_team(self, team) -> int:
+        design_staff = getattr(team, "design_staff", None)
+        engineering_staff = getattr(team, "engineering_staff", None)
+        mechanics_staff = getattr(team, "mechanics_staff", None)
+        if any(int(value or 0) > 0 for value in (design_staff, engineering_staff, mechanics_staff)):
+            return int(design_staff or 0)
+        return int(getattr(team, "workforce", 0) or 0)
+
+    def get_catalog(self, workforce: int = DESIGN_STAFF_BASELINE) -> list[dict]:
         return [
             {
                 "type": spec.key,
@@ -55,7 +63,8 @@ class PlayerCarDevelopmentManager:
         if not team:
             raise ValueError("No player team assigned")
 
-        duration_weeks = self._weeks_for_workforce(spec.weeks, team.workforce)
+        design_capacity = self._design_capacity_for_team(team)
+        duration_weeks = self._weeks_for_workforce(spec.weeks, design_capacity)
         weekly_cost = int(round(spec.total_cost / duration_weeks))
         state.player_car_development = PlayerCarDevelopment(
             active=True,
@@ -73,9 +82,10 @@ class PlayerCarDevelopmentManager:
             subject=f"Car Development Started: {spec.key.title()}",
             body=(
                 f"Development program initiated.\n\n"
-                f"Type: {spec.key.title()}\n"
-                f"Duration: {duration_weeks} weeks\n"
-                f"Expected speed gain: +{spec.speed_delta}\n"
+                    f"Type: {spec.key.title()}\n"
+                    f"Duration: {duration_weeks} weeks\n"
+                    f"Design staff allocated: {design_capacity}\n"
+                    f"Expected speed gain: +{spec.speed_delta}\n"
                 f"Total cost: ${spec.total_cost:,}\n"
                 f"Weekly cost: ${weekly_cost:,}"
             ),

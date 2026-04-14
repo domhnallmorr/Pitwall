@@ -24,8 +24,12 @@ def create_state() -> GameState:
             driver2_id=2,
             technical_director_id=21,
             commercial_manager_id=11,
+            factory_size=4,
             car_speed=80,
             workforce=250,
+            design_staff=63,
+            engineering_staff=61,
+            mechanics_staff=58,
             commercial_staff=49,
             title_sponsor_name="Windale",
             title_sponsor_yearly=32_500_000,
@@ -194,6 +198,9 @@ def test_get_finance_returns_summary_and_track_profit_loss():
     assert "overview" in result["data"]
     assert result["data"]["summary"]["transport_total"] == 200_000
     assert result["data"]["summary"]["testing_total"] == 0
+    assert "design_staff_total" in result["data"]["summary"]
+    assert "engineering_staff_total" in result["data"]["summary"]
+    assert "mechanics_staff_total" in result["data"]["summary"]
     assert "workforce_total" in result["data"]["summary"]
     assert "commercial_staff_total" in result["data"]["summary"]
     assert "factory_overhead_total" in result["data"]["summary"]
@@ -331,8 +338,28 @@ def test_get_finance_reports_testing_total():
         week=5,
         year=1998,
         amount=-120_000,
-        category=TransactionCategory.WORKFORCE_WAGES,
-        description="Test payroll",
+        category=TransactionCategory.DESIGN_STAFF_WAGES,
+        description="Design test payroll",
+        event_name="Silverstone Test",
+        event_type="TEST",
+        circuit_country="United Kingdom",
+    )
+    state.finance.add_transaction(
+        week=5,
+        year=1998,
+        amount=-90_000,
+        category=TransactionCategory.ENGINEERING_STAFF_WAGES,
+        description="Engineering test payroll",
+        event_name="Silverstone Test",
+        event_type="TEST",
+        circuit_country="United Kingdom",
+    )
+    state.finance.add_transaction(
+        week=5,
+        year=1998,
+        amount=-80_000,
+        category=TransactionCategory.MECHANICS_STAFF_WAGES,
+        description="Mechanics test payroll",
         event_name="Silverstone Test",
         event_type="TEST",
         circuit_country="United Kingdom",
@@ -342,7 +369,7 @@ def test_get_finance_reports_testing_total():
     result = process_command({"type": "get_finance"})
 
     assert result["status"] == "success"
-    assert result["data"]["summary"]["testing_total"] == 470_000
+    assert result["data"]["summary"]["testing_total"] == 640_000
 
 
 def test_get_finance_reports_factory_overhead_total():
@@ -749,6 +776,9 @@ def test_get_facilities_returns_player_and_team_comparison_data():
     assert result["type"] == "facilities_data"
     assert result["data"]["team_name"] == "Warrick"
     assert result["data"]["facilities"] == 75
+    assert result["data"]["factory_size"] == 4
+    assert result["data"]["factory_limits"]["workforce"] == 320
+    assert result["data"]["factory_limits"]["commercial_staff"] == 80
     assert len(result["data"]["teams"]) == 2
     assert any(t["name"] == "Ferano" and t["facilities"] == 68 for t in result["data"]["teams"])
 
@@ -827,58 +857,3 @@ def test_repair_car_wear_reduces_wear_and_records_cost():
     txs = [t for t in state.finance.transactions if t.category == TransactionCategory.MAINTENANCE]
     assert len(txs) == 1
     assert txs[0].amount == -32_000
-
-
-def test_update_workforce_updates_player_team_and_returns_cost_projection():
-    state = create_state()
-    state.teams[0].workforce = 150
-    app_main.CURRENT_STATE = state
-
-    result = process_command({"type": "update_workforce", "workforce": 200})
-
-    assert result["status"] == "success"
-    assert result["type"] == "workforce_updated"
-    assert result["data"]["previous_workforce"] == 150
-    assert result["data"]["new_workforce"] == 200
-    assert result["data"]["projected_race_cost"] > 0
-    assert state.teams[0].workforce == 200
-
-
-def test_update_workforce_rejects_values_above_cap():
-    state = create_state()
-    app_main.CURRENT_STATE = state
-
-    result = process_command({"type": "update_workforce", "workforce": 251})
-
-    assert result["status"] == "error"
-    assert "between 0 and 250" in result["message"]
-
-
-def test_update_workforce_requires_workforce_value():
-    state = create_state()
-    app_main.CURRENT_STATE = state
-
-    result = process_command({"type": "update_workforce"})
-
-    assert result["status"] == "error"
-    assert "workforce is required" in result["message"]
-
-
-def test_update_workforce_rejects_negative_values():
-    state = create_state()
-    app_main.CURRENT_STATE = state
-
-    result = process_command({"type": "update_workforce", "workforce": -1})
-
-    assert result["status"] == "error"
-    assert "between 0 and 250" in result["message"]
-
-
-def test_update_workforce_fails_when_game_not_started():
-    app_main.CURRENT_STATE = None
-
-    result = process_command({"type": "update_workforce", "workforce": 120})
-
-    assert result["status"] == "error"
-    assert result["type"] == "workforce_updated"
-    assert "Game not started" in result["message"]

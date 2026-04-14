@@ -33,5 +33,4 @@ from app.commands.staff_market_commands import (
 from app.commands.staff_team_commands import (
     handle_repair_car_wear,
     handle_start_car_development,
-    handle_update_workforce,
 )

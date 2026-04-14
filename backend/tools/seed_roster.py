@@ -27,15 +27,18 @@ try:
         TEAM_ENGINE_SUPPLIERS,
         TEAM_ENGINE_SUPPLIER_CONTRACT_LENGTHS,
         TEAM_FACTORY_OVERHEAD,
+        TEAM_FACTORY_SIZES,
         TEAM_COMMERCIAL_STAFF,
+        TEAM_DESIGN_STAFF,
+        TEAM_ENGINEERING_STAFF,
         TEAM_OTHER_SPONSORSHIP,
+        TEAM_MECHANICS_STAFF,
         TEAM_SPEEDS,
         TEAM_TITLE_SPONSORS,
         TEAM_TITLE_SPONSOR_CONTRACT_LENGTHS,
         TEAM_TYRE_SUPPLIERS,
         TEAM_TYRE_SUPPLIER_CONTRACT_LENGTHS,
         TEAM_FUEL_SUPPLIERS,
-        TEAM_WORKFORCE,
         TITLE_SPONSORS_DATA,
         TYRE_SUPPLIERS_DATA,
     )
@@ -66,15 +69,18 @@ except ModuleNotFoundError:
         TEAM_ENGINE_SUPPLIERS,
         TEAM_ENGINE_SUPPLIER_CONTRACT_LENGTHS,
         TEAM_FACTORY_OVERHEAD,
+        TEAM_FACTORY_SIZES,
         TEAM_COMMERCIAL_STAFF,
+        TEAM_DESIGN_STAFF,
+        TEAM_ENGINEERING_STAFF,
         TEAM_OTHER_SPONSORSHIP,
+        TEAM_MECHANICS_STAFF,
         TEAM_SPEEDS,
         TEAM_TITLE_SPONSORS,
         TEAM_TITLE_SPONSOR_CONTRACT_LENGTHS,
         TEAM_TYRE_SUPPLIERS,
         TEAM_TYRE_SUPPLIER_CONTRACT_LENGTHS,
         TEAM_FUEL_SUPPLIERS,
-        TEAM_WORKFORCE,
         TITLE_SPONSORS_DATA,
         TYRE_SUPPLIERS_DATA,
     )
@@ -98,6 +104,14 @@ def sync_seed_table_names(conn, table_name, seed_rows):
             f"WHERE start_year = ? AND name NOT IN ({placeholders})"
         )
         c.execute(query, [start_year, *sorted(allowed_names)])
+
+
+def total_operational_workforce(team_name):
+    return (
+        TEAM_DESIGN_STAFF.get(team_name, 0)
+        + TEAM_ENGINEERING_STAFF.get(team_name, 0)
+        + TEAM_MECHANICS_STAFF.get(team_name, 0)
+    )
 
 
 def seed_data(conn):
@@ -189,8 +203,24 @@ def seed_data(conn):
             [(speed, name) for name, speed in TEAM_SPEEDS.items()]
         )
         c.executemany(
+            'UPDATE teams SET factory_size = ? WHERE name = ?',
+            [(size, name) for name, size in TEAM_FACTORY_SIZES.items()]
+        )
+        c.executemany(
+            'UPDATE teams SET design_staff = ? WHERE name = ?',
+            [(count, name) for name, count in TEAM_DESIGN_STAFF.items()]
+        )
+        c.executemany(
+            'UPDATE teams SET engineering_staff = ? WHERE name = ?',
+            [(count, name) for name, count in TEAM_ENGINEERING_STAFF.items()]
+        )
+        c.executemany(
+            'UPDATE teams SET mechanics_staff = ? WHERE name = ?',
+            [(count, name) for name, count in TEAM_MECHANICS_STAFF.items()]
+        )
+        c.executemany(
             'UPDATE teams SET workforce = ? WHERE name = ?',
-            [(workforce, name) for name, workforce in TEAM_WORKFORCE.items()]
+            [(total_operational_workforce(name), name) for name in TEAM_DESIGN_STAFF]
         )
         c.executemany(
             'UPDATE teams SET commercial_staff = ? WHERE name = ?',
@@ -409,6 +439,26 @@ def seed_data(conn):
         [(amount, name) for name, amount in TEAM_OTHER_SPONSORSHIP.items()]
     )
     c.executemany(
+        'UPDATE teams SET design_staff = ? WHERE name = ?',
+        [(count, name) for name, count in TEAM_DESIGN_STAFF.items()]
+    )
+    c.executemany(
+        'UPDATE teams SET engineering_staff = ? WHERE name = ?',
+        [(count, name) for name, count in TEAM_ENGINEERING_STAFF.items()]
+    )
+    c.executemany(
+        'UPDATE teams SET mechanics_staff = ? WHERE name = ?',
+        [(count, name) for name, count in TEAM_MECHANICS_STAFF.items()]
+    )
+    c.executemany(
+        'UPDATE teams SET factory_size = ? WHERE name = ?',
+        [(size, name) for name, size in TEAM_FACTORY_SIZES.items()]
+    )
+    c.executemany(
+        'UPDATE teams SET workforce = ? WHERE name = ?',
+        [(total_operational_workforce(name), name) for name in TEAM_DESIGN_STAFF]
+    )
+    c.executemany(
         'UPDATE teams SET factory_overhead_yearly = ? WHERE name = ?',
         [(amount, name) for name, amount in TEAM_FACTORY_OVERHEAD.items()]
     )
@@ -495,7 +545,16 @@ def seed_data(conn):
     teams_data = TEAMS_DATA
 
     teams_data_with_attrs = [
-        (*t, TEAM_SPEEDS.get(t[1], 50), TEAM_WORKFORCE.get(t[1], 0), TEAM_COMMERCIAL_STAFF.get(t[1], 0))
+        (
+            *t,
+            TEAM_FACTORY_SIZES.get(t[1], 1),
+            TEAM_SPEEDS.get(t[1], 50),
+            TEAM_DESIGN_STAFF.get(t[1], 0),
+            TEAM_ENGINEERING_STAFF.get(t[1], 0),
+            TEAM_MECHANICS_STAFF.get(t[1], 0),
+            total_operational_workforce(t[1]),
+            TEAM_COMMERCIAL_STAFF.get(t[1], 0),
+        )
         for t in teams_data
     ]
     teams_data_with_attrs = [
@@ -509,7 +568,7 @@ def seed_data(conn):
         for row in teams_data_with_attrs
     ]
     c.executemany(
-        'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, car_speed, workforce, commercial_staff, title_sponsor_name, title_sponsor_yearly, title_sponsor_contract_length, other_sponsorship_yearly) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO teams (start_year, name, country, driver1_name, driver2_name, balance, facilities, factory_size, car_speed, design_staff, engineering_staff, mechanics_staff, workforce, commercial_staff, title_sponsor_name, title_sponsor_yearly, title_sponsor_contract_length, other_sponsorship_yearly) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         teams_data_with_attrs
     )
     c.executemany(

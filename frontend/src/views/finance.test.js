@@ -69,6 +69,9 @@ describe('FinanceView', () => {
 				crash_damage_total: 25000,
 				maintenance_total: 12000,
 				testing_total: 120,
+				design_staff_total: 200,
+				engineering_staff_total: 180,
+				mechanics_staff_total: 160,
 				workforce_total: 700,
 				commercial_staff_total: 500,
 				factory_overhead_total: 400000,
@@ -137,6 +140,9 @@ describe('FinanceView', () => {
 		expect(document.getElementById('finance-prize-money-total').textContent).toBe('$100')
 		expect(document.getElementById('finance-driver-wages-total').textContent).toBe('$220,000')
 		expect(document.getElementById('finance-management-salary-total').textContent).toBe('$5,160,000')
+		expect(document.getElementById('finance-design-staff-total').textContent).toBe('$200')
+		expect(document.getElementById('finance-engineering-staff-total').textContent).toBe('$180')
+		expect(document.getElementById('finance-mechanics-staff-total').textContent).toBe('$160')
 		expect(document.getElementById('finance-commercial-staff-total').textContent).toBe('$500')
 		expect(document.getElementById('finance-engine-income-total').textContent).toBe('$0')
 		expect(document.getElementById('finance-crash-damage-total').textContent).toBe('$25,000')
@@ -183,6 +189,9 @@ describe('FinanceView', () => {
 				crash_damage_total: 0,
 				maintenance_total: 0,
 				testing_total: 0,
+				design_staff_total: 0,
+				engineering_staff_total: 0,
+				mechanics_staff_total: 0,
 				workforce_total: 0,
 				commercial_staff_total: 0,
 				factory_overhead_total: 0,
@@ -237,6 +246,9 @@ describe('FinanceView', () => {
 				crash_damage_total: 0,
 				maintenance_total: 0,
 				testing_total: 0,
+				design_staff_total: 0,
+				engineering_staff_total: 0,
+				mechanics_staff_total: 0,
 				workforce_total: 0,
 				commercial_staff_total: 0,
 				factory_overhead_total: 0,

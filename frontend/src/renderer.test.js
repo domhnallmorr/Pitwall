@@ -18,7 +18,6 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 		simulateRace: vi.fn(),
 		getEmails: vi.fn(),
 		getStaff: vi.fn(),
-		updateWorkforce: vi.fn(),
 		getReplacementCandidates: vi.fn(),
 		getManagerReplacementCandidates: vi.fn(),
 		getTechnicalDirectorReplacementCandidates: vi.fn(),
@@ -91,7 +90,7 @@ vi.mock('./views/grid.js', () => ({
 vi.mock('./views/standings.js', () => ({ default: class { setDriverSelectHandler() {} render(...args) { viewFns.standingsRender(...args); } } }));
 vi.mock('./views/calendar.js', () => ({ default: class { render(...args) { viewFns.calendarRender(...args); } } }));
 vi.mock('./views/email.js', () => ({ default: class { render(...args) { viewFns.emailRender(...args); } updateUnreadBadge(...args) { viewFns.emailUnread(...args); } } }));
-vi.mock('./views/staff.js', () => ({ default: class { setReplaceDriverHandler() {} setDriverSelectHandler() {} setReplaceCommercialManagerHandler() {} setReplaceTechnicalDirectorHandler() {} setUpdateWorkforceHandler() {} render(...args) { viewFns.staffRender(...args); } } }));
+vi.mock('./views/staff.js', () => ({ default: class { setReplaceDriverHandler() {} setDriverSelectHandler() {} setReplaceCommercialManagerHandler() {} setReplaceTechnicalDirectorHandler() {} render(...args) { viewFns.staffRender(...args); } } }));
 vi.mock('./views/driver.js', () => ({ default: class { constructor() { this.currentDriverName = null; } render(...args) { viewFns.driverRender(...args); } } }));
 vi.mock('./views/driver_market.js', () => ({ default: class { setBackHandler() {} setSignHandler() {} render(...args) { viewFns.driverMarketRender(...args); } showOfferResult(...args) { viewFns.driverMarketOfferResult(...args); return true; } } }));
 vi.mock('./views/car.js', () => ({ default: class { setStartDevelopmentHandler() {} setRepairWearHandler() {} render(...args) { viewFns.carRender(...args); } } }));
@@ -128,6 +127,10 @@ describe('renderer smoke', () => {
 			<button id="advance-btn"></button>
 			<div id="test-session-modal" style="display:none;"></div>
 			<div id="test-km-modal" style="display:none;"></div>
+			<div id="game-over-modal" style="display:none;"></div>
+			<div id="game-over-modal-title"></div>
+			<div id="game-over-modal-body"></div>
+			<button id="game-over-modal-close-btn"></button>
 			<button id="test-no-btn"></button>
 			<button id="test-yes-btn"></button>
 			<input id="test-km-input" value="500" />
@@ -216,33 +219,6 @@ describe('renderer smoke', () => {
 
 		ipcHandler(JSON.stringify({ type: 'save_status', data: { has_save: true } }));
 		expect(document.getElementById('load-game-btn').disabled).toBe(false);
-	});
-
-	it('refreshes staff/finance/car/emails on successful workforce update', async () => {
-		let ipcHandler = null;
-		apiMock.onData.mockImplementation((cb) => { ipcHandler = cb; });
-
-		await import('./renderer.js');
-
-		ipcHandler(JSON.stringify({ type: 'workforce_updated', status: 'success', data: {} }));
-
-		expect(apiMock.getStaff).toHaveBeenCalledTimes(1);
-		expect(apiMock.getFinance).toHaveBeenCalledTimes(1);
-		expect(apiMock.getCar).toHaveBeenCalledTimes(1);
-		expect(apiMock.getEmails).toHaveBeenCalledTimes(1);
-	});
-
-	it('does not refresh views on workforce update error', async () => {
-		let ipcHandler = null;
-		apiMock.onData.mockImplementation((cb) => { ipcHandler = cb; });
-
-		await import('./renderer.js');
-
-		ipcHandler(JSON.stringify({ type: 'workforce_updated', status: 'error', message: 'bad input' }));
-
-		expect(apiMock.getStaff).not.toHaveBeenCalled();
-		expect(apiMock.getFinance).not.toHaveBeenCalled();
-		expect(apiMock.getCar).not.toHaveBeenCalled();
 	});
 
 	it('handles key IPC update branches end-to-end', async () => {
@@ -376,6 +352,36 @@ describe('renderer smoke', () => {
 		}));
 		expect(facilitiesFns.renderPreview).toHaveBeenCalled();
 		vi.useRealTimers();
+	});
+
+	it('shows a game over modal for bankruptcy results', async () => {
+		let ipcHandler = null;
+		apiMock.onData.mockImplementation((cb) => { ipcHandler = cb; });
+
+		await import('./renderer.js');
+
+		ipcHandler(JSON.stringify({
+			type: 'game_over',
+			status: 'success',
+			data: {
+				message: 'The team ended two consecutive grand prix weekends with a negative bank balance.',
+				race_result: { total_laps: 1, lap_history: [{ lap: 1, order: [], events: [] }], results: [] },
+				summary: {
+					new_date_display: 'Week 11 1998',
+					next_event_display: 'Game Over',
+					balance: -500000,
+					button_text: 'GAME OVER',
+					event_active: false,
+					game_over: true,
+				},
+			},
+		}));
+
+		expect(document.getElementById('game-over-modal').style.display).toBe('flex');
+		expect(document.getElementById('game-over-modal-body').textContent).toContain('negative bank balance');
+		expect(document.getElementById('advance-btn').disabled).toBe(true);
+		expect(apiMock.getFinance).toHaveBeenCalled();
+		expect(apiMock.getEmails).toHaveBeenCalled();
 	});
 
 	it('pauses and resumes race autoplay', async () => {

@@ -37,7 +37,6 @@ from app.commands.game_commands import (
     handle_sign_title_sponsor_negotiated_deal,
     handle_update_engine_negotiation_staff,
     handle_update_title_sponsor_negotiation_staff,
-    handle_update_workforce,
 )
 from app.commands.query_commands import (
     get_car_payload,
@@ -481,14 +480,6 @@ def process_command(command):
             save_game(CURRENT_STATE)
         return response
 
-    if cmd_type == 'update_workforce':
-        if not CURRENT_STATE:
-            return {"type": "workforce_updated", "status": "error", "message": "Game not started"}
-        response = handle_update_workforce(CURRENT_STATE, logging, command.get("workforce"))
-        if response.get("status") == "success":
-            save_game(CURRENT_STATE)
-        return response
-
     if cmd_type == 'check_save':
         return {
             "type": "save_status",
@@ -507,10 +498,16 @@ def process_command(command):
                 "data": {
                     "team_name": player_team.name if player_team else "Unknown",
                     "week_display": CURRENT_STATE.week_display,
-                    "next_event_display": "Career Complete" if CURRENT_STATE.game_completed else CURRENT_STATE.next_event_display,
+                    "next_event_display": (
+                        "Game Over"
+                        if CURRENT_STATE.game_over
+                        else ("Career Complete" if CURRENT_STATE.game_completed else CURRENT_STATE.next_event_display)
+                    ),
                     "year": CURRENT_STATE.year,
                     "balance": CURRENT_STATE.finance.balance,
                     "unread_count": sum(1 for e in CURRENT_STATE.emails if not e.read),
+                    "game_over": CURRENT_STATE.game_over,
+                    "game_over_reason": CURRENT_STATE.game_over_reason,
                     "game_completed": CURRENT_STATE.game_completed,
                     "completion_year": CURRENT_STATE.completion_year,
                 }

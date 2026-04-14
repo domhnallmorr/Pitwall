@@ -8,13 +8,17 @@ class CarPerformanceManager:
     MAX_WORKFORCE = 250
     MAX_FACILITIES = 100
     MAX_TD_SKILL = 100
+    DESIGN_WEIGHT = 1.0
+    ENGINEERING_WEIGHT = 0.9
+    MECHANICS_WEIGHT = 0.45
+    DEPARTMENT_SCALE = 1.25
     """
     Handles end-of-season car performance recalculation.
     """
 
     def __init__(
         self,
-        staff_coeff: float = 0.4,
+        staff_coeff: float = 0.55,
         td_default_skill: int = 50,
         tp_default_skill: int = 50,
         tp_skill_divisor: int = 12,
@@ -47,6 +51,25 @@ class CarPerformanceManager:
     def _ai_team_principal_modifier(self, team_principal_skill: int) -> int:
         raw_modifier = round((team_principal_skill - 50) / self.tp_skill_divisor)
         return max(-self.tp_max_modifier, min(self.tp_max_modifier, raw_modifier))
+
+    def _effective_staff_capacity(
+        self,
+        workforce: int = 0,
+        design_staff: int = 0,
+        engineering_staff: int = 0,
+        mechanics_staff: int = 0,
+    ) -> int:
+        design = max(0, int(design_staff or 0))
+        engineering = max(0, int(engineering_staff or 0))
+        mechanics = max(0, int(mechanics_staff or 0))
+        if design or engineering or mechanics:
+            weighted_total = (
+                (design * self.DESIGN_WEIGHT)
+                + (engineering * self.ENGINEERING_WEIGHT)
+                + (mechanics * self.MECHANICS_WEIGHT)
+            )
+            return max(0, int(round(weighted_total * self.DEPARTMENT_SCALE)))
+        return max(0, int(workforce or 0))
 
     def _resource_score(self, workforce: int, facilities: int, technical_director_skill: int) -> float:
         bounded_workforce = max(0, min(int(workforce or 0), self.MAX_WORKFORCE))
@@ -82,20 +105,26 @@ class CarPerformanceManager:
         for team in state.teams:
             old_speed = team.car_speed
             td_skill = self._get_td_skill(state, team.id)
-            team.car_speed = self.calculate_next_speed(team.workforce, team.facilities, td_skill)
+            effective_staff = self._effective_staff_capacity(
+                workforce=team.workforce,
+                design_staff=getattr(team, "design_staff", 0),
+                engineering_staff=getattr(team, "engineering_staff", 0),
+                mechanics_staff=getattr(team, "mechanics_staff", 0),
+            )
+            team.car_speed = self.calculate_next_speed(effective_staff, team.facilities, td_skill)
             tp_modifier = 0
             if state.player_team_id != team.id:
                 tp_skill = self._get_tp_skill(state, team.id)
                 tp_modifier = self._ai_team_principal_modifier(tp_skill)
                 team.car_speed = max(1, team.car_speed + tp_modifier)
-                team.car_speed = self._compress_to_resource_cap(team.car_speed, team.workforce, team.facilities, td_skill)
+                team.car_speed = self._compress_to_resource_cap(team.car_speed, effective_staff, team.facilities, td_skill)
             update = {
                 "team_id": team.id,
                 "team_name": team.name,
                 "old_speed": old_speed,
                 "new_speed": team.car_speed,
                 "team_principal_modifier": tp_modifier,
-                "resource_soft_cap": self._resource_soft_cap(team.workforce, team.facilities, td_skill) if state.player_team_id != team.id else None,
+                "resource_soft_cap": self._resource_soft_cap(effective_staff, team.facilities, td_skill) if state.player_team_id != team.id else None,
             }
             updates.append(update)
             if state.player_team_id == team.id:

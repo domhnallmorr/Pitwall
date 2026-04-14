@@ -140,6 +140,20 @@ export function handleGameStart({
 	nextEventEl.textContent = data.next_event_display;
 	if (data.balance !== undefined) updateBalance(balanceEl, data.balance);
 	if (data.unread_count !== undefined) emailView.updateUnreadBadge(data.unread_count);
+	const advanceBtn = document.getElementById('advance-btn');
+	if (advanceBtn) {
+		if (data.game_over) {
+			advanceBtn.textContent = 'GAME OVER';
+			advanceBtn.disabled = true;
+			advanceBtn.classList.remove('event-active');
+		} else if (data.game_completed) {
+			advanceBtn.textContent = 'CAREER COMPLETE';
+			advanceBtn.disabled = true;
+			advanceBtn.classList.remove('event-active');
+		} else {
+			advanceBtn.disabled = false;
+		}
+	}
 
 	api.getHome();
 	api.getStandings();
@@ -157,6 +171,7 @@ export function updateDashboard({ data, weekEl, nextEventEl, balanceEl, gridView
 		advanceBtn.textContent = data.button_text;
 		if (data.event_active) advanceBtn.classList.add('event-active');
 		else advanceBtn.classList.remove('event-active');
+		advanceBtn.disabled = Boolean(data.game_completed || data.game_over);
 	}
 
 	if (data.year && Number(data.year) !== gridView.baseYear) {

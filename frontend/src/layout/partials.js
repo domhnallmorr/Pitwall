@@ -44,7 +44,9 @@ function renderFinanceOverviewSections() {
 		const items = [
 			{ label: 'Driver Payroll', id: 'finance-driver-wages-total', defaultValue: '$0' },
 			{ label: 'Management Salaries', id: 'finance-management-salary-total', defaultValue: '$0' },
-			{ label: 'Workforce', id: 'finance-workforce-total', defaultValue: '$0' },
+			{ label: 'Design Staff', id: 'finance-design-staff-total', defaultValue: '$0' },
+			{ label: 'Engineering Staff', id: 'finance-engineering-staff-total', defaultValue: '$0' },
+			{ label: 'Mechanics', id: 'finance-mechanics-staff-total', defaultValue: '$0' },
 			{ label: 'Commercial Staff', id: 'finance-commercial-staff-total', defaultValue: '$0' },
 			{ label: 'Factory Overhead', id: 'finance-factory-overhead-total', defaultValue: '$0' },
 			{ label: 'Engine Supplier', id: 'finance-engine-supplier-total', defaultValue: '$0' },

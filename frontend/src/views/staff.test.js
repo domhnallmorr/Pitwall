@@ -8,20 +8,19 @@ describe('StaffView', () => {
 	beforeEach(() => {
 		const dom = new JSDOM(`
 			<div id="staff-content-drivers"></div>
-			<div id="staff-content-workforce" style="display:none;"></div>
+			<div id="staff-content-operational" style="display:none;"></div>
 			<div id="staff-content-management" style="display:none;"></div>
 			<div id="staff-content-commercial" style="display:none;"></div>
 			<button class="staff-tab-btn active" data-type="drivers">Drivers</button>
-			<button class="staff-tab-btn" data-type="workforce">Workforce</button>
 			<button class="staff-tab-btn" data-type="management">Management</button>
+			<button class="staff-tab-btn" data-type="design">Design</button>
+			<button class="staff-tab-btn" data-type="engineering">Engineering</button>
+			<button class="staff-tab-btn" data-type="mechanics">Mechanics</button>
 			<button class="staff-tab-btn" data-type="commercial">Commercial</button>
 			<div id="staff-drivers-container"></div>
-			<div id="staff-workforce-summary"></div>
-			<div id="staff-workforce-editor"></div>
-			<input id="staff-workforce-input" type="number" />
-			<button id="staff-workforce-apply-btn">Update</button>
-			<div id="staff-workforce-payroll"></div>
-			<table><tbody id="staff-workforce-table-body"></tbody></table>
+			<div id="staff-operational-summary"></div>
+			<div id="staff-operational-payroll"></div>
+			<table><tbody id="staff-operational-table-body"></tbody></table>
 			<div id="staff-management-container"></div>
 			<div id="staff-commercial-summary"></div>
 			<div id="staff-commercial-payroll"></div>
@@ -35,6 +34,7 @@ describe('StaffView', () => {
 	it('renders management section with technical and commercial managers and supports tab switch', () => {
 		staffView.render({
 			team_name: 'Warrick',
+			factory_size: 4,
 			player_workforce: 250,
 			player_commercial_staff: 49,
 			teams: [{ name: 'Warrick', country: 'United Kingdom', workforce: 250 }],
@@ -68,6 +68,7 @@ describe('StaffView', () => {
 		staffView.setReplaceDriverHandler(onReplace);
 		staffView.render({
 			team_name: 'Warrick',
+			factory_size: 4,
 			player_workforce: 250,
 			player_commercial_staff: 49,
 			teams: [{ name: 'Warrick', country: 'United Kingdom', workforce: 250 }],
@@ -88,16 +89,24 @@ describe('StaffView', () => {
 		expect(onReplace).toHaveBeenCalledWith(2);
 	});
 
-	it('calls workforce update handler with selected value', () => {
-		const onUpdate = vi.fn();
-		staffView.setUpdateWorkforceHandler(onUpdate);
+	it('renders design department breakdown and payroll details', () => {
 		staffView.render({
 			team_name: 'Warrick',
+			factory_size: 4,
 			player_workforce: 200,
 			player_commercial_staff: 49,
-			workforce_limits: { min: 0, max: 250 },
+			workforce_limits: { min: 0, max: 320 },
+			commercial_staff_limits: { min: 0, max: 80 },
 			projected_workforce_race_cost: 320000,
 			projected_workforce_annual_cost: 5600000,
+			operational_staff: {
+				design_count: 70,
+				engineering_count: 65,
+				mechanics_count: 65,
+				design_annual_avg_wage: 25000,
+				engineering_annual_avg_wage: 22000,
+				mechanics_annual_avg_wage: 20000,
+			},
 			projected_commercial_staff_race_cost: 57647,
 			projected_commercial_staff_annual_cost: 980000,
 			commercial_staff_annual_avg_wage: 20000,
@@ -108,14 +117,48 @@ describe('StaffView', () => {
 			commercial_manager: null,
 		});
 
-		const input = document.getElementById('staff-workforce-input');
-		const apply = document.getElementById('staff-workforce-apply-btn');
-		input.value = '215';
-		apply.click();
-
-		expect(onUpdate).toHaveBeenCalledWith(215);
-		expect(document.getElementById('staff-workforce-payroll').textContent).toContain('Projected payroll');
+		document.querySelector('.staff-tab-btn[data-type="design"]').click();
+		expect(document.getElementById('staff-content-operational').style.display).toBe('block');
+		expect(document.getElementById('staff-operational-payroll').textContent).toContain('Projected payroll');
 		expect(document.getElementById('staff-commercial-payroll').textContent).toContain('Projected payroll');
+		expect(document.getElementById('staff-operational-summary').textContent).toContain('design staff');
+		expect(document.getElementById('staff-operational-summary').textContent).toContain('320');
+		expect(document.getElementById('staff-operational-table-body').textContent).toContain('Average');
+		expect(document.getElementById('staff-operational-table-body').textContent).toContain('70');
+		expect(document.getElementById('staff-operational-table-body').textContent).toContain('$25,000');
+		expect(document.getElementById('staff-commercial-summary').textContent).toContain('80');
+	});
+
+	it('switches operational tabs between design engineering and mechanics', () => {
+		staffView.render({
+			team_name: 'Ferano',
+			factory_size: 4,
+			player_workforce: 194,
+			workforce_limits: { min: 0, max: 320 },
+			races_in_season: 16,
+			operational_staff: {
+				design_count: 68,
+				engineering_count: 64,
+				mechanics_count: 62,
+				design_annual_avg_wage: 25000,
+				engineering_annual_avg_wage: 22000,
+				mechanics_annual_avg_wage: 20000,
+			},
+			drivers: [],
+			technical_director: null,
+			commercial_manager: null,
+			teams: [],
+		});
+
+		document.querySelector('.staff-tab-btn[data-type="engineering"]').click();
+		expect(document.getElementById('staff-operational-summary').textContent).toContain('engineering staff');
+		expect(document.getElementById('staff-operational-table-body').textContent).toContain('64');
+		expect(document.getElementById('staff-operational-table-body').textContent).toContain('$22,000');
+
+		document.querySelector('.staff-tab-btn[data-type="mechanics"]').click();
+		expect(document.getElementById('staff-operational-summary').textContent).toContain('mechanics staff');
+		expect(document.getElementById('staff-operational-table-body').textContent).toContain('62');
+		expect(document.getElementById('staff-operational-table-body').textContent).toContain('$20,000');
 	});
 
 	it('covers guard branches and empty states', () => {
@@ -124,11 +167,6 @@ describe('StaffView', () => {
 		expect(staffView.getWorkforceRating(0, 0)).toBe(1);
 		expect(staffView.renderSpeedBlocks(0)).toContain('Speed rating 1 out of 5');
 		expect(staffView.renderSkillBlocks(100)).toContain('Skill rating 5 out of 5');
-
-		const apply = document.getElementById('staff-workforce-apply-btn');
-		const input = document.getElementById('staff-workforce-input');
-		input.value = 'not-a-number';
-		apply.click();
 
 		staffView.render({
 			drivers: [],
@@ -139,15 +177,17 @@ describe('StaffView', () => {
 
 		expect(document.getElementById('staff-drivers-container').textContent).toContain('No drivers assigned');
 		expect(document.getElementById('staff-management-container').textContent).toContain('No management staff assigned');
-		expect(document.getElementById('staff-workforce-summary').textContent).toContain('Your team workforce');
+		expect(document.getElementById('staff-operational-summary').textContent).toContain('Your team design staff');
 		expect(document.getElementById('staff-commercial-summary').textContent).toContain('Your team commercial staff');
 	});
 
 	it('renders commercial tab content', () => {
 		staffView.render({
 			team_name: 'Schweizer',
+			factory_size: 3,
 			player_workforce: 131,
 			player_commercial_staff: 49,
+			commercial_staff_limits: { min: 0, max: 60 },
 			projected_commercial_staff_race_cost: 57647,
 			projected_commercial_staff_annual_cost: 980000,
 			commercial_staff_annual_avg_wage: 20000,
@@ -163,6 +203,7 @@ describe('StaffView', () => {
 		expect(document.getElementById('staff-commercial-table-body').textContent).toContain('Average');
 		expect(document.getElementById('staff-commercial-table-body').textContent).toContain('49');
 		expect(document.getElementById('staff-commercial-table-body').textContent).toContain('$20,000');
+		expect(document.getElementById('staff-commercial-summary').textContent).toContain('60');
 	});
 
 	it('handles management replace edge cases and management-only rendering', () => {

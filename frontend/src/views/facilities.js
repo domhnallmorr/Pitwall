@@ -105,6 +105,9 @@ export default class FacilitiesView {
 
 		const rating = data.facilities || 0;
 		const teamName = data.team_name || 'Unknown';
+		const factorySize = Number(data?.factory_size) || 1;
+		const workforceLimit = Number(data?.factory_limits?.workforce) || 0;
+		const commercialStaffLimit = Number(data?.factory_limits?.commercial_staff) || 0;
 
 		// Determine tier label and color
 		let tier, tierColor;
@@ -132,6 +135,9 @@ export default class FacilitiesView {
 					<span class="facilities-rating-number" style="color: ${tierColor}">${rating}</span>
 					<span class="facilities-rating-max">/ 100</span>
 				</div>
+				<div class="facilities-upgrade-status">
+					Factory size: <strong>${factorySize} star</strong> | Workforce cap: <strong>${workforceLimit.toLocaleString()}</strong> | Commercial cap: <strong>${commercialStaffLimit.toLocaleString()}</strong>
+				</div>
 				<div class="facilities-bar-bg">
 					<div class="facilities-bar-fill" style="width: ${rating}%; background: ${tierColor}"></div>
 				</div>
@@ -152,6 +158,7 @@ export default class FacilitiesView {
 						<th>Pos</th>
 						<th>Team</th>
 						<th>Country</th>
+						<th>Factory Size</th>
 						<th>Facilities Rating</th>
 					</tr>
 				</thead>
@@ -167,6 +174,7 @@ export default class FacilitiesView {
 				<td>${index + 1}</td>
 				<td>${team.name}</td>
 				<td>${team.country || '-'}</td>
+				<td>${team.factory_size || 1} star</td>
 				<td>${this.renderRatingBlocks(team.facilities)}</td>
 			`;
 			tbody.appendChild(tr);

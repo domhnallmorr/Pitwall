@@ -173,10 +173,10 @@ def test_rollover_sends_facilities_upgrade_summary_email(mock_load_roster, mock_
 @patch("app.core.rollover.random.choices", side_effect=[["increase"], ["decrease"], ["decrease"]])
 def test_update_ai_workforce_applies_bounds_and_skips_player(mock_choices, mock_choice):
     teams = [
-        Team(id=1, name="Player Team", country="UK", workforce=200),
-        Team(id=2, name="AI Team A", country="IT", workforce=240),
-        Team(id=3, name="AI Team B", country="FR", workforce=95),
-        Team(id=4, name="AI Team C", country="DE", workforce=90),
+        Team(id=1, name="Player Team", country="UK", factory_size=4, workforce=200, design_staff=70, engineering_staff=65, mechanics_staff=65),
+        Team(id=2, name="AI Team A", country="IT", factory_size=4, workforce=240, design_staff=80, engineering_staff=80, mechanics_staff=80),
+        Team(id=3, name="AI Team B", country="FR", factory_size=1, workforce=95, design_staff=32, engineering_staff=32, mechanics_staff=31),
+        Team(id=4, name="AI Team C", country="DE", factory_size=1, workforce=67, design_staff=20, engineering_staff=23, mechanics_staff=24),
     ]
     state = GameState(
         year=1998,
@@ -194,12 +194,16 @@ def test_update_ai_workforce_applies_bounds_and_skips_player(mock_choices, mock_
     ai_b = next(t for t in state.teams if t.id == 3)
     ai_c = next(t for t in state.teams if t.id == 4)
     assert player.workforce == 200
-    assert ai_a.workforce == 250  # 240 + 15 -> capped
-    assert ai_b.workforce == 90   # 95 - 12 -> floored
-    assert ai_c.workforce == 90   # stays at min
-    assert len(updates) == 2
-    assert any(u["team_id"] == 2 and u["old_workforce"] == 240 and u["new_workforce"] == 250 for u in updates)
-    assert any(u["team_id"] == 3 and u["old_workforce"] == 95 and u["new_workforce"] == 90 for u in updates)
+    assert ai_a.workforce == 255  # 240 + 15, within factory cap
+    assert ai_b.workforce == 83   # 95 - 12
+    assert ai_c.workforce == 60   # 67 - 12 -> floored to new minimum
+    assert ai_a.design_staff + ai_a.engineering_staff + ai_a.mechanics_staff == 255
+    assert ai_b.design_staff + ai_b.engineering_staff + ai_b.mechanics_staff == 83
+    assert ai_c.design_staff + ai_c.engineering_staff + ai_c.mechanics_staff == 60
+    assert len(updates) == 3
+    assert any(u["team_id"] == 2 and u["old_workforce"] == 240 and u["new_workforce"] == 255 for u in updates)
+    assert any(u["team_id"] == 3 and u["old_workforce"] == 95 and u["new_workforce"] == 83 for u in updates)
+    assert any(u["team_id"] == 4 and u["old_workforce"] == 67 and u["new_workforce"] == 60 for u in updates)
 
 
 @patch.object(SeasonRolloverManager, "_update_ai_workforce", return_value=[{
@@ -212,8 +216,8 @@ def test_update_ai_workforce_applies_bounds_and_skips_player(mock_choices, mock_
 @patch("app.core.rollover.load_roster", return_value=([], [], 1999, [], []))
 def test_rollover_sends_ai_workforce_summary_email(mock_load_roster, mock_workforce_update):
     teams = [
-        Team(id=1, name="Player Team", country="UK", driver1_id=1, driver2_id=2, points=10, facilities=70, workforce=200),
-        Team(id=2, name="AI Team A", country="IT", driver1_id=3, driver2_id=4, points=8, facilities=60, workforce=120),
+        Team(id=1, name="Player Team", country="UK", driver1_id=1, driver2_id=2, points=10, facilities=70, factory_size=4, workforce=200, design_staff=70, engineering_staff=65, mechanics_staff=65),
+        Team(id=2, name="AI Team A", country="IT", driver1_id=3, driver2_id=4, points=8, facilities=60, factory_size=1, workforce=120, design_staff=40, engineering_staff=40, mechanics_staff=40),
     ]
     drivers = [
         Driver(id=1, name="P1", age=30, country="UK", team_id=1),

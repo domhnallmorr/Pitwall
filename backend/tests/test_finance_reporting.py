@@ -49,8 +49,28 @@ def test_build_finance_report_summarizes_and_groups_by_track():
         week=10,
         year=1998,
         amount=-120_000,
-        category=TransactionCategory.WORKFORCE_WAGES,
-        description="Workforce payroll",
+        category=TransactionCategory.DESIGN_STAFF_WAGES,
+        description="Design staff payroll",
+        event_name="Albert Park",
+        event_type="RACE",
+        circuit_country="Australia",
+    )
+    finance.add_transaction(
+        week=10,
+        year=1998,
+        amount=-90_000,
+        category=TransactionCategory.ENGINEERING_STAFF_WAGES,
+        description="Engineering staff payroll",
+        event_name="Albert Park",
+        event_type="RACE",
+        circuit_country="Australia",
+    )
+    finance.add_transaction(
+        week=10,
+        year=1998,
+        amount=-70_000,
+        category=TransactionCategory.MECHANICS_STAFF_WAGES,
+        description="Mechanics payroll",
         event_name="Albert Park",
         event_type="RACE",
         circuit_country="Australia",
@@ -70,10 +90,13 @@ def test_build_finance_report_summarizes_and_groups_by_track():
     report = build_finance_report(state)
 
     assert report["summary"]["income_total"] == 2_500_000
-    assert report["summary"]["expense_total"] == 610_000
-    assert report["summary"]["net_profit_loss"] == 1_890_000
+    assert report["summary"]["expense_total"] == 770_000
+    assert report["summary"]["net_profit_loss"] == 1_730_000
     assert report["summary"]["transport_total"] == 350_000
-    assert report["summary"]["workforce_total"] == 120_000
+    assert report["summary"]["design_staff_total"] == 120_000
+    assert report["summary"]["engineering_staff_total"] == 90_000
+    assert report["summary"]["mechanics_staff_total"] == 70_000
+    assert report["summary"]["workforce_total"] == 280_000
     assert report["summary"]["commercial_staff_total"] == 60_000
     assert report["summary"]["engine_supplier_total"] == 0
     assert report["summary"]["tyre_supplier_total"] == 0
@@ -85,5 +108,5 @@ def test_build_finance_report_summarizes_and_groups_by_track():
     assert track["track"] == "Albert Park"
     assert track["country"] == "Australia"
     assert track["income"] == 2_500_000
-    assert track["expense"] == 530_000
-    assert track["net"] == 1_970_000
+    assert track["expense"] == 690_000
+    assert track["net"] == 1_810_000

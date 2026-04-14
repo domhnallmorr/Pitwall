@@ -25,7 +25,6 @@ const API = {
 	getEmails: () => window.electronAPI.sendToPython({ type: 'get_emails' }),
 	readEmail: (emailId) => window.electronAPI.sendToPython({ type: 'read_email', email_id: emailId }),
 	getStaff: () => window.electronAPI.sendToPython({ type: 'get_staff' }),
-	updateWorkforce: (workforce) => window.electronAPI.sendToPython({ type: 'update_workforce', workforce }),
 	getReplacementCandidates: (driverId) => window.electronAPI.sendToPython({ type: 'get_replacement_candidates', driver_id: driverId }),
 	getManagerReplacementCandidates: (managerId) => window.electronAPI.sendToPython({ type: 'get_manager_replacement_candidates', manager_id: managerId }),
 	getTechnicalDirectorReplacementCandidates: (directorId) => window.electronAPI.sendToPython({ type: 'get_technical_director_replacement_candidates', director_id: directorId }),
