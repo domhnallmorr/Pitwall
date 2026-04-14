@@ -44,6 +44,7 @@ const gameOverModal = document.getElementById('game-over-modal');
 const gameOverModalTitle = document.getElementById('game-over-modal-title');
 const gameOverModalBody = document.getElementById('game-over-modal-body');
 const gameOverModalCloseBtn = document.getElementById('game-over-modal-close-btn');
+const driverProfileBackBtn = document.getElementById('driver-profile-back-btn');
 
 // Dashboard Info
 const teamNameEl = document.getElementById('team-name');
@@ -63,6 +64,7 @@ let driverMarketView;
 let carView;
 let financeView;
 let facilitiesView;
+let previousDriverView = 'staff';
 
 function showGameOverModal({ title = 'Game Over', body = 'The career has ended.' } = {}) {
 	if (gameOverModalTitle) gameOverModalTitle.textContent = title;
@@ -72,6 +74,43 @@ function showGameOverModal({ title = 'Game Over', body = 'The career has ended.'
 
 function hideGameOverModal() {
 	if (gameOverModal) gameOverModal.style.display = 'none';
+}
+
+function goBackFromDriverProfile() {
+	if (!navigation) return;
+	const targetView = previousDriverView || 'staff';
+	navigation.showView(targetView);
+	if (targetView === 'home') {
+		API.getHome();
+	} else if (targetView === 'grid') {
+		API.getStandings();
+		API.getGrid(gridView?.getActiveYear?.());
+	} else if (targetView === 'staff') {
+		API.getStaff();
+	} else if (targetView === 'standings') {
+		API.getStandings();
+	} else if (targetView === 'driver-market') {
+		// Keep existing market content visible; no fetch needed here.
+	} else if (targetView === 'finance') {
+		API.getFinance();
+	} else if (targetView === 'calendar') {
+		API.getCalendar();
+	} else if (targetView === 'email') {
+		API.getEmails();
+	} else if (targetView === 'car') {
+		API.getCar();
+	} else if (targetView === 'facilities') {
+		API.getFacilities();
+	}
+}
+
+function openDriverProfileFromCurrentView(name) {
+	if (!name) return;
+	const currentView = navigation?.currentView;
+	if (currentView && currentView !== 'driver') {
+		previousDriverView = currentView;
+	}
+	openDriverProfile(name, navigation, API);
 }
 
 const TEAM_OPTIONS = [
@@ -100,7 +139,7 @@ function init() {
 	emailView = new EmailView();
 	staffView = new StaffView();
 	staffView.setReplaceDriverHandler((driverId) => API.getReplacementCandidates(driverId));
-	staffView.setDriverSelectHandler((name) => openDriverProfile(name, navigation, API));
+	staffView.setDriverSelectHandler((name) => openDriverProfileFromCurrentView(name));
 	staffView.setReplaceCommercialManagerHandler((managerId) => API.getManagerReplacementCandidates(managerId));
 	staffView.setReplaceTechnicalDirectorHandler((directorId) => API.getTechnicalDirectorReplacementCandidates(directorId));
 	driverView = new DriverView();
@@ -158,8 +197,8 @@ function init() {
 	facilitiesView.setPreviewHandler((points, years) => API.previewFacilitiesUpgrade(points, years));
 	facilitiesView.setStartUpgradeHandler((points, years) => API.startFacilitiesUpgrade(points, years));
 	gridView.setYearRequestHandler((year) => API.getGrid(year));
-	gridView.setDriverSelectHandler((name) => openDriverProfile(name, navigation, API));
-	standingsView.setDriverSelectHandler((name) => openDriverProfile(name, navigation, API));
+	gridView.setDriverSelectHandler((name) => openDriverProfileFromCurrentView(name));
+	standingsView.setDriverSelectHandler((name) => openDriverProfileFromCurrentView(name));
 
 	setupEventListeners();
 	setupIPC();
@@ -259,6 +298,10 @@ function setupEventListeners() {
 
 	if (gameOverModalCloseBtn) {
 		gameOverModalCloseBtn.addEventListener('click', hideGameOverModal);
+	}
+
+	if (driverProfileBackBtn) {
+		driverProfileBackBtn.addEventListener('click', goBackFromDriverProfile);
 	}
 
 	// Race View Controls

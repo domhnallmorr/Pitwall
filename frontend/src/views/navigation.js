@@ -21,6 +21,7 @@ export default class Navigation {
 			'facilities': document.getElementById('facilities-view'),
 			'standings': document.getElementById('standings-view')
 		};
+		this.currentView = 'home';
 
 		this.initListeners();
 	}
@@ -88,6 +89,7 @@ export default class Navigation {
 		Object.values(this.views).filter(Boolean).forEach((v) => { v.style.display = 'none'; });
 		if (this.views[viewName]) {
 			this.views[viewName].style.display = 'block';
+			this.currentView = viewName;
 		}
 	}
 }
