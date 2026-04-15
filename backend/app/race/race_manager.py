@@ -6,8 +6,8 @@ from app.models.state import GameState
 from app.race.constants import GRID_JITTER_RANGE_MS, POINTS_TABLE, QUALIFYING_ATTEMPTS
 from app.race.lap_simulator import simulate_lap_race
 from app.race.pace import (
+	base_pace_bonus_ms,
 	dirty_air_penalty_ms,
-	get_performance_weight,
 	grid_score,
 	qualifying_lap_time_ms,
 	lap_time_ms,
@@ -43,8 +43,11 @@ class RaceManager:
 		self._active_player_team_id: int | None = None
 		self._active_player_pit_strategies: dict[int, dict[str, Any]] = {}
 
-	def _get_performance_weight(self, driver_speed: int, car_speed: int) -> int:
-		return get_performance_weight(driver_speed, car_speed)
+	def _get_base_pace_bonus_ms(self, driver_speed: int, car_speed: int) -> int:
+		return base_pace_bonus_ms({
+			"driver_speed": driver_speed,
+			"car_speed": car_speed,
+		})
 
 	def _pick_crash_count(self, participant_count: int) -> int:
 		return pick_crash_count(participant_count)
@@ -207,7 +210,6 @@ class RaceManager:
 						"engine_power": engine_power,
 						"tyre_grip": tyre_grip,
 						"tyre_wear": tyre_wear,
-						"performance_weight": self._get_performance_weight(driver_speed, car_speed),
 					})
 
 		return participants, circuit

@@ -2,14 +2,15 @@ import random
 
 from app.models.circuit import Circuit
 from app.race.constants import (
+	CAR_PACE_MS_PER_POINT,
 	DIRTY_AIR_GAP_THRESHOLD_MS,
 	DIRTY_AIR_LAP_PENALTY_MS,
+	DRIVER_PACE_MS_PER_POINT,
 	ENGINE_POWER_MAX_EFFECT_MS,
 	FUEL_PENALTY_MS_PER_KG,
 	LAP_JITTER_RANGE_MS,
 	OVERTAKE_SUCCESS_PROBABILITY,
 	PACE_CENTER,
-	PACE_TO_MS_FACTOR,
 	QUALIFYING_JITTER_RANGE_MS,
 	TYRE_DEGRADATION_MS_PER_LAP,
 	TYRE_GRIP_MAX_EFFECT_MS,
@@ -17,12 +18,22 @@ from app.race.constants import (
 )
 
 
-def get_performance_weight(driver_speed: int, car_speed: int) -> int:
-	return max(1, int((driver_speed * 0.65) + (car_speed * 0.35)))
+def driver_pace_bonus_ms(entrant: dict) -> int:
+	driver_speed = float(entrant.get("driver_speed", PACE_CENTER) or PACE_CENTER)
+	return int(round((driver_speed - PACE_CENTER) * DRIVER_PACE_MS_PER_POINT))
+
+
+def car_pace_bonus_ms(entrant: dict) -> int:
+	car_speed = float(entrant.get("car_speed", PACE_CENTER) or PACE_CENTER)
+	return int(round((car_speed - PACE_CENTER) * CAR_PACE_MS_PER_POINT))
+
+
+def base_pace_bonus_ms(entrant: dict) -> int:
+	return driver_pace_bonus_ms(entrant) + car_pace_bonus_ms(entrant)
 
 
 def grid_score(entrant: dict, grid_jitter_range_ms: int) -> int:
-	return entrant["performance_weight"] * 1000 + random.randint(-grid_jitter_range_ms, grid_jitter_range_ms)
+	return base_pace_bonus_ms(entrant) + random.randint(-grid_jitter_range_ms, grid_jitter_range_ms)
 
 
 def tyre_grip_effect_ms(entrant: dict) -> int:
@@ -48,7 +59,7 @@ def engine_power_effect_ms(entrant: dict, circuit: Circuit) -> int:
 
 
 def lap_time_ms(entrant: dict, circuit: Circuit) -> int:
-	base_bonus_ms = int((entrant["performance_weight"] - PACE_CENTER) * PACE_TO_MS_FACTOR)
+	base_bonus_ms = base_pace_bonus_ms(entrant)
 	jitter_ms = random.randint(-LAP_JITTER_RANGE_MS, LAP_JITTER_RANGE_MS)
 	engine_adjustment_ms = engine_power_effect_ms(entrant, circuit)
 	tyre_grip_adjustment_ms = tyre_grip_effect_ms(entrant)
@@ -63,7 +74,7 @@ def lap_time_ms(entrant: dict, circuit: Circuit) -> int:
 
 
 def qualifying_lap_time_ms(entrant: dict, circuit: Circuit) -> int:
-	base_bonus_ms = int((entrant["performance_weight"] - PACE_CENTER) * PACE_TO_MS_FACTOR)
+	base_bonus_ms = base_pace_bonus_ms(entrant)
 	jitter_ms = random.randint(-QUALIFYING_JITTER_RANGE_MS, QUALIFYING_JITTER_RANGE_MS)
 	engine_adjustment_ms = engine_power_effect_ms(entrant, circuit)
 	tyre_grip_adjustment_ms = tyre_grip_effect_ms(entrant)

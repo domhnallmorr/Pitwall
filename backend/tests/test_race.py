@@ -188,11 +188,15 @@ def test_simulate_race_records_driver_season_results():
         assert entries[0]["round"] == 1
 
 
-def test_performance_weight_blends_driver_and_car_speed():
+def test_base_pace_bonus_ms_matches_driver_and_car_targets():
     manager = RaceManager()
-    assert manager._get_performance_weight(100, 100) == 100
-    assert manager._get_performance_weight(80, 40) == 66
-    assert manager._get_performance_weight(0, 0) == 1
+    neutral = manager._get_base_pace_bonus_ms(50, 50)
+    elite_driver_gap = manager._get_base_pace_bonus_ms(100, 50) - manager._get_base_pace_bonus_ms(1, 50)
+    elite_car_gap = manager._get_base_pace_bonus_ms(50, 100) - manager._get_base_pace_bonus_ms(50, 1)
+
+    assert neutral == 0
+    assert 1_950 <= elite_driver_gap <= 2_050
+    assert 4_950 <= elite_car_gap <= 5_050
 
 
 def test_simulate_race_weighting_favors_faster_driver_and_car():
@@ -404,7 +408,7 @@ def test_heavier_fuel_load_makes_lap_time_slower():
     manager = RaceManager()
     circuit = state.circuits[0]
     entrant = {
-        "performance_weight": 50,
+        "driver_speed": 50,
         "car_speed": 50,
         "engine_power": 50,
         "tyre_grip": 50,
@@ -430,7 +434,7 @@ def test_tyre_wear_makes_lap_time_slower():
     manager = RaceManager()
     circuit = state.circuits[0]
     entrant = {
-        "performance_weight": 50,
+        "driver_speed": 50,
         "car_speed": 50,
         "engine_power": 50,
         "tyre_grip": 50,
@@ -457,7 +461,7 @@ def test_more_powerful_engine_reduces_lap_time_on_power_sensitive_track():
     manager = RaceManager()
     circuit = state.circuits[0]
     entrant = {
-        "performance_weight": 50,
+        "driver_speed": 50,
         "car_speed": 50,
         "engine_power": 80,
         "tyre_grip": 50,
@@ -482,7 +486,7 @@ def test_engine_power_effect_scales_down_on_low_power_track():
     state = create_race_state()
     manager = RaceManager()
     entrant = {
-        "performance_weight": 50,
+        "driver_speed": 50,
         "car_speed": 50,
         "engine_power": 80,
         "tyre_grip": 50,
@@ -516,7 +520,7 @@ def test_more_grippy_tyres_reduce_lap_time():
     manager = RaceManager()
     circuit = state.circuits[0]
     entrant = {
-        "performance_weight": 50,
+        "driver_speed": 50,
         "car_speed": 50,
         "engine_power": 50,
         "tyre_grip": 80,
@@ -542,7 +546,7 @@ def test_more_durable_tyres_reduce_stint_degradation():
     manager = RaceManager()
     circuit = state.circuits[0]
     entrant = {
-        "performance_weight": 50,
+        "driver_speed": 50,
         "car_speed": 50,
         "engine_power": 50,
         "tyre_grip": 50,
