@@ -56,6 +56,12 @@ DRIVER_SPEEDS = {
     "Giovanni Palermo": 57,
     "Tobias Ginter": 66,
     "Giacomo Bellini": 62,
+    "Teo Madeira": 57,
+    "Naveen Kapoor": 55,
+    "Ruben de Vos": 52,
+    "Peter Fischer": 50,
+    "Casper Amstel": 58,
+    "Valerio Lombardi": 59,
 }
 
 DRIVER_RACE_STARTS = {
@@ -116,6 +122,12 @@ DRIVER_RACE_STARTS = {
     "Giovanni Palermo": 0,
     "Tobias Ginter": 0,
     "Giacomo Bellini": 0,
+    "Teo Madeira": 0,
+    "Naveen Kapoor": 0,
+    "Ruben de Vos": 0,
+    "Peter Fischer": 0,
+    "Casper Amstel": 0,
+    "Valerio Lombardi": 0,
 }
 
 DRIVER_WINS = {
@@ -176,6 +188,12 @@ DRIVER_WINS = {
     "Giovanni Palermo": 0,
     "Tobias Ginter": 0,
     "Giacomo Bellini": 0,
+    "Teo Madeira": 0,
+    "Naveen Kapoor": 0,
+    "Ruben de Vos": 0,
+    "Peter Fischer": 0,
+    "Casper Amstel": 0,
+    "Valerio Lombardi": 0,
 }
 
 DRIVER_PODIUMS = {
@@ -286,6 +304,12 @@ DRIVER_CONTRACT_LENGTHS = {
     "Giovanni Palermo": 0,
     "Tobias Ginter": 0,
     "Giacomo Bellini": 0,
+    "Teo Madeira": 0,
+    "Naveen Kapoor": 0,
+    "Ruben de Vos": 0,
+    "Peter Fischer": 0,
+    "Casper Amstel": 0,
+    "Valerio Lombardi": 0,
 }
 
 TEAM_SPEEDS = {
@@ -671,6 +695,12 @@ FUTURE_DRIVERS_DATA = [
     (2003, "Giovanni Palermo", 24, "Italy", 0, 0),
     (2003, "Tobias Ginter", 21, "Germany", 0, 0),
     (2003, "Giacomo Bellini", 22, "Italy", 0, 0),
+    (2004, "Teo Madeira", 29, "Portugal", 0, 0),
+    (2004, "Naveen Kapoor", 28, "India", 0, 0),
+    (2004, "Ruben de Vos", 24, "Netherlands", 0, 0),
+    (2004, "Peter Fischer", 25, "Austria", 0, 0),
+    (2004, "Casper Amstel", 26, "Netherlands", 0, 0),
+    (2004, "Valerio Lombardi", 25, "Italy", 0, 0),
 ]
 
 CALENDAR_EVENTS_BASE = [
@@ -762,6 +792,12 @@ DRIVERS_DATA = [
     (2003, "Giovanni Palermo", 24, "Italy", 0, 0),
     (2003, "Tobias Ginter", 21, "Germany", 0, 0),
     (2003, "Giacomo Bellini", 22, "Italy", 0, 0),
+    (2004, "Teo Madeira", 29, "Portugal", 0, 0),
+    (2004, "Naveen Kapoor", 28, "India", 0, 0),
+    (2004, "Ruben de Vos", 24, "Netherlands", 0, 0),
+    (2004, "Peter Fischer", 25, "Austria", 0, 0),
+    (2004, "Casper Amstel", 26, "Netherlands", 0, 0),
+    (2004, "Valerio Lombardi", 25, "Italy", 0, 0),
 ]
 
 TEAMS_DATA = [
