@@ -4,6 +4,12 @@ from typing import Optional
 from app.models.calendar import Event, EventType
 from app.models.finance import TransactionCategory
 from app.models.state import GameState
+from app.core.finance_event_charges import (
+    count_races,
+    event_matches,
+    post_event_transaction,
+    resolve_event_charge_context,
+)
 
 
 @dataclass
@@ -19,7 +25,7 @@ class ManagementSalaryCharge:
 
 class ManagementSalaryManager:
     def _count_races(self, state: GameState) -> int:
-        return max(1, sum(1 for e in state.calendar.events if e.type == EventType.RACE))
+        return count_races(state)
 
     def calculate_race_salary(self, annual_salary: int, races_in_season: int) -> int:
         return max(0, int(round(max(0, annual_salary) / max(1, races_in_season))))
@@ -27,12 +33,11 @@ class ManagementSalaryManager:
     def charge_for_event(self, state: GameState, event: Optional[Event]) -> list[ManagementSalaryCharge]:
         if not state.player_team:
             return []
-        if event is None or event.type != EventType.RACE:
+        if not event_matches(event, [EventType.RACE]):
             return []
 
         races_in_season = self._count_races(state)
-        circuit = next((c for c in state.circuits if c.name == event.name), None)
-        country = circuit.country if circuit else "Unknown"
+        context = resolve_event_charge_context(state, event)
         charges: list[ManagementSalaryCharge] = []
 
         team_id = state.player_team_id
@@ -51,15 +56,12 @@ class ManagementSalaryManager:
             if race_salary <= 0:
                 continue
 
-            state.finance.add_transaction(
-                week=state.calendar.current_week,
-                year=state.year,
+            post_event_transaction(
+                state,
+                context,
                 amount=-race_salary,
                 category=TransactionCategory.MANAGEMENT_SALARIES,
                 description=f"Race salary: {staff_member.name} ({role_name})",
-                event_name=event.name,
-                event_type=event.type.value,
-                circuit_country=country,
             )
 
             charges.append(
@@ -69,8 +71,8 @@ class ManagementSalaryManager:
                     annual_salary=annual_salary,
                     races_in_season=races_in_season,
                     applied_cost=race_salary,
-                    event_name=event.name,
-                    country=country,
+                    event_name=context.event_name,
+                    country=context.country,
                 )
             )
 
