@@ -4,6 +4,7 @@ from unittest.mock import patch
 import app.main as app_main
 from app.main import process_command
 from app.core.roster import load_roster
+from app.core.rollover import SeasonRolloverManager
 from app.models.finance import TransactionCategory
 from app.core.crash_damage import DamageTier
 from tools.seed_roster import create_schema, seed_data
@@ -228,6 +229,99 @@ def test_simulate_race_posts_expected_finance_categories_and_summary(mock_get_co
     assert summary['factory_overhead_total'] > 0
     assert summary['engine_supplier_total'] < 0
     assert summary['transport_total'] > 0
+
+
+@patch('app.core.player_engine_negotiations.random.uniform', return_value=0.0)
+@patch('app.core.roster.get_connection')
+def test_engine_negotiation_progresses_only_after_race_and_keeps_assigned_staff(
+    mock_get_conn,
+    mock_uniform,
+    test_db,
+):
+    mock_get_conn.return_value = test_db
+    app_main.CURRENT_STATE = None
+
+    start_response = process_command({'type': 'start_career', 'team_name': 'Schweizer'})
+    assert start_response['status'] == 'success'
+
+    market_response = process_command({'type': 'get_engine_negotiation_market'})
+    assert market_response['status'] == 'success'
+    suppliers = market_response['data']['suppliers']
+    assert suppliers
+
+    supplier_id = suppliers[0]['id']
+    start_negotiation_response = process_command({'type': 'start_engine_negotiation', 'supplier_id': supplier_id})
+    assert start_negotiation_response['status'] == 'success'
+    assert start_negotiation_response['type'] == 'engine_negotiation_updated'
+
+    update_staff_response = process_command({'type': 'update_engine_negotiation_staff', 'assigned_staff': 20})
+    assert update_staff_response['status'] == 'success'
+    assert update_staff_response['data']['active_negotiation']['assigned_staff'] == 20
+
+    app_main.CURRENT_STATE.calendar.current_week = 10
+    starting_progress = app_main.CURRENT_STATE.player_engine_negotiation['progress']
+    starting_boxes = app_main.CURRENT_STATE.player_engine_negotiation['progress_boxes']
+
+    qualifying_response = process_command({'type': 'simulate_qualifying'})
+    assert qualifying_response['status'] == 'success'
+    assert app_main.CURRENT_STATE.player_engine_negotiation['progress'] == starting_progress
+    assert app_main.CURRENT_STATE.player_engine_negotiation['progress_boxes'] == starting_boxes
+    assert app_main.CURRENT_STATE.player_engine_negotiation['assigned_staff'] == 20
+
+    race_response = process_command({'type': 'simulate_race'})
+    assert race_response['status'] == 'success'
+    assert app_main.CURRENT_STATE.player_engine_negotiation['progress'] > starting_progress
+    assert app_main.CURRENT_STATE.player_engine_negotiation['progress_boxes'] >= starting_boxes
+    assert app_main.CURRENT_STATE.player_engine_negotiation['assigned_staff'] == 20
+
+    finance_response = process_command({'type': 'get_finance'})
+    assert finance_response['status'] == 'success'
+    active_negotiation = finance_response['data']['engine_negotiation']['active_negotiation']
+    assert active_negotiation is not None
+    assert active_negotiation['assigned_staff'] == 20
+    assert active_negotiation['progress'] > starting_progress
+
+
+@patch('app.core.rollover.load_roster', return_value=([], [], 1999, [], []))
+@patch('app.core.roster.get_connection')
+def test_signed_engine_negotiation_applies_agreed_terms_at_rollover(mock_get_conn, mock_load_roster, test_db):
+    mock_get_conn.return_value = test_db
+    app_main.CURRENT_STATE = None
+
+    start_response = process_command({'type': 'start_career', 'team_name': 'Schweizer'})
+    assert start_response['status'] == 'success'
+
+    market_response = process_command({'type': 'get_engine_negotiation_market'})
+    assert market_response['status'] == 'success'
+    supplier = market_response['data']['suppliers'][0]
+
+    start_negotiation_response = process_command({'type': 'start_engine_negotiation', 'supplier_id': supplier['id']})
+    assert start_negotiation_response['status'] == 'success'
+
+    negotiation = app_main.CURRENT_STATE.player_engine_negotiation
+    customer_threshold = negotiation['customer_threshold']
+    negotiated_cost = negotiation['annual_values']['customer']
+    negotiated_length = negotiation['contract_length']
+
+    app_main.CURRENT_STATE.player_engine_negotiation['progress'] = float(customer_threshold)
+    app_main.CURRENT_STATE.player_engine_negotiation['progress_boxes'] = customer_threshold
+
+    sign_response = process_command({'type': 'sign_engine_negotiated_deal', 'tier': 'customer'})
+    assert sign_response['status'] == 'success'
+    assert sign_response['type'] == 'engine_negotiation_signed'
+    assert sign_response['data']['supplier_name'] == supplier['name']
+    assert sign_response['data']['deal_type'] == 'customer'
+    assert sign_response['data']['yearly_cost'] == negotiated_cost
+    assert sign_response['data']['contract_length'] == negotiated_length
+
+    rollover_result = SeasonRolloverManager().process_rollover(app_main.CURRENT_STATE)
+
+    assert rollover_result['new_year'] == 1999
+    assert app_main.CURRENT_STATE.year == 1999
+    assert app_main.CURRENT_STATE.player_team.engine_supplier_name == supplier['name']
+    assert app_main.CURRENT_STATE.player_team.engine_supplier_deal == 'customer'
+    assert app_main.CURRENT_STATE.player_team.engine_supplier_yearly_cost == negotiated_cost
+    assert app_main.CURRENT_STATE.player_team.engine_supplier_contract_length == negotiated_length
 
 
 @patch('app.core.roster.get_connection')

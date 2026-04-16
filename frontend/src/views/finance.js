@@ -3,6 +3,110 @@
  * Displays team balance, commercial deals, suppliers, and ledger data.
  */
 
+import {
+	formatMoney,
+	renderEngineNegotiationDetail,
+	renderEngineNegotiationSupplierList,
+	renderTitleSponsorNegotiationDetail,
+	renderTitleSponsorNegotiationSupplierList,
+	renderTrackProfitLossHtml,
+	renderTransactionsHtml,
+} from './finance_renderers.js';
+
+const ELEMENT_GROUPS = {
+	overview: {
+		balanceEl: 'finance-balance-value',
+		netPlEl: 'finance-net-pl',
+		projectedBalanceEl: 'finance-projected-balance',
+		nextRaceNetEl: 'finance-next-race-net',
+		prizeRemainingEl: 'finance-prize-remaining',
+		prizeProgressEl: 'finance-prize-progress',
+		prizeOutlookEl: 'finance-prize-outlook',
+		facilitiesStatusEl: 'finance-facilities-status',
+		contractAlertsEl: 'finance-contract-alerts',
+		incomeTotalEl: 'finance-income-total',
+		netIncomeTotalEl: 'finance-net-income-total',
+		netExpenseTotalEl: 'finance-net-expense-total',
+		netPlBreakdownEl: 'finance-net-pl-breakdown',
+		expenseTotalEl: 'finance-expense-total',
+		prizeMoneyTotalEl: 'finance-prize-money-total',
+		payDriverTotalEl: 'finance-pay-driver-total',
+		engineIncomeTotalEl: 'finance-engine-income-total',
+		transportTotalEl: 'finance-transport-total',
+		crashDamageTotalEl: 'finance-crash-damage-total',
+		maintenanceTotalEl: 'finance-maintenance-total',
+		testingTotalEl: 'finance-testing-total',
+		driverWagesTotalEl: 'finance-driver-wages-total',
+		managementSalaryTotalEl: 'finance-management-salary-total',
+		designStaffTotalEl: 'finance-design-staff-total',
+		engineeringStaffTotalEl: 'finance-engineering-staff-total',
+		mechanicsStaffTotalEl: 'finance-mechanics-staff-total',
+		commercialStaffTotalEl: 'finance-commercial-staff-total',
+		factoryOverheadTotalEl: 'finance-factory-overhead-total',
+		engineSupplierTotalEl: 'finance-engine-supplier-total',
+		tyreSupplierTotalEl: 'finance-tyre-supplier-total',
+		fuelSupplierTotalEl: 'finance-fuel-supplier-total',
+		fuelIncomeTotalEl: 'finance-fuel-income-total',
+		fuelExpenseTotalEl: 'finance-fuel-expense-total',
+		facilitiesTotalEl: 'finance-facilities-total',
+		sponsorshipTotalEl: 'finance-sponsorship-total',
+	},
+	commercial: {
+		sponsorNameEl: 'finance-sponsor-name',
+		sponsorReplaceBtn: 'finance-sponsor-replace-btn',
+		sponsorAnnualEl: 'finance-sponsor-annual',
+		sponsorInstallmentEl: 'finance-sponsor-installment',
+		sponsorPaidEl: 'finance-sponsor-paid',
+		sponsorRemainingEl: 'finance-sponsor-remaining',
+		sponsorLogoWrap: 'finance-sponsor-logo-wrap',
+		otherSponsorshipNameEl: 'finance-other-sponsorship-name',
+		otherSponsorshipAnnualEl: 'finance-other-sponsorship-annual',
+		otherSponsorshipInstallmentEl: 'finance-other-sponsorship-installment',
+		otherSponsorshipPaidEl: 'finance-other-sponsorship-paid',
+		otherSponsorshipRemainingEl: 'finance-other-sponsorship-remaining',
+		otherSponsorshipLogoWrap: 'finance-other-sponsorship-logo-wrap',
+	},
+	suppliers: {
+		engineSupplierReplaceBtn: 'finance-engine-supplier-replace-btn',
+		tyreSupplierReplaceBtn: 'finance-tyre-supplier-replace-btn',
+		engineSupplierNameEl: 'finance-engine-supplier-name',
+		engineSupplierDealEl: 'finance-engine-supplier-deal',
+		engineSupplierAnnualEl: 'finance-engine-supplier-annual',
+		engineSupplierInstallmentEl: 'finance-engine-supplier-installment',
+		engineSupplierPaidEl: 'finance-engine-supplier-paid',
+		engineSupplierRemainingEl: 'finance-engine-supplier-remaining',
+		engineSupplierLogoWrap: 'finance-engine-supplier-logo-wrap',
+		tyreSupplierNameEl: 'finance-tyre-supplier-name',
+		tyreSupplierDealEl: 'finance-tyre-supplier-deal',
+		tyreSupplierAnnualEl: 'finance-tyre-supplier-annual',
+		tyreSupplierInstallmentEl: 'finance-tyre-supplier-installment',
+		tyreSupplierPaidEl: 'finance-tyre-supplier-paid',
+		tyreSupplierRemainingEl: 'finance-tyre-supplier-remaining',
+		tyreSupplierLogoWrap: 'finance-tyre-supplier-logo-wrap',
+		fuelSupplierNameEl: 'finance-fuel-supplier-name',
+		fuelSupplierDealEl: 'finance-fuel-supplier-deal',
+		fuelSupplierAnnualEl: 'finance-fuel-supplier-annual',
+		fuelSupplierInstallmentEl: 'finance-fuel-supplier-installment',
+		fuelSupplierPaidEl: 'finance-fuel-supplier-paid',
+		fuelSupplierRemainingEl: 'finance-fuel-supplier-remaining',
+		fuelSupplierLogoWrap: 'finance-fuel-supplier-logo-wrap',
+	},
+	ledger: {
+		trackPlBody: 'finance-track-pl-body',
+		tbody: 'finance-transactions-body',
+	},
+	modals: {
+		titleSponsorNegotiationModal: 'finance-title-sponsor-negotiation-modal',
+		titleSponsorNegotiationCloseBtn: 'finance-title-sponsor-negotiation-close-btn',
+		titleSponsorNegotiationSponsorsEl: 'finance-title-sponsor-negotiation-sponsors',
+		titleSponsorNegotiationDetailEl: 'finance-title-sponsor-negotiation-detail',
+		engineNegotiationModal: 'finance-engine-negotiation-modal',
+		engineNegotiationCloseBtn: 'finance-engine-negotiation-close-btn',
+		engineNegotiationSuppliersEl: 'finance-engine-negotiation-suppliers',
+		engineNegotiationDetailEl: 'finance-engine-negotiation-detail',
+	},
+};
+
 export default class FinanceView {
 	constructor() {
 		this.tabBtns = document.querySelectorAll('.finance-tab-btn');
@@ -12,87 +116,10 @@ export default class FinanceView {
 			suppliers: document.getElementById('finance-content-suppliers'),
 			ledger: document.getElementById('finance-content-ledger'),
 		};
-		this.balanceEl = document.getElementById('finance-balance-value');
-		this.netPlEl = document.getElementById('finance-net-pl');
-		this.projectedBalanceEl = document.getElementById('finance-projected-balance');
-		this.nextRaceNetEl = document.getElementById('finance-next-race-net');
-		this.prizeRemainingEl = document.getElementById('finance-prize-remaining');
-		this.prizeProgressEl = document.getElementById('finance-prize-progress');
-		this.prizeOutlookEl = document.getElementById('finance-prize-outlook');
-		this.facilitiesStatusEl = document.getElementById('finance-facilities-status');
-		this.contractAlertsEl = document.getElementById('finance-contract-alerts');
-		this.incomeTotalEl = document.getElementById('finance-income-total');
-		this.netIncomeTotalEl = document.getElementById('finance-net-income-total');
-		this.netExpenseTotalEl = document.getElementById('finance-net-expense-total');
-		this.netPlBreakdownEl = document.getElementById('finance-net-pl-breakdown');
-		this.expenseTotalEl = document.getElementById('finance-expense-total');
-		this.prizeMoneyTotalEl = document.getElementById('finance-prize-money-total');
-		this.payDriverTotalEl = document.getElementById('finance-pay-driver-total');
-		this.engineIncomeTotalEl = document.getElementById('finance-engine-income-total');
-		this.transportTotalEl = document.getElementById('finance-transport-total');
-		this.crashDamageTotalEl = document.getElementById('finance-crash-damage-total');
-		this.maintenanceTotalEl = document.getElementById('finance-maintenance-total');
-		this.testingTotalEl = document.getElementById('finance-testing-total');
-		this.driverWagesTotalEl = document.getElementById('finance-driver-wages-total');
-		this.managementSalaryTotalEl = document.getElementById('finance-management-salary-total');
-		this.designStaffTotalEl = document.getElementById('finance-design-staff-total');
-		this.engineeringStaffTotalEl = document.getElementById('finance-engineering-staff-total');
-		this.mechanicsStaffTotalEl = document.getElementById('finance-mechanics-staff-total');
-		this.commercialStaffTotalEl = document.getElementById('finance-commercial-staff-total');
-		this.factoryOverheadTotalEl = document.getElementById('finance-factory-overhead-total');
-		this.engineSupplierTotalEl = document.getElementById('finance-engine-supplier-total');
-		this.tyreSupplierTotalEl = document.getElementById('finance-tyre-supplier-total');
-		this.fuelSupplierTotalEl = document.getElementById('finance-fuel-supplier-total');
-		this.fuelIncomeTotalEl = document.getElementById('finance-fuel-income-total');
-		this.fuelExpenseTotalEl = document.getElementById('finance-fuel-expense-total');
-		this.facilitiesTotalEl = document.getElementById('finance-facilities-total');
-		this.sponsorshipTotalEl = document.getElementById('finance-sponsorship-total');
-		this.sponsorNameEl = document.getElementById('finance-sponsor-name');
-		this.sponsorReplaceBtn = document.getElementById('finance-sponsor-replace-btn');
-		this.engineSupplierReplaceBtn = document.getElementById('finance-engine-supplier-replace-btn');
-		this.tyreSupplierReplaceBtn = document.getElementById('finance-tyre-supplier-replace-btn');
-		this.sponsorAnnualEl = document.getElementById('finance-sponsor-annual');
-		this.sponsorInstallmentEl = document.getElementById('finance-sponsor-installment');
-		this.sponsorPaidEl = document.getElementById('finance-sponsor-paid');
-		this.sponsorRemainingEl = document.getElementById('finance-sponsor-remaining');
-		this.sponsorLogoWrap = document.getElementById('finance-sponsor-logo-wrap');
-		this.otherSponsorshipNameEl = document.getElementById('finance-other-sponsorship-name');
-		this.otherSponsorshipAnnualEl = document.getElementById('finance-other-sponsorship-annual');
-		this.otherSponsorshipInstallmentEl = document.getElementById('finance-other-sponsorship-installment');
-		this.otherSponsorshipPaidEl = document.getElementById('finance-other-sponsorship-paid');
-		this.otherSponsorshipRemainingEl = document.getElementById('finance-other-sponsorship-remaining');
-		this.otherSponsorshipLogoWrap = document.getElementById('finance-other-sponsorship-logo-wrap');
-		this.engineSupplierNameEl = document.getElementById('finance-engine-supplier-name');
-		this.engineSupplierDealEl = document.getElementById('finance-engine-supplier-deal');
-		this.engineSupplierAnnualEl = document.getElementById('finance-engine-supplier-annual');
-		this.engineSupplierInstallmentEl = document.getElementById('finance-engine-supplier-installment');
-		this.engineSupplierPaidEl = document.getElementById('finance-engine-supplier-paid');
-		this.engineSupplierRemainingEl = document.getElementById('finance-engine-supplier-remaining');
-		this.engineSupplierLogoWrap = document.getElementById('finance-engine-supplier-logo-wrap');
-		this.tyreSupplierNameEl = document.getElementById('finance-tyre-supplier-name');
-		this.tyreSupplierDealEl = document.getElementById('finance-tyre-supplier-deal');
-		this.tyreSupplierAnnualEl = document.getElementById('finance-tyre-supplier-annual');
-		this.tyreSupplierInstallmentEl = document.getElementById('finance-tyre-supplier-installment');
-		this.tyreSupplierPaidEl = document.getElementById('finance-tyre-supplier-paid');
-		this.tyreSupplierRemainingEl = document.getElementById('finance-tyre-supplier-remaining');
-		this.tyreSupplierLogoWrap = document.getElementById('finance-tyre-supplier-logo-wrap');
-		this.fuelSupplierNameEl = document.getElementById('finance-fuel-supplier-name');
-		this.fuelSupplierDealEl = document.getElementById('finance-fuel-supplier-deal');
-		this.fuelSupplierAnnualEl = document.getElementById('finance-fuel-supplier-annual');
-		this.fuelSupplierInstallmentEl = document.getElementById('finance-fuel-supplier-installment');
-		this.fuelSupplierPaidEl = document.getElementById('finance-fuel-supplier-paid');
-		this.fuelSupplierRemainingEl = document.getElementById('finance-fuel-supplier-remaining');
-		this.fuelSupplierLogoWrap = document.getElementById('finance-fuel-supplier-logo-wrap');
-		this.trackPlBody = document.getElementById('finance-track-pl-body');
-		this.tbody = document.getElementById('finance-transactions-body');
-		this.titleSponsorNegotiationModal = document.getElementById('finance-title-sponsor-negotiation-modal');
-		this.titleSponsorNegotiationCloseBtn = document.getElementById('finance-title-sponsor-negotiation-close-btn');
-		this.titleSponsorNegotiationSponsorsEl = document.getElementById('finance-title-sponsor-negotiation-sponsors');
-		this.titleSponsorNegotiationDetailEl = document.getElementById('finance-title-sponsor-negotiation-detail');
-		this.engineNegotiationModal = document.getElementById('finance-engine-negotiation-modal');
-		this.engineNegotiationCloseBtn = document.getElementById('finance-engine-negotiation-close-btn');
-		this.engineNegotiationSuppliersEl = document.getElementById('finance-engine-negotiation-suppliers');
-		this.engineNegotiationDetailEl = document.getElementById('finance-engine-negotiation-detail');
+		for (const group of Object.values(ELEMENT_GROUPS)) {
+			Object.assign(this, this.lookupElements(group));
+		}
+
 		this.engineNegotiationData = null;
 		this.titleSponsorNegotiationData = null;
 		this.onReplaceTitleSponsor = null;
@@ -104,55 +131,31 @@ export default class FinanceView {
 		this.onStartTitleSponsorNegotiation = null;
 		this.onUpdateTitleSponsorNegotiationStaff = null;
 		this.onSignTitleSponsorNegotiatedDeal = null;
+
 		this.bindTabs();
 		this.bindSponsorActions();
 		this.bindTitleSponsorNegotiationModal();
 		this.bindEngineNegotiationModal();
 	}
 
-	setReplaceTitleSponsorHandler(handler) {
-		this.onReplaceTitleSponsor = handler;
+	lookupElements(group) {
+		return Object.fromEntries(
+			Object.entries(group).map(([key, id]) => [key, document.getElementById(id)]),
+		);
 	}
 
-	setStartTitleSponsorNegotiationHandler(handler) {
-		this.onStartTitleSponsorNegotiation = handler;
-	}
+	setReplaceTitleSponsorHandler(handler) { this.onReplaceTitleSponsor = handler; }
+	setStartTitleSponsorNegotiationHandler(handler) { this.onStartTitleSponsorNegotiation = handler; }
+	setUpdateTitleSponsorNegotiationStaffHandler(handler) { this.onUpdateTitleSponsorNegotiationStaff = handler; }
+	setSignTitleSponsorNegotiatedDealHandler(handler) { this.onSignTitleSponsorNegotiatedDeal = handler; }
+	setReplaceTyreSupplierHandler(handler) { this.onReplaceTyreSupplier = handler; }
+	setReplaceEngineSupplierHandler(handler) { this.onReplaceEngineSupplier = handler; }
+	setStartEngineNegotiationHandler(handler) { this.onStartEngineNegotiation = handler; }
+	setUpdateEngineNegotiationStaffHandler(handler) { this.onUpdateEngineNegotiationStaff = handler; }
+	setSignEngineNegotiatedDealHandler(handler) { this.onSignEngineNegotiatedDeal = handler; }
 
-	setUpdateTitleSponsorNegotiationStaffHandler(handler) {
-		this.onUpdateTitleSponsorNegotiationStaff = handler;
-	}
-
-	setSignTitleSponsorNegotiatedDealHandler(handler) {
-		this.onSignTitleSponsorNegotiatedDeal = handler;
-	}
-
-	setReplaceTyreSupplierHandler(handler) {
-		this.onReplaceTyreSupplier = handler;
-	}
-
-	setReplaceEngineSupplierHandler(handler) {
-		this.onReplaceEngineSupplier = handler;
-	}
-
-	setStartEngineNegotiationHandler(handler) {
-		this.onStartEngineNegotiation = handler;
-	}
-
-	setUpdateEngineNegotiationStaffHandler(handler) {
-		this.onUpdateEngineNegotiationStaff = handler;
-	}
-
-	setSignEngineNegotiatedDealHandler(handler) {
-		this.onSignEngineNegotiatedDeal = handler;
-	}
-
-	formatMoney(value, { signed = false } = {}) {
-		const amount = Number(value || 0);
-		const formatted = `$${Math.abs(amount).toLocaleString()}`;
-		if (!signed) {
-			return amount < 0 ? `-${formatted}` : formatted;
-		}
-		return amount >= 0 ? `+${formatted}` : `-${formatted}`;
+	formatMoney(value, options = {}) {
+		return formatMoney(value, options);
 	}
 
 	applyMoneyState(element, value, { signed = false } = {}) {
@@ -164,6 +167,10 @@ export default class FinanceView {
 			: 'finance-balance-amount';
 	}
 
+	setText(element, value) {
+		if (element) element.textContent = value;
+	}
+
 	setSupplierLogo(targetWrap, supplierName) {
 		if (!targetWrap) return;
 		if (!supplierName) {
@@ -171,14 +178,27 @@ export default class FinanceView {
 			return;
 		}
 		const slug = supplierName.toLowerCase().replace(/\s+/g, '-');
-		const fileNameBySlug = {
-			hartek: 'harteck',
-		};
+		const fileNameBySlug = { hartek: 'harteck' };
 		const preferred = fileNameBySlug[slug] || slug;
 		const fallback = `${slug}.png`;
 		targetWrap.innerHTML = `
 			<img class="supplier-logo" src="assets/supplier_logos/${preferred}.png" alt="${supplierName} logo"
 				onerror="if(!this.dataset.f1){this.dataset.f1='1';this.src='assets/supplier_logos/${fallback}';}else{this.style.display='none';}">
+		`;
+	}
+
+	setSponsorLogo(targetWrap, sponsorName) {
+		if (!targetWrap) return;
+		if (!sponsorName) {
+			targetWrap.innerHTML = '';
+			return;
+		}
+		const encodedOriginal = encodeURIComponent(sponsorName);
+		const encodedLower = encodeURIComponent(sponsorName.toLowerCase());
+		const encodedUpper = encodeURIComponent(sponsorName.toUpperCase());
+		targetWrap.innerHTML = `
+			<img class="sponsor-logo" src="assets/sponsor_logos/${encodedOriginal}.png" alt="${sponsorName} logo"
+				onerror="if(!this.dataset.f1){this.dataset.f1='1';this.src='assets/sponsor_logos/${encodedLower}.png';}else if(!this.dataset.f2){this.dataset.f2='1';this.src='assets/sponsor_logos/${encodedUpper}.png';}else{this.style.display='none';}">
 		`;
 	}
 
@@ -207,23 +227,20 @@ export default class FinanceView {
 		if (this.sponsorReplaceBtn) {
 			this.sponsorReplaceBtn.addEventListener('click', () => {
 				if (!this.onReplaceTitleSponsor) return;
-				const sponsorName = this.sponsorReplaceBtn.getAttribute('data-sponsor-name');
-				this.onReplaceTitleSponsor(sponsorName || null);
+				this.onReplaceTitleSponsor(this.sponsorReplaceBtn.getAttribute('data-sponsor-name') || null);
 			});
 		}
 		if (this.engineSupplierReplaceBtn) {
 			this.engineSupplierReplaceBtn.addEventListener('click', () => {
 				if (!this.onReplaceEngineSupplier) return;
-				const supplierName = this.engineSupplierReplaceBtn.getAttribute('data-supplier-name');
-				this.onReplaceEngineSupplier(supplierName || null);
+				this.onReplaceEngineSupplier(this.engineSupplierReplaceBtn.getAttribute('data-supplier-name') || null);
 			});
 		}
 		if (this.tyreSupplierReplaceBtn) {
 			this.tyreSupplierReplaceBtn.addEventListener('click', () => {
 				if (!this.onReplaceTyreSupplier) return;
 				const supplierName = this.tyreSupplierReplaceBtn.getAttribute('data-supplier-name');
-				if (!supplierName) return;
-				this.onReplaceTyreSupplier(supplierName);
+				if (supplierName) this.onReplaceTyreSupplier(supplierName);
 			});
 		}
 	}
@@ -234,30 +251,26 @@ export default class FinanceView {
 		}
 		if (this.titleSponsorNegotiationModal) {
 			this.titleSponsorNegotiationModal.addEventListener('click', (event) => {
-				if (event.target === this.titleSponsorNegotiationModal) {
-					this.hideTitleSponsorNegotiationModal();
-				}
+				if (event.target === this.titleSponsorNegotiationModal) this.hideTitleSponsorNegotiationModal();
 			});
 		}
 		if (this.titleSponsorNegotiationSponsorsEl) {
 			this.titleSponsorNegotiationSponsorsEl.addEventListener('click', (event) => {
 				const button = event.target.closest('[data-title-sponsor-id]');
-				if (!button || !this.onStartTitleSponsorNegotiation) return;
-				this.onStartTitleSponsorNegotiation(Number(button.getAttribute('data-title-sponsor-id')));
+				if (button && this.onStartTitleSponsorNegotiation) {
+					this.onStartTitleSponsorNegotiation(Number(button.getAttribute('data-title-sponsor-id')));
+				}
 			});
 		}
 		if (this.titleSponsorNegotiationDetailEl) {
 			this.titleSponsorNegotiationDetailEl.addEventListener('click', (event) => {
-				const signButton = event.target.closest('#finance-title-sponsor-negotiation-sign-btn');
-				if (signButton && this.onSignTitleSponsorNegotiatedDeal) {
+				if (event.target.closest('#finance-title-sponsor-negotiation-sign-btn') && this.onSignTitleSponsorNegotiatedDeal) {
 					this.onSignTitleSponsorNegotiatedDeal();
 					return;
 				}
-				const applyButton = event.target.closest('#finance-title-sponsor-negotiation-apply-staff');
-				if (applyButton && this.onUpdateTitleSponsorNegotiationStaff) {
+				if (event.target.closest('#finance-title-sponsor-negotiation-apply-staff') && this.onUpdateTitleSponsorNegotiationStaff) {
 					const input = document.getElementById('finance-title-sponsor-negotiation-staff');
-					if (!input) return;
-					this.onUpdateTitleSponsorNegotiationStaff(Number(input.value || 0));
+					if (input) this.onUpdateTitleSponsorNegotiationStaff(Number(input.value || 0));
 				}
 			});
 		}
@@ -269,16 +282,15 @@ export default class FinanceView {
 		}
 		if (this.engineNegotiationModal) {
 			this.engineNegotiationModal.addEventListener('click', (event) => {
-				if (event.target === this.engineNegotiationModal) {
-					this.hideEngineNegotiationModal();
-				}
+				if (event.target === this.engineNegotiationModal) this.hideEngineNegotiationModal();
 			});
 		}
 		if (this.engineNegotiationSuppliersEl) {
 			this.engineNegotiationSuppliersEl.addEventListener('click', (event) => {
 				const button = event.target.closest('[data-engine-supplier-id]');
-				if (!button || !this.onStartEngineNegotiation) return;
-				this.onStartEngineNegotiation(Number(button.getAttribute('data-engine-supplier-id')));
+				if (button && this.onStartEngineNegotiation) {
+					this.onStartEngineNegotiation(Number(button.getAttribute('data-engine-supplier-id')));
+				}
 			});
 		}
 		if (this.engineNegotiationDetailEl) {
@@ -288,11 +300,9 @@ export default class FinanceView {
 					this.onSignEngineNegotiatedDeal(signButton.getAttribute('data-engine-tier'));
 					return;
 				}
-				const applyButton = event.target.closest('#finance-engine-negotiation-apply-staff');
-				if (applyButton && this.onUpdateEngineNegotiationStaff) {
+				if (event.target.closest('#finance-engine-negotiation-apply-staff') && this.onUpdateEngineNegotiationStaff) {
 					const input = document.getElementById('finance-engine-negotiation-staff');
-					if (!input) return;
-					this.onUpdateEngineNegotiationStaff(Number(input.value || 0));
+					if (input) this.onUpdateEngineNegotiationStaff(Number(input.value || 0));
 				}
 			});
 		}
@@ -303,36 +313,37 @@ export default class FinanceView {
 		this.applyMoneyState(this.netPlEl, summary.net_profit_loss || 0);
 		this.applyMoneyState(this.projectedBalanceEl, overview.projected_end_balance || 0);
 		this.applyMoneyState(this.nextRaceNetEl, overview.next_race_net || 0);
-		if (this.prizeRemainingEl) this.prizeRemainingEl.textContent = this.formatMoney(prizeMeta.remaining || 0);
-		if (this.prizeProgressEl) this.prizeProgressEl.textContent = `Race installments: ${prizeMeta.racesPaid || 0} / ${prizeMeta.totalRaces || 0}`;
-		if (this.prizeOutlookEl) this.prizeOutlookEl.textContent = overview.prize_outlook || '-';
-		if (this.facilitiesStatusEl) this.facilitiesStatusEl.textContent = overview.facilities_status || '-';
-		if (this.incomeTotalEl) this.incomeTotalEl.textContent = this.formatMoney(summary.income_total || 0);
-		if (this.netIncomeTotalEl) this.netIncomeTotalEl.textContent = this.formatMoney(summary.income_total || 0);
-		if (this.netExpenseTotalEl) this.netExpenseTotalEl.textContent = this.formatMoney(summary.expense_total || 0);
-		if (this.netPlBreakdownEl) this.netPlBreakdownEl.textContent = this.formatMoney(summary.net_profit_loss || 0, { signed: true });
-		if (this.expenseTotalEl) this.expenseTotalEl.textContent = this.formatMoney(summary.expense_total || 0);
-		if (this.prizeMoneyTotalEl) this.prizeMoneyTotalEl.textContent = this.formatMoney(summary.prize_money_total || 0);
-		if (this.payDriverTotalEl) this.payDriverTotalEl.textContent = this.formatMoney(summary.pay_driver_income_total || 0);
-		if (this.engineIncomeTotalEl) this.engineIncomeTotalEl.textContent = this.formatMoney(summary.engine_supplier_income_total || 0);
-		if (this.transportTotalEl) this.transportTotalEl.textContent = this.formatMoney(summary.transport_total || 0);
-		if (this.crashDamageTotalEl) this.crashDamageTotalEl.textContent = this.formatMoney(summary.crash_damage_total || 0);
-		if (this.maintenanceTotalEl) this.maintenanceTotalEl.textContent = this.formatMoney(summary.maintenance_total || 0);
-		if (this.testingTotalEl) this.testingTotalEl.textContent = this.formatMoney(summary.testing_total || 0);
-		if (this.driverWagesTotalEl) this.driverWagesTotalEl.textContent = this.formatMoney(summary.driver_wage_expense_total || 0);
-		if (this.managementSalaryTotalEl) this.managementSalaryTotalEl.textContent = this.formatMoney(summary.management_salary_total || 0);
-		if (this.designStaffTotalEl) this.designStaffTotalEl.textContent = this.formatMoney(summary.design_staff_total || 0);
-		if (this.engineeringStaffTotalEl) this.engineeringStaffTotalEl.textContent = this.formatMoney(summary.engineering_staff_total || 0);
-		if (this.mechanicsStaffTotalEl) this.mechanicsStaffTotalEl.textContent = this.formatMoney(summary.mechanics_staff_total || 0);
-		if (this.commercialStaffTotalEl) this.commercialStaffTotalEl.textContent = this.formatMoney(summary.commercial_staff_total || 0);
-		if (this.factoryOverheadTotalEl) this.factoryOverheadTotalEl.textContent = this.formatMoney(summary.factory_overhead_total || 0);
-		if (this.engineSupplierTotalEl) this.engineSupplierTotalEl.textContent = this.formatMoney(summary.engine_supplier_expense_total || 0);
-		if (this.tyreSupplierTotalEl) this.tyreSupplierTotalEl.textContent = this.formatMoney(summary.tyre_supplier_total || 0);
-		if (this.fuelSupplierTotalEl) this.fuelSupplierTotalEl.textContent = this.formatMoney(summary.fuel_supplier_total || 0, { signed: true });
-		if (this.fuelIncomeTotalEl) this.fuelIncomeTotalEl.textContent = this.formatMoney(summary.fuel_income_total || 0);
-		if (this.fuelExpenseTotalEl) this.fuelExpenseTotalEl.textContent = this.formatMoney(summary.fuel_expense_total || 0);
-		if (this.facilitiesTotalEl) this.facilitiesTotalEl.textContent = this.formatMoney(summary.facilities_total || 0);
-		if (this.sponsorshipTotalEl) this.sponsorshipTotalEl.textContent = this.formatMoney(summary.sponsorship_total || 0);
+
+		this.setText(this.prizeRemainingEl, this.formatMoney(prizeMeta.remaining || 0));
+		this.setText(this.prizeProgressEl, `Race installments: ${prizeMeta.racesPaid || 0} / ${prizeMeta.totalRaces || 0}`);
+		this.setText(this.prizeOutlookEl, overview.prize_outlook || '-');
+		this.setText(this.facilitiesStatusEl, overview.facilities_status || '-');
+		this.setText(this.incomeTotalEl, this.formatMoney(summary.income_total || 0));
+		this.setText(this.netIncomeTotalEl, this.formatMoney(summary.income_total || 0));
+		this.setText(this.netExpenseTotalEl, this.formatMoney(summary.expense_total || 0));
+		this.setText(this.netPlBreakdownEl, this.formatMoney(summary.net_profit_loss || 0, { signed: true }));
+		this.setText(this.expenseTotalEl, this.formatMoney(summary.expense_total || 0));
+		this.setText(this.prizeMoneyTotalEl, this.formatMoney(summary.prize_money_total || 0));
+		this.setText(this.payDriverTotalEl, this.formatMoney(summary.pay_driver_income_total || 0));
+		this.setText(this.engineIncomeTotalEl, this.formatMoney(summary.engine_supplier_income_total || 0));
+		this.setText(this.transportTotalEl, this.formatMoney(summary.transport_total || 0));
+		this.setText(this.crashDamageTotalEl, this.formatMoney(summary.crash_damage_total || 0));
+		this.setText(this.maintenanceTotalEl, this.formatMoney(summary.maintenance_total || 0));
+		this.setText(this.testingTotalEl, this.formatMoney(summary.testing_total || 0));
+		this.setText(this.driverWagesTotalEl, this.formatMoney(summary.driver_wage_expense_total || 0));
+		this.setText(this.managementSalaryTotalEl, this.formatMoney(summary.management_salary_total || 0));
+		this.setText(this.designStaffTotalEl, this.formatMoney(summary.design_staff_total || 0));
+		this.setText(this.engineeringStaffTotalEl, this.formatMoney(summary.engineering_staff_total || 0));
+		this.setText(this.mechanicsStaffTotalEl, this.formatMoney(summary.mechanics_staff_total || 0));
+		this.setText(this.commercialStaffTotalEl, this.formatMoney(summary.commercial_staff_total || 0));
+		this.setText(this.factoryOverheadTotalEl, this.formatMoney(summary.factory_overhead_total || 0));
+		this.setText(this.engineSupplierTotalEl, this.formatMoney(summary.engine_supplier_expense_total || 0));
+		this.setText(this.tyreSupplierTotalEl, this.formatMoney(summary.tyre_supplier_total || 0));
+		this.setText(this.fuelSupplierTotalEl, this.formatMoney(summary.fuel_supplier_total || 0, { signed: true }));
+		this.setText(this.fuelIncomeTotalEl, this.formatMoney(summary.fuel_income_total || 0));
+		this.setText(this.fuelExpenseTotalEl, this.formatMoney(summary.fuel_expense_total || 0));
+		this.setText(this.facilitiesTotalEl, this.formatMoney(summary.facilities_total || 0));
+		this.setText(this.sponsorshipTotalEl, this.formatMoney(summary.sponsorship_total || 0));
 
 		if (this.contractAlertsEl) {
 			const alerts = Array.isArray(overview.contract_alerts) ? overview.contract_alerts : [];
@@ -349,151 +360,84 @@ export default class FinanceView {
 		const sponsorContractLength = sponsor.contract_length || 0;
 		const sponsorPendingReplacement = Boolean(sponsor.pending_replacement);
 
-		if (this.sponsorNameEl) this.sponsorNameEl.textContent = sponsorName;
+		this.setText(this.sponsorNameEl, sponsorName);
 		if (this.sponsorReplaceBtn) {
 			const canNegotiate = Boolean(sponsor.name) && sponsorContractLength < 2 && !sponsorPendingReplacement && !titleSponsorNegotiation?.blocked_reason;
 			this.sponsorReplaceBtn.disabled = !canNegotiate;
-			if (canNegotiate) {
-				this.sponsorReplaceBtn.setAttribute('data-sponsor-name', sponsor.name);
-			} else {
-				this.sponsorReplaceBtn.removeAttribute('data-sponsor-name');
-			}
+			if (canNegotiate) this.sponsorReplaceBtn.setAttribute('data-sponsor-name', sponsor.name);
+			else this.sponsorReplaceBtn.removeAttribute('data-sponsor-name');
 		}
-		if (this.sponsorAnnualEl) this.sponsorAnnualEl.textContent = this.formatMoney(sponsor.annual_value || 0);
-		if (this.sponsorInstallmentEl) this.sponsorInstallmentEl.textContent = this.formatMoney(sponsor.installment || 0);
-		if (this.sponsorPaidEl) this.sponsorPaidEl.textContent = this.formatMoney(sponsor.paid_so_far || 0);
-		if (this.sponsorRemainingEl) this.sponsorRemainingEl.textContent = this.formatMoney(sponsor.remaining || 0);
-		if (this.sponsorLogoWrap) {
-			if (!sponsor.name) {
-				this.sponsorLogoWrap.innerHTML = '';
-			} else {
-				const encodedOriginal = encodeURIComponent(sponsor.name);
-				const encodedLower = encodeURIComponent(sponsor.name.toLowerCase());
-				const encodedUpper = encodeURIComponent(sponsor.name.toUpperCase());
-				this.sponsorLogoWrap.innerHTML = `
-					<img class="sponsor-logo" src="assets/sponsor_logos/${encodedOriginal}.png" alt="${sponsor.name} logo"
-						onerror="if(!this.dataset.f1){this.dataset.f1='1';this.src='assets/sponsor_logos/${encodedLower}.png';}else if(!this.dataset.f2){this.dataset.f2='1';this.src='assets/sponsor_logos/${encodedUpper}.png';}else{this.style.display='none';}">
-				`;
-			}
-		}
+		this.setText(this.sponsorAnnualEl, this.formatMoney(sponsor.annual_value || 0));
+		this.setText(this.sponsorInstallmentEl, this.formatMoney(sponsor.installment || 0));
+		this.setText(this.sponsorPaidEl, this.formatMoney(sponsor.paid_so_far || 0));
+		this.setText(this.sponsorRemainingEl, this.formatMoney(sponsor.remaining || 0));
+		this.setSponsorLogo(this.sponsorLogoWrap, sponsor.name);
 
 		const otherSponsorship = data.other_sponsorship || {};
-		if (this.otherSponsorshipNameEl) this.otherSponsorshipNameEl.textContent = 'Minor Sponsors';
-		if (this.otherSponsorshipAnnualEl) this.otherSponsorshipAnnualEl.textContent = this.formatMoney(otherSponsorship.annual_value || 0);
-		if (this.otherSponsorshipInstallmentEl) this.otherSponsorshipInstallmentEl.textContent = this.formatMoney(otherSponsorship.installment || 0);
-		if (this.otherSponsorshipPaidEl) this.otherSponsorshipPaidEl.textContent = this.formatMoney(otherSponsorship.paid_so_far || 0);
-		if (this.otherSponsorshipRemainingEl) this.otherSponsorshipRemainingEl.textContent = this.formatMoney(otherSponsorship.remaining || 0);
+		this.setText(this.otherSponsorshipNameEl, 'Minor Sponsors');
+		this.setText(this.otherSponsorshipAnnualEl, this.formatMoney(otherSponsorship.annual_value || 0));
+		this.setText(this.otherSponsorshipInstallmentEl, this.formatMoney(otherSponsorship.installment || 0));
+		this.setText(this.otherSponsorshipPaidEl, this.formatMoney(otherSponsorship.paid_so_far || 0));
+		this.setText(this.otherSponsorshipRemainingEl, this.formatMoney(otherSponsorship.remaining || 0));
 		if (this.otherSponsorshipLogoWrap) this.otherSponsorshipLogoWrap.innerHTML = '';
 	}
 
 	renderSuppliers(data) {
 		const engineSupplier = data.engine_supplier || {};
 		const engineNegotiation = data.engine_negotiation || this.engineNegotiationData;
-		const engineSupplierName = engineSupplier.name || 'Unassigned';
-		const engineSupplierContractLength = engineSupplier.contract_length || 0;
-		const engineSupplierPendingReplacement = Boolean(engineSupplier.pending_replacement);
 		const engineSupplierBuildsOwnEngine = Boolean(engineSupplier.builds_own_engine);
+		const engineContractLength = engineSupplier.contract_length || 0;
+		const enginePendingReplacement = Boolean(engineSupplier.pending_replacement);
 		const engineAnnualSign = (engineSupplier.annual_value || 0) < 0 ? '+' : '-';
 		const engineInstallmentSign = engineSupplier.direction === 'income' ? '+' : '-';
 
-		if (this.engineSupplierNameEl) this.engineSupplierNameEl.textContent = engineSupplierName;
+		this.setText(this.engineSupplierNameEl, engineSupplier.name || 'Unassigned');
 		if (this.engineSupplierReplaceBtn) {
-			const canNegotiate = Boolean(engineSupplier.name) && !engineSupplierBuildsOwnEngine && engineSupplierContractLength < 2 && !engineSupplierPendingReplacement && !engineNegotiation?.blocked_reason;
+			const canNegotiate = Boolean(engineSupplier.name) && !engineSupplierBuildsOwnEngine && engineContractLength < 2 && !enginePendingReplacement && !engineNegotiation?.blocked_reason;
 			this.engineSupplierReplaceBtn.disabled = !canNegotiate;
-			if (canNegotiate) {
-				this.engineSupplierReplaceBtn.setAttribute('data-supplier-name', engineSupplier.name);
-			} else {
-				this.engineSupplierReplaceBtn.removeAttribute('data-supplier-name');
-			}
+			if (canNegotiate) this.engineSupplierReplaceBtn.setAttribute('data-supplier-name', engineSupplier.name);
+			else this.engineSupplierReplaceBtn.removeAttribute('data-supplier-name');
 		}
-		if (this.engineSupplierDealEl) this.engineSupplierDealEl.textContent = engineSupplier.deal || '-';
-		if (this.engineSupplierAnnualEl) this.engineSupplierAnnualEl.textContent = `${engineAnnualSign}$${Math.abs(engineSupplier.annual_value || 0).toLocaleString()}`;
-		if (this.engineSupplierInstallmentEl) this.engineSupplierInstallmentEl.textContent = `${engineInstallmentSign}$${Math.abs(engineSupplier.installment || 0).toLocaleString()}`;
-		if (this.engineSupplierPaidEl) this.engineSupplierPaidEl.textContent = this.formatMoney(engineSupplier.paid_so_far || 0);
-		if (this.engineSupplierRemainingEl) this.engineSupplierRemainingEl.textContent = this.formatMoney(engineSupplier.remaining || 0);
+		this.setText(this.engineSupplierDealEl, engineSupplier.deal || '-');
+		this.setText(this.engineSupplierAnnualEl, `${engineAnnualSign}$${Math.abs(engineSupplier.annual_value || 0).toLocaleString()}`);
+		this.setText(this.engineSupplierInstallmentEl, `${engineInstallmentSign}$${Math.abs(engineSupplier.installment || 0).toLocaleString()}`);
+		this.setText(this.engineSupplierPaidEl, this.formatMoney(engineSupplier.paid_so_far || 0));
+		this.setText(this.engineSupplierRemainingEl, this.formatMoney(engineSupplier.remaining || 0));
 		this.setSupplierLogo(this.engineSupplierLogoWrap, engineSupplier.name);
 
 		const tyreSupplier = data.tyre_supplier || {};
-		const tyreSupplierName = tyreSupplier.name || 'Unassigned';
-		const tyreSupplierContractLength = tyreSupplier.contract_length || 0;
-		const tyreSupplierPendingReplacement = Boolean(tyreSupplier.pending_replacement);
+		const tyreContractLength = tyreSupplier.contract_length || 0;
+		const tyrePendingReplacement = Boolean(tyreSupplier.pending_replacement);
 
-		if (this.tyreSupplierNameEl) this.tyreSupplierNameEl.textContent = tyreSupplierName;
+		this.setText(this.tyreSupplierNameEl, tyreSupplier.name || 'Unassigned');
 		if (this.tyreSupplierReplaceBtn) {
-			const canReplace = Boolean(tyreSupplier.name) && tyreSupplierContractLength < 2 && !tyreSupplierPendingReplacement;
+			const canReplace = Boolean(tyreSupplier.name) && tyreContractLength < 2 && !tyrePendingReplacement;
 			this.tyreSupplierReplaceBtn.disabled = !canReplace;
-			if (canReplace) {
-				this.tyreSupplierReplaceBtn.setAttribute('data-supplier-name', tyreSupplier.name);
-			} else {
-				this.tyreSupplierReplaceBtn.removeAttribute('data-supplier-name');
-			}
+			if (canReplace) this.tyreSupplierReplaceBtn.setAttribute('data-supplier-name', tyreSupplier.name);
+			else this.tyreSupplierReplaceBtn.removeAttribute('data-supplier-name');
 		}
-		if (this.tyreSupplierDealEl) this.tyreSupplierDealEl.textContent = tyreSupplier.deal || '-';
-		if (this.tyreSupplierAnnualEl) this.tyreSupplierAnnualEl.textContent = this.formatMoney(tyreSupplier.annual_value || 0);
-		if (this.tyreSupplierInstallmentEl) this.tyreSupplierInstallmentEl.textContent = this.formatMoney(tyreSupplier.installment || 0);
-		if (this.tyreSupplierPaidEl) this.tyreSupplierPaidEl.textContent = this.formatMoney(tyreSupplier.paid_so_far || 0);
-		if (this.tyreSupplierRemainingEl) this.tyreSupplierRemainingEl.textContent = this.formatMoney(tyreSupplier.remaining || 0);
+		this.setText(this.tyreSupplierDealEl, tyreSupplier.deal || '-');
+		this.setText(this.tyreSupplierAnnualEl, this.formatMoney(tyreSupplier.annual_value || 0));
+		this.setText(this.tyreSupplierInstallmentEl, this.formatMoney(tyreSupplier.installment || 0));
+		this.setText(this.tyreSupplierPaidEl, this.formatMoney(tyreSupplier.paid_so_far || 0));
+		this.setText(this.tyreSupplierRemainingEl, this.formatMoney(tyreSupplier.remaining || 0));
 		this.setSupplierLogo(this.tyreSupplierLogoWrap, tyreSupplier.name);
 
 		const fuelSupplier = data.fuel_supplier || {};
 		const annualSign = (fuelSupplier.annual_value || 0) < 0 ? '+' : '-';
 		const installmentSign = fuelSupplier.direction === 'income' ? '+' : '-';
-		if (this.fuelSupplierNameEl) this.fuelSupplierNameEl.textContent = fuelSupplier.name || 'Unassigned';
-		if (this.fuelSupplierDealEl) this.fuelSupplierDealEl.textContent = fuelSupplier.deal || '-';
-		if (this.fuelSupplierAnnualEl) this.fuelSupplierAnnualEl.textContent = `${annualSign}$${Math.abs(fuelSupplier.annual_value || 0).toLocaleString()}`;
-		if (this.fuelSupplierInstallmentEl) this.fuelSupplierInstallmentEl.textContent = `${installmentSign}$${Math.abs(fuelSupplier.installment || 0).toLocaleString()}`;
-		if (this.fuelSupplierPaidEl) this.fuelSupplierPaidEl.textContent = this.formatMoney(fuelSupplier.paid_so_far || 0);
-		if (this.fuelSupplierRemainingEl) this.fuelSupplierRemainingEl.textContent = this.formatMoney(fuelSupplier.remaining || 0);
+		this.setText(this.fuelSupplierNameEl, fuelSupplier.name || 'Unassigned');
+		this.setText(this.fuelSupplierDealEl, fuelSupplier.deal || '-');
+		this.setText(this.fuelSupplierAnnualEl, `${annualSign}$${Math.abs(fuelSupplier.annual_value || 0).toLocaleString()}`);
+		this.setText(this.fuelSupplierInstallmentEl, `${installmentSign}$${Math.abs(fuelSupplier.installment || 0).toLocaleString()}`);
+		this.setText(this.fuelSupplierPaidEl, this.formatMoney(fuelSupplier.paid_so_far || 0));
+		this.setText(this.fuelSupplierRemainingEl, this.formatMoney(fuelSupplier.remaining || 0));
 		this.setSupplierLogo(this.fuelSupplierLogoWrap, fuelSupplier.name);
 	}
 
 	renderLedger(data) {
-		if (this.trackPlBody) {
-			this.trackPlBody.innerHTML = '';
-			const trackRows = data.track_profit_loss || [];
-			trackRows.forEach((rowData) => {
-				const row = document.createElement('tr');
-				const netClass = rowData.net >= 0 ? 'finance-amount-positive' : 'finance-amount-negative';
-				row.innerHTML = `
-					<td>${rowData.track}</td>
-					<td>${rowData.type || '-'}</td>
-					<td>${rowData.country}</td>
-					<td class="finance-amount-positive">$${(rowData.income || 0).toLocaleString()}</td>
-					<td class="finance-amount-negative">$${(rowData.expense || 0).toLocaleString()}</td>
-					<td class="${netClass}">${rowData.net >= 0 ? '+' : '-'}$${Math.abs(rowData.net || 0).toLocaleString()}</td>
-				`;
-				this.trackPlBody.appendChild(row);
-			});
-			if (trackRows.length === 0) {
-				this.trackPlBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">No track-linked finance yet.</td></tr>';
-			}
-		}
-
-		if (this.tbody) {
-			this.tbody.innerHTML = '';
-			const transactions = data.transactions || [];
-			const reversed = [...transactions].reverse();
-			reversed.forEach((t) => {
-				const row = document.createElement('tr');
-				const amountFormatted = '$' + Math.abs(t.amount).toLocaleString();
-				const amountClass = t.amount >= 0 ? 'finance-amount-positive' : 'finance-amount-negative';
-				const amountDisplay = t.amount >= 0 ? '+' + amountFormatted : '-' + amountFormatted;
-				const categoryLabel = t.category.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-				const categoryClass = t.category === 'transport' ? 'finance-category-badge finance-category-transport' : 'finance-category-badge';
-
-				row.innerHTML = `
-					<td>Week ${t.week}, ${t.year}</td>
-					<td>${t.description}</td>
-					<td><span class="${categoryClass}">${categoryLabel}</span></td>
-					<td class="${amountClass}">${amountDisplay}</td>
-				`;
-				this.tbody.appendChild(row);
-			});
-
-			if (transactions.length === 0) {
-				this.tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">No transactions yet.</td></tr>';
-			}
-		}
+		if (this.trackPlBody) this.trackPlBody.innerHTML = renderTrackProfitLossHtml(data.track_profit_loss || []);
+		if (this.tbody) this.tbody.innerHTML = renderTransactionsHtml(data.transactions || []);
 	}
 
 	render(data) {
@@ -501,6 +445,7 @@ export default class FinanceView {
 		this.titleSponsorNegotiationData = data.title_sponsor_negotiation || null;
 		const summary = data.summary || {};
 		const overview = data.overview || {};
+
 		this.renderOverview(overview, summary, {
 			balance: data.balance || 0,
 			entitlement: data.prize_money_entitlement || 0,
@@ -515,9 +460,7 @@ export default class FinanceView {
 	}
 
 	hideTitleSponsorNegotiationModal() {
-		if (this.titleSponsorNegotiationModal) {
-			this.titleSponsorNegotiationModal.style.display = 'none';
-		}
+		if (this.titleSponsorNegotiationModal) this.titleSponsorNegotiationModal.style.display = 'none';
 	}
 
 	showTitleSponsorNegotiationModal(data) {
@@ -529,87 +472,15 @@ export default class FinanceView {
 
 	renderTitleSponsorNegotiationModal(data = {}) {
 		if (this.titleSponsorNegotiationSponsorsEl) {
-			const sponsors = Array.isArray(data.sponsors) ? data.sponsors : [];
-			this.titleSponsorNegotiationSponsorsEl.innerHTML = sponsors.length
-				? sponsors.map((sponsor) => `
-					<div class="finance-engine-supplier-row">
-						<div>
-							<div class="finance-section-title">${sponsor.name}</div>
-							<div class="finance-balance-label">Wealth ${sponsor.wealth}</div>
-						</div>
-						<button class="btn-secondary" data-title-sponsor-id="${sponsor.id}" ${sponsor.targetable ? '' : 'disabled'}>
-							Approach
-						</button>
-					</div>
-				`).join('')
-				: '<p class="finance-engine-negotiation-empty">No sponsors available.</p>';
+			this.titleSponsorNegotiationSponsorsEl.innerHTML = renderTitleSponsorNegotiationSupplierList(Array.isArray(data.sponsors) ? data.sponsors : []);
 		}
-
-		if (!this.titleSponsorNegotiationDetailEl) return;
-		if (data.blocked_reason) {
-			this.titleSponsorNegotiationDetailEl.innerHTML = `
-				<div class="finance-engine-negotiation-empty">
-					<h3>Negotiations Unavailable</h3>
-					<p>${data.blocked_reason}</p>
-				</div>
-			`;
-			return;
+		if (this.titleSponsorNegotiationDetailEl) {
+			this.titleSponsorNegotiationDetailEl.innerHTML = renderTitleSponsorNegotiationDetail(data);
 		}
-		const active = data.active_negotiation;
-		if (!active) {
-			this.titleSponsorNegotiationDetailEl.innerHTML = `
-				<div class="finance-engine-negotiation-empty">
-					<h3>No Active Negotiation</h3>
-					<p>Select a sponsor on the left to begin talks. Commercial staff and your commercial manager will determine how quickly the deal progresses.</p>
-					<div class="finance-balance-label">Commercial Manager</div>
-					<div>${data.commercial_manager?.name || 'Unassigned'} · Skill ${data.commercial_manager?.skill || 0}</div>
-					<div class="finance-balance-label" style="margin-top:12px;">Commercial Staff Available</div>
-					<div>${data.commercial_staff_total || 0}</div>
-				</div>
-			`;
-			return;
-		}
-		const boxes = Array.from({ length: active.total_boxes }, (_, index) => `
-			<div class="finance-engine-progress-box ${(index + 1) <= active.progress_boxes ? 'filled' : ''}">
-				<span>${index + 1}</span>
-			</div>
-		`).join('');
-		this.titleSponsorNegotiationDetailEl.innerHTML = `
-			<div class="finance-engine-negotiation-card">
-				<div class="finance-balance-label">Active Negotiation</div>
-				<h3>${active.sponsor_name}</h3>
-				<div class="finance-engine-progress-track">${boxes}</div>
-				<div class="finance-balance-label">Progress: ${active.progress_boxes}/${active.total_boxes} boxes</div>
-				<div class="finance-engine-negotiation-meta">
-					<div>
-						<span class="finance-balance-label">Annual Value</span>
-						<div>$${Math.abs(active.annual_value || 0).toLocaleString()}</div>
-					</div>
-					<div>
-						<span class="finance-balance-label">Contract Length</span>
-						<div>${active.contract_length} year(s)</div>
-					</div>
-				</div>
-				<div class="finance-engine-negotiation-staff">
-					<label for="finance-title-sponsor-negotiation-staff">Commercial Staff Assigned</label>
-					<div class="finance-engine-negotiation-staff-row">
-						<input id="finance-title-sponsor-negotiation-staff" type="number" min="0" max="${data.commercial_staff_total || 0}" value="${active.assigned_staff}">
-						<button id="finance-title-sponsor-negotiation-apply-staff" class="btn-secondary">Update Staff</button>
-					</div>
-				</div>
-				<div class="finance-engine-negotiation-tiers">
-					<button id="finance-title-sponsor-negotiation-sign-btn" class="btn-primary" ${active.ready_to_sign ? '' : 'disabled'}>
-						Sign Deal ($${Math.abs(active.annual_value || 0).toLocaleString()})
-					</button>
-				</div>
-			</div>
-		`;
 	}
 
 	hideEngineNegotiationModal() {
-		if (this.engineNegotiationModal) {
-			this.engineNegotiationModal.style.display = 'none';
-		}
+		if (this.engineNegotiationModal) this.engineNegotiationModal.style.display = 'none';
 	}
 
 	showEngineNegotiationModal(data) {
@@ -621,103 +492,10 @@ export default class FinanceView {
 
 	renderEngineNegotiationModal(data = {}) {
 		if (this.engineNegotiationSuppliersEl) {
-			const suppliers = Array.isArray(data.suppliers) ? data.suppliers : [];
-			this.engineNegotiationSuppliersEl.innerHTML = suppliers.length
-				? suppliers.map((supplier) => `
-					<div class="finance-engine-supplier-row">
-						<div>
-							<div class="finance-section-title">${supplier.name}</div>
-							<div class="finance-balance-label">${supplier.country} · Power ${supplier.power} · Resources ${supplier.resources}</div>
-						</div>
-						<button class="btn-secondary" data-engine-supplier-id="${supplier.id}" ${supplier.targetable ? '' : 'disabled'}>
-							Approach
-						</button>
-					</div>
-				`).join('')
-				: '<p class="finance-engine-negotiation-empty">No suppliers available.</p>';
+			this.engineNegotiationSuppliersEl.innerHTML = renderEngineNegotiationSupplierList(Array.isArray(data.suppliers) ? data.suppliers : []);
 		}
-
-		if (!this.engineNegotiationDetailEl) return;
-
-		if (data.blocked_reason) {
-			this.engineNegotiationDetailEl.innerHTML = `
-				<div class="finance-engine-negotiation-empty">
-					<h3>Negotiations Unavailable</h3>
-					<p>${data.blocked_reason}</p>
-				</div>
-			`;
-			return;
+		if (this.engineNegotiationDetailEl) {
+			this.engineNegotiationDetailEl.innerHTML = renderEngineNegotiationDetail(data);
 		}
-
-		const active = data.active_negotiation;
-		if (!active) {
-			this.engineNegotiationDetailEl.innerHTML = `
-				<div class="finance-engine-negotiation-empty">
-					<h3>No Active Negotiation</h3>
-					<p>Select a supplier on the left to open talks. Commercial manager skill and assigned commercial staff will drive progress after each race.</p>
-					<div class="finance-balance-label">Commercial Manager</div>
-					<div>${data.commercial_manager?.name || 'Unassigned'} · Skill ${data.commercial_manager?.skill || 0}</div>
-					<div class="finance-balance-label" style="margin-top:12px;">Commercial Staff Available</div>
-					<div>${data.commercial_staff_total || 0}</div>
-				</div>
-			`;
-			return;
-		}
-
-		const boxes = Array.from({ length: active.total_boxes }, (_, index) => {
-			const boxNumber = index + 1;
-			const marker = boxNumber === active.customer_threshold
-				? 'C'
-				: boxNumber === active.partner_threshold
-					? 'P'
-					: boxNumber === active.works_threshold
-						? 'W'
-						: '';
-			return `
-				<div class="finance-engine-progress-box ${boxNumber <= active.progress_boxes ? 'filled' : ''}">
-					<span>${marker}</span>
-				</div>
-			`;
-		}).join('');
-
-		const tierButtons = ['customer', 'partner', 'works']
-			.filter((tier) => active.available_tiers.includes(tier))
-			.map((tier) => {
-				const unlocked = active.unlocked_tiers.includes(tier);
-				const value = active.annual_values?.[tier] || 0;
-				const sign = value < 0 ? '+' : '-';
-				return `
-					<button class="btn-primary finance-engine-tier-btn" data-engine-tier="${tier}" ${unlocked ? '' : 'disabled'}>
-						Sign ${tier[0].toUpperCase()}${tier.slice(1)} (${sign}$${Math.abs(value).toLocaleString()})
-					</button>
-				`;
-			}).join('');
-
-		this.engineNegotiationDetailEl.innerHTML = `
-			<div class="finance-engine-negotiation-card">
-				<div class="finance-balance-label">Active Negotiation</div>
-				<h3>${active.supplier_name}</h3>
-				<div class="finance-engine-progress-track">${boxes}</div>
-				<div class="finance-balance-label">Progress: ${active.progress_boxes}/${active.total_boxes} boxes</div>
-				<div class="finance-engine-negotiation-meta">
-					<div>
-						<span class="finance-balance-label">Contract Length</span>
-						<div>${active.contract_length} year(s)</div>
-					</div>
-					<div>
-						<span class="finance-balance-label">Unlocked</span>
-						<div>${active.unlocked_tiers.map((tier) => tier[0].toUpperCase() + tier.slice(1)).join(', ') || 'None yet'}</div>
-					</div>
-				</div>
-				<div class="finance-engine-negotiation-staff">
-					<label for="finance-engine-negotiation-staff">Commercial Staff Assigned</label>
-					<div class="finance-engine-negotiation-staff-row">
-						<input id="finance-engine-negotiation-staff" type="number" min="0" max="${data.commercial_staff_total || 0}" value="${active.assigned_staff}">
-						<button id="finance-engine-negotiation-apply-staff" class="btn-secondary">Update Staff</button>
-					</div>
-				</div>
-				<div class="finance-engine-negotiation-tiers">${tierButtons}</div>
-			</div>
-		`;
 	}
 }
