@@ -28,6 +28,7 @@ from app.commands.race_commands import (
 )
 from app.commands.staff_commands import (
     handle_get_title_sponsor_negotiation_market,
+    handle_book_title_sponsor_hospitality,
     handle_sign_title_sponsor_negotiated_deal,
     handle_start_title_sponsor_negotiation,
     handle_update_title_sponsor_negotiation_staff,
@@ -47,6 +48,7 @@ from app.commands.staff_commands import (
     handle_replace_title_sponsor,
     handle_replace_driver,
     handle_start_car_development,
+    handle_book_engine_negotiation_hospitality,
     handle_start_engine_negotiation,
     handle_sign_engine_negotiated_deal,
     handle_update_engine_negotiation_staff,

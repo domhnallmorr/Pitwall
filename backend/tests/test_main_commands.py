@@ -710,6 +710,22 @@ def test_start_engine_negotiation_returns_market_payload_with_active_negotiation
     assert result["data"]["active_negotiation"]["supplier_name"] == "Frost"
 
 
+def test_book_engine_negotiation_hospitality_returns_updated_market_payload():
+    state = create_state()
+    state.teams[0].engine_supplier_contract_length = 1
+    app_main.CURRENT_STATE = state
+
+    start = process_command({"type": "start_engine_negotiation", "supplier_id": 42})
+    assert start["status"] == "success"
+
+    result = process_command({"type": "book_engine_negotiation_hospitality"})
+
+    assert result["status"] == "success"
+    assert result["type"] == "engine_negotiation_updated"
+    assert result["data"]["hospitality"]["booked"] is True
+    assert any(t.category == TransactionCategory.HOSPITALITY and t.amount == -100_000 for t in state.finance.transactions)
+
+
 def test_replace_tyre_supplier_respects_contract_rule_and_signs_replacement():
     state = create_state()
     app_main.CURRENT_STATE = state

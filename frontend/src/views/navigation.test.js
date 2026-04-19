@@ -30,6 +30,7 @@ describe('Navigation', () => {
 				<button class="nav-item">Staff</button>
 				<button class="nav-item">Car</button>
 				<button class="nav-item">Finance</button>
+				<button class="nav-item">Commercial</button>
 				<button class="nav-item">Facilities</button>
 				<button class="nav-item">Standings</button>
 			</div>
@@ -43,6 +44,7 @@ describe('Navigation', () => {
 			<div id="driver-view" style="display:none;"></div>
 			<div id="car-view" style="display:none;"></div>
 			<div id="finance-view" style="display:none;"></div>
+			<div id="commercial-view" style="display:none;"></div>
 			<div id="facilities-view" style="display:none;"></div>
 			<div id="standings-view" style="display:none;"></div>
 		`;
@@ -58,7 +60,7 @@ describe('Navigation', () => {
 	});
 
 	it('navigates to standings and requests standings data', () => {
-		const standingsBtn = document.querySelectorAll('.nav-item')[8];
+		const standingsBtn = document.querySelectorAll('.nav-item')[9];
 		standingsBtn.click();
 
 		expect(apiMock.getStandings).toHaveBeenCalledTimes(1);
@@ -102,10 +104,17 @@ describe('Navigation', () => {
 	});
 
 	it('navigates to facilities and requests facilities data', () => {
-		const btn = document.querySelectorAll('.nav-item')[7];
+		const btn = document.querySelectorAll('.nav-item')[8];
 		btn.click();
 		expect(apiMock.getFacilities).toHaveBeenCalledTimes(1);
 		expect(document.getElementById('facilities-view').style.display).toBe('block');
+	});
+
+	it('navigates to commercial and requests finance data', () => {
+		const btn = document.querySelectorAll('.nav-item')[7];
+		btn.click();
+		expect(apiMock.getFinance).toHaveBeenCalledTimes(1);
+		expect(document.getElementById('commercial-view').style.display).toBe('block');
 	});
 
 	it('navigates to home and requests home data', () => {

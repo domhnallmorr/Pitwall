@@ -102,6 +102,7 @@ describe('finance_renderers', () => {
 
 		const activeHtml = renderTitleSponsorNegotiationDetail({
 			commercial_staff_total: 49,
+			hospitality: { available: true, booked: false, cost: 100000, progress_bonus: 1.0, event_name: 'Albert Park', event_week: 10 },
 			active_negotiation: {
 				sponsor_name: 'Windale',
 				total_boxes: 6,
@@ -116,6 +117,9 @@ describe('finance_renderers', () => {
 		expect(activeHtml).toContain('Windale')
 		expect(activeHtml).toContain('Progress: 4/6 boxes')
 		expect(activeHtml).toContain('value="18"')
+		expect(activeHtml).toContain('Invite To Next Race')
+		expect(activeHtml).toContain('Albert Park (Week 10)')
+		expect(activeHtml).toContain('$100,000')
 		expect(activeHtml).toContain('Sign Deal ($32,500,000)')
 		expect(activeHtml).not.toContain('finance-title-sponsor-negotiation-sign-btn" class="btn-primary" disabled')
 		expect((activeHtml.match(/finance-engine-progress-box filled/g) || [])).toHaveLength(4)
@@ -132,6 +136,7 @@ describe('finance_renderers', () => {
 
 		const activeHtml = renderEngineNegotiationDetail({
 			commercial_staff_total: 49,
+			hospitality: { available: false, booked: true, cost: 100000, progress_bonus: 1.0, reason: 'Hospitality is already booked for Albert Park (Week 10).', event_name: 'Albert Park', event_week: 10 },
 			active_negotiation: {
 				supplier_name: 'Mechatron',
 				total_boxes: 8,
@@ -160,6 +165,8 @@ describe('finance_renderers', () => {
 		expect(activeHtml).toContain('data-engine-tier="works" disabled')
 		expect(activeHtml).toContain('Sign Customer (-$4,500,000)')
 		expect(activeHtml).toContain('Sign Works (+$3,000,000)')
+		expect(activeHtml).toContain('Hospitality booked for Albert Park (Week 10)')
+		expect(activeHtml).toContain('finance-engine-hospitality-btn')
 		expect(activeHtml).toContain('value="20"')
 		expect((activeHtml.match(/finance-engine-progress-box filled/g) || [])).toHaveLength(5)
 	})

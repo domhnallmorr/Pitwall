@@ -69,13 +69,17 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 			driverRender: vi.fn(),
 			carRender: vi.fn(),
 			financeRender: vi.fn(),
+			commercialRender: vi.fn(),
+			commercialTitle: vi.fn(),
+			commercialEngine: vi.fn(),
+			commercialTab: vi.fn(),
 			facilitiesRender: vi.fn(),
 		},
 	};
 });
 
 vi.mock('./api.js', () => ({ default: apiMock }));
-vi.mock('./views/navigation.js', () => ({ default: class { showView() {} } }));
+vi.mock('./views/navigation.js', () => ({ default: class { showView() {} activateView() {} } }));
 vi.mock('./views/grid.js', () => ({
 	default: class {
 		constructor() { this.baseYear = 1998; }
@@ -94,7 +98,8 @@ vi.mock('./views/staff.js', () => ({ default: class { setReplaceDriverHandler() 
 vi.mock('./views/driver.js', () => ({ default: class { constructor() { this.currentDriverName = null; } render(...args) { viewFns.driverRender(...args); } } }));
 vi.mock('./views/driver_market.js', () => ({ default: class { setBackHandler() {} setSignHandler() {} render(...args) { viewFns.driverMarketRender(...args); } showOfferResult(...args) { viewFns.driverMarketOfferResult(...args); return true; } } }));
 vi.mock('./views/car.js', () => ({ default: class { setStartDevelopmentHandler() {} setRepairWearHandler() {} render(...args) { viewFns.carRender(...args); } } }));
-vi.mock('./views/finance.js', () => ({ default: class { setReplaceTitleSponsorHandler() {} setStartTitleSponsorNegotiationHandler() {} setUpdateTitleSponsorNegotiationStaffHandler() {} setSignTitleSponsorNegotiatedDealHandler() {} setReplaceEngineSupplierHandler() {} setReplaceTyreSupplierHandler() {} setStartEngineNegotiationHandler() {} setUpdateEngineNegotiationStaffHandler() {} setSignEngineNegotiatedDealHandler() {} showTitleSponsorNegotiationModal() {} hideTitleSponsorNegotiationModal() {} showEngineNegotiationModal() {} hideEngineNegotiationModal() {} render(...args) { viewFns.financeRender(...args); } } }));
+vi.mock('./views/finance.js', () => ({ default: class { setReplaceTitleSponsorHandler() {} setStartTitleSponsorNegotiationHandler() {} setUpdateTitleSponsorNegotiationStaffHandler() {} setSignTitleSponsorNegotiatedDealHandler() {} setBookTitleSponsorHospitalityHandler() {} setReplaceEngineSupplierHandler() {} setReplaceTyreSupplierHandler() {} setStartEngineNegotiationHandler() {} setUpdateEngineNegotiationStaffHandler() {} setSignEngineNegotiatedDealHandler() {} setBookEngineNegotiationHospitalityHandler() {} showTitleSponsorNegotiationModal() {} hideTitleSponsorNegotiationModal() {} showEngineNegotiationModal() {} hideEngineNegotiationModal() {} render(...args) { viewFns.financeRender(...args); } } }));
+vi.mock('./views/commercial.js', () => ({ default: class { setStartTitleSponsorNegotiationHandler() {} setUpdateTitleSponsorNegotiationStaffHandler() {} setSignTitleSponsorNegotiatedDealHandler() {} setBookTitleSponsorHospitalityHandler() {} setStartEngineNegotiationHandler() {} setUpdateEngineNegotiationStaffHandler() {} setSignEngineNegotiatedDealHandler() {} setBookEngineNegotiationHospitalityHandler() {} render(...args) { viewFns.commercialRender(...args); } renderTitleSponsorNegotiation(...args) { viewFns.commercialTitle(...args); } renderEngineNegotiation(...args) { viewFns.commercialEngine(...args); } showTab(...args) { viewFns.commercialTab(...args); } } }));
 vi.mock('./views/facilities.js', () => ({
 	default: class {
 		setPreviewHandler() {}
@@ -194,6 +199,7 @@ describe('renderer smoke', () => {
 			<div id="staff-view" style="display:none;"></div>
 			<div id="standings-view" style="display:none;"></div>
 			<div id="finance-view" style="display:none;"></div>
+			<div id="commercial-view" style="display:none;"></div>
 			<div id="facilities-view" style="display:none;"></div>
 			<div id="driver-view" style="display:none;"></div>
 			<div id="driver-market-view" style="display:none;"></div>
@@ -618,6 +624,8 @@ describe('renderer smoke', () => {
 		ipcHandler(JSON.stringify({ type: 'driver_data', data: { name: 'Driver X' } }));
 		ipcHandler(JSON.stringify({ type: 'car_data', data: { teams: [] } }));
 		ipcHandler(JSON.stringify({ type: 'finance_data', data: { summary: {} } }));
+		ipcHandler(JSON.stringify({ type: 'title_sponsor_negotiation_market', data: { sponsors: [] } }));
+		ipcHandler(JSON.stringify({ type: 'engine_negotiation_market', data: { suppliers: [] } }));
 		ipcHandler(JSON.stringify({ type: 'facilities_data', data: { teams: [] } }));
 		ipcHandler(JSON.stringify({ type: 'facilities_upgrade_preview', data: { projected_facilities: 90 }, status: 'success' }));
 		ipcHandler(JSON.stringify({ type: 'status', message: 'ok' }));
@@ -633,6 +641,10 @@ describe('renderer smoke', () => {
 		expect(viewFns.driverRender).toHaveBeenCalled();
 		expect(viewFns.carRender).toHaveBeenCalled();
 		expect(viewFns.financeRender).toHaveBeenCalled();
+		expect(viewFns.commercialRender).toHaveBeenCalled();
+		expect(viewFns.commercialTitle).toHaveBeenCalled();
+		expect(viewFns.commercialEngine).toHaveBeenCalled();
+		expect(viewFns.commercialTab).toHaveBeenCalled();
 		expect(viewFns.facilitiesRender).toHaveBeenCalled();
 		expect(facilitiesFns.renderPreview).toHaveBeenCalled();
 		expect(apiMock.getGrid).toHaveBeenCalled();

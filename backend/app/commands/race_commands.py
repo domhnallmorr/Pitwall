@@ -148,8 +148,12 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
         transport_charge = TransportManager().charge_for_event(state, current_event, attended=True)
         crash_damage_charges = CrashDamageManager().charge_for_race(state, race_result, current_event)
         facilities_upgrade_charge = FacilitiesUpgradeManager().charge_for_event(state, current_event)
-        PlayerEngineNegotiationManager().progress_after_race(state)
-        PlayerTitleSponsorNegotiationManager().progress_after_race(state)
+        engine_negotiation_manager = PlayerEngineNegotiationManager()
+        title_sponsor_negotiation_manager = PlayerTitleSponsorNegotiationManager()
+        engine_negotiation_manager.progress_after_race(state)
+        title_sponsor_negotiation_manager.progress_after_race(state)
+        engine_negotiation_manager.apply_hospitality_bonus_after_race(state)
+        title_sponsor_negotiation_manager.apply_hospitality_bonus_after_race(state)
 
         if transport_charge:
             state.add_email(

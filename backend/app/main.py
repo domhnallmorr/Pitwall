@@ -18,6 +18,8 @@ from app.commands.game_commands import (
     handle_load_roster,
     handle_offer_driver,
     handle_repair_car_wear,
+    handle_book_engine_negotiation_hospitality,
+    handle_book_title_sponsor_hospitality,
     handle_replace_commercial_manager,
     handle_replace_driver,
     handle_replace_engine_supplier,
@@ -385,6 +387,9 @@ def process_command(command: dict[str, Any]) -> dict[str, Any]:
     if cmd_type == "sign_title_sponsor_negotiated_deal":
         return _run_state_handler(handle_sign_title_sponsor_negotiated_deal, save_on_success=True)
 
+    if cmd_type == "book_title_sponsor_hospitality":
+        return _run_state_handler(handle_book_title_sponsor_hospitality, save_on_success=True)
+
     if cmd_type == "replace_engine_supplier":
         return _run_state_handler(
             handle_replace_engine_supplier,
@@ -421,6 +426,9 @@ def process_command(command: dict[str, Any]) -> dict[str, Any]:
             command.get("tier"),
             save_on_success=True,
         )
+
+    if cmd_type == "book_engine_negotiation_hospitality":
+        return _run_state_handler(handle_book_engine_negotiation_hospitality, save_on_success=True)
 
     if cmd_type == "replace_tyre_supplier":
         return _run_state_handler(

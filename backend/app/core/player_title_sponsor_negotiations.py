@@ -2,6 +2,11 @@ import random
 from typing import Any
 
 from app.core.management_transfer_markets.title_sponsor import TitleSponsorTransferManager
+from app.core.player_negotiation_hospitality import (
+    book_hospitality,
+    get_hospitality_status,
+    pop_hospitality_bonus,
+)
 from app.core.transfers import TransferManager
 from app.models.email import EmailCategory
 from app.models.state import GameState
@@ -38,6 +43,7 @@ class PlayerTitleSponsorNegotiationManager:
                 "skill": int(getattr(commercial_manager, "skill", 0) or 0),
             },
             "active_negotiation": active,
+            "hospitality": get_hospitality_status(state, "title_sponsor", active_negotiation=active is not None),
             "sponsors": sponsors,
         }
 
@@ -158,6 +164,42 @@ class PlayerTitleSponsorNegotiationManager:
             category=EmailCategory.SEASON,
         )
         return signing
+
+    def book_hospitality(self, state: GameState) -> dict[str, Any]:
+        negotiation = state.player_title_sponsor_negotiation
+        if negotiation is None:
+            raise ValueError("No active title sponsor negotiation")
+        book_hospitality(state, "title_sponsor", target_name=str(negotiation["sponsor_name"]))
+        return self.get_market_payload(state)
+
+    def apply_hospitality_bonus_after_race(self, state: GameState) -> dict[str, Any] | None:
+        negotiation = state.player_title_sponsor_negotiation
+        if negotiation is None:
+            return None
+
+        pending = pop_hospitality_bonus(state, "title_sponsor")
+        if pending is None:
+            return None
+
+        negotiation["progress"] = min(
+            float(negotiation["total_boxes"]),
+            float(negotiation.get("progress", 0.0) or 0.0) + float(pending["progress_bonus"]),
+        )
+        negotiation["progress_boxes"] = min(
+            int(negotiation["total_boxes"]),
+            int(float(negotiation["progress"]) // 1),
+        )
+        state.add_email(
+            sender="Commercial Department",
+            subject=f"Hospitality Report: {pending['target_name']}",
+            body=(
+                f"The hospitality programme for {pending['target_name']} at {state.calendar.current_event.name} helped move the talks forward.\n\n"
+                f"Bonus applied: +{pending['progress_bonus']:.1f} boxes\n"
+                f"Progress: {negotiation['progress_boxes']}/{negotiation['total_boxes']} boxes"
+            ),
+            category=EmailCategory.GENERAL,
+        )
+        return self._serialize_negotiation(negotiation)
 
     def _require_player_team(self, state: GameState):
         player_team = state.player_team

@@ -2,6 +2,11 @@ import random
 from typing import Any
 
 from app.core.management_transfers import EngineSupplierTransferManager
+from app.core.player_negotiation_hospitality import (
+    book_hospitality,
+    get_hospitality_status,
+    pop_hospitality_bonus,
+)
 from app.core.transfers import TransferManager
 from app.models.email import EmailCategory
 from app.models.state import GameState
@@ -40,6 +45,7 @@ class PlayerEngineNegotiationManager:
                 "skill": int(getattr(commercial_manager, "skill", 0) or 0),
             },
             "active_negotiation": active,
+            "hospitality": get_hospitality_status(state, "engine", active_negotiation=active is not None),
             "suppliers": suppliers,
         }
 
@@ -182,6 +188,54 @@ class PlayerEngineNegotiationManager:
             category=EmailCategory.SEASON,
         )
         return signing
+
+    def book_hospitality(self, state: GameState) -> dict[str, Any]:
+        negotiation = state.player_engine_negotiation
+        if negotiation is None:
+            raise ValueError("No active engine negotiation")
+        book_hospitality(state, "engine", target_name=str(negotiation["supplier_name"]))
+        return self.get_market_payload(state)
+
+    def apply_hospitality_bonus_after_race(self, state: GameState) -> dict[str, Any] | None:
+        negotiation = state.player_engine_negotiation
+        if negotiation is None:
+            return None
+
+        pending = pop_hospitality_bonus(state, "engine")
+        if pending is None:
+            return None
+
+        before_boxes = int(negotiation.get("progress_boxes", 0) or 0)
+        before_unlocked = set(self._unlocked_tiers(negotiation))
+        negotiation["progress"] = min(
+            float(negotiation["total_boxes"]),
+            float(negotiation.get("progress", 0.0) or 0.0) + float(pending["progress_bonus"]),
+        )
+        negotiation["progress_boxes"] = min(
+            int(negotiation["total_boxes"]),
+            int(float(negotiation["progress"]) // 1),
+        )
+        after_boxes = int(negotiation.get("progress_boxes", 0) or 0)
+        after_unlocked = set(self._unlocked_tiers(negotiation))
+        unlocked_labels = ", ".join(
+            tier.title() for tier in ("customer", "partner", "works") if tier in after_unlocked and tier not in before_unlocked
+        )
+
+        body_lines = [
+            f"The hospitality programme for {pending['target_name']} at {state.calendar.current_event.name} helped move the talks forward.",
+            "",
+            f"Bonus applied: +{pending['progress_bonus']:.1f} boxes",
+            f"Progress: {after_boxes}/{negotiation['total_boxes']} boxes",
+        ]
+        if unlocked_labels:
+            body_lines.extend(["", f"Newly unlocked terms: {unlocked_labels}"])
+        state.add_email(
+            sender="Commercial Department",
+            subject=f"Hospitality Report: {pending['target_name']}",
+            body="\n".join(body_lines),
+            category=EmailCategory.GENERAL,
+        )
+        return self._serialize_negotiation(negotiation)
 
     def _require_player_team(self, state: GameState):
         player_team = state.player_team

@@ -128,9 +128,11 @@ export default class FinanceView {
 		this.onStartEngineNegotiation = null;
 		this.onUpdateEngineNegotiationStaff = null;
 		this.onSignEngineNegotiatedDeal = null;
+		this.onBookEngineNegotiationHospitality = null;
 		this.onStartTitleSponsorNegotiation = null;
 		this.onUpdateTitleSponsorNegotiationStaff = null;
 		this.onSignTitleSponsorNegotiatedDeal = null;
+		this.onBookTitleSponsorHospitality = null;
 
 		this.bindTabs();
 		this.bindSponsorActions();
@@ -148,11 +150,13 @@ export default class FinanceView {
 	setStartTitleSponsorNegotiationHandler(handler) { this.onStartTitleSponsorNegotiation = handler; }
 	setUpdateTitleSponsorNegotiationStaffHandler(handler) { this.onUpdateTitleSponsorNegotiationStaff = handler; }
 	setSignTitleSponsorNegotiatedDealHandler(handler) { this.onSignTitleSponsorNegotiatedDeal = handler; }
+	setBookTitleSponsorHospitalityHandler(handler) { this.onBookTitleSponsorHospitality = handler; }
 	setReplaceTyreSupplierHandler(handler) { this.onReplaceTyreSupplier = handler; }
 	setReplaceEngineSupplierHandler(handler) { this.onReplaceEngineSupplier = handler; }
 	setStartEngineNegotiationHandler(handler) { this.onStartEngineNegotiation = handler; }
 	setUpdateEngineNegotiationStaffHandler(handler) { this.onUpdateEngineNegotiationStaff = handler; }
 	setSignEngineNegotiatedDealHandler(handler) { this.onSignEngineNegotiatedDeal = handler; }
+	setBookEngineNegotiationHospitalityHandler(handler) { this.onBookEngineNegotiationHospitality = handler; }
 
 	formatMoney(value, options = {}) {
 		return formatMoney(value, options);
@@ -271,6 +275,10 @@ export default class FinanceView {
 				if (event.target.closest('#finance-title-sponsor-negotiation-apply-staff') && this.onUpdateTitleSponsorNegotiationStaff) {
 					const input = document.getElementById('finance-title-sponsor-negotiation-staff');
 					if (input) this.onUpdateTitleSponsorNegotiationStaff(Number(input.value || 0));
+					return;
+				}
+				if (event.target.closest('#finance-title-sponsor-hospitality-btn') && this.onBookTitleSponsorHospitality) {
+					this.onBookTitleSponsorHospitality();
 				}
 			});
 		}
@@ -303,6 +311,10 @@ export default class FinanceView {
 				if (event.target.closest('#finance-engine-negotiation-apply-staff') && this.onUpdateEngineNegotiationStaff) {
 					const input = document.getElementById('finance-engine-negotiation-staff');
 					if (input) this.onUpdateEngineNegotiationStaff(Number(input.value || 0));
+					return;
+				}
+				if (event.target.closest('#finance-engine-hospitality-btn') && this.onBookEngineNegotiationHospitality) {
+					this.onBookEngineNegotiationHospitality();
 				}
 			});
 		}

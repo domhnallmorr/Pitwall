@@ -77,6 +77,7 @@ class GameState(BaseModel):
     planned_ai_car_updates: List[Dict[str, Any]] = Field(default_factory=list)
     player_title_sponsor_negotiation: Dict[str, Any] | None = None
     player_engine_negotiation: Dict[str, Any] | None = None
+    pending_hospitality_event: Dict[str, Any] | None = None
     player_car_development: PlayerCarDevelopment | None = None
     negative_balance_race_streak: int = 0
     game_over: bool = False

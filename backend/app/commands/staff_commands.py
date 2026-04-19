@@ -8,6 +8,8 @@ from app.core.management_transfers import (
 from app.core.player_car_development import PlayerCarDevelopmentManager
 from app.core.transfers import TransferManager
 from app.commands.staff_market_commands import (
+    handle_book_engine_negotiation_hospitality,
+    handle_book_title_sponsor_hospitality,
     handle_get_engine_negotiation_market,
     handle_get_title_sponsor_negotiation_market,
     handle_offer_driver,

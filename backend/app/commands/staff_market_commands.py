@@ -361,6 +361,20 @@ def handle_sign_title_sponsor_negotiated_deal(
         return state, {"status": "error", "message": str(e)}
 
 
+def handle_book_title_sponsor_hospitality(
+    state: GameState,
+    logger: logging.Logger,
+):
+    try:
+        data = PlayerTitleSponsorNegotiationManager().book_hospitality(state)
+        return state, {"type": "title_sponsor_negotiation_updated", "status": "success", "data": data}
+    except ValueError as ve:
+        return state, {"type": "title_sponsor_negotiation_updated", "status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error booking title sponsor hospitality: {e}")
+        return state, {"type": "title_sponsor_negotiation_updated", "status": "error", "message": str(e)}
+
+
 def handle_replace_tyre_supplier(
     state: GameState,
     logger: logging.Logger,
@@ -555,3 +569,17 @@ def handle_sign_engine_negotiated_deal(
     except Exception as e:
         logger.error(f"Error signing negotiated engine deal: {e}")
         return state, {"status": "error", "message": str(e)}
+
+
+def handle_book_engine_negotiation_hospitality(
+    state: GameState,
+    logger: logging.Logger,
+):
+    try:
+        data = PlayerEngineNegotiationManager().book_hospitality(state)
+        return state, {"type": "engine_negotiation_updated", "status": "success", "data": data}
+    except ValueError as ve:
+        return state, {"type": "engine_negotiation_updated", "status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error booking engine hospitality: {e}")
+        return state, {"type": "engine_negotiation_updated", "status": "error", "message": str(e)}

@@ -18,8 +18,21 @@ export default class Navigation {
 			'driver-market': document.getElementById('driver-market-view'),
 			'car': document.getElementById('car-view'),
 			'finance': document.getElementById('finance-view'),
+			'commercial': document.getElementById('commercial-view'),
 			'facilities': document.getElementById('facilities-view'),
 			'standings': document.getElementById('standings-view')
+		};
+		this.viewToIndex = {
+			home: 0,
+			email: 1,
+			calendar: 2,
+			grid: 3,
+			staff: 4,
+			car: 5,
+			finance: 6,
+			commercial: 7,
+			facilities: 8,
+			standings: 9,
 		};
 		this.currentView = 'home';
 
@@ -41,7 +54,7 @@ export default class Navigation {
 	}
 
 	handleNavigation(index) {
-		// 0: Home, 1: Email, 2: Calendar, 3: Grid, 4: Staff, 5: Car, 6: Finance, 7: Facilities, 8: Standings
+		// 0: Home, 1: Email, 2: Calendar, 3: Grid, 4: Staff, 5: Car, 6: Finance, 7: Commercial, 8: Facilities, 9: Standings
 		if (index === 0) { // Home
 			this.showView('home');
 			API.getHome();
@@ -72,11 +85,15 @@ export default class Navigation {
 			this.showView('finance');
 			console.log("Requesting Finance Data...");
 			API.getFinance();
-		} else if (index === 7) { // Facilities
+		} else if (index === 7) { // Commercial
+			this.showView('commercial');
+			console.log("Requesting Commercial Data...");
+			API.getFinance();
+		} else if (index === 8) { // Facilities
 			this.showView('facilities');
 			console.log("Requesting Facilities Data...");
 			API.getFacilities();
-		} else if (index === 8) { // Standings
+		} else if (index === 9) { // Standings
 			this.showView('standings');
 			console.log("Requesting Standings Data...");
 			API.getStandings();
@@ -91,5 +108,11 @@ export default class Navigation {
 			this.views[viewName].style.display = 'block';
 			this.currentView = viewName;
 		}
+	}
+
+	activateView(viewName) {
+		const index = this.viewToIndex[viewName];
+		if (index === undefined || !this.navItems[index]) return;
+		this.setActive(this.navItems[index]);
 	}
 }

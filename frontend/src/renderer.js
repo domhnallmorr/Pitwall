@@ -14,6 +14,7 @@ import DriverView from './views/driver.js';
 import DriverMarketView from './views/driver_market.js';
 import CarView from './views/car.js';
 import FinanceView from './views/finance.js';
+import CommercialView from './views/commercial.js';
 import FacilitiesView from './views/facilities.js';
 import { renderLayoutPartials } from './layout/partials.js';
 import {
@@ -63,6 +64,7 @@ let driverView;
 let driverMarketView;
 let carView;
 let financeView;
+let commercialView;
 let facilitiesView;
 let previousDriverView = 'staff';
 
@@ -92,6 +94,8 @@ function goBackFromDriverProfile() {
 	} else if (targetView === 'driver-market') {
 		// Keep existing market content visible; no fetch needed here.
 	} else if (targetView === 'finance') {
+		API.getFinance();
+	} else if (targetView === 'commercial') {
 		API.getFinance();
 	} else if (targetView === 'calendar') {
 		API.getCalendar();
@@ -185,14 +189,17 @@ function init() {
 	carView.setRepairWearHandler((wearPoints) => API.repairCarWear(wearPoints));
 	financeView = new FinanceView();
 	financeView.setReplaceTitleSponsorHandler(() => API.getTitleSponsorNegotiationMarket());
-	financeView.setStartTitleSponsorNegotiationHandler((sponsorId) => API.startTitleSponsorNegotiation(sponsorId));
-	financeView.setUpdateTitleSponsorNegotiationStaffHandler((assignedStaff) => API.updateTitleSponsorNegotiationStaff(assignedStaff));
-	financeView.setSignTitleSponsorNegotiatedDealHandler(() => API.signTitleSponsorNegotiatedDeal());
 	financeView.setReplaceEngineSupplierHandler(() => API.getEngineNegotiationMarket());
-	financeView.setStartEngineNegotiationHandler((supplierId) => API.startEngineNegotiation(supplierId));
-	financeView.setUpdateEngineNegotiationStaffHandler((assignedStaff) => API.updateEngineNegotiationStaff(assignedStaff));
-	financeView.setSignEngineNegotiatedDealHandler((tier) => API.signEngineNegotiatedDeal(tier));
 	financeView.setReplaceTyreSupplierHandler((supplierName) => API.getTyreSupplierReplacementCandidates(supplierName));
+	commercialView = new CommercialView();
+	commercialView.setStartTitleSponsorNegotiationHandler((sponsorId) => API.startTitleSponsorNegotiation(sponsorId));
+	commercialView.setUpdateTitleSponsorNegotiationStaffHandler((assignedStaff) => API.updateTitleSponsorNegotiationStaff(assignedStaff));
+	commercialView.setSignTitleSponsorNegotiatedDealHandler(() => API.signTitleSponsorNegotiatedDeal());
+	commercialView.setBookTitleSponsorHospitalityHandler(() => API.bookTitleSponsorHospitality());
+	commercialView.setStartEngineNegotiationHandler((supplierId) => API.startEngineNegotiation(supplierId));
+	commercialView.setUpdateEngineNegotiationStaffHandler((assignedStaff) => API.updateEngineNegotiationStaff(assignedStaff));
+	commercialView.setSignEngineNegotiatedDealHandler((tier) => API.signEngineNegotiatedDeal(tier));
+	commercialView.setBookEngineNegotiationHospitalityHandler(() => API.bookEngineNegotiationHospitality());
 	facilitiesView = new FacilitiesView();
 	facilitiesView.setPreviewHandler((points, years) => API.previewFacilitiesUpgrade(points, years));
 	facilitiesView.setStartUpgradeHandler((points, years) => API.startFacilitiesUpgrade(points, years));
@@ -484,12 +491,30 @@ function setupIPC() {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
 			} else if (parsed.type === 'title_sponsor_negotiation_market' || parsed.type === 'title_sponsor_negotiation_updated') {
-				financeView.showTitleSponsorNegotiationModal(parsed.data);
+				if (parsed.status === 'error') {
+					window.alert(parsed.message || 'Unable to update title sponsor negotiation.');
+					return;
+				}
+				commercialView.renderTitleSponsorNegotiation(parsed.data);
+				if (navigation) {
+					navigation.activateView('commercial');
+					navigation.showView('commercial');
+				}
+				commercialView.showTab('title-sponsor');
 			} else if (parsed.type === 'engine_supplier_replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
 			} else if (parsed.type === 'engine_negotiation_market' || parsed.type === 'engine_negotiation_updated') {
-				financeView.showEngineNegotiationModal(parsed.data);
+				if (parsed.status === 'error') {
+					window.alert(parsed.message || 'Unable to update engine negotiation.');
+					return;
+				}
+				commercialView.renderEngineNegotiation(parsed.data);
+				if (navigation) {
+					navigation.activateView('commercial');
+					navigation.showView('commercial');
+				}
+				commercialView.showTab('engine');
 			} else if (parsed.type === 'tyre_supplier_replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
@@ -538,8 +563,11 @@ function setupIPC() {
 				API.getGrid(gridView.baseYear + 1);
 				API.getEmails();
 			} else if (parsed.type === 'title_sponsor_negotiation_signed') {
-				financeView.hideTitleSponsorNegotiationModal();
-				if (navigation) navigation.showView('finance');
+				if (navigation) {
+					navigation.activateView('commercial');
+					navigation.showView('commercial');
+				}
+				commercialView.showTab('title-sponsor');
 				API.getFinance();
 				API.getGrid(gridView.getActiveYear());
 				API.getGrid(gridView.baseYear + 1);
@@ -551,8 +579,11 @@ function setupIPC() {
 				API.getGrid(gridView.baseYear + 1);
 				API.getEmails();
 			} else if (parsed.type === 'engine_negotiation_signed') {
-				financeView.hideEngineNegotiationModal();
-				if (navigation) navigation.showView('finance');
+				if (navigation) {
+					navigation.activateView('commercial');
+					navigation.showView('commercial');
+				}
+				commercialView.showTab('engine');
 				API.getFinance();
 				API.getGrid(gridView.getActiveYear());
 				API.getGrid(gridView.baseYear + 1);
@@ -581,6 +612,7 @@ function setupIPC() {
 				}
 			} else if (parsed.type === 'finance_data') {
 				financeView.render(parsed.data);
+				commercialView.render(parsed.data);
 			} else if (parsed.type === 'facilities_data') {
 				facilitiesView.render(parsed.data);
 			} else if (parsed.type === 'facilities_upgrade_preview') {

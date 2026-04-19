@@ -123,7 +123,7 @@ function renderFinanceCommercialSections() {
 			nameId: 'finance-sponsor-name',
 			nameDefault: 'Unassigned',
 			actionButtonId: 'finance-sponsor-replace-btn',
-			actionButtonLabel: 'Negotiate',
+			actionButtonLabel: 'Open Talks',
 			rows: [
 				{ label: 'Annual Value', id: 'finance-sponsor-annual', defaultValue: '$0' },
 				{ label: 'Per Race', id: 'finance-sponsor-installment', defaultValue: '$0' },
@@ -156,7 +156,7 @@ function renderFinanceSupplierSections() {
 			nameId: 'finance-engine-supplier-name',
 			nameDefault: 'Unassigned',
 			actionButtonId: 'finance-engine-supplier-replace-btn',
-			actionButtonLabel: 'Negotiate',
+			actionButtonLabel: 'Open Talks',
 			rows: [
 				{ label: 'Deal', id: 'finance-engine-supplier-deal', defaultValue: '-' },
 				{ label: 'Annual Net', id: 'finance-engine-supplier-annual', defaultValue: '$0' },

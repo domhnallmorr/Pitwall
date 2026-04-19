@@ -106,8 +106,37 @@ export function renderNegotiationIdleState({ intro, commercialManager, commercia
 	`;
 }
 
-export function renderTitleSponsorNegotiationDetail(data = {}) {
+function renderHospitalityAction(action = {}, buttonId) {
+	const cost = Number(action.cost || 0);
+	const progressBonus = Number(action.progress_bonus || 0);
+	const eventLabel = action.event_name
+		? `${action.event_name}${action.event_week ? ` (Week ${action.event_week})` : ''}`
+		: 'the next race';
+	const helper = action.booked
+		? `Hospitality booked for ${eventLabel}. Race-day bonus queued: +${progressBonus.toFixed(1)} boxes.`
+		: `Invite to ${eventLabel} for $${cost.toLocaleString()}. Adds +${progressBonus.toFixed(1)} boxes after the race.`;
+
+	return `
+		<div class="finance-engine-negotiation-staff">
+			<div class="finance-balance-label">Hospitality</div>
+			<p class="finance-balance-label">${helper}</p>
+			<button id="${buttonId}" class="btn-secondary" ${action.available ? '' : 'disabled'}>
+				Invite To Next Race
+			</button>
+			${action.reason && !action.booked ? `<div class="finance-balance-label" style="margin-top:8px;">${action.reason}</div>` : ''}
+		</div>
+	`;
+}
+
+export function renderTitleSponsorNegotiationDetail(data = {}, options = {}) {
 	const active = data.active_negotiation;
+	const hospitality = data.hospitality || {};
+	const {
+		staffInputId = 'finance-title-sponsor-negotiation-staff',
+		applyStaffButtonId = 'finance-title-sponsor-negotiation-apply-staff',
+		signButtonId = 'finance-title-sponsor-negotiation-sign-btn',
+		hospitalityButtonId = 'finance-title-sponsor-hospitality-btn',
+	} = options;
 	if (data.blocked_reason) {
 		return renderNegotiationBlockedState(data.blocked_reason);
 	}
@@ -142,14 +171,15 @@ export function renderTitleSponsorNegotiationDetail(data = {}) {
 				</div>
 			</div>
 			<div class="finance-engine-negotiation-staff">
-				<label for="finance-title-sponsor-negotiation-staff">Commercial Staff Assigned</label>
+				<label for="${staffInputId}">Commercial Staff Assigned</label>
 				<div class="finance-engine-negotiation-staff-row">
-					<input id="finance-title-sponsor-negotiation-staff" type="number" min="0" max="${data.commercial_staff_total || 0}" value="${active.assigned_staff}">
-					<button id="finance-title-sponsor-negotiation-apply-staff" class="btn-secondary">Update Staff</button>
+					<input id="${staffInputId}" type="number" min="0" max="${data.commercial_staff_total || 0}" value="${active.assigned_staff}">
+					<button id="${applyStaffButtonId}" class="btn-secondary">Update Staff</button>
 				</div>
 			</div>
+			${renderHospitalityAction(hospitality, hospitalityButtonId)}
 			<div class="finance-engine-negotiation-tiers">
-				<button id="finance-title-sponsor-negotiation-sign-btn" class="btn-primary" ${active.ready_to_sign ? '' : 'disabled'}>
+				<button id="${signButtonId}" class="btn-primary" ${active.ready_to_sign ? '' : 'disabled'}>
 					Sign Deal ($${Math.abs(active.annual_value || 0).toLocaleString()})
 				</button>
 			</div>
@@ -157,8 +187,14 @@ export function renderTitleSponsorNegotiationDetail(data = {}) {
 	`;
 }
 
-export function renderEngineNegotiationDetail(data = {}) {
+export function renderEngineNegotiationDetail(data = {}, options = {}) {
 	const active = data.active_negotiation;
+	const hospitality = data.hospitality || {};
+	const {
+		staffInputId = 'finance-engine-negotiation-staff',
+		applyStaffButtonId = 'finance-engine-negotiation-apply-staff',
+		hospitalityButtonId = 'finance-engine-hospitality-btn',
+	} = options;
 	if (data.blocked_reason) {
 		return renderNegotiationBlockedState(data.blocked_reason);
 	}
@@ -216,12 +252,13 @@ export function renderEngineNegotiationDetail(data = {}) {
 				</div>
 			</div>
 			<div class="finance-engine-negotiation-staff">
-				<label for="finance-engine-negotiation-staff">Commercial Staff Assigned</label>
+				<label for="${staffInputId}">Commercial Staff Assigned</label>
 				<div class="finance-engine-negotiation-staff-row">
-					<input id="finance-engine-negotiation-staff" type="number" min="0" max="${data.commercial_staff_total || 0}" value="${active.assigned_staff}">
-					<button id="finance-engine-negotiation-apply-staff" class="btn-secondary">Update Staff</button>
+					<input id="${staffInputId}" type="number" min="0" max="${data.commercial_staff_total || 0}" value="${active.assigned_staff}">
+					<button id="${applyStaffButtonId}" class="btn-secondary">Update Staff</button>
 				</div>
 			</div>
+			${renderHospitalityAction(hospitality, hospitalityButtonId)}
 			<div class="finance-engine-negotiation-tiers">${tierButtons}</div>
 		</div>
 	`;

@@ -243,6 +243,7 @@ def test_engine_negotiation_progresses_only_after_race_and_keeps_assigned_staff(
 
     start_response = process_command({'type': 'start_career', 'team_name': 'Schweizer'})
     assert start_response['status'] == 'success'
+    app_main.CURRENT_STATE.calendar.current_week = 10
 
     market_response = process_command({'type': 'get_engine_negotiation_market'})
     assert market_response['status'] == 'success'
@@ -280,6 +281,74 @@ def test_engine_negotiation_progresses_only_after_race_and_keeps_assigned_staff(
     assert active_negotiation is not None
     assert active_negotiation['assigned_staff'] == 20
     assert active_negotiation['progress'] > starting_progress
+
+
+@patch('app.core.player_engine_negotiations.random.uniform', return_value=0.0)
+@patch('app.core.roster.get_connection')
+def test_engine_hospitality_books_finance_cost_and_applies_post_race_bonus(
+    mock_get_conn,
+    mock_uniform,
+    test_db,
+):
+    mock_get_conn.return_value = test_db
+    app_main.CURRENT_STATE = None
+
+    start_response = process_command({'type': 'start_career', 'team_name': 'Schweizer'})
+    assert start_response['status'] == 'success'
+    app_main.CURRENT_STATE.calendar.current_week = 10
+
+    market_response = process_command({'type': 'get_engine_negotiation_market'})
+    supplier_id = market_response['data']['suppliers'][0]['id']
+    process_command({'type': 'start_engine_negotiation', 'supplier_id': supplier_id})
+
+    book_response = process_command({'type': 'book_engine_negotiation_hospitality'})
+    assert book_response['status'] == 'success'
+    assert book_response['type'] == 'engine_negotiation_updated'
+    assert book_response['data']['hospitality']['booked'] is True
+
+    hospitality_txs = [t for t in app_main.CURRENT_STATE.finance.transactions if t.category == TransactionCategory.HOSPITALITY]
+    assert len(hospitality_txs) == 1
+    assert hospitality_txs[0].amount == -100_000
+    assert app_main.CURRENT_STATE.pending_hospitality_event is not None
+
+    app_main.CURRENT_STATE.calendar.current_week = 10
+    race_response = process_command({'type': 'simulate_race'})
+    assert race_response['status'] == 'success'
+
+    assert app_main.CURRENT_STATE.pending_hospitality_event is None
+    assert app_main.CURRENT_STATE.player_engine_negotiation['progress'] > 1.0
+    hospitality_reports = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Hospitality Report:")]
+    assert len(hospitality_reports) == 1
+
+
+@patch('app.core.player_engine_negotiations.random.uniform', return_value=0.0)
+@patch('app.core.roster.get_connection')
+def test_engine_hospitality_can_be_booked_for_next_race_from_non_race_week(
+    mock_get_conn,
+    mock_uniform,
+    test_db,
+):
+    mock_get_conn.return_value = test_db
+    app_main.CURRENT_STATE = None
+
+    start_response = process_command({'type': 'start_career', 'team_name': 'Schweizer'})
+    assert start_response['status'] == 'success'
+    app_main.CURRENT_STATE.calendar.current_week = 1
+
+    market_response = process_command({'type': 'get_engine_negotiation_market'})
+    supplier_id = market_response['data']['suppliers'][0]['id']
+    process_command({'type': 'start_engine_negotiation', 'supplier_id': supplier_id})
+
+    book_response = process_command({'type': 'book_engine_negotiation_hospitality'})
+    assert book_response['status'] == 'success'
+    assert book_response['data']['hospitality']['booked'] is True
+    assert book_response['data']['hospitality']['event_name'] == 'Albert Park'
+    assert book_response['data']['hospitality']['event_week'] == 10
+
+    pending = app_main.CURRENT_STATE.pending_hospitality_event
+    assert pending is not None
+    assert pending['event_name'] == 'Albert Park'
+    assert pending['week'] == 10
 
 
 @patch('app.core.rollover.load_roster', return_value=([], [], 1999, [], []))
