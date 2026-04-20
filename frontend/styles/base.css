@@ -139,10 +139,20 @@ select,
   backdrop-filter: blur(5px);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background-color: rgba(100, 255, 218, 0.2);
   box-shadow: 0 0 20px rgba(100, 255, 218, 0.4);
   transform: translateY(-2px);
+}
+
+.btn-primary:disabled {
+  background-color: rgba(15, 23, 42, 0.72);
+  color: #94a3b8;
+  border-color: rgba(148, 163, 184, 0.26);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+  opacity: 0.55;
 }
 
 /* --- Dashboard Layout --- */

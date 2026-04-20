@@ -3,6 +3,7 @@ from typing import Any
 
 from app.core.management_transfer_markets.title_sponsor import TitleSponsorTransferManager
 from app.core.player_negotiation_hospitality import (
+    apply_hospitality_charge,
     book_hospitality,
     get_hospitality_status,
     pop_hospitality_bonus,
@@ -180,6 +181,7 @@ class PlayerTitleSponsorNegotiationManager:
         pending = pop_hospitality_bonus(state, "title_sponsor")
         if pending is None:
             return None
+        apply_hospitality_charge(state, pending)
 
         negotiation["progress"] = min(
             float(negotiation["total_boxes"]),

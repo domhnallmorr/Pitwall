@@ -51,6 +51,27 @@ export default class CommercialView {
 	setSignEngineNegotiatedDealHandler(handler) { this.onSignEngineNegotiatedDeal = handler; }
 	setBookEngineNegotiationHospitalityHandler(handler) { this.onBookEngineNegotiationHospitality = handler; }
 
+	adjustStaffInput(inputId, delta) {
+		const input = document.getElementById(inputId);
+		if (!input) return null;
+		const min = Number(input.min || 0);
+		const max = Number(input.max || 0);
+		const current = Number(input.value || 0);
+		const nextValue = Math.max(min, Math.min(max, current + delta));
+		input.value = String(nextValue);
+		return nextValue;
+	}
+
+	applyStaffFromInput(inputId, handler) {
+		const input = document.getElementById(inputId);
+		if (!input || !handler) return;
+		const min = Number(input.min || 0);
+		const max = Number(input.max || 0);
+		const nextValue = Math.max(min, Math.min(max, Number(input.value || 0)));
+		input.value = String(nextValue);
+		handler(nextValue);
+	}
+
 	bindTabs() {
 		this.tabBtns.forEach((btn) => {
 			btn.addEventListener('click', () => this.showTab(btn.getAttribute('data-type')));
@@ -68,17 +89,27 @@ export default class CommercialView {
 		}
 		if (this.titleSponsorDetailEl) {
 			this.titleSponsorDetailEl.addEventListener('click', (event) => {
+				const stepButton = event.target.closest('[data-staff-step]');
+				if (stepButton) {
+					const inputId = stepButton.getAttribute('data-staff-input-id');
+					this.adjustStaffInput(
+						inputId,
+						Number(stepButton.getAttribute('data-staff-step') || 0),
+					);
+					this.applyStaffFromInput(inputId, this.onUpdateTitleSponsorNegotiationStaff);
+					return;
+				}
 				if (event.target.closest('#commercial-title-sponsor-negotiation-sign-btn') && this.onSignTitleSponsorNegotiatedDeal) {
 					this.onSignTitleSponsorNegotiatedDeal();
 					return;
 				}
-				if (event.target.closest('#commercial-title-sponsor-negotiation-apply-staff') && this.onUpdateTitleSponsorNegotiationStaff) {
-					const input = document.getElementById('commercial-title-sponsor-negotiation-staff');
-					if (input) this.onUpdateTitleSponsorNegotiationStaff(Number(input.value || 0));
-					return;
-				}
 				if (event.target.closest('#commercial-title-sponsor-hospitality-btn') && this.onBookTitleSponsorHospitality) {
 					this.openHospitalityConfirm('title-sponsor');
+				}
+			});
+			this.titleSponsorDetailEl.addEventListener('change', (event) => {
+				if (event.target?.id === 'commercial-title-sponsor-negotiation-staff') {
+					this.applyStaffFromInput(event.target.id, this.onUpdateTitleSponsorNegotiationStaff);
 				}
 			});
 		}
@@ -95,18 +126,28 @@ export default class CommercialView {
 		}
 		if (this.engineDetailEl) {
 			this.engineDetailEl.addEventListener('click', (event) => {
+				const stepButton = event.target.closest('[data-staff-step]');
+				if (stepButton) {
+					const inputId = stepButton.getAttribute('data-staff-input-id');
+					this.adjustStaffInput(
+						inputId,
+						Number(stepButton.getAttribute('data-staff-step') || 0),
+					);
+					this.applyStaffFromInput(inputId, this.onUpdateEngineNegotiationStaff);
+					return;
+				}
 				const signButton = event.target.closest('[data-engine-tier]');
 				if (signButton && this.onSignEngineNegotiatedDeal) {
 					this.onSignEngineNegotiatedDeal(signButton.getAttribute('data-engine-tier'));
 					return;
 				}
-				if (event.target.closest('#commercial-engine-negotiation-apply-staff') && this.onUpdateEngineNegotiationStaff) {
-					const input = document.getElementById('commercial-engine-negotiation-staff');
-					if (input) this.onUpdateEngineNegotiationStaff(Number(input.value || 0));
-					return;
-				}
 				if (event.target.closest('#commercial-engine-hospitality-btn') && this.onBookEngineNegotiationHospitality) {
 					this.openHospitalityConfirm('engine');
+				}
+			});
+			this.engineDetailEl.addEventListener('change', (event) => {
+				if (event.target?.id === 'commercial-engine-negotiation-staff') {
+					this.applyStaffFromInput(event.target.id, this.onUpdateEngineNegotiationStaff);
 				}
 			});
 		}
@@ -212,7 +253,6 @@ export default class CommercialView {
 		if (this.titleSponsorDetailEl) {
 			this.titleSponsorDetailEl.innerHTML = renderTitleSponsorNegotiationDetail(data, {
 				staffInputId: 'commercial-title-sponsor-negotiation-staff',
-				applyStaffButtonId: 'commercial-title-sponsor-negotiation-apply-staff',
 				signButtonId: 'commercial-title-sponsor-negotiation-sign-btn',
 				hospitalityButtonId: 'commercial-title-sponsor-hospitality-btn',
 			});
@@ -228,7 +268,6 @@ export default class CommercialView {
 		if (this.engineDetailEl) {
 			this.engineDetailEl.innerHTML = renderEngineNegotiationDetail(data, {
 				staffInputId: 'commercial-engine-negotiation-staff',
-				applyStaffButtonId: 'commercial-engine-negotiation-apply-staff',
 				hospitalityButtonId: 'commercial-engine-hospitality-btn',
 			});
 		}

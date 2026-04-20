@@ -101,17 +101,6 @@ def book_hospitality(state: GameState, target_type: str, *, target_name: str) ->
         raise ValueError(status["reason"])
 
     target_event = _next_race_event(state)
-    circuit = next((c for c in state.circuits if c.name == target_event.name), None)
-    state.finance.add_transaction(
-        week=state.calendar.current_week,
-        year=state.year,
-        amount=-HOSPITALITY_COST,
-        category=TransactionCategory.HOSPITALITY,
-        description=f"Hospitality booked for {target_name} at {target_event.name}",
-        event_name=target_event.name,
-        event_type=target_event.type.value,
-        circuit_country=circuit.country if circuit else None,
-    )
     state.pending_hospitality_event = {
         "target_type": target_type,
         "target_name": target_name,
@@ -132,6 +121,23 @@ def book_hospitality(state: GameState, target_type: str, *, target_name: str) ->
         category=EmailCategory.GENERAL,
     )
     return get_hospitality_status(state, target_type, active_negotiation=True)
+
+
+def apply_hospitality_charge(state: GameState, pending: dict[str, Any]) -> None:
+    event_name = str(pending.get("event_name") or "")
+    if not event_name:
+        return
+    circuit = next((c for c in state.circuits if c.name == event_name), None)
+    state.finance.add_transaction(
+        week=state.calendar.current_week,
+        year=state.year,
+        amount=-int(pending.get("cost", HOSPITALITY_COST) or HOSPITALITY_COST),
+        category=TransactionCategory.HOSPITALITY,
+        description=f"Hospitality for {pending.get('target_name')} at {event_name}",
+        event_name=event_name,
+        event_type=EventType.RACE.value,
+        circuit_country=circuit.country if circuit else None,
+    )
 
 
 def pop_hospitality_bonus(state: GameState, target_type: str) -> dict[str, Any] | None:

@@ -42,6 +42,7 @@ const ELEMENT_GROUPS = {
 		engineeringStaffTotalEl: 'finance-engineering-staff-total',
 		mechanicsStaffTotalEl: 'finance-mechanics-staff-total',
 		commercialStaffTotalEl: 'finance-commercial-staff-total',
+		hospitalityTotalEl: 'finance-hospitality-total',
 		factoryOverheadTotalEl: 'finance-factory-overhead-total',
 		engineSupplierTotalEl: 'finance-engine-supplier-total',
 		tyreSupplierTotalEl: 'finance-tyre-supplier-total',
@@ -348,6 +349,7 @@ export default class FinanceView {
 		this.setText(this.engineeringStaffTotalEl, this.formatMoney(summary.engineering_staff_total || 0));
 		this.setText(this.mechanicsStaffTotalEl, this.formatMoney(summary.mechanics_staff_total || 0));
 		this.setText(this.commercialStaffTotalEl, this.formatMoney(summary.commercial_staff_total || 0));
+		this.setText(this.hospitalityTotalEl, this.formatMoney(summary.hospitality_total || 0));
 		this.setText(this.factoryOverheadTotalEl, this.formatMoney(summary.factory_overhead_total || 0));
 		this.setText(this.engineSupplierTotalEl, this.formatMoney(summary.engine_supplier_expense_total || 0));
 		this.setText(this.tyreSupplierTotalEl, this.formatMoney(summary.tyre_supplier_total || 0));

@@ -273,10 +273,19 @@
   transition: all 0.3s ease;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   background-color: rgba(255, 255, 255, 0.1);
   border-color: var(--accent-color);
   color: var(--accent-color);
+}
+
+.btn-secondary:disabled {
+  background-color: rgba(15, 23, 42, 0.62);
+  color: #94a3b8;
+  border-color: rgba(148, 163, 184, 0.26);
+  cursor: not-allowed;
+  opacity: 0.58;
+  box-shadow: none;
 }
 
 /* --- Race View --- */

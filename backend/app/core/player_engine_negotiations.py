@@ -3,6 +3,7 @@ from typing import Any
 
 from app.core.management_transfers import EngineSupplierTransferManager
 from app.core.player_negotiation_hospitality import (
+    apply_hospitality_charge,
     book_hospitality,
     get_hospitality_status,
     pop_hospitality_bonus,
@@ -204,6 +205,7 @@ class PlayerEngineNegotiationManager:
         pending = pop_hospitality_bonus(state, "engine")
         if pending is None:
             return None
+        apply_hospitality_charge(state, pending)
 
         before_boxes = int(negotiation.get("progress_boxes", 0) or 0)
         before_unlocked = set(self._unlocked_tiers(negotiation))

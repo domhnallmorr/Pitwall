@@ -83,7 +83,7 @@
 }
 
 #finance-overview-expenditure {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   column-gap: 18px;
 }
 
@@ -361,14 +361,83 @@
   margin: 14px 0;
 }
 
+.finance-engine-negotiation-staff-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.finance-engine-negotiation-staff-limit {
+  color: #94a3b8;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
 .finance-engine-negotiation-staff-row {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 8px;
 }
 
-.finance-engine-negotiation-staff-row input {
-  flex: 0 0 120px;
+.finance-engine-negotiation-staff-note {
+  margin-top: 8px;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+.finance-engine-negotiation-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(8, 20, 38, 0.72);
+}
+
+.finance-engine-negotiation-step-btn {
+  width: 42px;
+  height: 42px;
+  border: none;
+  background: rgba(15, 23, 42, 0.88);
+  color: #e2e8f0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.finance-engine-negotiation-step-btn:hover:not(:disabled) {
+  background: rgba(30, 41, 59, 0.92);
+}
+
+.finance-engine-negotiation-step-input {
+  width: 88px;
+  height: 42px;
+  border: none;
+  border-left: 1px solid rgba(148, 163, 184, 0.12);
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
+  background: transparent;
+  color: #e2e8f0;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.finance-engine-negotiation-step-input:focus {
+  outline: none;
+  background: rgba(15, 23, 42, 0.78);
+}
+
+.finance-engine-negotiation-step-input::-webkit-outer-spin-button,
+.finance-engine-negotiation-step-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.finance-engine-negotiation-step-input[type=number] {
+  -moz-appearance: textfield;
 }
 
 .finance-engine-negotiation-tiers {

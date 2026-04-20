@@ -86,16 +86,18 @@ describe('CommercialView', () => {
 		document.querySelector('[data-title-sponsor-id="7"]').click();
 		expect(onStart).toHaveBeenCalledWith(7);
 
+		document.querySelector('[data-staff-input-id="commercial-title-sponsor-negotiation-staff"][data-staff-step="1"]').click();
+		document.querySelector('[data-staff-input-id="commercial-title-sponsor-negotiation-staff"][data-staff-step="1"]').click();
 		const input = document.getElementById('commercial-title-sponsor-negotiation-staff');
-		input.value = '18';
-		document.getElementById('commercial-title-sponsor-negotiation-apply-staff').click();
 		document.getElementById('commercial-title-sponsor-negotiation-sign-btn').click();
 		document.getElementById('commercial-title-sponsor-hospitality-btn').click();
 		expect(document.getElementById('commercial-hospitality-modal').style.display).toBe('flex');
 		expect(document.getElementById('commercial-hospitality-modal-body').textContent).toContain('Albert Park (Week 10)');
 		document.getElementById('commercial-hospitality-confirm-btn').click();
 
-		expect(onUpdateStaff).toHaveBeenCalledWith(18);
+		expect(input.value).toBe('14');
+		expect(onUpdateStaff).toHaveBeenNthCalledWith(1, 13);
+		expect(onUpdateStaff).toHaveBeenNthCalledWith(2, 14);
 		expect(onSign).toHaveBeenCalled();
 		expect(onHospitality).toHaveBeenCalled();
 

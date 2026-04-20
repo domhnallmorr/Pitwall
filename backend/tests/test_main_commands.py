@@ -723,7 +723,12 @@ def test_book_engine_negotiation_hospitality_returns_updated_market_payload():
     assert result["status"] == "success"
     assert result["type"] == "engine_negotiation_updated"
     assert result["data"]["hospitality"]["booked"] is True
-    assert any(t.category == TransactionCategory.HOSPITALITY and t.amount == -100_000 for t in state.finance.transactions)
+    assert not any(t.category == TransactionCategory.HOSPITALITY for t in state.finance.transactions)
+    assert state.pending_hospitality_event is not None
+
+    finance = process_command({"type": "get_finance"})
+    assert finance["status"] == "success"
+    assert finance["data"]["overview"]["next_race_outgoings"] >= 100_000
 
 
 def test_replace_tyre_supplier_respects_contract_rule_and_signs_replacement():

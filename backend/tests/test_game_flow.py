@@ -305,17 +305,19 @@ def test_engine_hospitality_books_finance_cost_and_applies_post_race_bonus(
     assert book_response['status'] == 'success'
     assert book_response['type'] == 'engine_negotiation_updated'
     assert book_response['data']['hospitality']['booked'] is True
-
-    hospitality_txs = [t for t in app_main.CURRENT_STATE.finance.transactions if t.category == TransactionCategory.HOSPITALITY]
-    assert len(hospitality_txs) == 1
-    assert hospitality_txs[0].amount == -100_000
     assert app_main.CURRENT_STATE.pending_hospitality_event is not None
+    hospitality_txs = [t for t in app_main.CURRENT_STATE.finance.transactions if t.category == TransactionCategory.HOSPITALITY]
+    assert hospitality_txs == []
 
     app_main.CURRENT_STATE.calendar.current_week = 10
     race_response = process_command({'type': 'simulate_race'})
     assert race_response['status'] == 'success'
 
     assert app_main.CURRENT_STATE.pending_hospitality_event is None
+    hospitality_txs = [t for t in app_main.CURRENT_STATE.finance.transactions if t.category == TransactionCategory.HOSPITALITY]
+    assert len(hospitality_txs) == 1
+    assert hospitality_txs[0].amount == -100_000
+    assert hospitality_txs[0].event_name == 'Albert Park'
     assert app_main.CURRENT_STATE.player_engine_negotiation['progress'] > 1.0
     hospitality_reports = [e for e in app_main.CURRENT_STATE.emails if e.subject.startswith("Hospitality Report:")]
     assert len(hospitality_reports) == 1

@@ -142,6 +142,10 @@ def build_finance_payload(state: GameState):
     projected_mechanics_staff_remaining = max(mechanics_staff_annual_projection - int(summary.get("mechanics_staff_total", 0) or 0), 0)
     projected_workforce_remaining = projected_design_staff_remaining + projected_engineering_staff_remaining + projected_mechanics_staff_remaining
     projected_commercial_staff_remaining = max(commercial_staff_annual_projection - int(summary.get("commercial_staff_total", 0) or 0), 0)
+    hospitality_pending_cost = 0
+    pending_hospitality = getattr(state, "pending_hospitality_event", None)
+    if pending_hospitality and pending_hospitality.get("year", state.year) == state.year:
+        hospitality_pending_cost = int(pending_hospitality.get("cost", 0) or 0)
     prize_remaining = max(state.finance.prize_money_entitlement - state.finance.prize_money_paid, 0)
     next_race_prize_income = int(round(prize_remaining / max(1, remaining_races))) if remaining_races else 0
     transport_events_remaining = []
@@ -201,6 +205,7 @@ def build_finance_payload(state: GameState):
     next_race_outgoings = (
         workforce_race_cost
         + commercial_staff_race_cost
+        + hospitality_pending_cost
         + factory_overhead_installment
         + tyre_supplier_installment
         + facilities_installment
@@ -221,6 +226,7 @@ def build_finance_payload(state: GameState):
         + projected_commercial_staff_remaining
         + factory_overhead_remaining
         + projected_driver_expense_remaining
+        + hospitality_pending_cost
         + projected_transport_remaining
         + facilities_remaining
     )

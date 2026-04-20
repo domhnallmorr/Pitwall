@@ -48,6 +48,7 @@ function renderFinanceOverviewSections() {
 			{ label: 'Engineering Staff', id: 'finance-engineering-staff-total', defaultValue: '$0' },
 			{ label: 'Mechanics', id: 'finance-mechanics-staff-total', defaultValue: '$0' },
 			{ label: 'Commercial Staff', id: 'finance-commercial-staff-total', defaultValue: '$0' },
+			{ label: 'Hospitality', id: 'finance-hospitality-total', defaultValue: '$0' },
 			{ label: 'Factory Overhead', id: 'finance-factory-overhead-total', defaultValue: '$0' },
 			{ label: 'Engine Supplier', id: 'finance-engine-supplier-total', defaultValue: '$0' },
 			{ label: 'Tyre Supplier', id: 'finance-tyre-supplier-total', defaultValue: '$0' },

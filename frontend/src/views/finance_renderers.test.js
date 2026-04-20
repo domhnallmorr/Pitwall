@@ -117,12 +117,30 @@ describe('finance_renderers', () => {
 		expect(activeHtml).toContain('Windale')
 		expect(activeHtml).toContain('Progress: 4/6 boxes')
 		expect(activeHtml).toContain('value="18"')
+		expect(activeHtml).toContain('finance-engine-negotiation-stepper')
+		expect(activeHtml).toContain('Max 49')
+		expect(activeHtml).toContain('Changes apply immediately.')
 		expect(activeHtml).toContain('Invite To Next Race')
 		expect(activeHtml).toContain('Albert Park (Week 10)')
 		expect(activeHtml).toContain('$100,000')
 		expect(activeHtml).toContain('Sign Deal ($32,500,000)')
 		expect(activeHtml).not.toContain('finance-title-sponsor-negotiation-sign-btn" class="btn-primary" disabled')
 		expect((activeHtml.match(/finance-engine-progress-box filled/g) || [])).toHaveLength(4)
+
+		const pendingHtml = renderTitleSponsorNegotiationDetail({
+			commercial_staff_total: 49,
+			active_negotiation: {
+				sponsor_name: 'Windale',
+				total_boxes: 6,
+				progress_boxes: 2,
+				annual_value: 32500000,
+				contract_length: 2,
+				assigned_staff: 18,
+				ready_to_sign: false,
+			},
+		})
+		expect(pendingHtml).toContain('Negotiations Ongoing')
+		expect(pendingHtml).toContain('finance-title-sponsor-negotiation-sign-btn" type="button" class="btn-primary" disabled')
 	})
 
 	it('renders engine negotiation detail states with tier unlocks', () => {
@@ -166,8 +184,11 @@ describe('finance_renderers', () => {
 		expect(activeHtml).toContain('Sign Customer (-$4,500,000)')
 		expect(activeHtml).toContain('Sign Works (+$3,000,000)')
 		expect(activeHtml).toContain('Hospitality booked for Albert Park (Week 10)')
-		expect(activeHtml).toContain('finance-engine-hospitality-btn')
+		expect(activeHtml).toContain('id="finance-engine-hospitality-btn" class="btn-secondary" disabled')
 		expect(activeHtml).toContain('value="20"')
+		expect(activeHtml).toContain('finance-engine-negotiation-step-btn')
+		expect(activeHtml).toContain('Max 49')
+		expect(activeHtml).toContain('Changes apply immediately.')
 		expect((activeHtml.match(/finance-engine-progress-box filled/g) || [])).toHaveLength(5)
 	})
 })
