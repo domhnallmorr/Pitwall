@@ -18,6 +18,7 @@ def load_drivers(cursor, start_year: int) -> tuple[List[Driver], Dict[str, Drive
     cursor.execute("PRAGMA table_info(drivers)")
     driver_columns = {row[1] for row in cursor.fetchall()}
     has_speed = "speed" in driver_columns
+    has_consistency = "consistency" in driver_columns
     has_race_starts = "race_starts" in driver_columns
     has_wins = "wins" in driver_columns
     has_podiums = "podiums" in driver_columns
@@ -27,6 +28,7 @@ def load_drivers(cursor, start_year: int) -> tuple[List[Driver], Dict[str, Drive
     has_contract_length = "contract_length" in driver_columns
 
     speed_expr = "speed" if has_speed else "50"
+    consistency_expr = "consistency" if has_consistency else "50"
     race_starts_expr = "race_starts" if has_race_starts else "0"
     wins_expr = "wins" if has_wins else "0"
     podiums_expr = "podiums" if has_podiums else "0"
@@ -35,7 +37,7 @@ def load_drivers(cursor, start_year: int) -> tuple[List[Driver], Dict[str, Drive
     championships_expr = "championships" if has_championships else "0"
     contract_length_expr = "contract_length" if has_contract_length else "2"
     cursor.execute(
-        f"SELECT id, name, age, country, wage, pay_driver, {speed_expr} AS speed, {race_starts_expr} AS race_starts, {wins_expr} AS wins, {podiums_expr} AS podiums, {poles_expr} AS poles, {fastest_laps_expr} AS fastest_laps, {championships_expr} AS championships, {contract_length_expr} AS contract_length "
+        f"SELECT id, name, age, country, wage, pay_driver, {speed_expr} AS speed, {consistency_expr} AS consistency, {race_starts_expr} AS race_starts, {wins_expr} AS wins, {podiums_expr} AS podiums, {poles_expr} AS poles, {fastest_laps_expr} AS fastest_laps, {championships_expr} AS championships, {contract_length_expr} AS contract_length "
         "FROM drivers WHERE start_year = ? OR start_year = 0 ORDER BY id ASC",
         (start_year,),
     )
@@ -43,13 +45,14 @@ def load_drivers(cursor, start_year: int) -> tuple[List[Driver], Dict[str, Drive
     driver_map: Dict[str, Driver] = {}
     for row in cursor.fetchall():
         speed = row[6] if row[6] is not None else 50
-        race_starts = row[7] if row[7] is not None else 0
-        wins = row[8] if row[8] is not None else 0
-        podiums = row[9] if row[9] is not None else 0
-        poles = row[10] if row[10] is not None else 0
-        fastest_laps = row[11] if row[11] is not None else 0
-        championships = row[12] if row[12] is not None else 0
-        contract_length = row[13] if row[13] is not None else 2
+        consistency = row[7] if row[7] is not None else 50
+        race_starts = row[8] if row[8] is not None else 0
+        wins = row[9] if row[9] is not None else 0
+        podiums = row[10] if row[10] is not None else 0
+        poles = row[11] if row[11] is not None else 0
+        fastest_laps = row[12] if row[12] is not None else 0
+        championships = row[13] if row[13] is not None else 0
+        contract_length = row[14] if row[14] is not None else 2
         driver = Driver(
             id=row[0],
             name=row[1],
@@ -58,6 +61,7 @@ def load_drivers(cursor, start_year: int) -> tuple[List[Driver], Dict[str, Drive
             wage=row[4],
             pay_driver=bool(row[5]),
             speed=speed,
+            consistency=consistency,
             race_starts=race_starts,
             wins=wins,
             podiums=podiums,

@@ -1,5 +1,6 @@
 from app.core.standings import StandingsManager
 from app.core.commercial_staff_costs import CommercialStaffCostManager
+from app.core.driver_ratings import calculate_driver_overall_rating
 from app.core.factory_size import get_factory_limits
 from app.core.operational_staff_costs import OperationalStaffCostManager
 from app.core.player_car_development import PlayerCarDevelopmentManager
@@ -184,6 +185,8 @@ def get_staff_payload(state: GameState) -> dict:
             "age": d.age,
             "country": d.country,
             "speed": d.speed,
+            "consistency": getattr(d, "consistency", 50),
+            "overall_rating": calculate_driver_overall_rating(d.speed, getattr(d, "consistency", 50)),
             "points": d.points,
             "wage": d.wage,
             "pay_driver": d.pay_driver,
@@ -286,6 +289,8 @@ def get_driver_payload(state: GameState, driver_name: str) -> dict:
         "country": driver.country,
         "team_name": team_name,
         "speed": driver.speed,
+        "consistency": getattr(driver, "consistency", 50),
+        "overall_rating": calculate_driver_overall_rating(driver.speed, getattr(driver, "consistency", 50)),
         "race_starts": driver.race_starts,
         "wins": driver.wins,
         "podiums": driver.podiums,

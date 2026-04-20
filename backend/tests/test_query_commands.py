@@ -34,8 +34,8 @@ def create_state() -> GameState:
             )
         ],
         drivers=[
-            Driver(id=1, name="John Newhouse", age=27, country="Canada", team_id=1, speed=84, race_starts=1, wins=1, podiums=2, poles=1, fastest_laps=1, championships=1),
-            Driver(id=2, name="Henrik Friedrich", age=31, country="Germany", team_id=1, speed=72),
+            Driver(id=1, name="John Newhouse", age=27, country="Canada", team_id=1, speed=84, consistency=68, race_starts=1, wins=1, podiums=2, poles=1, fastest_laps=1, championships=1),
+            Driver(id=2, name="Henrik Friedrich", age=31, country="Germany", team_id=1, speed=72, consistency=58),
         ],
         calendar=Calendar(events=[Event(name="Albert Park", week=10, type=EventType.RACE)], current_week=1),
         circuits=[],
@@ -115,6 +115,18 @@ def test_get_driver_payload_requires_existing_driver():
         assert False, "Expected ValueError"
     except ValueError as exc:
         assert "not found" in str(exc)
+
+
+def test_driver_and_staff_payloads_include_overall_rating_and_consistency():
+    state = create_state()
+
+    staff_payload = get_staff_payload(state)
+    driver_payload = get_driver_payload(state, "John Newhouse")
+
+    assert staff_payload["drivers"][0]["consistency"] == 68
+    assert staff_payload["drivers"][0]["overall_rating"] == 80
+    assert driver_payload["consistency"] == 68
+    assert driver_payload["overall_rating"] == 80
 
 
 def test_get_facilities_payload_requires_player_team():

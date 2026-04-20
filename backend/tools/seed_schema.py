@@ -18,6 +18,7 @@ def create_schema(conn):
             pay_driver INTEGER DEFAULT 0,
             contract_length INTEGER DEFAULT 2,
             speed INTEGER DEFAULT 50,
+            consistency INTEGER DEFAULT 50,
             race_starts INTEGER DEFAULT 0,
             wins INTEGER DEFAULT 0,
             podiums INTEGER DEFAULT 0,
@@ -207,6 +208,8 @@ def create_schema(conn):
     driver_columns = {row[1] for row in c.fetchall()}
     if "speed" not in driver_columns:
         c.execute("ALTER TABLE drivers ADD COLUMN speed INTEGER DEFAULT 50")
+    if "consistency" not in driver_columns:
+        c.execute("ALTER TABLE drivers ADD COLUMN consistency INTEGER DEFAULT 50")
     if "contract_length" not in driver_columns:
         c.execute("ALTER TABLE drivers ADD COLUMN contract_length INTEGER DEFAULT 2")
     if "race_starts" not in driver_columns:

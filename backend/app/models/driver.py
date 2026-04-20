@@ -7,6 +7,7 @@ class Driver(BaseModel):
     age: int
     country: str
     speed: int = 50
+    consistency: int = 50
     race_starts: int = 0
     wins: int = 0
     podiums: int = 0

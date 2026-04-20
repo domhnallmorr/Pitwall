@@ -1,6 +1,6 @@
 import sqlite3
 
-from app.core.roster_components import load_teams
+from app.core.roster_components import load_drivers, load_teams
 from tools.seed_schema import create_schema
 
 
@@ -29,3 +29,24 @@ def test_load_teams_reads_factory_size_department_and_commercial_staff_columns()
     assert teams[0].mechanics_staff == 58
     assert teams[0].workforce == 182
     assert teams[0].commercial_staff == 60
+
+
+def test_load_drivers_reads_consistency_column():
+    conn = sqlite3.connect(":memory:")
+    create_schema(conn)
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO drivers (
+            start_year, name, age, country, wage, pay_driver, contract_length, speed, consistency
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (0, "Marco Schneider", 29, "Germany", 24_000_000, 0, 4, 98, 100),
+    )
+    conn.commit()
+
+    drivers, driver_map = load_drivers(cursor, 1998)
+
+    assert len(drivers) == 1
+    assert driver_map["Marco Schneider"].speed == 98
+    assert driver_map["Marco Schneider"].consistency == 100

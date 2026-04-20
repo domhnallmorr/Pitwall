@@ -78,24 +78,24 @@ export default class StaffView {
 		});
 	}
 
-	getSpeedRating(speed) {
-		const numericSpeed = Number(speed);
-		const clamped = Number.isFinite(numericSpeed) ? Math.max(0, Math.min(100, numericSpeed)) : 0;
+	getRatingLevel(value) {
+		const numericValue = Number(value);
+		const clamped = Number.isFinite(numericValue) ? Math.max(0, Math.min(100, numericValue)) : 0;
 		return Math.max(1, Math.ceil(clamped / 20));
 	}
 
-	renderSpeedBlocks(speed) {
-		const rating = this.getSpeedRating(speed);
+	renderSpeedBlocks(value, label = 'Rating') {
+		const rating = this.getRatingLevel(value);
 		let blocks = '';
 		for (let i = 1; i <= 5; i += 1) {
 			const stateClass = i <= rating ? 'is-filled' : '';
 			blocks += `<span class="staff-speed-block ${stateClass}" aria-hidden="true"></span>`;
 		}
-		return `<span class="staff-speed-rating" role="img" aria-label="Speed rating ${rating} out of 5">${blocks}</span>`;
+		return `<span class="staff-speed-rating" role="img" aria-label="${label} ${rating} out of 5">${blocks}</span>`;
 	}
 
 	renderSkillBlocks(skill) {
-		const rating = this.getSpeedRating(skill);
+		const rating = this.getRatingLevel(skill);
 		let blocks = '';
 		for (let i = 1; i <= 5; i += 1) {
 			const stateClass = i <= rating ? 'is-filled' : '';
@@ -314,8 +314,8 @@ export default class StaffView {
 						<span class="staff-detail-value">${renderFlagLabel(driver.country, driver.country)}</span>
 					</div>
 					<div class="staff-detail-row">
-						<span class="staff-detail-label">Speed</span>
-						<span class="staff-detail-value">${this.renderSpeedBlocks(driver.speed)}</span>
+						<span class="staff-detail-label">Overall</span>
+						<span class="staff-detail-value">${this.renderSpeedBlocks(driver.overall_rating, 'Overall rating')}</span>
 					</div>
 					<div class="staff-detail-row">
 						<span class="staff-detail-label">Wage</span>

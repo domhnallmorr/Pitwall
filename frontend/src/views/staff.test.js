@@ -73,8 +73,8 @@ describe('StaffView', () => {
 			player_commercial_staff: 49,
 			teams: [{ name: 'Warrick', country: 'United Kingdom', workforce: 250 }],
 			drivers: [
-				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, wage: 1000, pay_driver: false, contract_length: 2 },
-				{ id: 2, name: 'Driver B', age: 24, country: 'DE', speed: 70, wage: 1000, pay_driver: false, contract_length: 1 },
+				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, overall_rating: 75, wage: 1000, pay_driver: false, contract_length: 2 },
+				{ id: 2, name: 'Driver B', age: 24, country: 'DE', speed: 70, overall_rating: 68, wage: 1000, pay_driver: false, contract_length: 1 },
 			],
 			technical_director: null,
 			commercial_manager: null,
@@ -162,10 +162,10 @@ describe('StaffView', () => {
 	});
 
 	it('covers guard branches and empty states', () => {
-		expect(staffView.getSpeedRating('bad')).toBe(1);
-		expect(staffView.getSpeedRating(999)).toBe(5);
+		expect(staffView.getRatingLevel('bad')).toBe(1);
+		expect(staffView.getRatingLevel(999)).toBe(5);
 		expect(staffView.getWorkforceRating(0, 0)).toBe(1);
-		expect(staffView.renderSpeedBlocks(0)).toContain('Speed rating 1 out of 5');
+		expect(staffView.renderSpeedBlocks(0, 'Overall rating')).toContain('Overall rating 1 out of 5');
 		expect(staffView.renderSkillBlocks(100)).toContain('Skill rating 5 out of 5');
 
 		staffView.render({
@@ -271,7 +271,7 @@ describe('StaffView', () => {
 		staffView.setReplaceDriverHandler(onReplace);
 		staffView.render({
 			drivers: [
-				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, wage: -250000, pay_driver: true, contract_length: 1 },
+				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, overall_rating: 75, wage: -250000, pay_driver: true, contract_length: 1 },
 			],
 			technical_director: null,
 			commercial_manager: null,
@@ -298,7 +298,7 @@ describe('StaffView', () => {
 		staffView.setDriverSelectHandler(onSelect);
 		staffView.render({
 			drivers: [
-				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, wage: 1000, pay_driver: false, contract_length: 1 },
+				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, overall_rating: 75, wage: 1000, pay_driver: false, contract_length: 1 },
 			],
 			technical_director: null,
 			commercial_manager: null,
@@ -312,7 +312,7 @@ describe('StaffView', () => {
 	it('disables replace buttons when a pending replacement exists', () => {
 		staffView.render({
 			drivers: [
-				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, wage: 1000, pay_driver: false, contract_length: 1, pending_replacement: true },
+				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, overall_rating: 75, wage: 1000, pay_driver: false, contract_length: 1, pending_replacement: true },
 			],
 			technical_director: {
 				id: 6,
