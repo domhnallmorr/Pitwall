@@ -269,6 +269,8 @@ export default class DriverMarketView {
 					<strong>${this.renderSpeedBlocks(candidate.speed)}</strong>
 					<span class="driver-market-detail-label" style="margin-top: 10px;">Consistency</span>
 					<strong>${this.renderSpeedBlocks(candidate.consistency)}</strong>
+					<span class="driver-market-detail-label" style="margin-top: 10px;">Qualifying</span>
+					<strong>${this.renderSpeedBlocks((Number(candidate.qualifying) || 1) * 20)}</strong>
 				</div>
 				<div class="driver-market-detail-card">
 					<span class="driver-market-detail-label">Current Ask</span>

@@ -24,6 +24,7 @@ describe('DriverView', () => {
 			country: 'Canada',
 			speed: 84,
 			consistency: 68,
+			qualifying: 3,
 			race_starts: 33,
 			wins: 11,
 			podiums: 19,
@@ -50,6 +51,7 @@ describe('DriverView', () => {
 		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Fastest Laps');
 		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Championships');
 		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Consistency');
+		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Qualifying');
 		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Speed rating 4 out of 5');
 
 		const seasonHtml = document.getElementById('driver-season-results-container').innerHTML;
@@ -67,6 +69,7 @@ describe('DriverView', () => {
 			country: 'United Kingdom',
 			speed: 80,
 			consistency: 70,
+			qualifying: 3,
 			race_starts: 1,
 			wins: 0,
 			podiums: 0,
@@ -111,6 +114,7 @@ describe('DriverView', () => {
 			country: 'Ireland',
 			speed: 0,
 			consistency: 27,
+			qualifying: 2,
 			race_starts: 0,
 			wins: 0,
 			podiums: 0,
@@ -127,6 +131,7 @@ describe('DriverView', () => {
 		expect(profileHtml).toContain('Free Agent');
 		expect(profileHtml).toContain('Pay Driver');
 		expect(profileHtml).toContain('Speed rating 2 out of 5');
+		expect(profileHtml).toContain('Qualifying');
 		expect(document.getElementById('driver-season-results-container').textContent).toContain('No race results recorded this season yet');
 	});
 });

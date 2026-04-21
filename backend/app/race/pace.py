@@ -12,7 +12,9 @@ from app.race.constants import (
 	FUEL_PENALTY_MS_PER_KG,
 	OVERTAKE_SUCCESS_PROBABILITY,
 	PACE_CENTER,
+	QUALIFYING_DRIVER_PACE_FACTOR,
 	QUALIFYING_JITTER_RANGE_MS,
+	QUALIFYING_REDUCTION_CAP_MS_BY_STAR,
 	TYRE_DEGRADATION_MS_PER_LAP,
 	TYRE_GRIP_MAX_EFFECT_MS,
 	TYRE_WEAR_MAX_MULTIPLIER_DELTA,
@@ -24,6 +26,11 @@ def driver_pace_bonus_ms(entrant: dict) -> int:
 	return int(round((driver_speed - PACE_CENTER) * DRIVER_PACE_MS_PER_POINT))
 
 
+def qualifying_driver_pace_bonus_ms(entrant: dict) -> int:
+	driver_speed = float(entrant.get("driver_speed", PACE_CENTER) or PACE_CENTER)
+	return int(round((driver_speed - PACE_CENTER) * DRIVER_PACE_MS_PER_POINT * QUALIFYING_DRIVER_PACE_FACTOR))
+
+
 def car_pace_bonus_ms(entrant: dict) -> int:
 	car_speed = float(entrant.get("car_speed", PACE_CENTER) or PACE_CENTER)
 	return int(round((car_speed - PACE_CENTER) * CAR_PACE_MS_PER_POINT))
@@ -31,6 +38,18 @@ def car_pace_bonus_ms(entrant: dict) -> int:
 
 def base_pace_bonus_ms(entrant: dict) -> int:
 	return driver_pace_bonus_ms(entrant) + car_pace_bonus_ms(entrant)
+
+
+def qualifying_reduction_cap_ms(entrant: dict) -> int:
+	qualifying = entrant.get("driver_qualifying", 3)
+	if qualifying is None:
+		qualifying = 3
+	qualifying = int(max(1, min(5, qualifying)))
+	return QUALIFYING_REDUCTION_CAP_MS_BY_STAR[qualifying]
+
+
+def qualifying_attribute_reduction_ms(entrant: dict) -> int:
+	return random.randint(0, qualifying_reduction_cap_ms(entrant))
 
 
 def consistency_max_lap_penalty_ms(entrant: dict) -> float:
@@ -90,13 +109,14 @@ def lap_time_ms(entrant: dict, circuit: Circuit) -> int:
 
 
 def qualifying_lap_time_ms(entrant: dict, circuit: Circuit) -> int:
-	base_bonus_ms = base_pace_bonus_ms(entrant)
+	base_bonus_ms = qualifying_driver_pace_bonus_ms(entrant) + car_pace_bonus_ms(entrant)
+	qualifying_reduction_ms = qualifying_attribute_reduction_ms(entrant)
 	jitter_ms = random.randint(-QUALIFYING_JITTER_RANGE_MS, QUALIFYING_JITTER_RANGE_MS)
 	engine_adjustment_ms = engine_power_effect_ms(entrant, circuit)
 	tyre_grip_adjustment_ms = tyre_grip_effect_ms(entrant)
 	return max(
 		45_000,
-		circuit.base_laptime_ms - base_bonus_ms + engine_adjustment_ms + tyre_grip_adjustment_ms + jitter_ms,
+		circuit.base_laptime_ms - base_bonus_ms - qualifying_reduction_ms + engine_adjustment_ms + tyre_grip_adjustment_ms + jitter_ms,
 	)
 
 

@@ -116,6 +116,10 @@ export default class DriverView {
 							<span class="staff-detail-value">${this.renderSpeedBlocks(data.consistency)}</span>
 						</div>
 						<div class="staff-detail-row">
+							<span class="staff-detail-label">Qualifying</span>
+							<span class="staff-detail-value">${this.renderSpeedBlocks((Number(data.qualifying) || 1) * 20)}</span>
+						</div>
+						<div class="staff-detail-row">
 							<span class="staff-detail-label">Wage</span>
 							<span class="staff-detail-value">${wageDisplay}</span>
 						</div>

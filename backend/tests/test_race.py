@@ -238,6 +238,7 @@ def test_qualifying_lap_time_does_not_use_driver_consistency():
     entrant = {
         "driver_speed": 50,
         "driver_consistency": 100,
+        "driver_qualifying": 3,
         "car_speed": 50,
         "engine_power": 50,
         "tyre_grip": 50,
@@ -254,9 +255,37 @@ def test_qualifying_lap_time_does_not_use_driver_consistency():
     finally:
         random.randint = original_randint
 
-    assert elite == 84_220
-    assert average == 84_220
-    assert erratic == 84_220
+    assert elite == 84_120
+    assert average == 84_120
+    assert erratic == 84_120
+
+
+def test_qualifying_lap_time_uses_qualifying_bonus_cap():
+    state = create_race_state()
+    manager = RaceManager()
+    circuit = state.circuits[0]
+    entrant = {
+        "driver_speed": 50,
+        "driver_consistency": 50,
+        "driver_qualifying": 5,
+        "car_speed": 50,
+        "engine_power": 50,
+        "tyre_grip": 50,
+    }
+
+    original_randint = random.randint
+    calls = iter([240, 220, 0, 220])
+    random.randint = lambda a, b: next(calls)
+    try:
+        elite = manager._qualifying_lap_time_ms(entrant, circuit)
+        entrant["driver_qualifying"] = 1
+        limited = manager._qualifying_lap_time_ms(entrant, circuit)
+    finally:
+        random.randint = original_randint
+
+    assert elite < limited
+    assert elite == 83_980
+    assert limited == 84_220
 
 
 def test_simulate_race_weighting_favors_faster_driver_and_car():

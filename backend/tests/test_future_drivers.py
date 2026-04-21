@@ -35,10 +35,13 @@ def test_load_roster_includes_default_free_agents_from_1998(mock_get_conn):
     assert by_name["Javier Perez Mendoza"].country == "Colombia"
     assert by_name["Javier Perez Mendoza"].speed == 79
     assert by_name["Javier Perez Mendoza"].consistency == 59
+    assert by_name["Javier Perez Mendoza"].qualifying == 4
     assert by_name["Leonardo Badei"].race_starts == 34
     assert by_name["Leonardo Badei"].consistency == 30
+    assert by_name["Leonardo Badei"].qualifying == 2
     assert by_name["Jan van der Veen"].race_starts == 48
     assert by_name["Jan van der Veen"].consistency == 32
+    assert by_name["Jan van der Veen"].qualifying == 2
     assert by_name["Pablo del Rosario"].country == "Spain"
     assert by_name["Stefan Sarrien"].age == 22
     assert by_name["Jorn Maller"].country == "Germany"
@@ -94,6 +97,7 @@ def test_load_roster_includes_2000_future_drivers_with_supported_fields(mock_get
     assert faustino.country == "Spain"
     assert faustino.speed == 95
     assert faustino.consistency == 90
+    assert faustino.qualifying == 5
 
     assert eugenio.country == "Brazil"
     assert eugenio.speed == 59
@@ -162,6 +166,7 @@ def test_load_roster_includes_2001_future_drivers_with_supported_fields(mock_get
     assert fabrizio.country == "Brazil"
     assert fabrizio.speed == 76
     assert fabrizio.consistency == 55
+    assert fabrizio.qualifying == 4
 
     assert all(driver.contract_length == 0 for driver in [toshiro, alistair, mason, arthur, fabrizio])
     assert all(driver.wage == 0 for driver in [toshiro, alistair, mason, arthur, fabrizio])
@@ -198,6 +203,7 @@ def test_load_roster_includes_2002_future_drivers_with_supported_fields(mock_get
     assert adriano.country == "Brazil"
     assert adriano.speed == 66
     assert adriano.consistency == 55
+    assert adriano.qualifying == 3
 
     assert james.age == 24
     assert james.country == "United Kingdom"
@@ -243,11 +249,13 @@ def test_load_roster_includes_2003_future_drivers_with_supported_fields(mock_get
     assert tobias.age == 21
     assert tobias.country == "Germany"
     assert tobias.speed == 66
+    assert tobias.qualifying == 3
 
     assert giacomo.age == 22
     assert giacomo.country == "Italy"
     assert giacomo.speed == 62
     assert giacomo.consistency == 47
+    assert giacomo.qualifying == 2
 
     assert all(driver.contract_length == 0 for driver in [caspar, giovanni, tobias, giacomo])
     assert all(driver.wage == 0 for driver in [caspar, giovanni, tobias, giacomo])
@@ -276,31 +284,37 @@ def test_load_roster_includes_2004_future_drivers_with_supported_fields(mock_get
     assert teo.country == "Portugal"
     assert teo.speed == 57
     assert teo.consistency == 26
+    assert teo.qualifying == 2
 
     assert naveen.age == 28
     assert naveen.country == "India"
     assert naveen.speed == 55
     assert naveen.consistency == 15
+    assert naveen.qualifying == 1
 
     assert ruben.age == 24
     assert ruben.country == "Netherlands"
     assert ruben.speed == 52
     assert ruben.consistency == 33
+    assert ruben.qualifying == 2
 
     assert peter.age == 25
     assert peter.country == "Austria"
     assert peter.speed == 50
     assert peter.consistency == 22
+    assert peter.qualifying == 2
 
     assert casper.age == 26
     assert casper.country == "Netherlands"
     assert casper.speed == 58
     assert casper.consistency == 37
+    assert casper.qualifying == 2
 
     assert valerio.age == 25
     assert valerio.country == "Italy"
     assert valerio.speed == 59
     assert valerio.consistency == 45
+    assert valerio.qualifying == 3
 
     assert all(driver.contract_length == 0 for driver in [teo, naveen, ruben, peter, casper, valerio])
     assert all(driver.wage == 0 for driver in [teo, naveen, ruben, peter, casper, valerio])
