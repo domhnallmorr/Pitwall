@@ -194,6 +194,7 @@ class RaceManager:
 				if did and did in driver_lookup:
 					driver = driver_lookup[did]
 					driver_speed = getattr(driver, "speed", 50)
+					driver_consistency = getattr(driver, "consistency", 50)
 					car_speed = getattr(team, "car_speed", 50)
 					engine_supplier = engine_supplier_lookup.get(getattr(team, "engine_supplier_name", None))
 					engine_power = getattr(engine_supplier, "power", 50) if engine_supplier else 50
@@ -206,6 +207,7 @@ class RaceManager:
 						"team_id": team.id,
 						"team_name": team.name,
 						"driver_speed": driver_speed,
+						"driver_consistency": driver_consistency,
 						"car_speed": car_speed,
 						"engine_power": engine_power,
 						"tyre_grip": tyre_grip,

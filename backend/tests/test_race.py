@@ -199,6 +199,65 @@ def test_base_pace_bonus_ms_matches_driver_and_car_targets():
     assert 4_950 <= elite_car_gap <= 5_050
 
 
+def test_lap_time_consistency_penalty_scales_with_driver_consistency():
+    state = create_race_state()
+    manager = RaceManager()
+    circuit = state.circuits[0]
+    entrant = {
+        "driver_speed": 50,
+        "driver_consistency": 100,
+        "car_speed": 50,
+        "engine_power": 50,
+        "tyre_grip": 50,
+        "tyre_wear": 50,
+        "fuel_kg": 0.0,
+        "stint_laps": 0,
+    }
+
+    original_randint = random.randint
+    random.randint = lambda a, b: b
+    try:
+        elite = manager._lap_time_ms(entrant, circuit)
+        entrant["driver_consistency"] = 50
+        average = manager._lap_time_ms(entrant, circuit)
+        entrant["driver_consistency"] = 1
+        erratic = manager._lap_time_ms(entrant, circuit)
+    finally:
+        random.randint = original_randint
+
+    assert elite == 84_250
+    assert average == 84_376
+    assert erratic == 84_500
+
+
+def test_qualifying_lap_time_does_not_use_driver_consistency():
+    state = create_race_state()
+    manager = RaceManager()
+    circuit = state.circuits[0]
+    entrant = {
+        "driver_speed": 50,
+        "driver_consistency": 100,
+        "car_speed": 50,
+        "engine_power": 50,
+        "tyre_grip": 50,
+    }
+
+    original_randint = random.randint
+    random.randint = lambda a, b: b
+    try:
+        elite = manager._qualifying_lap_time_ms(entrant, circuit)
+        entrant["driver_consistency"] = 50
+        average = manager._qualifying_lap_time_ms(entrant, circuit)
+        entrant["driver_consistency"] = 1
+        erratic = manager._qualifying_lap_time_ms(entrant, circuit)
+    finally:
+        random.randint = original_randint
+
+    assert elite == 84_220
+    assert average == 84_220
+    assert erratic == 84_220
+
+
 def test_simulate_race_weighting_favors_faster_driver_and_car():
     manager = RaceManager()
     random.seed(12345)

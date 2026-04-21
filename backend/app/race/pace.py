@@ -3,12 +3,13 @@ import random
 from app.models.circuit import Circuit
 from app.race.constants import (
 	CAR_PACE_MS_PER_POINT,
+	CONSISTENCY_MAX_LAP_PENALTY_MAX_MS,
+	CONSISTENCY_MIN_LAP_PENALTY_MAX_MS,
 	DIRTY_AIR_GAP_THRESHOLD_MS,
 	DIRTY_AIR_LAP_PENALTY_MS,
 	DRIVER_PACE_MS_PER_POINT,
 	ENGINE_POWER_MAX_EFFECT_MS,
 	FUEL_PENALTY_MS_PER_KG,
-	LAP_JITTER_RANGE_MS,
 	OVERTAKE_SUCCESS_PROBABILITY,
 	PACE_CENTER,
 	QUALIFYING_JITTER_RANGE_MS,
@@ -30,6 +31,21 @@ def car_pace_bonus_ms(entrant: dict) -> int:
 
 def base_pace_bonus_ms(entrant: dict) -> int:
 	return driver_pace_bonus_ms(entrant) + car_pace_bonus_ms(entrant)
+
+
+def consistency_max_lap_penalty_ms(entrant: dict) -> float:
+	consistency = entrant.get("driver_consistency", PACE_CENTER)
+	if consistency is None:
+		consistency = PACE_CENTER
+	consistency = float(consistency)
+	consistency = max(1.0, min(100.0, consistency))
+	scale = (consistency - 1.0) / 99.0
+	range_ms = CONSISTENCY_MAX_LAP_PENALTY_MAX_MS - CONSISTENCY_MIN_LAP_PENALTY_MAX_MS
+	return CONSISTENCY_MAX_LAP_PENALTY_MAX_MS - scale * range_ms
+
+
+def consistency_lap_penalty_ms(entrant: dict) -> int:
+	return random.randint(0, int(round(consistency_max_lap_penalty_ms(entrant))))
 
 
 def grid_score(entrant: dict, grid_jitter_range_ms: int) -> int:
@@ -60,7 +76,7 @@ def engine_power_effect_ms(entrant: dict, circuit: Circuit) -> int:
 
 def lap_time_ms(entrant: dict, circuit: Circuit) -> int:
 	base_bonus_ms = base_pace_bonus_ms(entrant)
-	jitter_ms = random.randint(-LAP_JITTER_RANGE_MS, LAP_JITTER_RANGE_MS)
+	consistency_penalty_ms = consistency_lap_penalty_ms(entrant)
 	engine_adjustment_ms = engine_power_effect_ms(entrant, circuit)
 	tyre_grip_adjustment_ms = tyre_grip_effect_ms(entrant)
 	fuel_penalty_ms = int((entrant.get("fuel_kg", 0.0) or 0.0) * FUEL_PENALTY_MS_PER_KG)
@@ -69,7 +85,7 @@ def lap_time_ms(entrant: dict, circuit: Circuit) -> int:
 	return max(
 		45_000,
 		circuit.base_laptime_ms - base_bonus_ms + engine_adjustment_ms + tyre_grip_adjustment_ms
-		+ fuel_penalty_ms + degradation_ms + dirty_air_penalty_ms + jitter_ms,
+		+ fuel_penalty_ms + degradation_ms + dirty_air_penalty_ms + consistency_penalty_ms,
 	)
 
 
