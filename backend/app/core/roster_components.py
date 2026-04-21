@@ -419,8 +419,11 @@ def load_events(cursor, start_year: int) -> List[Event]:
 
 def load_circuits(cursor) -> List[Circuit]:
     try:
+        cursor.execute("PRAGMA table_info(circuits)")
+        circuit_columns = {row[1] for row in cursor.fetchall()}
+        distance_expr = "distance_to_t1_m" if "distance_to_t1_m" in circuit_columns else "615.0"
         cursor.execute(
-            "SELECT id, name, country, location, laps, base_laptime_ms, length_km, overtaking_delta, power_factor, track_map_path FROM circuits"
+            f"SELECT id, name, country, location, laps, base_laptime_ms, length_km, overtaking_delta, power_factor, {distance_expr} AS distance_to_t1_m, track_map_path FROM circuits"
         )
         return [
             Circuit(
@@ -433,7 +436,8 @@ def load_circuits(cursor) -> List[Circuit]:
                 length_km=row[6],
                 overtaking_delta=row[7],
                 power_factor=row[8],
-                track_map_path=row[9],
+                distance_to_t1_m=row[9] if row[9] is not None else 615.0,
+                track_map_path=row[10],
             )
             for row in cursor.fetchall()
         ]

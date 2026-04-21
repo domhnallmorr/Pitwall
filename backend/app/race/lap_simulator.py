@@ -10,9 +10,13 @@ from app.race.constants import (
 	LAP1_SPREAD_JITTER_MS,
 	PIT_LANE_TIME_LOSS_MS,
 	START_CAR_SPEED_FACTOR_MPS,
-	START_DISTANCE_TO_T1_M,
 	START_DRIVER_SPEED_FACTOR_MPS,
 	START_SPEED_JITTER_MPS,
+	TURN_ONE_BASE_INCIDENT_PROBABILITY,
+	TURN_ONE_COMPRESSION_RISK_PER_CLOSE_PAIR,
+	TURN_ONE_COMPRESSION_THRESHOLD_MS,
+	TURN_ONE_MAJOR_INCIDENT_PROBABILITY,
+	TURN_ONE_MAX_INCIDENT_PROBABILITY,
 )
 
 
@@ -121,9 +125,10 @@ def lap_events(
 	return events
 
 
-def start_to_turn_one_time_ms(entrant: dict[str, Any]) -> int:
+def start_to_turn_one_time_ms(entrant: dict[str, Any], circuit: Circuit) -> int:
 	grid_position = max(1, int(entrant.get("grid_position", 1)))
-	distance_m = START_DISTANCE_TO_T1_M + (grid_position - 1) * GRID_SLOT_DISTANCE_M
+	distance_to_t1_m = float(getattr(circuit, "distance_to_t1_m", 615.0) or 615.0)
+	distance_m = distance_to_t1_m + (grid_position - 1) * GRID_SLOT_DISTANCE_M
 	driver_speed = float(entrant.get("driver_speed", 50) or 50)
 	car_speed = float(entrant.get("car_speed", 50) or 50)
 	launch_speed = (
@@ -136,6 +141,102 @@ def start_to_turn_one_time_ms(entrant: dict[str, Any]) -> int:
 	return int((distance_m / launch_speed) * 1000)
 
 
+def weighted_index_choice(indices: list[int], weights: list[float]) -> int:
+	total_weight = sum(weights)
+	if total_weight <= 0:
+		return indices[0]
+	roll = random.uniform(0.0, total_weight)
+	running = 0.0
+	for idx, weight in zip(indices, weights):
+		running += weight
+		if roll <= running:
+			return idx
+	return indices[-1]
+
+
+def resolve_turn_one_incident(
+	start_order: list[tuple[int, int, dict[str, Any]]],
+	lap_one_events: list[dict[str, Any]],
+) -> list[tuple[int, int, dict[str, Any]]]:
+	if len(start_order) < 2:
+		return start_order
+
+	close_pairs = 0
+	candidate_indices: set[int] = set()
+	for idx in range(1, len(start_order)):
+		gap_ms = start_order[idx][0] - start_order[idx - 1][0]
+		if gap_ms <= TURN_ONE_COMPRESSION_THRESHOLD_MS:
+			close_pairs += 1
+			if idx - 1 > 0:
+				candidate_indices.add(idx - 1)
+			if idx < len(start_order) - 1:
+				candidate_indices.add(idx)
+
+	if close_pairs == 0 or not candidate_indices:
+		return start_order
+
+	incident_probability = min(
+		TURN_ONE_MAX_INCIDENT_PROBABILITY,
+		TURN_ONE_BASE_INCIDENT_PROBABILITY + close_pairs * TURN_ONE_COMPRESSION_RISK_PER_CLOSE_PAIR,
+	)
+	if random.random() >= incident_probability:
+		return start_order
+
+	ordered_candidates = sorted(candidate_indices)
+	weights = []
+	for idx in ordered_candidates:
+		entrant = start_order[idx][2]
+		consistency = float(entrant.get("driver_consistency", 50) or 50)
+		inconsistency_weight = 1.0 + (100.0 - max(1.0, min(100.0, consistency))) / 25.0
+		weights.append(inconsistency_weight)
+
+	victim_idx = weighted_index_choice(ordered_candidates, weights)
+	_victim_time, _victim_grid, victim = start_order[victim_idx]
+
+	if random.random() < TURN_ONE_MAJOR_INCIDENT_PROBABILITY:
+		victim["retirement_lap"] = 1
+		victim["retirement_reason"] = "crash"
+		victim["status"] = "DNF"
+		lap_one_events.append({
+			"type": "turn_one_crash",
+			"lap": 1,
+			"driver_id": victim["driver_id"],
+			"driver_name": victim["driver_name"],
+			"team_name": victim["team_name"],
+		})
+		return [entry for idx, entry in enumerate(start_order) if idx != victim_idx]
+
+	outcome_roll = random.random()
+	if outcome_roll < 0.5:
+		event_type = "turn_one_pushed_wide"
+		positions_lost_target = random.randint(1, 2)
+	elif outcome_roll < 0.85:
+		event_type = "turn_one_checked_up"
+		positions_lost_target = random.randint(2, 4)
+	else:
+		event_type = "turn_one_spin"
+		positions_lost_target = len(start_order) - 1 - victim_idx
+
+	new_idx = min(len(start_order) - 1, victim_idx + positions_lost_target)
+	actual_positions_lost = new_idx - victim_idx
+	if actual_positions_lost <= 0:
+		return start_order
+
+	entry = start_order.pop(victim_idx)
+	start_order.insert(new_idx, entry)
+	lap_one_events.append({
+		"type": event_type,
+		"lap": 1,
+		"driver_id": victim["driver_id"],
+		"driver_name": victim["driver_name"],
+		"team_name": victim["team_name"],
+		"from_position": victim_idx + 1,
+		"to_position": new_idx + 1,
+		"positions_lost": actual_positions_lost,
+	})
+	return start_order
+
+
 def simulate_opening_lap(
 	running_before_lap: list[dict[str, Any]],
 	circuit: Circuit,
@@ -143,7 +244,7 @@ def simulate_opening_lap(
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
 	start_order = []
 	for entrant in running_before_lap:
-		t1_time_ms = start_to_turn_one_time_ms(entrant)
+		t1_time_ms = start_to_turn_one_time_ms(entrant, circuit)
 		start_order.append((t1_time_ms, entrant["grid_position"], entrant))
 
 	start_order.sort(key=lambda item: (item[0], item[1]))
@@ -159,6 +260,7 @@ def simulate_opening_lap(
 			"team_name": leader["team_name"],
 		})
 
+	start_order = resolve_turn_one_incident(start_order, lap_one_moves)
 	for idx, (t1_time_ms, _grid_position, entrant) in enumerate(start_order):
 		base_lap_time_ms = lap_time_fn(entrant, circuit)
 		start_gap_ms = max(0, t1_time_ms - leader_t1_ms)

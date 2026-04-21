@@ -198,6 +198,7 @@ def create_schema(conn):
             length_km REAL,
             overtaking_delta INTEGER,
             power_factor INTEGER,
+            distance_to_t1_m REAL DEFAULT 615.0,
             track_map_path TEXT
         )
     '''
@@ -364,6 +365,11 @@ def create_schema(conn):
         c.execute("ALTER TABLE fuel_suppliers ADD COLUMN r_and_d INTEGER DEFAULT 0")
     if "start_year" not in fuel_columns:
         c.execute("ALTER TABLE fuel_suppliers ADD COLUMN start_year INTEGER DEFAULT 0")
+
+    c.execute("PRAGMA table_info(circuits)")
+    circuit_columns = {row[1] for row in c.fetchall()}
+    if "distance_to_t1_m" not in circuit_columns:
+        c.execute("ALTER TABLE circuits ADD COLUMN distance_to_t1_m REAL DEFAULT 615.0")
 
     conn.commit()
 

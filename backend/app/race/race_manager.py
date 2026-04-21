@@ -81,6 +81,7 @@ class RaceManager:
 			length_km=5.0,
 			overtaking_delta=1.0,
 			power_factor=1.0,
+			distance_to_t1_m=615.0,
 		)
 
 	def _current_event_key(self, state: GameState) -> str | None:

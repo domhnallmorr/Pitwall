@@ -717,22 +717,22 @@ FUEL_SUPPLIERS_DATA = [
 ]
 
 REQUIRED_CIRCUITS = [
-    ("Albert Park", "Australia", "Melbourne", 58, 84000, 5.303, 1200, 6, None),
-    ("Interlagos", "Brazil", "Sao Paulo", 72, 72000, 4.292, 900, 7, None),
-    ("Autodromo Oscar Alfredo Galvez", "Argentina", "Buenos Aries", 72, 80000, 4.259, 1300, 3, None),
-    ("Autodromo Enzo e Dino Ferrari", "San Marino", "Imola", 62, 81000, 4.933, 1800, 3, None),
-    ("Circuit de Barcelona-Catalunya", "Spain", "Barcelona", 66, 75000, 4.728, 1800, 5, None),
-    ("Circuit de Monaco", "Monaco", "Monte Carlo", 78, 75000, 3.367, 2000, 1, None),
-    ("Circuit Gilles Villeneuve", "Canada", "Montreal", 70, 73000, 4.421, 700, 8, None),
-    ("Circuit de Nevers Magny-Cours", "France", "Magny-Cours", 72, 70000, 4.250, 1500, 5, None),
-    ("Silverstone Circuit", "United Kingdom", "Silverstone", 60, 79000, 5.140, 900, 7, None),
-    ("A1 Ring", "Austria", "Spielberg", 71, 68000, 4.319, 800, 7, None),
-    ("Hockenheimring", "Germany", "Hockenheim", 45, 97000, 6.823, 600, 10, None),
-    ("Hungaroring", "Hungary", "Budapest", 77, 73000, 3.972, 1900, 2, None),
-    ("Circuit de Spa-Francorchamps", "Belgium", "Stavelot", 44, 104000, 6.968, 700, 9, None),
-    ("Autodromo Nazionale di Monza", "Italy", "Monza", 53, 80000, 5.770, 700, 10, None),
-    ("Nurburgring", "Luxembourg", "Nurburg", 67, 74000, 4.556, 1100, 7, None),
-    ("Suzuka Circuit", "Japan", "Suzuka", 53, 90000, 5.860, 1400, 6, None),
+    ("Albert Park", "Australia", "Melbourne", 58, 84000, 5.303, 1200, 6, 500.0, None),
+    ("Interlagos", "Brazil", "Sao Paulo", 72, 72000, 4.292, 900, 7, 200.0, None),
+    ("Autodromo Oscar Alfredo Galvez", "Argentina", "Buenos Aries", 72, 80000, 4.259, 1300, 3, 250.0, None),
+    ("Autodromo Enzo e Dino Ferrari", "San Marino", "Imola", 62, 81000, 4.933, 1800, 3, 553.0, None),
+    ("Circuit de Barcelona-Catalunya", "Spain", "Barcelona", 66, 75000, 4.728, 1800, 5, 730.0, None),
+    ("Circuit de Monaco", "Monaco", "Monte Carlo", 78, 75000, 3.367, 2000, 1, 210.0, None),
+    ("Circuit Gilles Villeneuve", "Canada", "Montreal", 70, 73000, 4.421, 700, 8, 260.0, None),
+    ("Circuit de Nevers Magny-Cours", "France", "Magny-Cours", 72, 70000, 4.250, 1500, 5, 400.0, None),
+    ("Silverstone Circuit", "United Kingdom", "Silverstone", 60, 79000, 5.140, 900, 7, 470.0, None),
+    ("A1 Ring", "Austria", "Spielberg", 71, 68000, 4.319, 800, 7, 350.0, None),
+    ("Hockenheimring", "Germany", "Hockenheim", 45, 97000, 6.823, 600, 10, 300.0, None),
+    ("Hungaroring", "Hungary", "Budapest", 77, 73000, 3.972, 1900, 2, 472.0, None),
+    ("Circuit de Spa-Francorchamps", "Belgium", "Stavelot", 44, 104000, 6.968, 700, 9, 260.0, None),
+    ("Autodromo Nazionale di Monza", "Italy", "Monza", 53, 80000, 5.770, 700, 10, 580.0, None),
+    ("Nurburgring", "Luxembourg", "Nurburg", 67, 74000, 4.556, 1100, 7, 350.0, None),
+    ("Suzuka Circuit", "Japan", "Suzuka", 53, 90000, 5.860, 1400, 6, 277.0, None),
 ]
 
 FUTURE_DRIVERS_DATA = [

@@ -24,6 +24,18 @@ function buildCommentaryLine(event) {
 	if (event.type === 'turn_one_leader') {
 		return `Lap ${event.lap}: ${event.driver_name} leads out of turn 1.`;
 	}
+	if (event.type === 'turn_one_pushed_wide') {
+		return `Lap ${event.lap}: ${event.driver_name} is pushed wide at turn 1 and drops ${event.positions_lost} place(s).`;
+	}
+	if (event.type === 'turn_one_checked_up') {
+		return `Lap ${event.lap}: ${event.driver_name} is checked up at turn 1 and loses ${event.positions_lost} place(s).`;
+	}
+	if (event.type === 'turn_one_spin') {
+		return `Lap ${event.lap}: ${event.driver_name} spins at turn 1 and falls back ${event.positions_lost} place(s).`;
+	}
+	if (event.type === 'turn_one_crash') {
+		return `Lap ${event.lap}: ${event.driver_name} crashes out at turn 1.`;
+	}
 	if (event.type === 'pit_stop') {
 		return `Lap ${event.lap}: ${event.driver_name} pits for fuel, stop ${event.stop_number}.`;
 	}

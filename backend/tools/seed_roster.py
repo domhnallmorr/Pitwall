@@ -125,11 +125,16 @@ def seed_data(conn):
     if circuits_to_insert:
         print(f"Seeding {len(circuits_to_insert)} missing circuit(s)...")
         c.executemany('''
-            INSERT INTO circuits (name, country, location, laps, base_laptime_ms, length_km, overtaking_delta, power_factor, track_map_path) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO circuits (name, country, location, laps, base_laptime_ms, length_km, overtaking_delta, power_factor, distance_to_t1_m, track_map_path) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', circuits_to_insert)
         conn.commit()
         print("Circuits seeded.")
+
+    c.executemany(
+        'UPDATE circuits SET distance_to_t1_m = ? WHERE name = ?',
+        [(row[8], row[0]) for row in REQUIRED_CIRCUITS]
+    )
 
     # Check if data exists
     c.execute('SELECT count(*) FROM drivers')

@@ -7,6 +7,7 @@ from app.models.engine_supplier import EngineSupplier
 from app.models.state import GameState
 from app.models.team import Team
 from app.models.tyre_supplier import TyreSupplier
+from app.race.lap_simulator import resolve_turn_one_incident, start_to_turn_one_time_ms
 from app.race.race_manager import RaceManager
 from app.race.retirements import mechanical_failure_probability, pick_crash_count, prepare_participants
 
@@ -348,6 +349,86 @@ def test_simulate_race_launch_phase_can_reorder_field_on_lap_one():
     assert any(event["type"] == "turn_one_leader" and event["driver_id"] == 2 for event in lap_one_events)
 
 
+def test_start_to_turn_one_time_uses_circuit_distance():
+    short_run = Circuit(
+        id=1,
+        name="Short",
+        country="Nowhere",
+        location="Testville",
+        laps=10,
+        base_laptime_ms=84_000,
+        length_km=4.2,
+        overtaking_delta=1.2,
+        power_factor=1.0,
+        distance_to_t1_m=200.0,
+    )
+    long_run = short_run.model_copy(update={"id": 2, "name": "Long", "distance_to_t1_m": 700.0})
+    entrant = {"grid_position": 1, "driver_speed": 50, "car_speed": 50}
+
+    original_uniform = random.uniform
+    random.uniform = lambda a, b: 0.0
+    try:
+        short_time = start_to_turn_one_time_ms(entrant, short_run)
+        long_time = start_to_turn_one_time_ms(entrant, long_run)
+    finally:
+        random.uniform = original_uniform
+
+    assert long_time > short_time
+
+
+def test_turn_one_minor_incident_can_drop_driver_back():
+    start_order = [
+        (1000, 1, {"driver_id": 1, "driver_name": "Leader", "team_name": "A", "driver_consistency": 80}),
+        (1080, 2, {"driver_id": 2, "driver_name": "Victim", "team_name": "B", "driver_consistency": 10}),
+        (1140, 3, {"driver_id": 3, "driver_name": "Follower", "team_name": "C", "driver_consistency": 70}),
+        (1220, 4, {"driver_id": 4, "driver_name": "Tail", "team_name": "D", "driver_consistency": 70}),
+    ]
+    events = []
+
+    original_random = random.random
+    original_uniform = random.uniform
+    original_randint = random.randint
+    random_values = iter([0.0, 0.99, 0.1])
+    random.random = lambda: next(random_values)
+    random.uniform = lambda a, b: 0.0
+    random.randint = lambda a, b: 2
+    try:
+        updated_order = resolve_turn_one_incident(start_order, events)
+    finally:
+        random.random = original_random
+        random.uniform = original_uniform
+        random.randint = original_randint
+
+    assert [entry[2]["driver_id"] for entry in updated_order] == [1, 3, 4, 2]
+    assert any(event["type"] == "turn_one_pushed_wide" and event["driver_id"] == 2 for event in events)
+
+
+def test_turn_one_major_incident_can_retire_driver():
+    start_order = [
+        (1000, 1, {"driver_id": 1, "driver_name": "Leader", "team_name": "A", "driver_consistency": 80}),
+        (1080, 2, {"driver_id": 2, "driver_name": "Victim", "team_name": "B", "driver_consistency": 10}),
+        (1140, 3, {"driver_id": 3, "driver_name": "Follower", "team_name": "C", "driver_consistency": 70}),
+    ]
+    events = []
+
+    original_random = random.random
+    original_uniform = random.uniform
+    random_values = iter([0.0, 0.0])
+    random.random = lambda: next(random_values)
+    random.uniform = lambda a, b: 0.0
+    try:
+        updated_order = resolve_turn_one_incident(start_order, events)
+    finally:
+        random.random = original_random
+        random.uniform = original_uniform
+
+    victim = start_order[1][2]
+    assert [entry[2]["driver_id"] for entry in updated_order] == [1, 3]
+    assert victim["retirement_lap"] == 1
+    assert victim["retirement_reason"] == "crash"
+    assert any(event["type"] == "turn_one_crash" and event["driver_id"] == 2 for event in events)
+
+
 def test_simulate_race_returns_qualifying_order_and_uses_it_for_grid():
     state = create_race_state()
     state.circuits[0].laps = 3
@@ -418,6 +499,8 @@ def test_simulate_race_can_include_mechanical_outs_with_player_team():
         0.0,
         0.99,
         0.0,
+        0.99,
+        0.99,
         0.99,
     ])
     random.random = lambda: next(values)

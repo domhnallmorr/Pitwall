@@ -193,6 +193,32 @@ describe('race_helpers', () => {
 		expect(document.getElementById('race-latest-commentary').textContent).toContain('leads out of turn 1');
 	});
 
+	it('renders turn 1 incident commentary events', () => {
+		renderRaceResults({
+			total_laps: 1,
+			lap_history: [
+				{
+					lap: 1,
+					order: [{ driver_id: 2, position: 1, driver_name: 'B', team_name: 'T2', last_lap_ms: 83000, best_lap_ms: 83000, gap_display: 'LEADER', status: 'RUNNING' }],
+					events: [
+						{ type: 'turn_one_pushed_wide', lap: 1, driver_id: 3, driver_name: 'C', positions_lost: 2 },
+						{ type: 'turn_one_checked_up', lap: 1, driver_id: 4, driver_name: 'D', positions_lost: 3 },
+						{ type: 'turn_one_spin', lap: 1, driver_id: 5, driver_name: 'E', positions_lost: 6 },
+						{ type: 'turn_one_crash', lap: 1, driver_id: 6, driver_name: 'F', team_name: 'T6' },
+					],
+				},
+			],
+			results: [],
+		});
+
+		const commentary = document.getElementById('race-commentary-log').textContent;
+		expect(commentary).toContain('is pushed wide at turn 1');
+		expect(commentary).toContain('is checked up at turn 1');
+		expect(commentary).toContain('spins at turn 1');
+		expect(commentary).toContain('crashes out at turn 1');
+		expect(document.getElementById('race-latest-commentary').textContent).toContain('crashes out at turn 1');
+	});
+
 	it('renders the qualifying weekend panel and enables the race when grid is set', () => {
 		renderRaceWeekend({
 			circuit_name: 'Monaco Grand Prix',
