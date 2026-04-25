@@ -4,6 +4,7 @@ from unittest.mock import patch
 from app.core.save_manager import save_game, load_game, has_save
 from app.models.email import Email, EmailCategory
 from app.models.finance import Finance, TransactionCategory
+from app.models.chassis import Chassis
 from app.models.state import GameState
 from app.models.calendar import Calendar
 from app.models.team import Team
@@ -35,6 +36,14 @@ def create_state() -> GameState:
             Driver(id=1, name="John Newhouse", age=27, country="Canada", team_id=1, speed=84, race_starts=33, wins=11),
             Driver(id=2, name="Henrik Friedrich", age=31, country="Germany", team_id=1, speed=72, race_starts=65, wins=1),
         ],
+        player_spares=4,
+        player_chassis=[
+            Chassis(id=1, team_id=1, name="Chassis 1", wear=5),
+            Chassis(id=2, team_id=1, name="Chassis 2", wear=9),
+            Chassis(id=3, team_id=1, name="Chassis 3", wear=0),
+        ],
+        player_test_chassis_id=3,
+        player_race_chassis_assignments={1: 1, 2: 2},
         team_principals=[
             TeamPrincipal(
                 id=10,
@@ -162,6 +171,11 @@ def test_save_and_load_round_trip(tmp_path: Path):
     assert saved == str(save_path)
     assert loaded.year == 1998
     assert loaded.player_team_id == 1
+    assert loaded.player_spares == 4
+    assert len(loaded.player_chassis) == 3
+    assert loaded.player_chassis[1].wear == 9
+    assert loaded.player_test_chassis_id == 3
+    assert loaded.player_race_chassis_assignments[1] == 1
     assert loaded.drivers[0].race_starts == 33
     assert loaded.drivers[0].wins == 11
     assert loaded.team_principals[0].name == "Franklin Warrick"

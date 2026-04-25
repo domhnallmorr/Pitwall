@@ -430,7 +430,8 @@
           <div class="tabs">
             <button class="tab-btn car-tab-btn active" data-type="comparison">Comparison</button>
             <button class="tab-btn car-tab-btn" data-type="development">Development</button>
-            <button class="tab-btn car-tab-btn" data-type="garage">Garage</button>
+            <button class="tab-btn car-tab-btn" data-type="construction">Construction</button>
+            <button class="tab-btn car-tab-btn" data-type="chassis">Chassis</button>
           </div>
           <div id="car-content-comparison">
             <table class="data-table">
@@ -466,21 +467,34 @@
               </tbody>
             </table>
           </div>
-          <div id="car-content-garage" style="display:none;">
-            <div class="car-garage-card">
-              <h3>Reliability</h3>
-              <div id="car-garage-wear" class="car-garage-line">Wear: 0</div>
-              <div id="car-garage-risk" class="car-garage-line">Mechanical failure risk: 0%</div>
-              <div class="car-garage-repair">
-                <label for="car-garage-repair-slider">Repair amount: <span id="car-garage-repair-value">0</span></label>
-                <input id="car-garage-repair-slider" type="range" min="0" max="0" value="0" step="1">
-                <div class="car-garage-line">Estimated repair cost: <strong id="car-garage-repair-cost">$0</strong></div>
-                <button id="car-garage-repair-btn" class="btn-secondary">Repair Wear</button>
-              </div>
-              <p class="car-garage-note">
-                Future modules: crash damage state, spare parts inventory, and chassis management.
-              </p>
+          <div id="car-content-construction" style="display:none;">
+            <div class="car-construction-intro">
+              <p class="car-garage-note">Engineering construction projects will live here, starting with spare production and later new chassis builds.</p>
             </div>
+            <div id="car-spares-widget" class="car-spares-widget" aria-live="polite"></div>
+            <div id="car-construction-build-card" class="car-construction-build-card"></div>
+          </div>
+          <div id="car-content-chassis" style="display:none;">
+            <div class="car-chassis-intro">
+              <p class="car-garage-note">Manage test selection, race assignment, and maintenance directly from each chassis row.</p>
+              <div class="car-garage-line">Race status: <strong id="car-garage-race-assignments-status">Race chassis not set.</strong></div>
+              <div class="car-garage-line">Mechanics capacity: <strong id="car-garage-mechanics-status">100% remaining this week.</strong></div>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Chassis</th>
+                  <th>Wear</th>
+                  <th>Test</th>
+                  <th>Race Assignment</th>
+                  <th>Risk</th>
+                  <th>Maintenance</th>
+                </tr>
+              </thead>
+              <tbody id="car-chassis-table-body">
+                <!-- JS populated -->
+              </tbody>
+            </table>
           </div>
         </div>
 

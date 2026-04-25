@@ -1,5 +1,6 @@
 import random
 
+from app.core.player_chassis import apply_player_test_wear, get_player_test_chassis
 from app.models.calendar import Event, EventType
 from app.models.email import EmailCategory
 from app.models.finance import TransactionCategory
@@ -35,12 +36,6 @@ class TestSessionManager:
         team.car_speed = max(1, old_speed + max(0, int(gain)))
         return old_speed, team.car_speed
 
-    def _add_player_wear(self, player_team, kms: int) -> int:
-        old_wear = max(0, int(getattr(player_team, "car_wear", 0) or 0))
-        increment = max(0, int(kms)) // 100
-        player_team.car_wear = min(self.MAX_WEAR, old_wear + increment)
-        return player_team.car_wear
-
     def _resolve_gain_with_risk(self, kms: int) -> tuple[int, int, float, bool]:
         attempted_gain = self._gain_for_km(kms)
         if attempted_gain <= 0:
@@ -66,7 +61,8 @@ class TestSessionManager:
             kms = max(0, min(self.PLAYER_MAX_KM, int(player_kms or 0))) if player_attended else 0
             attempted_gain, actual_gain, probability, succeeded = self._resolve_gain_with_risk(kms) if player_attended else (0, 0, self._success_probability(0), False)
             old_speed, new_speed = self._apply_team_gain(player_team, actual_gain)
-            new_wear = self._add_player_wear(player_team, kms) if player_attended else player_team.car_wear
+            selected_chassis = get_player_test_chassis(state)
+            new_wear = apply_player_test_wear(state, kms) if player_attended else int(getattr(selected_chassis, "wear", 0) or 0)
             cost = kms * self.COST_PER_KM
             if cost > 0:
                 state.finance.add_transaction(
@@ -90,6 +86,7 @@ class TestSessionManager:
                 "cost": cost,
                 "old_speed": old_speed,
                 "new_speed": new_speed,
+                "chassis_name": selected_chassis.name if selected_chassis else None,
                 "wear": new_wear,
             }
 
@@ -126,7 +123,7 @@ class TestSessionManager:
                     f"({outcome_label}), cost ${player_summary['cost']:,} "
                     f"({player_summary['old_speed']} -> {player_summary['new_speed']}), "
                     f"success chance {round(player_summary['success_probability'] * 100)}%, "
-                    f"wear now {player_summary['wear']}"
+                    f"{player_summary['chassis_name'] or 'Chassis'} wear now {player_summary['wear']}"
                 )
             else:
                 lines.append(f"Your team ({player_summary['team_name']}): did not attend")

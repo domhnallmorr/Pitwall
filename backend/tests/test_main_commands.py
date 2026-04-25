@@ -12,6 +12,7 @@ from app.models.technical_director import TechnicalDirector
 from app.models.title_sponsor import TitleSponsor
 from app.models.engine_supplier import EngineSupplier
 from app.models.tyre_supplier import TyreSupplier
+from app.models.chassis import Chassis
 
 
 def create_state() -> GameState:
@@ -98,6 +99,14 @@ def create_state() -> GameState:
         calendar=calendar,
         circuits=circuits,
         player_team_id=1,
+        player_chassis=[
+            Chassis(id=1, team_id=1, name="Chassis 1", wear=12),
+            Chassis(id=2, team_id=1, name="Chassis 2", wear=25),
+            Chassis(id=3, team_id=1, name="Chassis 3", wear=5),
+        ],
+        player_spares=4,
+        player_test_chassis_id=1,
+        player_race_chassis_assignments={1: 1, 2: 2},
         driver_season_results={
             1998: {
                 1: [{"round": 1, "event_name": "Albert Park", "country": "Australia", "position": 2}]
@@ -865,16 +874,39 @@ def test_attend_test_command_applies_testing_cost():
     assert txs[0].amount == -1_260_000
 
 
-def test_repair_car_wear_reduces_wear_and_records_cost():
+def test_repair_chassis_wear_reduces_wear_and_records_cost():
     state = create_state()
-    state.teams[0].car_wear = 25
     app_main.CURRENT_STATE = state
 
-    result = process_command({"type": "repair_car_wear", "wear_points": 10})
+    with patch("app.commands.staff_team_commands.random.randint", return_value=26):
+        result = process_command({"type": "repair_chassis_wear", "chassis_id": 2, "wear_points": 10})
     assert result["status"] == "success"
-    assert result["type"] == "car_wear_repaired"
+    assert result["type"] == "chassis_wear_repaired"
     assert result["data"]["cost"] == 32_000
-    assert state.teams[0].car_wear == 15
+    assert state.player_chassis[1].wear == 15
+    assert result["data"]["spares_used"] == 1
+    assert state.player_spares == 3
+    assert result["data"]["mechanics_usage_percent_used"] == 11
+    assert state.player_mechanics_usage_percent == 11
     txs = [t for t in state.finance.transactions if t.category == TransactionCategory.MAINTENANCE]
     assert len(txs) == 1
     assert txs[0].amount == -32_000
+
+
+def test_build_spare_set_command_updates_player_stock():
+    state = create_state()
+    state.finance.balance = 500_000
+    state.player_spares = 0
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "build_spare_set"})
+
+    assert result["status"] == "success"
+    assert result["type"] == "spare_set_built"
+    assert result["data"]["spares_after"] == 1
+    assert result["data"]["construction_usage_percent_after"] == 18
+    assert state.player_spares == 1
+    assert state.player_construction_usage_percent == 18
+    txs = [t for t in state.finance.transactions if t.category == TransactionCategory.CONSTRUCTION]
+    assert len(txs) == 1
+    assert txs[0].amount == -52_500

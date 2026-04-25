@@ -15,11 +15,23 @@ def create_mock_state(week=1):
 
 def test_advance_week_increments_week():
     state = create_mock_state(week=1)
+    state.player_construction_usage_percent = 45
+    state.player_construction_usage_week = 1
+    state.player_construction_usage_year = 1998
+    state.player_mechanics_usage_percent = 22
+    state.player_mechanics_usage_week = 1
+    state.player_mechanics_usage_year = 1998
     engine = GameEngine()
     
     summary = engine.advance_week(state)
     
     assert state.calendar.current_week == 2
+    assert state.player_construction_usage_percent == 0
+    assert state.player_construction_usage_week == 2
+    assert state.player_construction_usage_year == 1998
+    assert state.player_mechanics_usage_percent == 0
+    assert state.player_mechanics_usage_week == 2
+    assert state.player_mechanics_usage_year == 1998
     assert summary["week"] == 2
     assert "Week 2 1998" in summary["new_date_display"]
 

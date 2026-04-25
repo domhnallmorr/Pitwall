@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, ClassVar
 from app.models.driver import Driver
+from app.models.chassis import Chassis
 from app.models.team import Team
 from app.models.team_principal import TeamPrincipal
 from app.models.technical_director import TechnicalDirector
@@ -39,6 +40,16 @@ class GameState(BaseModel):
     year: int
     teams: List[Team]
     drivers: List[Driver]
+    player_spares: int = 0
+    player_construction_usage_percent: int = 0
+    player_construction_usage_week: int | None = None
+    player_construction_usage_year: int | None = None
+    player_mechanics_usage_percent: int = 0
+    player_mechanics_usage_week: int | None = None
+    player_mechanics_usage_year: int | None = None
+    player_chassis: List[Chassis] = Field(default_factory=list)
+    player_test_chassis_id: int | None = None
+    player_race_chassis_assignments: Dict[int, int] = Field(default_factory=dict)
     team_principals: List[TeamPrincipal] = Field(default_factory=list)
     technical_directors: List[TechnicalDirector] = Field(default_factory=list)
     commercial_managers: List[CommercialManager] = Field(default_factory=list)

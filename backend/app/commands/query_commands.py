@@ -3,7 +3,10 @@ from app.core.commercial_staff_costs import CommercialStaffCostManager
 from app.core.driver_ratings import calculate_driver_overall_rating
 from app.core.factory_size import get_factory_limits
 from app.core.operational_staff_costs import OperationalStaffCostManager
+from app.core.player_chassis import get_player_race_chassis_assignments, get_player_test_chassis, player_chassis_fail_probability
 from app.core.player_car_development import PlayerCarDevelopmentManager
+from app.core.player_spares import get_player_spares_construction_data
+from app.core.player_spares import get_player_maintenance_data
 from app.core.finance_reporting import build_finance_report
 from app.models.calendar import EventType
 from app.models.state import GameState
@@ -78,8 +81,11 @@ def get_home_payload(state: GameState) -> dict:
         alerts.append(f"{player_team.engine_supplier_name} engine deal expires this season")
     if player_team.tyre_supplier_name and getattr(player_team, "tyre_supplier_contract_length", 0) == 1:
         alerts.append(f"{player_team.tyre_supplier_name} tyre deal expires this season")
-    if int(getattr(player_team, "car_wear", 0) or 0) > 0:
-        alerts.append(f"Car wear at {int(player_team.car_wear)} points")
+    player_chassis = list(state.player_chassis)
+    if player_chassis:
+        max_wear = max(int(getattr(chassis, "wear", 0) or 0) for chassis in player_chassis)
+        if max_wear > 0:
+            alerts.append(f"Chassis wear up to {max_wear} points")
     if state.finance.facilities_upgrade_active:
         alerts.append("Facilities upgrade installments in progress")
 
@@ -350,8 +356,26 @@ def get_car_payload(state: GameState) -> dict:
     if player_team:
         design_staff = getattr(player_team, "design_staff", None)
         player_design_staff = int(design_staff or 0) if design_staff is not None and int(design_staff or 0) > 0 else int(getattr(player_team, "workforce", 250) or 250)
-    player_wear = int(player_team.car_wear) if player_team else 0
-    player_mech_fail_probability = min(0.35, max(0.0, player_wear * 0.002))
+    player_drivers = [
+        driver
+        for driver in state.drivers
+        if player_team and driver.id in {player_team.driver1_id, player_team.driver2_id}
+    ]
+    player_driver_lookup = {driver.id: driver.name for driver in player_drivers}
+    get_player_race_chassis_assignments(state)
+    selected_test_chassis = get_player_test_chassis(state)
+    if player_team:
+        player_wear_values = [int(getattr(chassis, "wear", 0) or 0) for chassis in state.player_chassis]
+        player_wear = max(player_wear_values) if player_wear_values else int(getattr(player_team, "car_wear", 0) or 0)
+        assigned_wears = [
+            int(getattr(chassis, "wear", 0) or 0)
+            for chassis in state.player_chassis
+            if chassis.id in state.player_race_chassis_assignments.values()
+        ]
+        player_mech_fail_probability = max((player_chassis_fail_probability(wear) for wear in assigned_wears), default=player_chassis_fail_probability(player_wear))
+    else:
+        player_wear = 0
+        player_mech_fail_probability = 0.0
     return {
         "teams": [
             {
@@ -371,6 +395,42 @@ def get_car_payload(state: GameState) -> dict:
         "player_car_speed": player_team.car_speed if player_team else 0,
         "player_car_wear": player_wear,
         "player_mechanical_fail_probability": player_mech_fail_probability,
+        "player_spares": int(getattr(state, "player_spares", 0) or 0),
+        "construction": {
+            "spares": get_player_spares_construction_data(state),
+        },
+        "maintenance": get_player_maintenance_data(state),
+        "player_test_chassis_id": selected_test_chassis.id if selected_test_chassis else state.player_test_chassis_id,
+        "player_drivers": [
+            {"id": driver.id, "name": driver.name}
+            for driver in player_drivers
+        ],
+        "player_chassis": [
+            {
+                "id": chassis.id,
+                "name": chassis.name,
+                "wear": chassis.wear,
+                "mechanical_fail_probability": player_chassis_fail_probability(chassis.wear),
+                "assigned_to_test": selected_test_chassis is not None and chassis.id == selected_test_chassis.id,
+                "assigned_driver_id": next(
+                    (
+                        driver_id
+                        for driver_id, chassis_id in state.player_race_chassis_assignments.items()
+                        if chassis_id == chassis.id
+                    ),
+                    None,
+                ),
+                "assigned_driver_name": next(
+                    (
+                        player_driver_lookup.get(driver_id)
+                        for driver_id, chassis_id in state.player_race_chassis_assignments.items()
+                        if chassis_id == chassis.id
+                    ),
+                    None,
+                ),
+            }
+            for chassis in state.player_chassis
+        ],
         "player_development": (
             {
                 "active": player_project.active,

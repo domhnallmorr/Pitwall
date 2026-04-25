@@ -3,6 +3,7 @@ from unittest.mock import patch
 from app.core.engine import GameEngine
 from app.core.testing import TestSessionManager
 from app.models.calendar import Calendar, Event, EventType
+from app.models.chassis import Chassis
 from app.models.finance import TransactionCategory
 from app.models.state import GameState
 from app.models.team import Team
@@ -19,6 +20,12 @@ def create_state() -> GameState:
         calendar=Calendar(events=[Event(name="Test 1", week=5, type=EventType.TEST)], current_week=5),
         circuits=[],
         player_team_id=1,
+        player_chassis=[
+            Chassis(id=1, team_id=1, name="Chassis 1", wear=0),
+            Chassis(id=2, team_id=1, name="Chassis 2", wear=0),
+            Chassis(id=3, team_id=1, name="Chassis 3", wear=0),
+        ],
+        player_test_chassis_id=2,
     )
 
 
@@ -33,7 +40,8 @@ def test_test_session_attend_applies_player_cost_and_ai_gains(mock_random, mock_
     assert result["player"]["gain"] == 4
     assert result["player"]["cost"] == 1_680_000
     assert state.player_team.car_speed == 84
-    assert state.player_team.car_wear == 12
+    assert result["player"]["chassis_name"] == "Chassis 2"
+    assert state.player_chassis[1].wear == 12
     ai_team = next(t for t in state.teams if t.id == 2)
     assert ai_team.car_speed == 87  # 900 km -> +3
     assert ai_team.car_wear == 0
@@ -51,7 +59,7 @@ def test_skip_test_still_allows_ai_to_improve(mock_random, mock_randint):
     engine.handle_event_action(state, "skip")
 
     assert state.player_team.car_speed == 80
-    assert state.player_team.car_wear == 0
+    assert state.player_chassis[1].wear == 0
     ai_team = next(t for t in state.teams if t.id == 2)
     assert ai_team.car_speed == 86  # 600 km -> +2
     txs = [t for t in state.finance.transactions if t.category == TransactionCategory.TESTING]
@@ -65,6 +73,12 @@ def test_player_test_can_fail_to_gain_speed(mock_random):
         year=1998,
         teams=[Team(id=1, name="Warrick", country="United Kingdom", car_speed=80)],
         drivers=[],
+        player_chassis=[
+            Chassis(id=1, team_id=1, name="Chassis 1", wear=0),
+            Chassis(id=2, team_id=1, name="Chassis 2", wear=0),
+            Chassis(id=3, team_id=1, name="Chassis 3", wear=0),
+        ],
+        player_test_chassis_id=2,
         calendar=Calendar(events=[Event(name="Test 1", week=5, type=EventType.TEST)], current_week=5),
         circuits=[],
         player_team_id=1,
@@ -77,3 +91,4 @@ def test_player_test_can_fail_to_gain_speed(mock_random):
     assert result["player"]["gain"] == 0
     assert result["player"]["succeeded"] is False
     assert state.player_team.car_speed == 80
+    assert state.player_chassis[1].wear == 15

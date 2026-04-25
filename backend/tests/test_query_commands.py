@@ -10,6 +10,7 @@ from app.commands.query_commands import (
     get_standings_payload,
 )
 from app.models.calendar import Calendar, Event, EventType
+from app.models.chassis import Chassis
 from app.models.driver import Driver
 from app.models.engine_supplier import EngineSupplier
 from app.models.finance import Finance
@@ -29,6 +30,7 @@ def create_state() -> GameState:
                 driver2_id=2,
                 car_speed=80,
                 workforce=200,
+                mechanics_staff=58,
                 engine_supplier_name="Mechatron",
                 facilities=70,
             )
@@ -37,6 +39,14 @@ def create_state() -> GameState:
             Driver(id=1, name="John Newhouse", age=27, country="Canada", team_id=1, speed=84, consistency=68, qualifying=3, race_starts=1, wins=1, podiums=2, poles=1, fastest_laps=1, championships=1),
             Driver(id=2, name="Henrik Friedrich", age=31, country="Germany", team_id=1, speed=72, consistency=58, qualifying=3),
         ],
+        player_spares=6,
+        player_chassis=[
+            Chassis(id=1, team_id=1, name="Chassis 1", wear=5),
+            Chassis(id=2, team_id=1, name="Chassis 2", wear=9),
+            Chassis(id=3, team_id=1, name="Chassis 3", wear=0),
+        ],
+        player_test_chassis_id=3,
+        player_race_chassis_assignments={1: 1, 2: 2},
         calendar=Calendar(events=[Event(name="Albert Park", week=10, type=EventType.RACE)], current_week=1),
         circuits=[],
         player_team_id=1,
@@ -149,3 +159,27 @@ def test_get_car_payload_without_player_team_returns_defaults():
     assert payload["player_car_speed"] == 0
     assert payload["player_car_wear"] == 0
     assert payload["player_development"]["active"] is False
+
+
+def test_get_car_payload_includes_player_chassis_state():
+    state = create_state()
+
+    payload = get_car_payload(state)
+
+    assert payload["player_spares"] == 6
+    assert payload["construction"]["spares"]["available"] == 6
+    assert payload["construction"]["spares"]["build_cost"] == 52_500
+    assert payload["construction"]["spares"]["construction_usage_percent"] == 0
+    assert payload["construction"]["spares"]["construction_capacity_remaining"] == 100
+    assert payload["maintenance"]["mechanics_usage_percent"] == 0
+    assert payload["maintenance"]["mechanics_capacity_remaining"] == 100
+    assert payload["maintenance"]["mechanics_staff_available"] == 58
+    assert payload["maintenance"]["mechanics_required_percent_per_spare"] == 11
+    assert payload["player_test_chassis_id"] == 3
+    assert payload["player_drivers"][0]["name"] == "John Newhouse"
+    assert len(payload["player_chassis"]) == 3
+    assert payload["player_chassis"][0]["name"] == "Chassis 1"
+    assert payload["player_chassis"][0]["assigned_driver_id"] == 1
+    assert payload["player_chassis"][0]["assigned_driver_name"] == "John Newhouse"
+    assert payload["player_chassis"][1]["assigned_driver_id"] == 2
+    assert payload["player_chassis"][2]["assigned_to_test"] is True

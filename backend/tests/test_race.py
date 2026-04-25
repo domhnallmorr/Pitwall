@@ -1,6 +1,7 @@
 import random
 
 from app.models.calendar import Calendar, Event, EventType
+from app.models.chassis import Chassis
 from app.models.circuit import Circuit
 from app.models.driver import Driver
 from app.models.engine_supplier import EngineSupplier
@@ -59,6 +60,13 @@ def create_race_state():
         tyre_suppliers=tyre_suppliers,
         calendar=calendar,
         circuits=circuits,
+        player_chassis=[
+            Chassis(id=1, team_id=1, name="Chassis 1", wear=0),
+            Chassis(id=2, team_id=1, name="Chassis 2", wear=0),
+            Chassis(id=3, team_id=1, name="Chassis 3", wear=0),
+        ],
+        player_test_chassis_id=1,
+        player_race_chassis_assignments={1: 1, 2: 2},
     )
 
 
@@ -538,7 +546,8 @@ def test_simulate_race_can_include_mechanical_outs_with_player_team():
     finally:
         random.random = original_random
 
-    assert state.teams[0].car_wear == 8
+    assert state.player_chassis[0].wear == 8
+    assert state.player_chassis[1].wear == 8
     mechanical_results = [r for r in result["results"] if r.get("mechanical_out")]
     assert len(mechanical_results) == 2
     assert all(r["status"] == "DNF" for r in mechanical_results)
@@ -889,13 +898,14 @@ def test_pick_crash_count_handles_small_fields():
 def test_mechanical_failure_probability_handles_none_player_team_and_caps_player_wear():
     state = create_race_state()
     team_lookup = {team.id: team for team in state.teams}
+    entrant = {"team_id": 1, "chassis_wear": 0}
 
-    assert mechanical_failure_probability(state, 1, team_lookup) == 0.0
+    assert mechanical_failure_probability(state, entrant, team_lookup) == 0.0
 
     state.player_team_id = 1
-    team_lookup[1].car_wear = 10_000
-    assert mechanical_failure_probability(state, 1, team_lookup) == 0.35
-    assert mechanical_failure_probability(state, 2, team_lookup) == 0.05
+    entrant["chassis_wear"] = 10_000
+    assert mechanical_failure_probability(state, entrant, team_lookup) == 0.35
+    assert mechanical_failure_probability(state, {"team_id": 2}, team_lookup) == 0.05
 
 
 def test_prepare_participants_rescues_one_driver_when_everyone_retires():

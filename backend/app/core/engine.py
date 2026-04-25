@@ -48,6 +48,12 @@ class GameEngine:
             return self.get_week_summary(state)
 
         state.calendar.advance_week()
+        state.player_construction_usage_percent = 0
+        state.player_construction_usage_week = state.calendar.current_week
+        state.player_construction_usage_year = state.year
+        state.player_mechanics_usage_percent = 0
+        state.player_mechanics_usage_week = state.calendar.current_week
+        state.player_mechanics_usage_year = state.year
 
         # Process weekly finances
         self._process_weekly_finances(state)

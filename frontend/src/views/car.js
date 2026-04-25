@@ -10,16 +10,23 @@ export default class CarView {
 		this.devStatus = document.getElementById('car-development-status');
 		this.comparisonContent = document.getElementById('car-content-comparison');
 		this.developmentContent = document.getElementById('car-content-development');
-		this.garageContent = document.getElementById('car-content-garage');
-		this.garageWear = document.getElementById('car-garage-wear');
-		this.garageRisk = document.getElementById('car-garage-risk');
-		this.garageRepairSlider = document.getElementById('car-garage-repair-slider');
-		this.garageRepairValue = document.getElementById('car-garage-repair-value');
-		this.garageRepairCost = document.getElementById('car-garage-repair-cost');
-		this.garageRepairBtn = document.getElementById('car-garage-repair-btn');
+		this.constructionContent = document.getElementById('car-content-construction');
+		this.chassisContent = document.getElementById('car-content-chassis');
+		this.chassisBody = document.getElementById('car-chassis-table-body');
+		this.raceAssignmentsStatus = document.getElementById('car-garage-race-assignments-status');
+		this.mechanicsStatus = document.getElementById('car-garage-mechanics-status');
+		this.sparesWidget = document.getElementById('car-spares-widget');
+		this.constructionBuildCard = document.getElementById('car-construction-build-card');
 		this.tabButtons = document.querySelectorAll('.car-tab-btn');
 		this.onStartDevelopment = null;
-		this.onRepairWear = null;
+		this.onSetTestChassis = null;
+		this.onSetRaceChassisAssignments = null;
+		this.onRepairChassisWear = null;
+		this.onBuildSpareSet = null;
+		this.playerSpares = 0;
+		this.mechanicsCapacityRemaining = 100;
+		this.mechanicsStaffAvailable = 0;
+		this.mechanicsPercentPerSpare = 11;
 		this.activeTab = 'comparison';
 		this.bindTabs();
 	}
@@ -28,8 +35,20 @@ export default class CarView {
 		this.onStartDevelopment = handler;
 	}
 
-	setRepairWearHandler(handler) {
-		this.onRepairWear = handler;
+	setTestChassisHandler(handler) {
+		this.onSetTestChassis = handler;
+	}
+
+	setRaceChassisAssignmentsHandler(handler) {
+		this.onSetRaceChassisAssignments = handler;
+	}
+
+	setRepairChassisWearHandler(handler) {
+		this.onRepairChassisWear = handler;
+	}
+
+	setBuildSpareSetHandler(handler) {
+		this.onBuildSpareSet = handler;
 	}
 
 	bindTabs() {
@@ -50,8 +69,11 @@ export default class CarView {
 		if (this.developmentContent) {
 			this.developmentContent.style.display = tab === 'development' ? 'block' : 'none';
 		}
-		if (this.garageContent) {
-			this.garageContent.style.display = tab === 'garage' ? 'block' : 'none';
+		if (this.constructionContent) {
+			this.constructionContent.style.display = tab === 'construction' ? 'block' : 'none';
+		}
+		if (this.chassisContent) {
+			this.chassisContent.style.display = tab === 'chassis' ? 'block' : 'none';
 		}
 	}
 
@@ -70,6 +92,39 @@ export default class CarView {
 			blocks += `<span class="car-speed-block ${stateClass}" aria-hidden="true"></span>`;
 		}
 		return `<span class="car-speed-rating" role="img" aria-label="${label} rating ${rating} out of 5">${blocks}</span>`;
+	}
+
+	renderAvailabilityBlocks(value, label, maxValue = 10) {
+		const filled = Math.max(0, Math.min(maxValue, Number(value || 0)));
+		let blocks = '';
+		for (let i = 1; i <= maxValue; i += 1) {
+			const stateClass = i <= filled ? 'is-filled' : '';
+			blocks += `<span class="car-speed-block car-availability-block ${stateClass}" aria-hidden="true"></span>`;
+		}
+		return `<span class="car-speed-rating car-availability-rating" role="img" aria-label="${label} ${filled} out of ${maxValue}">${blocks}</span>`;
+	}
+
+	updateSparesWidget(playerSpares) {
+		this.playerSpares = Math.max(0, Math.min(10, Number(playerSpares || 0)));
+		if (!this.sparesWidget) return;
+		this.sparesWidget.innerHTML = `
+			<div class="car-spares-widget-label">Available Spares</div>
+			<div class="car-spares-widget-value">${this.renderAvailabilityBlocks(this.playerSpares, 'Available spares', 10)}</div>
+			<div class="car-spares-widget-count">${this.playerSpares} / 10 sets</div>
+		`;
+	}
+
+	applyChassisWearRepairResult(data) {
+		if (!data) return;
+		if (typeof data.spares_after !== 'undefined') {
+			this.updateSparesWidget(data.spares_after);
+		}
+		if (typeof data.mechanics_usage_percent_after !== 'undefined') {
+			this.mechanicsCapacityRemaining = Math.max(0, 100 - Number(data.mechanics_usage_percent_after || 0));
+			if (this.mechanicsStatus) {
+				this.mechanicsStatus.textContent = `${this.mechanicsCapacityRemaining}% remaining this week.`;
+			}
+		}
 	}
 
 	render(data) {
@@ -127,38 +182,201 @@ export default class CarView {
 			});
 		});
 
-		if (this.garageWear) {
-			const wear = Number(data?.player_car_wear || 0);
-			this.garageWear.textContent = `Wear: ${wear}`;
-		}
-		if (this.garageRisk) {
-			const risk = Number(data?.player_mechanical_fail_probability || 0);
-			this.garageRisk.textContent = `Mechanical failure risk (per race): ${Math.round(risk * 100)}%`;
-		}
-		const wear = Number(data?.player_car_wear || 0);
-		if (this.garageRepairSlider) {
-			this.garageRepairSlider.max = String(Math.max(0, wear));
-			this.garageRepairSlider.value = String(Math.min(Number(this.garageRepairSlider.value || 0), wear));
-		}
-		const selectedRepair = Number(this.garageRepairSlider?.value || 0);
-		if (this.garageRepairValue) this.garageRepairValue.textContent = String(selectedRepair);
-		if (this.garageRepairCost) this.garageRepairCost.textContent = `$${(selectedRepair * 3200).toLocaleString()}`;
-		if (this.garageRepairBtn) this.garageRepairBtn.disabled = wear <= 0 || selectedRepair <= 0;
+		const chassisRows = Array.isArray(data?.player_chassis) ? data.player_chassis : [];
+		const playerDrivers = Array.isArray(data?.player_drivers) ? data.player_drivers : [];
+		const driverOptions = playerDrivers.map((driver) => ({ value: String(driver.id), label: driver.name }));
+		const playerSpares = Math.max(0, Math.min(10, Number(data?.player_spares || 0)));
+		this.playerSpares = playerSpares;
+		const spareConstruction = data?.construction?.spares || {};
+		const maintenance = data?.maintenance || {};
+		const averageWearRepairPerSpare = 26;
+		this.mechanicsCapacityRemaining = Math.max(0, Number(maintenance.mechanics_capacity_remaining ?? 100));
+		this.mechanicsStaffAvailable = Math.max(0, Number(maintenance.mechanics_staff_available ?? 0));
+		this.mechanicsPercentPerSpare = Math.max(0, Number(maintenance.mechanics_required_percent_per_spare ?? 11));
 
-		if (this.garageRepairSlider) {
-			this.garageRepairSlider.oninput = () => {
-				const value = Number(this.garageRepairSlider.value || 0);
-				if (this.garageRepairValue) this.garageRepairValue.textContent = String(value);
-				if (this.garageRepairCost) this.garageRepairCost.textContent = `$${(value * 3200).toLocaleString()}`;
-				if (this.garageRepairBtn) this.garageRepairBtn.disabled = wear <= 0 || value <= 0;
-			};
+		if (this.chassisBody) {
+			this.chassisBody.innerHTML = '';
+			chassisRows.forEach((chassis) => {
+				const repairDisabled = Number(chassis.wear || 0) <= 0 ? 'disabled' : '';
+				const row = document.createElement('tr');
+				row.innerHTML = `
+					<td><strong>${chassis.name}</strong></td>
+					<td>${Number(chassis.wear || 0)}</td>
+					<td>
+						<label class="car-chassis-radio">
+							<input
+								type="radio"
+								name="car-test-chassis"
+								class="car-chassis-test-radio"
+								value="${chassis.id}"
+								${chassis.assigned_to_test ? 'checked' : ''}
+							>
+							<span>Selected</span>
+						</label>
+					</td>
+					<td>
+						<select class="car-chassis-assignment-select" data-chassis-id="${chassis.id}">
+							<option value="">Unassigned</option>
+							${driverOptions.map((driver) => `<option value="${driver.value}" ${String(chassis.assigned_driver_id || '') === driver.value ? 'selected' : ''}>${driver.label}</option>`).join('')}
+						</select>
+					</td>
+					<td>${Math.round(Number(chassis.mechanical_fail_probability || 0) * 100)}%</td>
+					<td>
+						<div class="car-chassis-maintenance">
+							<input
+								type="range"
+								min="0"
+								max="${Math.max(0, Number(chassis.wear || 0))}"
+								value="0"
+								step="1"
+								class="car-chassis-repair-slider"
+								data-chassis-id="${chassis.id}"
+							>
+							<div class="car-chassis-maintenance-meta">
+								<span class="car-chassis-repair-value" data-chassis-id="${chassis.id}">0 wear</span>
+								<span class="car-chassis-repair-cost" data-chassis-id="${chassis.id}">$0</span>
+								<span class="car-chassis-repair-spares" data-chassis-id="${chassis.id}">0 spare sets</span>
+								<span class="car-chassis-repair-mechanics" data-chassis-id="${chassis.id}">0% mechanics</span>
+							</div>
+							<button class="btn-secondary car-chassis-repair-btn" data-chassis-id="${chassis.id}" ${repairDisabled}>Repair</button>
+						</div>
+					</td>
+				`;
+				this.chassisBody.appendChild(row);
+			});
+			if (!chassisRows.length) {
+				this.chassisBody.innerHTML = '<tr><td colspan="6">No chassis configured</td></tr>';
+			}
 		}
-		if (this.garageRepairBtn) {
-			this.garageRepairBtn.onclick = () => {
-				if (!this.onRepairWear) return;
-				const value = Number(this.garageRepairSlider?.value || 0);
-				if (value > 0) this.onRepairWear(value);
+		if (this.mechanicsStatus) {
+			this.mechanicsStatus.textContent = `${this.mechanicsCapacityRemaining}% remaining this week.`;
+		}
+
+		const refreshRaceStatus = () => {
+			const selections = Array.from(document.querySelectorAll('.car-chassis-assignment-select'))
+				.map((select) => ({
+					chassisId: Number(select.dataset.chassisId),
+					driverId: select.value ? Number(select.value) : null,
+				}))
+				.filter((item) => item.driverId);
+			const uniqueDriverIds = new Set(selections.map((item) => item.driverId));
+			const complete = selections.length === playerDrivers.length && uniqueDriverIds.size === playerDrivers.length;
+			if (this.raceAssignmentsStatus) {
+				this.raceAssignmentsStatus.textContent = complete
+					? 'Race chassis assigned.'
+					: 'Assign one distinct chassis to each driver.';
+			}
+			return complete ? selections : [];
+		};
+
+		document.querySelectorAll('.car-chassis-test-radio').forEach((input) => {
+			input.addEventListener('change', () => {
+				if (input.checked && this.onSetTestChassis) {
+					this.onSetTestChassis(Number(input.value));
+				}
+			});
+		});
+
+		document.querySelectorAll('.car-chassis-assignment-select').forEach((select) => {
+			select.addEventListener('change', () => {
+				if (!select.value) {
+					refreshRaceStatus();
+					return;
+				}
+				document.querySelectorAll('.car-chassis-assignment-select').forEach((otherSelect) => {
+					if (otherSelect !== select && otherSelect.value === select.value) {
+						otherSelect.value = '';
+					}
+				});
+				const assignments = refreshRaceStatus();
+				if (assignments.length === 2 && this.onSetRaceChassisAssignments) {
+					const orderedAssignments = playerDrivers.map((driver) => assignments.find((item) => item.driverId === driver.id));
+					if (orderedAssignments.every(Boolean)) {
+						this.onSetRaceChassisAssignments(orderedAssignments[0].chassisId, orderedAssignments[1].chassisId);
+					}
+				}
+			});
+		});
+		refreshRaceStatus();
+
+		document.querySelectorAll('.car-chassis-repair-slider').forEach((slider) => {
+			const updateRepairPreview = () => {
+				const value = Number(slider.value || 0);
+				const chassisId = slider.dataset.chassisId;
+				const valueNode = document.querySelector(`.car-chassis-repair-value[data-chassis-id="${chassisId}"]`);
+				const costNode = document.querySelector(`.car-chassis-repair-cost[data-chassis-id="${chassisId}"]`);
+				const sparesNode = document.querySelector(`.car-chassis-repair-spares[data-chassis-id="${chassisId}"]`);
+				const mechanicsNode = document.querySelector(`.car-chassis-repair-mechanics[data-chassis-id="${chassisId}"]`);
+				const repairBtn = document.querySelector(`.car-chassis-repair-btn[data-chassis-id="${chassisId}"]`);
+				const estimatedSpares = value > 0 ? Math.max(1, Math.ceil(value / averageWearRepairPerSpare)) : 0;
+				const estimatedMechanics = estimatedSpares * this.mechanicsPercentPerSpare;
+				if (valueNode) valueNode.textContent = `${value} wear`;
+				if (costNode) costNode.textContent = `$${(value * 3200).toLocaleString()}`;
+				if (sparesNode) {
+					sparesNode.textContent = estimatedSpares === 1 ? 'Est. 1 spare set' : `Est. ${estimatedSpares} spare sets`;
+				}
+				if (mechanicsNode) {
+					mechanicsNode.textContent = `Est. ${estimatedMechanics}% mechanics`;
+				}
+				if (repairBtn) {
+					repairBtn.disabled =
+						value <= 0 ||
+						this.playerSpares <= 0 ||
+						estimatedSpares > this.playerSpares ||
+						this.mechanicsStaffAvailable <= 0 ||
+						estimatedMechanics > this.mechanicsCapacityRemaining;
+				}
 			};
+			slider.addEventListener('input', updateRepairPreview);
+			updateRepairPreview();
+		});
+
+		document.querySelectorAll('.car-chassis-repair-btn').forEach((button) => {
+			button.addEventListener('click', () => {
+				if (!this.onRepairChassisWear) return;
+				const chassisId = Number(button.dataset.chassisId);
+				const slider = document.querySelector(`.car-chassis-repair-slider[data-chassis-id="${chassisId}"]`);
+				const wearPoints = Number(slider?.value || 0);
+				if (wearPoints > 0) {
+					this.onRepairChassisWear(chassisId, wearPoints);
+				}
+			});
+		});
+
+		this.updateSparesWidget(playerSpares);
+
+		if (this.constructionBuildCard) {
+			const buildCost = Number(spareConstruction.build_cost || 0);
+			const canBuild = Boolean(spareConstruction.can_build);
+			const blockingReason = spareConstruction.blocking_reason || 'Unable to build spare set';
+			const requiredPercentage = Number(spareConstruction.engineering_required_percentage || 0);
+			const requiredStaff = Number(spareConstruction.engineering_required_staff || 0);
+			const availableStaff = Number(spareConstruction.engineering_staff_available || 0);
+			const usagePercent = Number(spareConstruction.construction_usage_percent || 0);
+			const remainingPercent = Number(spareConstruction.construction_capacity_remaining || 0);
+			this.constructionBuildCard.innerHTML = `
+				<div class="car-construction-build-head">
+					<div>
+						<div class="car-spares-widget-label">Build Spare Set</div>
+						<div class="car-construction-build-title">Engineering Construction</div>
+					</div>
+					<div class="car-construction-build-cost">$${buildCost.toLocaleString()}</div>
+				</div>
+				<div class="car-construction-build-meta">
+					<div>Engineering Required: <strong>${requiredStaff}</strong> staff (${requiredPercentage}%)</div>
+					<div>Engineering Available: <strong>${availableStaff}</strong></div>
+					<div>Capacity Used This Week: <strong>${usagePercent}%</strong></div>
+					<div>Capacity Remaining: <strong>${remainingPercent}%</strong></div>
+				</div>
+				<div class="car-construction-note">${canBuild ? "A spare set can be built if you allocate this week's remaining construction capacity." : blockingReason}</div>
+				<button id="car-build-spare-set-btn" class="btn-primary" ${canBuild ? '' : 'disabled'}>Build Spare Set</button>
+			`;
+			const buildBtn = document.getElementById('car-build-spare-set-btn');
+			if (buildBtn) {
+				buildBtn.addEventListener('click', () => {
+					if (this.onBuildSpareSet) this.onBuildSpareSet();
+				});
+			}
 		}
 
 		this.setActiveTab(this.activeTab);

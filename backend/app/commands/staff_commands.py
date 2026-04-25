@@ -33,6 +33,9 @@ from app.commands.staff_market_commands import (
     handle_replace_tyre_supplier,
 )
 from app.commands.staff_team_commands import (
-    handle_repair_car_wear,
+    handle_build_spare_set,
+    handle_repair_chassis_wear,
+    handle_set_race_chassis_assignments,
+    handle_set_test_chassis,
     handle_start_car_development,
 )

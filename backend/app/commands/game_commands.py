@@ -40,13 +40,16 @@ from app.commands.staff_commands import (
     handle_get_tyre_supplier_replacement_candidates,
     handle_get_title_sponsor_replacement_candidates,
     handle_get_replacement_candidates,
-    handle_repair_car_wear,
+    handle_build_spare_set,
+    handle_repair_chassis_wear,
     handle_replace_commercial_manager,
     handle_replace_engine_supplier,
     handle_replace_technical_director,
     handle_replace_tyre_supplier,
     handle_replace_title_sponsor,
     handle_replace_driver,
+    handle_set_race_chassis_assignments,
+    handle_set_test_chassis,
     handle_start_car_development,
     handle_book_engine_negotiation_hospitality,
     handle_start_engine_negotiation,
@@ -54,9 +57,22 @@ from app.commands.staff_commands import (
     handle_update_engine_negotiation_staff,
 )
 from app.models.calendar import Calendar
+from app.models.chassis import Chassis
 from app.models.email import EmailCategory
 from app.models.finance import Finance
 from app.models.state import GameState
+
+
+def _create_player_chassis(team_id: int, count: int = 3) -> list[Chassis]:
+    return [
+        Chassis(
+            id=index,
+            team_id=team_id,
+            name=f"Chassis {index}",
+            wear=0,
+        )
+        for index in range(1, count + 1)
+    ]
 
 
 def load_default_state() -> GameState:
@@ -124,6 +140,16 @@ def handle_start_career(state: GameState | None, logger: logging.Logger, team_na
             return current_state, {"status": "error", "message": f"Team '{selected_team_name}' not found in roster."}
 
         current_state.player_team_id = selected_team.id
+        current_state.player_spares = 0
+        current_state.player_construction_usage_percent = 0
+        current_state.player_construction_usage_week = current_state.calendar.current_week
+        current_state.player_construction_usage_year = current_state.year
+        current_state.player_mechanics_usage_percent = 0
+        current_state.player_mechanics_usage_week = current_state.calendar.current_week
+        current_state.player_mechanics_usage_year = current_state.year
+        current_state.player_chassis = _create_player_chassis(selected_team.id)
+        current_state.player_test_chassis_id = current_state.player_chassis[0].id if current_state.player_chassis else None
+        current_state.player_race_chassis_assignments = {}
         released_principal = next(
             (principal for principal in current_state.team_principals if principal.team_id == selected_team.id),
             None,

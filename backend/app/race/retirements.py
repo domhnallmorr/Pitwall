@@ -1,14 +1,12 @@
 import random
 from typing import Any
 
+from app.core.player_chassis import apply_player_race_wear, get_player_driver_chassis, player_chassis_fail_probability
 from app.models.circuit import Circuit
 from app.models.state import GameState
 from app.race.constants import (
 	AI_MECHANICAL_FAILURE_PROBABILITY,
-	MAX_CAR_WEAR,
 	MAX_CRASH_OUTS,
-	PLAYER_FAILURE_PROB_PER_WEAR,
-	PLAYER_MAX_FAILURE_PROBABILITY,
 	PLAYER_RACE_WEAR_INCREASE,
 )
 
@@ -21,15 +19,13 @@ def pick_crash_count(participant_count: int) -> int:
 
 def mechanical_failure_probability(
 	state: GameState,
-	team_id: int,
+	entrant: dict[str, Any],
 	team_lookup: dict[int, Any],
 ) -> float:
 	if state.player_team_id is None:
 		return 0.0
-	if team_id == state.player_team_id:
-		player_team = team_lookup.get(team_id)
-		wear = max(0, int(getattr(player_team, "car_wear", 0) or 0))
-		return min(PLAYER_MAX_FAILURE_PROBABILITY, wear * PLAYER_FAILURE_PROB_PER_WEAR)
+	if entrant.get("team_id") == state.player_team_id:
+		return player_chassis_fail_probability(int(entrant.get("chassis_wear", 0) or 0))
 	return AI_MECHANICAL_FAILURE_PROBABILITY
 
 
@@ -46,9 +42,12 @@ def prepare_participants(
 	crashed_driver_ids = {entry["driver_id"] for entry in crashed_participants}
 
 	if state.player_team_id is not None and state.player_team_id in team_lookup:
-		player_team = team_lookup[state.player_team_id]
-		current_wear = max(0, int(getattr(player_team, "car_wear", 0) or 0))
-		player_team.car_wear = min(MAX_CAR_WEAR, current_wear + PLAYER_RACE_WEAR_INCREASE)
+		player_wear_by_driver = apply_player_race_wear(state, PLAYER_RACE_WEAR_INCREASE)
+		for entry in participants:
+			if entry.get("team_id") == state.player_team_id:
+				chassis = get_player_driver_chassis(state, entry["driver_id"])
+				entry["chassis_id"] = chassis.id if chassis else None
+				entry["chassis_wear"] = player_wear_by_driver.get(entry["driver_id"], int(getattr(chassis, "wear", 0) or 0))
 
 	mechanical_participants: list[dict[str, Any]] = []
 	finishers: list[dict[str, Any]] = []
@@ -59,7 +58,7 @@ def prepare_participants(
 			entry["retirement_reason"] = "crash"
 			continue
 
-		fail_prob = mechanical_failure_probability_fn(state, entry["team_id"], team_lookup)
+		fail_prob = mechanical_failure_probability_fn(state, entry, team_lookup)
 		if random.random() < fail_prob:
 			entry["retirement_lap"] = random.randint(1, circuit.laps)
 			entry["retirement_reason"] = "mechanical"

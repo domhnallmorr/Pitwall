@@ -42,7 +42,10 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 		getDriver: vi.fn(),
 		getCar: vi.fn(),
 		startCarDevelopment: vi.fn(),
-		repairCarWear: vi.fn(),
+		setTestChassis: vi.fn(),
+		setRaceChassisAssignments: vi.fn(),
+		repairChassisWear: vi.fn(),
+		buildSpareSet: vi.fn(),
 		getFinance: vi.fn(),
 		getFacilities: vi.fn(),
 		previewFacilitiesUpgrade: vi.fn(),
@@ -97,7 +100,16 @@ vi.mock('./views/email.js', () => ({ default: class { render(...args) { viewFns.
 vi.mock('./views/staff.js', () => ({ default: class { setReplaceDriverHandler() {} setDriverSelectHandler() {} setReplaceCommercialManagerHandler() {} setReplaceTechnicalDirectorHandler() {} render(...args) { viewFns.staffRender(...args); } } }));
 vi.mock('./views/driver.js', () => ({ default: class { constructor() { this.currentDriverName = null; } render(...args) { viewFns.driverRender(...args); } } }));
 vi.mock('./views/driver_market.js', () => ({ default: class { setBackHandler() {} setSignHandler() {} render(...args) { viewFns.driverMarketRender(...args); } showOfferResult(...args) { viewFns.driverMarketOfferResult(...args); return true; } } }));
-vi.mock('./views/car.js', () => ({ default: class { setStartDevelopmentHandler() {} setRepairWearHandler() {} render(...args) { viewFns.carRender(...args); } } }));
+vi.mock('./views/car.js', () => ({
+	default: class {
+		setStartDevelopmentHandler() {}
+		setTestChassisHandler() {}
+		setRaceChassisAssignmentsHandler() {}
+		setRepairChassisWearHandler() {}
+		setBuildSpareSetHandler() {}
+		render(...args) { viewFns.carRender(...args); }
+	}
+}));
 vi.mock('./views/finance.js', () => ({ default: class { setReplaceTitleSponsorHandler() {} setStartTitleSponsorNegotiationHandler() {} setUpdateTitleSponsorNegotiationStaffHandler() {} setSignTitleSponsorNegotiatedDealHandler() {} setBookTitleSponsorHospitalityHandler() {} setReplaceEngineSupplierHandler() {} setReplaceTyreSupplierHandler() {} setStartEngineNegotiationHandler() {} setUpdateEngineNegotiationStaffHandler() {} setSignEngineNegotiatedDealHandler() {} setBookEngineNegotiationHospitalityHandler() {} showTitleSponsorNegotiationModal() {} hideTitleSponsorNegotiationModal() {} showEngineNegotiationModal() {} hideEngineNegotiationModal() {} render(...args) { viewFns.financeRender(...args); } } }));
 vi.mock('./views/commercial.js', () => ({ default: class { setStartTitleSponsorNegotiationHandler() {} setUpdateTitleSponsorNegotiationStaffHandler() {} setSignTitleSponsorNegotiatedDealHandler() {} setBookTitleSponsorHospitalityHandler() {} setStartEngineNegotiationHandler() {} setUpdateEngineNegotiationStaffHandler() {} setSignEngineNegotiatedDealHandler() {} setBookEngineNegotiationHospitalityHandler() {} render(...args) { viewFns.commercialRender(...args); } renderTitleSponsorNegotiation(...args) { viewFns.commercialTitle(...args); } renderEngineNegotiation(...args) { viewFns.commercialEngine(...args); } showTab(...args) { viewFns.commercialTab(...args); } } }));
 vi.mock('./views/facilities.js', () => ({
@@ -343,7 +355,7 @@ describe('renderer smoke', () => {
 		expect(apiMock.getFinance).toHaveBeenCalled();
 
 		ipcHandler(JSON.stringify({ type: 'car_development_started', status: 'success' }));
-		ipcHandler(JSON.stringify({ type: 'car_wear_repaired', status: 'success' }));
+		ipcHandler(JSON.stringify({ type: 'chassis_wear_repaired', status: 'success' }));
 		expect(apiMock.getCar).toHaveBeenCalled();
 
 		ipcHandler(JSON.stringify({ type: 'facilities_upgrade_started', status: 'success' }));

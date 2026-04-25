@@ -81,7 +81,18 @@ const API = {
 	getDriver: (name) => window.electronAPI.sendToPython({ type: 'get_driver', name }),
 	getCar: () => window.electronAPI.sendToPython({ type: 'get_car' }),
 	startCarDevelopment: (developmentType) => window.electronAPI.sendToPython({ type: 'start_car_development', development_type: developmentType }),
-	repairCarWear: (wearPoints) => window.electronAPI.sendToPython({ type: 'repair_car_wear', wear_points: wearPoints }),
+	setTestChassis: (chassisId) => window.electronAPI.sendToPython({ type: 'set_test_chassis', chassis_id: chassisId }),
+	setRaceChassisAssignments: (driver1ChassisId, driver2ChassisId) => window.electronAPI.sendToPython({
+		type: 'set_race_chassis_assignments',
+		driver1_chassis_id: driver1ChassisId,
+		driver2_chassis_id: driver2ChassisId
+	}),
+	repairChassisWear: (chassisId, wearPoints) => window.electronAPI.sendToPython({
+		type: 'repair_chassis_wear',
+		chassis_id: chassisId,
+		wear_points: wearPoints
+	}),
+	buildSpareSet: () => window.electronAPI.sendToPython({ type: 'build_spare_set' }),
 	getFinance: () => window.electronAPI.sendToPython({ type: 'get_finance' }),
 	getFacilities: () => window.electronAPI.sendToPython({ type: 'get_facilities' }),
 	previewFacilitiesUpgrade: (points, years) => window.electronAPI.sendToPython({ type: 'preview_facilities_upgrade', points, years }),

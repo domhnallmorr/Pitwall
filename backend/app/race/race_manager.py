@@ -1,9 +1,10 @@
 import random
 from typing import Any
 
+from app.core.player_chassis import apply_player_race_wear, get_player_driver_chassis, get_player_race_chassis_assignments
 from app.models.circuit import Circuit
 from app.models.state import GameState
-from app.race.constants import GRID_JITTER_RANGE_MS, POINTS_TABLE, QUALIFYING_ATTEMPTS
+from app.race.constants import GRID_JITTER_RANGE_MS, PLAYER_QUALIFYING_WEAR_INCREASE, POINTS_TABLE, QUALIFYING_ATTEMPTS
 from app.race.lap_simulator import simulate_lap_race
 from app.race.pace import (
 	base_pace_bonus_ms,
@@ -55,10 +56,10 @@ class RaceManager:
 	def _mechanical_failure_probability(
 		self,
 		state: GameState,
-		team_id: int,
+		entrant: dict[str, Any],
 		team_lookup: dict[int, Any],
 	) -> float:
-		return mechanical_failure_probability(state, team_id, team_lookup)
+		return mechanical_failure_probability(state, entrant, team_lookup)
 
 	def _resolve_circuit(self, state: GameState) -> Circuit | None:
 		event = state.calendar.current_event
@@ -203,7 +204,7 @@ class RaceManager:
 					tyre_supplier = tyre_supplier_lookup.get(getattr(team, "tyre_supplier_name", None))
 					tyre_grip = getattr(tyre_supplier, "grip", 50) if tyre_supplier else 50
 					tyre_wear = getattr(tyre_supplier, "wear", 50) if tyre_supplier else 50
-					participants.append({
+					participant = {
 						"driver_id": did,
 						"driver_name": driver.name,
 						"team_id": team.id,
@@ -215,9 +216,20 @@ class RaceManager:
 						"engine_power": engine_power,
 						"tyre_grip": tyre_grip,
 						"tyre_wear": tyre_wear,
-					})
+					}
+					if state.player_team_id is not None and team.id == state.player_team_id:
+						chassis = get_player_driver_chassis(state, did)
+						participant["chassis_id"] = chassis.id if chassis else None
+						participant["chassis_wear"] = int(getattr(chassis, "wear", 0) or 0)
+					participants.append(participant)
 
 		return participants, circuit
+
+	def _apply_player_qualifying_wear(self, state: GameState):
+		for driver_id, wear in apply_player_race_wear(state, PLAYER_QUALIFYING_WEAR_INCREASE).items():
+			for participant in getattr(self, "_latest_participants", []):
+				if participant.get("driver_id") == driver_id:
+					participant["chassis_wear"] = wear
 
 	def _grid_score(self, entrant: dict[str, Any]) -> int:
 		return grid_score(entrant, GRID_JITTER_RANGE_MS)
@@ -334,7 +346,9 @@ class RaceManager:
 
 	def simulate_qualifying(self, state: GameState) -> dict[str, Any]:
 		participants, circuit = self._build_participants(state)
+		self._latest_participants = participants
 		qualifying_results = self._simulate_qualifying(participants, circuit)
+		self._apply_player_qualifying_wear(state)
 		event_key = self._current_event_key(state)
 		if event_key is not None:
 			state.qualifying_results_by_event[event_key] = qualifying_results
@@ -358,6 +372,7 @@ class RaceManager:
 		"""
 		team_lookup = {t.id: t for t in state.teams}
 		driver_lookup = {d.id: d for d in state.drivers}
+		get_player_race_chassis_assignments(state)
 		participants, circuit = self._build_participants(state)
 
 		crashed_participants, mechanical_participants = self._prepare_participants(

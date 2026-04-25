@@ -15,9 +15,10 @@ from app.commands.game_commands import (
     handle_get_title_sponsor_negotiation_market,
     handle_get_title_sponsor_replacement_candidates,
     handle_get_tyre_supplier_replacement_candidates,
+    handle_build_spare_set,
     handle_load_roster,
     handle_offer_driver,
-    handle_repair_car_wear,
+    handle_repair_chassis_wear,
     handle_book_engine_negotiation_hospitality,
     handle_book_title_sponsor_hospitality,
     handle_replace_commercial_manager,
@@ -33,6 +34,8 @@ from app.commands.game_commands import (
     handle_simulate_race,
     handle_start_career,
     handle_start_car_development,
+    handle_set_race_chassis_assignments,
+    handle_set_test_chassis,
     handle_start_engine_negotiation,
     handle_start_facilities_upgrade,
     handle_start_title_sponsor_negotiation,
@@ -511,12 +514,37 @@ def process_command(command: dict[str, Any]) -> dict[str, Any]:
             response_type_on_missing_state="car_development_started",
         )
 
-    if cmd_type == "repair_car_wear":
+    if cmd_type == "set_test_chassis":
         return _run_response_handler(
-            handle_repair_car_wear,
+            handle_set_test_chassis,
+            command.get("chassis_id"),
+            save_on_success=True,
+            response_type_on_missing_state="test_chassis_updated",
+        )
+
+    if cmd_type == "set_race_chassis_assignments":
+        return _run_response_handler(
+            handle_set_race_chassis_assignments,
+            command.get("driver1_chassis_id"),
+            command.get("driver2_chassis_id"),
+            save_on_success=True,
+            response_type_on_missing_state="race_chassis_assignments_updated",
+        )
+
+    if cmd_type == "repair_chassis_wear":
+        return _run_response_handler(
+            handle_repair_chassis_wear,
+            command.get("chassis_id"),
             command.get("wear_points"),
             save_on_success=True,
-            response_type_on_missing_state="car_wear_repaired",
+            response_type_on_missing_state="chassis_wear_repaired",
+        )
+
+    if cmd_type == "build_spare_set":
+        return _run_response_handler(
+            handle_build_spare_set,
+            save_on_success=True,
+            response_type_on_missing_state="spare_set_built",
         )
 
     if cmd_type == "get_staff":

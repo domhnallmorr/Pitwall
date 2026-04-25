@@ -6,6 +6,7 @@ from app.commands.game_commands import (
     load_default_state,
 )
 from app.models.calendar import Calendar, Event, EventType
+from app.models.chassis import Chassis
 from app.models.state import GameState
 from app.models.team import Team
 from app.models.team_principal import TeamPrincipal
@@ -102,6 +103,17 @@ def test_handle_start_career_success_without_retirement_email(
     mock_td_signings.assert_called_once_with(next_state)
     assert next_state.team_principals[0].team_id is None
     assert next_state.teams[0].team_principal_id is None
+    assert next_state.player_spares == 0
+    assert next_state.player_construction_usage_percent == 0
+    assert next_state.player_construction_usage_week == 1
+    assert next_state.player_construction_usage_year == 1998
+    assert next_state.player_mechanics_usage_percent == 0
+    assert next_state.player_mechanics_usage_week == 1
+    assert next_state.player_mechanics_usage_year == 1998
+    assert [chassis.name for chassis in next_state.player_chassis] == ["Chassis 1", "Chassis 2", "Chassis 3"]
+    assert all(chassis.team_id == 1 for chassis in next_state.player_chassis)
+    assert next_state.player_test_chassis_id == 1
+    assert next_state.player_race_chassis_assignments == {}
 
 
 @patch("app.commands.game_commands.load_default_state", side_effect=RuntimeError("boom"))

@@ -186,7 +186,10 @@ function init() {
 	});
 	carView = new CarView();
 	carView.setStartDevelopmentHandler((developmentType) => API.startCarDevelopment(developmentType));
-	carView.setRepairWearHandler((wearPoints) => API.repairCarWear(wearPoints));
+	carView.setTestChassisHandler((chassisId) => API.setTestChassis(chassisId));
+	carView.setRaceChassisAssignmentsHandler((driver1ChassisId, driver2ChassisId) => API.setRaceChassisAssignments(driver1ChassisId, driver2ChassisId));
+	carView.setRepairChassisWearHandler((chassisId, wearPoints) => API.repairChassisWear(chassisId, wearPoints));
+	carView.setBuildSpareSetHandler(() => API.buildSpareSet());
 	financeView = new FinanceView();
 	financeView.setReplaceTitleSponsorHandler(() => API.getTitleSponsorNegotiationMarket());
 	financeView.setReplaceEngineSupplierHandler(() => API.getEngineNegotiationMarket());
@@ -604,8 +607,11 @@ function setupIPC() {
 					API.getFinance();
 					API.getEmails();
 				}
-			} else if (parsed.type === 'car_wear_repaired') {
+			} else if (parsed.type === 'test_chassis_updated' || parsed.type === 'race_chassis_assignments_updated' || parsed.type === 'chassis_wear_repaired' || parsed.type === 'spare_set_built') {
 				if (parsed.status === 'success') {
+					if (parsed.type === 'chassis_wear_repaired') {
+						carView.applyChassisWearRepairResult(parsed.data);
+					}
 					API.getCar();
 					API.getFinance();
 					API.getEmails();
