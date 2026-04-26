@@ -55,7 +55,7 @@ describe('CarView', () => {
 			mechanics_usage_percent: 22,
 			mechanics_capacity_remaining: 78,
 			mechanics_staff_available: 58,
-			mechanics_required_percent_per_spare: 11,
+			mechanics_required_percent_per_spare: 22,
 			can_repair: true,
 		},
 		player_drivers: [
@@ -122,7 +122,7 @@ describe('CarView', () => {
 		slider.value = '4';
 		slider.dispatchEvent(new window.Event('input'));
 		expect(document.querySelector('.car-chassis-repair-spares[data-chassis-id="2"]').textContent).toContain('Est. 1 spare set');
-		expect(document.querySelector('.car-chassis-repair-mechanics[data-chassis-id="2"]').textContent).toContain('Est. 11% mechanics');
+		expect(document.querySelector('.car-chassis-repair-mechanics[data-chassis-id="2"]').textContent).toContain('Est. 22% mechanics');
 		document.querySelector('.car-chassis-repair-btn[data-chassis-id="2"]').click();
 		expect(onRepairChassisWear).toHaveBeenCalledWith(2, 4);
 

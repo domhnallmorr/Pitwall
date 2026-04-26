@@ -34,7 +34,7 @@ const ELEMENT_GROUPS = {
 		engineIncomeTotalEl: 'finance-engine-income-total',
 		transportTotalEl: 'finance-transport-total',
 		crashDamageTotalEl: 'finance-crash-damage-total',
-		maintenanceTotalEl: 'finance-maintenance-total',
+		sparesTotalEl: 'finance-spares-total',
 		testingTotalEl: 'finance-testing-total',
 		driverWagesTotalEl: 'finance-driver-wages-total',
 		managementSalaryTotalEl: 'finance-management-salary-total',
@@ -159,6 +159,27 @@ export default class FinanceView {
 	setSignEngineNegotiatedDealHandler(handler) { this.onSignEngineNegotiatedDeal = handler; }
 	setBookEngineNegotiationHospitalityHandler(handler) { this.onBookEngineNegotiationHospitality = handler; }
 
+	adjustStaffInput(inputId, delta) {
+		const input = document.getElementById(inputId);
+		if (!input) return null;
+		const min = Number(input.min || 0);
+		const max = Number(input.max || 0);
+		const current = Number(input.value || 0);
+		const nextValue = Math.max(min, Math.min(max, current + delta));
+		input.value = String(nextValue);
+		return nextValue;
+	}
+
+	applyStaffFromInput(inputId, handler) {
+		const input = document.getElementById(inputId);
+		if (!input || !handler) return;
+		const min = Number(input.min || 0);
+		const max = Number(input.max || 0);
+		const nextValue = Math.max(min, Math.min(max, Number(input.value || 0)));
+		input.value = String(nextValue);
+		handler(nextValue);
+	}
+
 	formatMoney(value, options = {}) {
 		return formatMoney(value, options);
 	}
@@ -269,17 +290,27 @@ export default class FinanceView {
 		}
 		if (this.titleSponsorNegotiationDetailEl) {
 			this.titleSponsorNegotiationDetailEl.addEventListener('click', (event) => {
+				const stepButton = event.target.closest('[data-staff-step]');
+				if (stepButton) {
+					const inputId = stepButton.getAttribute('data-staff-input-id');
+					this.adjustStaffInput(
+						inputId,
+						Number(stepButton.getAttribute('data-staff-step') || 0),
+					);
+					this.applyStaffFromInput(inputId, this.onUpdateTitleSponsorNegotiationStaff);
+					return;
+				}
 				if (event.target.closest('#finance-title-sponsor-negotiation-sign-btn') && this.onSignTitleSponsorNegotiatedDeal) {
 					this.onSignTitleSponsorNegotiatedDeal();
 					return;
 				}
-				if (event.target.closest('#finance-title-sponsor-negotiation-apply-staff') && this.onUpdateTitleSponsorNegotiationStaff) {
-					const input = document.getElementById('finance-title-sponsor-negotiation-staff');
-					if (input) this.onUpdateTitleSponsorNegotiationStaff(Number(input.value || 0));
-					return;
-				}
 				if (event.target.closest('#finance-title-sponsor-hospitality-btn') && this.onBookTitleSponsorHospitality) {
 					this.onBookTitleSponsorHospitality();
+				}
+			});
+			this.titleSponsorNegotiationDetailEl.addEventListener('change', (event) => {
+				if (event.target?.id === 'finance-title-sponsor-negotiation-staff') {
+					this.applyStaffFromInput(event.target.id, this.onUpdateTitleSponsorNegotiationStaff);
 				}
 			});
 		}
@@ -304,18 +335,28 @@ export default class FinanceView {
 		}
 		if (this.engineNegotiationDetailEl) {
 			this.engineNegotiationDetailEl.addEventListener('click', (event) => {
+				const stepButton = event.target.closest('[data-staff-step]');
+				if (stepButton) {
+					const inputId = stepButton.getAttribute('data-staff-input-id');
+					this.adjustStaffInput(
+						inputId,
+						Number(stepButton.getAttribute('data-staff-step') || 0),
+					);
+					this.applyStaffFromInput(inputId, this.onUpdateEngineNegotiationStaff);
+					return;
+				}
 				const signButton = event.target.closest('[data-engine-tier]');
 				if (signButton && this.onSignEngineNegotiatedDeal) {
 					this.onSignEngineNegotiatedDeal(signButton.getAttribute('data-engine-tier'));
 					return;
 				}
-				if (event.target.closest('#finance-engine-negotiation-apply-staff') && this.onUpdateEngineNegotiationStaff) {
-					const input = document.getElementById('finance-engine-negotiation-staff');
-					if (input) this.onUpdateEngineNegotiationStaff(Number(input.value || 0));
-					return;
-				}
 				if (event.target.closest('#finance-engine-hospitality-btn') && this.onBookEngineNegotiationHospitality) {
 					this.onBookEngineNegotiationHospitality();
+				}
+			});
+			this.engineNegotiationDetailEl.addEventListener('change', (event) => {
+				if (event.target?.id === 'finance-engine-negotiation-staff') {
+					this.applyStaffFromInput(event.target.id, this.onUpdateEngineNegotiationStaff);
 				}
 			});
 		}
@@ -341,7 +382,7 @@ export default class FinanceView {
 		this.setText(this.engineIncomeTotalEl, this.formatMoney(summary.engine_supplier_income_total || 0));
 		this.setText(this.transportTotalEl, this.formatMoney(summary.transport_total || 0));
 		this.setText(this.crashDamageTotalEl, this.formatMoney(summary.crash_damage_total || 0));
-		this.setText(this.maintenanceTotalEl, this.formatMoney(summary.maintenance_total || 0));
+		this.setText(this.sparesTotalEl, this.formatMoney(summary.spares_total || 0));
 		this.setText(this.testingTotalEl, this.formatMoney(summary.testing_total || 0));
 		this.setText(this.driverWagesTotalEl, this.formatMoney(summary.driver_wage_expense_total || 0));
 		this.setText(this.managementSalaryTotalEl, this.formatMoney(summary.management_salary_total || 0));

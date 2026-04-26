@@ -373,6 +373,7 @@ describe('renderer smoke', () => {
 	});
 
 	it('shows a game over modal for bankruptcy results', async () => {
+		vi.useFakeTimers();
 		let ipcHandler = null;
 		apiMock.onData.mockImplementation((cb) => { ipcHandler = cb; });
 
@@ -400,6 +401,46 @@ describe('renderer smoke', () => {
 		expect(document.getElementById('advance-btn').disabled).toBe(true);
 		expect(apiMock.getFinance).toHaveBeenCalled();
 		expect(apiMock.getEmails).toHaveBeenCalled();
+		vi.useRealTimers();
+	});
+
+	it('shows a pending game over modal when returning to dashboard before playback completes', async () => {
+		vi.useFakeTimers();
+		let ipcHandler = null;
+		apiMock.onData.mockImplementation((cb) => { ipcHandler = cb; });
+
+		await import('./renderer.js');
+
+		ipcHandler(JSON.stringify({
+			type: 'game_over',
+			status: 'success',
+			data: {
+				message: 'The team ended two consecutive grand prix weekends with a negative bank balance.',
+				race_result: {
+					total_laps: 3,
+					lap_history: [
+						{ lap: 1, order: [], events: [] },
+						{ lap: 2, order: [], events: [] },
+						{ lap: 3, order: [], events: [] },
+					],
+					results: [],
+				},
+				summary: {
+					new_date_display: 'Week 11 1998',
+					next_event_display: 'Game Over',
+					balance: -500000,
+					button_text: 'GAME OVER',
+					event_active: false,
+					game_over: true,
+				},
+			},
+		}));
+
+		expect(document.getElementById('game-over-modal').style.display).not.toBe('flex');
+		document.getElementById('return-dashboard-btn').click();
+		expect(document.getElementById('game-over-modal').style.display).toBe('flex');
+		expect(document.getElementById('game-over-modal-body').textContent).toContain('negative bank balance');
+		vi.useRealTimers();
 	});
 
 	it('pauses and resumes race autoplay', async () => {

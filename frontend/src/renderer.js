@@ -29,6 +29,7 @@ import {
 	renderRaceResults,
 	renderRaceStrategyScreen,
 	renderRaceWeekend,
+	setRacePlaybackCompleteHandler,
 	showTeamSelect,
 	updateDashboard,
 } from './renderer/helpers.js';
@@ -67,14 +68,93 @@ let financeView;
 let commercialView;
 let facilitiesView;
 let previousDriverView = 'staff';
+let pendingGameOverModalTimeout = null;
+let pendingGameOverModalPayload = null;
+
+function showCurrentSaveGameOver() {
+	showGameOverModal({
+		title: 'Game Over',
+		body: 'This career save is already over due to insolvency.',
+	});
+}
+
+function refreshGridYears() {
+	API.getGrid(gridView.getActiveYear());
+	API.getGrid(gridView.baseYear + 1);
+}
+
+function refreshGridYearsAndEmails() {
+	refreshGridYears();
+	API.getEmails();
+}
+
+function activateCommercialTab(tabName) {
+	if (navigation) {
+		navigation.activateView('commercial');
+		navigation.showView('commercial');
+	}
+	commercialView.showTab(tabName);
+}
+
+function renderCommercialNegotiation(parsed, render, tabName, errorMessage) {
+	if (parsed.status === 'error') {
+		window.alert(parsed.message || errorMessage);
+		return;
+	}
+	render(parsed.data);
+	activateCommercialTab(tabName);
+}
+
+function refreshDriverMarketOutcome(viewName) {
+	if (navigation) navigation.showView(viewName);
+	if (viewName === 'staff') {
+		API.getStaff();
+	} else if (viewName === 'finance') {
+		API.getFinance();
+	}
+	refreshGridYearsAndEmails();
+}
+
+function refreshCarRelatedViews() {
+	API.getCar();
+	API.getFinance();
+	API.getEmails();
+}
+
+function handleGameLifecycleSuccess(data) {
+	handleGameStart({
+		data,
+		titleScreen,
+		dashboard,
+		gridView,
+		teamNameEl,
+		weekEl,
+		nextEventEl,
+		balanceEl,
+		emailView,
+		api: API,
+	});
+	if (data?.game_over) {
+		showCurrentSaveGameOver();
+	}
+}
 
 function showGameOverModal({ title = 'Game Over', body = 'The career has ended.' } = {}) {
+	if (pendingGameOverModalTimeout) {
+		window.clearTimeout(pendingGameOverModalTimeout);
+		pendingGameOverModalTimeout = null;
+	}
+	pendingGameOverModalPayload = null;
 	if (gameOverModalTitle) gameOverModalTitle.textContent = title;
 	if (gameOverModalBody) gameOverModalBody.textContent = body;
 	if (gameOverModal) gameOverModal.style.display = 'flex';
 }
 
 function hideGameOverModal() {
+	if (pendingGameOverModalTimeout) {
+		window.clearTimeout(pendingGameOverModalTimeout);
+		pendingGameOverModalTimeout = null;
+	}
 	if (gameOverModal) gameOverModal.style.display = 'none';
 }
 
@@ -370,6 +450,9 @@ function setupEventListeners() {
 	if (returnBtn) {
 		returnBtn.addEventListener('click', () => {
 			exitRaceView();
+			if (pendingGameOverModalPayload) {
+				showGameOverModal(pendingGameOverModalPayload);
+			}
 		});
 	}
 }
@@ -381,43 +464,9 @@ function setupIPC() {
 			const parsed = JSON.parse(data);
 
 			if (parsed.type === 'game_started' && parsed.status === 'success') {
-				handleGameStart({
-					data: parsed.data,
-					titleScreen,
-					dashboard,
-					gridView,
-					teamNameEl,
-					weekEl,
-					nextEventEl,
-					balanceEl,
-					emailView,
-					api: API,
-				});
-				if (parsed.data?.game_over) {
-					showGameOverModal({
-						title: 'Game Over',
-						body: 'This career save is already over due to insolvency.',
-					});
-				}
+				handleGameLifecycleSuccess(parsed.data);
 			} else if (parsed.type === 'game_loaded' && parsed.status === 'success') {
-				handleGameStart({
-					data: parsed.data,
-					titleScreen,
-					dashboard,
-					gridView,
-					teamNameEl,
-					weekEl,
-					nextEventEl,
-					balanceEl,
-					emailView,
-					api: API,
-				});
-				if (parsed.data?.game_over) {
-					showGameOverModal({
-						title: 'Game Over',
-						body: 'This career save is already over due to insolvency.',
-					});
-				}
+				handleGameLifecycleSuccess(parsed.data);
 			} else if (parsed.type === 'save_status') {
 				if (parsed.data.has_save) {
 					loadBtn.disabled = false;
@@ -441,7 +490,7 @@ function setupIPC() {
 					api: API,
 				});
 				refreshVisibleViews({ gridView, driverView, api: API });
-				API.getEmails(); // Keep unread badge/messages in sync with new events.
+				API.getEmails();
 				// Auto-refresh finance view if it's currently visible
 				const financeEl = document.getElementById('finance-view');
 				if (financeEl && financeEl.style.display !== 'none') {
@@ -452,8 +501,29 @@ function setupIPC() {
 				refreshVisibleViews({ gridView, driverView, api: API });
 				API.getFinance();
 			} else if (parsed.type === 'game_over') {
+				const modalPayload = {
+					title: 'Game Over',
+					body: parsed.data?.message || 'The career has ended due to insolvency.',
+				};
+				pendingGameOverModalPayload = modalPayload;
+				const showBankruptcyModal = () => {
+					showGameOverModal(modalPayload);
+				};
 				if (parsed.data?.race_result) {
+					const lapHistory = Array.isArray(parsed.data.race_result.lap_history) ? parsed.data.race_result.lap_history : [];
+					if (lapHistory.length > 0) {
+						setRacePlaybackCompleteHandler(showBankruptcyModal);
+						pendingGameOverModalTimeout = window.setTimeout(
+							showBankruptcyModal,
+							Math.max(500, lapHistory.length * 500),
+						);
+					}
 					renderRaceResults(parsed.data.race_result);
+					if (lapHistory.length <= 1) {
+						showBankruptcyModal();
+					}
+				} else {
+					showBankruptcyModal();
 				}
 				if (parsed.data?.summary) {
 					updateDashboard({
@@ -468,10 +538,6 @@ function setupIPC() {
 				refreshVisibleViews({ gridView, driverView, api: API });
 				API.getFinance();
 				API.getEmails();
-				showGameOverModal({
-					title: 'Game Over',
-					body: parsed.data?.message || 'The career has ended due to insolvency.',
-				});
 			} else if (parsed.type === 'race_weekend') {
 				renderRaceWeekend(parsed.data);
 			} else if (parsed.type === 'qualifying_result') {
@@ -494,127 +560,71 @@ function setupIPC() {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
 			} else if (parsed.type === 'title_sponsor_negotiation_market' || parsed.type === 'title_sponsor_negotiation_updated') {
-				if (parsed.status === 'error') {
-					window.alert(parsed.message || 'Unable to update title sponsor negotiation.');
-					return;
-				}
-				commercialView.renderTitleSponsorNegotiation(parsed.data);
-				if (navigation) {
-					navigation.activateView('commercial');
-					navigation.showView('commercial');
-				}
-				commercialView.showTab('title-sponsor');
+				renderCommercialNegotiation(
+					parsed,
+					(data) => commercialView.renderTitleSponsorNegotiation(data),
+					'title-sponsor',
+					'Unable to update title sponsor negotiation.',
+				);
 			} else if (parsed.type === 'engine_supplier_replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
 			} else if (parsed.type === 'engine_negotiation_market' || parsed.type === 'engine_negotiation_updated') {
-				if (parsed.status === 'error') {
-					window.alert(parsed.message || 'Unable to update engine negotiation.');
-					return;
-				}
-				commercialView.renderEngineNegotiation(parsed.data);
-				if (navigation) {
-					navigation.activateView('commercial');
-					navigation.showView('commercial');
-				}
-				commercialView.showTab('engine');
+				renderCommercialNegotiation(
+					parsed,
+					(data) => commercialView.renderEngineNegotiation(data),
+					'engine',
+					'Unable to update engine negotiation.',
+				);
 			} else if (parsed.type === 'tyre_supplier_replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
 			} else if (parsed.type === 'driver_replaced') {
-				if (navigation) navigation.showView('staff');
-				API.getStaff();
-				API.getGrid(gridView.getActiveYear());
-				API.getGrid(gridView.baseYear + 1);
-				API.getEmails();
+				refreshDriverMarketOutcome('staff');
 			} else if (parsed.type === 'driver_offer_result') {
 				const didShowResult = driverMarketView?.showOfferResult?.(parsed.data || {}, () => {
 					if (parsed.data?.accepted) {
-						if (navigation) navigation.showView('staff');
-						API.getStaff();
-						API.getGrid(gridView.getActiveYear());
-						API.getGrid(gridView.baseYear + 1);
-						API.getEmails();
+						refreshDriverMarketOutcome('staff');
 					}
 				});
 				if (!didShowResult) {
 					window.alert(parsed.data?.message || 'Driver offer processed.');
 					if (parsed.data?.accepted) {
-						if (navigation) navigation.showView('staff');
-						API.getStaff();
-						API.getGrid(gridView.getActiveYear());
-						API.getGrid(gridView.baseYear + 1);
-						API.getEmails();
+						refreshDriverMarketOutcome('staff');
 					}
 				}
 			} else if (parsed.type === 'commercial_manager_replaced') {
-				if (navigation) navigation.showView('staff');
-				API.getStaff();
-				API.getGrid(gridView.getActiveYear());
-				API.getGrid(gridView.baseYear + 1);
-				API.getEmails();
+				refreshDriverMarketOutcome('staff');
 			} else if (parsed.type === 'technical_director_replaced') {
-				if (navigation) navigation.showView('staff');
-				API.getStaff();
-				API.getGrid(gridView.getActiveYear());
-				API.getGrid(gridView.baseYear + 1);
-				API.getEmails();
+				refreshDriverMarketOutcome('staff');
 			} else if (parsed.type === 'title_sponsor_replaced') {
-				if (navigation) navigation.showView('finance');
-				API.getFinance();
-				API.getGrid(gridView.getActiveYear());
-				API.getGrid(gridView.baseYear + 1);
-				API.getEmails();
+				refreshDriverMarketOutcome('finance');
 			} else if (parsed.type === 'title_sponsor_negotiation_signed') {
-				if (navigation) {
-					navigation.activateView('commercial');
-					navigation.showView('commercial');
-				}
-				commercialView.showTab('title-sponsor');
+				activateCommercialTab('title-sponsor');
 				API.getFinance();
-				API.getGrid(gridView.getActiveYear());
-				API.getGrid(gridView.baseYear + 1);
-				API.getEmails();
+				refreshGridYearsAndEmails();
 			} else if (parsed.type === 'engine_supplier_replaced') {
-				if (navigation) navigation.showView('finance');
-				API.getFinance();
-				API.getGrid(gridView.getActiveYear());
-				API.getGrid(gridView.baseYear + 1);
-				API.getEmails();
+				refreshDriverMarketOutcome('finance');
 			} else if (parsed.type === 'engine_negotiation_signed') {
-				if (navigation) {
-					navigation.activateView('commercial');
-					navigation.showView('commercial');
-				}
-				commercialView.showTab('engine');
+				activateCommercialTab('engine');
 				API.getFinance();
-				API.getGrid(gridView.getActiveYear());
-				API.getGrid(gridView.baseYear + 1);
-				API.getEmails();
+				refreshGridYearsAndEmails();
 			} else if (parsed.type === 'tyre_supplier_replaced') {
-				if (navigation) navigation.showView('finance');
-				API.getFinance();
-				API.getGrid(gridView.getActiveYear());
-				API.getGrid(gridView.baseYear + 1);
-				API.getEmails();
+				refreshDriverMarketOutcome('finance');
 			} else if (parsed.type === 'driver_data') {
 				driverView.render(parsed.data);
 			} else if (parsed.type === 'car_data') {
 				carView.render(parsed.data);
 			} else if (parsed.type === 'car_development_started') {
 				if (parsed.status === 'success') {
-					API.getCar();
-					API.getFinance();
-					API.getEmails();
+					refreshCarRelatedViews();
 				}
 			} else if (parsed.type === 'test_chassis_updated' || parsed.type === 'race_chassis_assignments_updated' || parsed.type === 'chassis_wear_repaired' || parsed.type === 'spare_set_built') {
 				if (parsed.status === 'success') {
 					if (parsed.type === 'chassis_wear_repaired') {
 						carView.applyChassisWearRepairResult(parsed.data);
 					}
-					API.getCar();
-					API.getFinance();
-					API.getEmails();
+					refreshCarRelatedViews();
 				}
 			} else if (parsed.type === 'finance_data') {
 				financeView.render(parsed.data);

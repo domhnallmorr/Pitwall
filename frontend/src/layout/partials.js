@@ -55,7 +55,7 @@ function renderFinanceOverviewSections() {
 			{ label: 'Fuel Supplier', id: 'finance-fuel-expense-total', defaultValue: '$0' },
 			{ label: 'Transport', id: 'finance-transport-total', defaultValue: '$0' },
 			{ label: 'Crash Damage', id: 'finance-crash-damage-total', defaultValue: '$0' },
-			{ label: 'Wear Repairs', id: 'finance-maintenance-total', defaultValue: '$0' },
+			{ label: 'Spares', id: 'finance-spares-total', defaultValue: '$0' },
 			{ label: 'Testing', id: 'finance-testing-total', defaultValue: '$0' },
 			{ label: 'Facilities', id: 'finance-facilities-total', defaultValue: '$0' },
 			{ label: 'Total Expenditure', id: 'finance-expense-total', defaultValue: '$0', total: true },

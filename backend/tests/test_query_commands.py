@@ -174,7 +174,7 @@ def test_get_car_payload_includes_player_chassis_state():
     assert payload["maintenance"]["mechanics_usage_percent"] == 0
     assert payload["maintenance"]["mechanics_capacity_remaining"] == 100
     assert payload["maintenance"]["mechanics_staff_available"] == 58
-    assert payload["maintenance"]["mechanics_required_percent_per_spare"] == 11
+    assert payload["maintenance"]["mechanics_required_percent_per_spare"] == 22
     assert payload["player_test_chassis_id"] == 3
     assert payload["player_drivers"][0]["name"] == "John Newhouse"
     assert len(payload["player_chassis"]) == 3

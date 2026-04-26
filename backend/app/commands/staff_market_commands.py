@@ -14,38 +14,89 @@ from app.core.transfers import TransferManager
 from app.models.state import GameState
 
 
+def _error_response(message: str, response_type: str | None = None):
+    payload = {"status": "error", "message": message}
+    if response_type:
+        payload["type"] = response_type
+    return payload
+
+
+def _success_response(response_type: str, data):
+    return {"type": response_type, "status": "success", "data": data}
+
+
+def _state_error_response(state: GameState, message: str, response_type: str | None = None):
+    return state, _error_response(message, response_type=response_type)
+
+
+def _state_success_response(state: GameState, response_type: str, data):
+    return state, _success_response(response_type, data)
+
+
+def _require_value(value, message: str):
+    if value is None:
+        raise ValueError(message)
+    return value
+
+
+def _require_text(value: str | None, message: str):
+    if not value:
+        raise ValueError(message)
+    return value
+
+
+def _run_handler(logger: logging.Logger, error_message: str, action, response_type: str | None = None):
+    try:
+        return action()
+    except ValueError as exc:
+        return _error_response(str(exc), response_type=response_type)
+    except Exception as exc:
+        logger.error(f"{error_message}: {exc}")
+        return _error_response(str(exc), response_type=response_type)
+
+
+def _run_state_handler(
+    state: GameState,
+    logger: logging.Logger,
+    error_message: str,
+    action,
+    response_type: str | None = None,
+):
+    try:
+        return action()
+    except ValueError as exc:
+        return _state_error_response(state, str(exc), response_type=response_type)
+    except Exception as exc:
+        logger.error(f"{error_message}: {exc}")
+        return _state_error_response(state, str(exc), response_type=response_type)
+
+
 def handle_replace_driver(
     state: GameState,
     logger: logging.Logger,
     driver_id: int | None,
     incoming_driver_id: int | None = None,
 ):
-    try:
-        if driver_id is None:
-            return state, {"status": "error", "message": "Driver id is required"}
+    def action():
+        driver_id_value = int(_require_value(driver_id, "Driver id is required"))
         signing = TransferManager().sign_player_replacement(
             state,
-            outgoing_driver_id=int(driver_id),
+            outgoing_driver_id=driver_id_value,
             incoming_driver_id=int(incoming_driver_id) if incoming_driver_id is not None else None,
         )
-        return state, {"type": "driver_replaced", "status": "success", "data": signing}
-    except ValueError as ve:
-        return state, {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error replacing driver: {e}")
-        return state, {"status": "error", "message": str(e)}
+        return _state_success_response(state, "driver_replaced", signing)
+
+    return _run_state_handler(state, logger, "Error replacing driver", action)
 
 
 def handle_get_replacement_candidates(state: GameState, logger: logging.Logger, driver_id: int | None):
-    try:
-        if driver_id is None:
-            return {"status": "error", "message": "Driver id is required"}
-
-        outgoing = next((d for d in state.drivers if d.id == int(driver_id)), None)
+    def action():
+        driver_id_value = int(_require_value(driver_id, "Driver id is required"))
+        outgoing = next((d for d in state.drivers if d.id == driver_id_value), None)
         if outgoing is None:
-            return {"status": "error", "message": "Driver not found"}
+            raise ValueError("Driver not found")
 
-        candidates = TransferManager().get_player_replacement_candidates(state, int(driver_id))
+        candidates = TransferManager().get_player_replacement_candidates(state, driver_id_value)
         driver_team_lookup = {}
         for team in state.teams:
             if team.driver1_id is not None:
@@ -75,12 +126,9 @@ def handle_get_replacement_candidates(state: GameState, logger: logging.Logger, 
                 for d in candidates
             ],
         }
-        return {"type": "replacement_candidates", "status": "success", "data": payload}
-    except ValueError as ve:
-        return {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error loading replacement candidates: {e}")
-        return {"status": "error", "message": str(e)}
+        return _success_response("replacement_candidates", payload)
+
+    return _run_handler(logger, "Error loading replacement candidates", action)
 
 
 def handle_offer_driver(
@@ -91,29 +139,17 @@ def handle_offer_driver(
     salary_offer: int | None,
     contract_length: int | None,
 ):
-    try:
-        if driver_id is None:
-            return state, {"status": "error", "message": "Driver id is required"}
-        if incoming_driver_id is None:
-            return state, {"status": "error", "message": "Incoming driver id is required"}
-        if salary_offer is None:
-            return state, {"status": "error", "message": "Salary offer is required"}
-        if contract_length is None:
-            return state, {"status": "error", "message": "Contract length is required"}
-
+    def action():
         result = PlayerDriverNegotiationManager().submit_offer(
             state,
-            outgoing_driver_id=int(driver_id),
-            incoming_driver_id=int(incoming_driver_id),
-            salary_offer=int(salary_offer),
-            contract_length=int(contract_length),
+            outgoing_driver_id=int(_require_value(driver_id, "Driver id is required")),
+            incoming_driver_id=int(_require_value(incoming_driver_id, "Incoming driver id is required")),
+            salary_offer=int(_require_value(salary_offer, "Salary offer is required")),
+            contract_length=int(_require_value(contract_length, "Contract length is required")),
         )
-        return state, {"type": "driver_offer_result", "status": "success", "data": result}
-    except ValueError as ve:
-        return state, {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error offering contract to driver: {e}")
-        return state, {"status": "error", "message": str(e)}
+        return _state_success_response(state, "driver_offer_result", result)
+
+    return _run_state_handler(state, logger, "Error offering contract to driver", action)
 
 
 def handle_replace_commercial_manager(
@@ -122,20 +158,16 @@ def handle_replace_commercial_manager(
     manager_id: int | None,
     incoming_manager_id: int | None = None,
 ):
-    try:
-        if manager_id is None:
-            return state, {"status": "error", "message": "Commercial manager id is required"}
+    def action():
+        manager_id_value = int(_require_value(manager_id, "Commercial manager id is required"))
         signing = CommercialManagerTransferManager().sign_player_replacement(
             state,
-            outgoing_manager_id=int(manager_id),
+            outgoing_manager_id=manager_id_value,
             incoming_manager_id=int(incoming_manager_id) if incoming_manager_id is not None else None,
         )
-        return state, {"type": "commercial_manager_replaced", "status": "success", "data": signing}
-    except ValueError as ve:
-        return state, {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error replacing commercial manager: {e}")
-        return state, {"status": "error", "message": str(e)}
+        return _state_success_response(state, "commercial_manager_replaced", signing)
+
+    return _run_state_handler(state, logger, "Error replacing commercial manager", action)
 
 
 def handle_replace_technical_director(
@@ -144,32 +176,26 @@ def handle_replace_technical_director(
     director_id: int | None,
     incoming_director_id: int | None = None,
 ):
-    try:
-        if director_id is None:
-            return state, {"status": "error", "message": "Technical director id is required"}
+    def action():
+        director_id_value = int(_require_value(director_id, "Technical director id is required"))
         signing = TechnicalDirectorTransferManager().sign_player_replacement(
             state,
-            outgoing_director_id=int(director_id),
+            outgoing_director_id=director_id_value,
             incoming_director_id=int(incoming_director_id) if incoming_director_id is not None else None,
         )
-        return state, {"type": "technical_director_replaced", "status": "success", "data": signing}
-    except ValueError as ve:
-        return state, {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error replacing technical director: {e}")
-        return state, {"status": "error", "message": str(e)}
+        return _state_success_response(state, "technical_director_replaced", signing)
+
+    return _run_state_handler(state, logger, "Error replacing technical director", action)
 
 
 def handle_get_manager_replacement_candidates(state: GameState, logger: logging.Logger, manager_id: int | None):
-    try:
-        if manager_id is None:
-            return {"status": "error", "message": "Commercial manager id is required"}
-
-        outgoing = next((m for m in state.commercial_managers if m.id == int(manager_id)), None)
+    def action():
+        manager_id_value = int(_require_value(manager_id, "Commercial manager id is required"))
+        outgoing = next((m for m in state.commercial_managers if m.id == manager_id_value), None)
         if outgoing is None:
-            return {"status": "error", "message": "Commercial manager not found"}
+            raise ValueError("Commercial manager not found")
 
-        candidates = CommercialManagerTransferManager().get_player_replacement_candidates(state, int(manager_id))
+        candidates = CommercialManagerTransferManager().get_player_replacement_candidates(state, manager_id_value)
         payload = {
             "market_type": "commercial_manager",
             "outgoing_manager": {
@@ -189,12 +215,9 @@ def handle_get_manager_replacement_candidates(state: GameState, logger: logging.
                 for m in candidates
             ],
         }
-        return {"type": "manager_replacement_candidates", "status": "success", "data": payload}
-    except ValueError as ve:
-        return {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error loading commercial manager replacement candidates: {e}")
-        return {"status": "error", "message": str(e)}
+        return _success_response("manager_replacement_candidates", payload)
+
+    return _run_handler(logger, "Error loading commercial manager replacement candidates", action)
 
 
 def handle_get_technical_director_replacement_candidates(
@@ -202,15 +225,13 @@ def handle_get_technical_director_replacement_candidates(
     logger: logging.Logger,
     director_id: int | None,
 ):
-    try:
-        if director_id is None:
-            return {"status": "error", "message": "Technical director id is required"}
-
-        outgoing = next((d for d in state.technical_directors if d.id == int(director_id)), None)
+    def action():
+        director_id_value = int(_require_value(director_id, "Technical director id is required"))
+        outgoing = next((d for d in state.technical_directors if d.id == director_id_value), None)
         if outgoing is None:
-            return {"status": "error", "message": "Technical director not found"}
+            raise ValueError("Technical director not found")
 
-        candidates = TechnicalDirectorTransferManager().get_player_replacement_candidates(state, int(director_id))
+        candidates = TechnicalDirectorTransferManager().get_player_replacement_candidates(state, director_id_value)
         payload = {
             "market_type": "technical_director",
             "outgoing_manager": {
@@ -230,12 +251,9 @@ def handle_get_technical_director_replacement_candidates(
                 for d in candidates
             ],
         }
-        return {"type": "manager_replacement_candidates", "status": "success", "data": payload}
-    except ValueError as ve:
-        return {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error loading technical director replacement candidates: {e}")
-        return {"status": "error", "message": str(e)}
+        return _success_response("manager_replacement_candidates", payload)
+
+    return _run_handler(logger, "Error loading technical director replacement candidates", action)
 
 
 def handle_replace_title_sponsor(
@@ -244,20 +262,16 @@ def handle_replace_title_sponsor(
     sponsor_name: str | None,
     incoming_sponsor_id: int | None = None,
 ):
-    try:
-        if not sponsor_name:
-            return state, {"status": "error", "message": "Title sponsor name is required"}
+    def action():
+        sponsor_name_value = _require_text(sponsor_name, "Title sponsor name is required")
         signing = TitleSponsorTransferManager().sign_player_replacement(
             state,
-            outgoing_sponsor_name=str(sponsor_name),
+            outgoing_sponsor_name=str(sponsor_name_value),
             incoming_sponsor_id=int(incoming_sponsor_id) if incoming_sponsor_id is not None else None,
         )
-        return state, {"type": "title_sponsor_replaced", "status": "success", "data": signing}
-    except ValueError as ve:
-        return state, {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error replacing title sponsor: {e}")
-        return state, {"status": "error", "message": str(e)}
+        return _state_success_response(state, "title_sponsor_replaced", signing)
+
+    return _run_state_handler(state, logger, "Error replacing title sponsor", action)
 
 
 def handle_get_title_sponsor_replacement_candidates(
@@ -265,19 +279,17 @@ def handle_get_title_sponsor_replacement_candidates(
     logger: logging.Logger,
     sponsor_name: str | None,
 ):
-    try:
-        if not sponsor_name:
-            return {"status": "error", "message": "Title sponsor name is required"}
-
+    def action():
+        sponsor_name_value = _require_text(sponsor_name, "Title sponsor name is required")
         team = state.player_team
-        if team is None or getattr(team, "title_sponsor_name", None) != str(sponsor_name):
-            return {"status": "error", "message": "Title sponsor not found"}
+        if team is None or getattr(team, "title_sponsor_name", None) != str(sponsor_name_value):
+            raise ValueError("Title sponsor not found")
 
-        candidates = TitleSponsorTransferManager().get_player_replacement_candidates(state, str(sponsor_name))
+        candidates = TitleSponsorTransferManager().get_player_replacement_candidates(state, str(sponsor_name_value))
         payload = {
             "market_type": "title_sponsor",
             "outgoing_sponsor": {
-                "name": sponsor_name,
+                "name": sponsor_name_value,
                 "contract_length": int(getattr(team, "title_sponsor_contract_length", 0) or 0),
                 "annual_value": int(getattr(team, "title_sponsor_yearly", 0) or 0),
             },
@@ -291,26 +303,20 @@ def handle_get_title_sponsor_replacement_candidates(
                 for s in candidates
             ],
         }
-        return {"type": "title_sponsor_replacement_candidates", "status": "success", "data": payload}
-    except ValueError as ve:
-        return {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error loading title sponsor replacement candidates: {e}")
-        return {"status": "error", "message": str(e)}
+        return _success_response("title_sponsor_replacement_candidates", payload)
+
+    return _run_handler(logger, "Error loading title sponsor replacement candidates", action)
 
 
 def handle_get_title_sponsor_negotiation_market(
     state: GameState,
     logger: logging.Logger,
 ):
-    try:
+    def action():
         payload = PlayerTitleSponsorNegotiationManager().get_market_payload(state)
-        return {"type": "title_sponsor_negotiation_market", "status": "success", "data": payload}
-    except ValueError as ve:
-        return {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error loading title sponsor negotiation market: {e}")
-        return {"status": "error", "message": str(e)}
+        return _success_response("title_sponsor_negotiation_market", payload)
+
+    return _run_handler(logger, "Error loading title sponsor negotiation market", action)
 
 
 def handle_start_title_sponsor_negotiation(
@@ -318,17 +324,17 @@ def handle_start_title_sponsor_negotiation(
     logger: logging.Logger,
     sponsor_id: int | None,
 ):
-    try:
-        if sponsor_id is None:
-            return state, {"status": "error", "message": "Title sponsor id is required"}
+    def action():
+        sponsor_id_value = int(_require_value(sponsor_id, "Title sponsor id is required"))
         manager = PlayerTitleSponsorNegotiationManager()
-        manager.start_negotiation(state, int(sponsor_id))
-        return state, {"type": "title_sponsor_negotiation_updated", "status": "success", "data": manager.get_market_payload(state)}
-    except ValueError as ve:
-        return state, {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error starting title sponsor negotiation: {e}")
-        return state, {"status": "error", "message": str(e)}
+        manager.start_negotiation(state, sponsor_id_value)
+        return _state_success_response(
+            state,
+            "title_sponsor_negotiation_updated",
+            manager.get_market_payload(state),
+        )
+
+    return _run_state_handler(state, logger, "Error starting title sponsor negotiation", action)
 
 
 def handle_update_title_sponsor_negotiation_staff(
@@ -336,45 +342,44 @@ def handle_update_title_sponsor_negotiation_staff(
     logger: logging.Logger,
     assigned_staff: int | None,
 ):
-    try:
-        if assigned_staff is None:
-            return state, {"status": "error", "message": "Assigned staff is required"}
+    def action():
         manager = PlayerTitleSponsorNegotiationManager()
-        manager.update_assigned_staff(state, int(assigned_staff))
-        return state, {"type": "title_sponsor_negotiation_updated", "status": "success", "data": manager.get_market_payload(state)}
-    except ValueError as ve:
-        return state, {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error updating title sponsor negotiation staff: {e}")
-        return state, {"status": "error", "message": str(e)}
+        manager.update_assigned_staff(state, int(_require_value(assigned_staff, "Assigned staff is required")))
+        return _state_success_response(
+            state,
+            "title_sponsor_negotiation_updated",
+            manager.get_market_payload(state),
+        )
+
+    return _run_state_handler(state, logger, "Error updating title sponsor negotiation staff", action)
 
 
 def handle_sign_title_sponsor_negotiated_deal(
     state: GameState,
     logger: logging.Logger,
 ):
-    try:
+    def action():
         signing = PlayerTitleSponsorNegotiationManager().sign_deal(state)
-        return state, {"type": "title_sponsor_negotiation_signed", "status": "success", "data": signing}
-    except ValueError as ve:
-        return state, {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error signing negotiated title sponsor deal: {e}")
-        return state, {"status": "error", "message": str(e)}
+        return _state_success_response(state, "title_sponsor_negotiation_signed", signing)
+
+    return _run_state_handler(state, logger, "Error signing negotiated title sponsor deal", action)
 
 
 def handle_book_title_sponsor_hospitality(
     state: GameState,
     logger: logging.Logger,
 ):
-    try:
+    def action():
         data = PlayerTitleSponsorNegotiationManager().book_hospitality(state)
-        return state, {"type": "title_sponsor_negotiation_updated", "status": "success", "data": data}
-    except ValueError as ve:
-        return state, {"type": "title_sponsor_negotiation_updated", "status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error booking title sponsor hospitality: {e}")
-        return state, {"type": "title_sponsor_negotiation_updated", "status": "error", "message": str(e)}
+        return _state_success_response(state, "title_sponsor_negotiation_updated", data)
+
+    return _run_state_handler(
+        state,
+        logger,
+        "Error booking title sponsor hospitality",
+        action,
+        response_type="title_sponsor_negotiation_updated",
+    )
 
 
 def handle_replace_tyre_supplier(
@@ -383,20 +388,16 @@ def handle_replace_tyre_supplier(
     supplier_name: str | None,
     incoming_supplier_id: int | None = None,
 ):
-    try:
-        if not supplier_name:
-            return state, {"status": "error", "message": "Tyre supplier name is required"}
+    def action():
+        supplier_name_value = _require_text(supplier_name, "Tyre supplier name is required")
         signing = TyreSupplierTransferManager().sign_player_replacement(
             state,
-            outgoing_supplier_name=str(supplier_name),
+            outgoing_supplier_name=str(supplier_name_value),
             incoming_supplier_id=int(incoming_supplier_id) if incoming_supplier_id is not None else None,
         )
-        return state, {"type": "tyre_supplier_replaced", "status": "success", "data": signing}
-    except ValueError as ve:
-        return state, {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error replacing tyre supplier: {e}")
-        return state, {"status": "error", "message": str(e)}
+        return _state_success_response(state, "tyre_supplier_replaced", signing)
+
+    return _run_state_handler(state, logger, "Error replacing tyre supplier", action)
 
 
 def handle_get_tyre_supplier_replacement_candidates(
@@ -404,19 +405,17 @@ def handle_get_tyre_supplier_replacement_candidates(
     logger: logging.Logger,
     supplier_name: str | None,
 ):
-    try:
-        if not supplier_name:
-            return {"status": "error", "message": "Tyre supplier name is required"}
-
+    def action():
+        supplier_name_value = _require_text(supplier_name, "Tyre supplier name is required")
         team = state.player_team
-        if team is None or getattr(team, "tyre_supplier_name", None) != str(supplier_name):
-            return {"status": "error", "message": "Tyre supplier not found"}
+        if team is None or getattr(team, "tyre_supplier_name", None) != str(supplier_name_value):
+            raise ValueError("Tyre supplier not found")
 
-        candidates = TyreSupplierTransferManager().get_player_replacement_candidates(state, str(supplier_name))
+        candidates = TyreSupplierTransferManager().get_player_replacement_candidates(state, str(supplier_name_value))
         payload = {
             "market_type": "tyre_supplier",
             "outgoing_supplier": {
-                "name": supplier_name,
+                "name": supplier_name_value,
                 "contract_length": int(getattr(team, "tyre_supplier_contract_length", 0) or 0),
                 "deal": getattr(team, "tyre_supplier_deal", None),
                 "annual_value": int(getattr(team, "tyre_supplier_yearly_cost", 0) or 0),
@@ -433,12 +432,9 @@ def handle_get_tyre_supplier_replacement_candidates(
                 for s in candidates
             ],
         }
-        return {"type": "tyre_supplier_replacement_candidates", "status": "success", "data": payload}
-    except ValueError as ve:
-        return {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error loading tyre supplier replacement candidates: {e}")
-        return {"status": "error", "message": str(e)}
+        return _success_response("tyre_supplier_replacement_candidates", payload)
+
+    return _run_handler(logger, "Error loading tyre supplier replacement candidates", action)
 
 
 def handle_replace_engine_supplier(
@@ -447,20 +443,16 @@ def handle_replace_engine_supplier(
     supplier_name: str | None,
     incoming_supplier_id: int | None = None,
 ):
-    try:
-        if not supplier_name:
-            return state, {"status": "error", "message": "Engine supplier name is required"}
+    def action():
+        supplier_name_value = _require_text(supplier_name, "Engine supplier name is required")
         signing = EngineSupplierTransferManager().sign_player_replacement(
             state,
-            outgoing_supplier_name=str(supplier_name),
+            outgoing_supplier_name=str(supplier_name_value),
             incoming_supplier_id=int(incoming_supplier_id) if incoming_supplier_id is not None else None,
         )
-        return state, {"type": "engine_supplier_replaced", "status": "success", "data": signing}
-    except ValueError as ve:
-        return state, {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error replacing engine supplier: {e}")
-        return state, {"status": "error", "message": str(e)}
+        return _state_success_response(state, "engine_supplier_replaced", signing)
+
+    return _run_state_handler(state, logger, "Error replacing engine supplier", action)
 
 
 def handle_get_engine_supplier_replacement_candidates(
@@ -468,19 +460,17 @@ def handle_get_engine_supplier_replacement_candidates(
     logger: logging.Logger,
     supplier_name: str | None,
 ):
-    try:
-        if not supplier_name:
-            return {"status": "error", "message": "Engine supplier name is required"}
-
+    def action():
+        supplier_name_value = _require_text(supplier_name, "Engine supplier name is required")
         team = state.player_team
-        if team is None or getattr(team, "engine_supplier_name", None) != str(supplier_name):
-            return {"status": "error", "message": "Engine supplier not found"}
+        if team is None or getattr(team, "engine_supplier_name", None) != str(supplier_name_value):
+            raise ValueError("Engine supplier not found")
 
-        candidates = EngineSupplierTransferManager().get_player_replacement_candidates(state, str(supplier_name))
+        candidates = EngineSupplierTransferManager().get_player_replacement_candidates(state, str(supplier_name_value))
         payload = {
             "market_type": "engine_supplier",
             "outgoing_supplier": {
-                "name": supplier_name,
+                "name": supplier_name_value,
                 "contract_length": int(getattr(team, "engine_supplier_contract_length", 0) or 0),
                 "deal": getattr(team, "engine_supplier_deal", None),
                 "annual_value": int(getattr(team, "engine_supplier_yearly_cost", 0) or 0),
@@ -498,26 +488,20 @@ def handle_get_engine_supplier_replacement_candidates(
                 for s in candidates
             ],
         }
-        return {"type": "engine_supplier_replacement_candidates", "status": "success", "data": payload}
-    except ValueError as ve:
-        return {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error loading engine supplier replacement candidates: {e}")
-        return {"status": "error", "message": str(e)}
+        return _success_response("engine_supplier_replacement_candidates", payload)
+
+    return _run_handler(logger, "Error loading engine supplier replacement candidates", action)
 
 
 def handle_get_engine_negotiation_market(
     state: GameState,
     logger: logging.Logger,
 ):
-    try:
+    def action():
         payload = PlayerEngineNegotiationManager().get_market_payload(state)
-        return {"type": "engine_negotiation_market", "status": "success", "data": payload}
-    except ValueError as ve:
-        return {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error loading engine negotiation market: {e}")
-        return {"status": "error", "message": str(e)}
+        return _success_response("engine_negotiation_market", payload)
+
+    return _run_handler(logger, "Error loading engine negotiation market", action)
 
 
 def handle_start_engine_negotiation(
@@ -525,17 +509,13 @@ def handle_start_engine_negotiation(
     logger: logging.Logger,
     supplier_id: int | None,
 ):
-    try:
-        if supplier_id is None:
-            return state, {"status": "error", "message": "Engine supplier id is required"}
+    def action():
+        supplier_id_value = int(_require_value(supplier_id, "Engine supplier id is required"))
         manager = PlayerEngineNegotiationManager()
-        manager.start_negotiation(state, int(supplier_id))
-        return state, {"type": "engine_negotiation_updated", "status": "success", "data": manager.get_market_payload(state)}
-    except ValueError as ve:
-        return state, {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error starting engine negotiation: {e}")
-        return state, {"status": "error", "message": str(e)}
+        manager.start_negotiation(state, supplier_id_value)
+        return _state_success_response(state, "engine_negotiation_updated", manager.get_market_payload(state))
+
+    return _run_state_handler(state, logger, "Error starting engine negotiation", action)
 
 
 def handle_update_engine_negotiation_staff(
@@ -543,17 +523,12 @@ def handle_update_engine_negotiation_staff(
     logger: logging.Logger,
     assigned_staff: int | None,
 ):
-    try:
-        if assigned_staff is None:
-            return state, {"status": "error", "message": "Assigned staff is required"}
+    def action():
         manager = PlayerEngineNegotiationManager()
-        manager.update_assigned_staff(state, int(assigned_staff))
-        return state, {"type": "engine_negotiation_updated", "status": "success", "data": manager.get_market_payload(state)}
-    except ValueError as ve:
-        return state, {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error updating engine negotiation staff: {e}")
-        return state, {"status": "error", "message": str(e)}
+        manager.update_assigned_staff(state, int(_require_value(assigned_staff, "Assigned staff is required")))
+        return _state_success_response(state, "engine_negotiation_updated", manager.get_market_payload(state))
+
+    return _run_state_handler(state, logger, "Error updating engine negotiation staff", action)
 
 
 def handle_sign_engine_negotiated_deal(
@@ -561,27 +536,28 @@ def handle_sign_engine_negotiated_deal(
     logger: logging.Logger,
     tier: str | None,
 ):
-    try:
-        if not tier:
-            return state, {"status": "error", "message": "Negotiated tier is required"}
-        signing = PlayerEngineNegotiationManager().sign_deal(state, str(tier))
-        return state, {"type": "engine_negotiation_signed", "status": "success", "data": signing}
-    except ValueError as ve:
-        return state, {"status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error signing negotiated engine deal: {e}")
-        return state, {"status": "error", "message": str(e)}
+    def action():
+        signing = PlayerEngineNegotiationManager().sign_deal(
+            state,
+            str(_require_text(tier, "Negotiated tier is required")),
+        )
+        return _state_success_response(state, "engine_negotiation_signed", signing)
+
+    return _run_state_handler(state, logger, "Error signing negotiated engine deal", action)
 
 
 def handle_book_engine_negotiation_hospitality(
     state: GameState,
     logger: logging.Logger,
 ):
-    try:
+    def action():
         data = PlayerEngineNegotiationManager().book_hospitality(state)
-        return state, {"type": "engine_negotiation_updated", "status": "success", "data": data}
-    except ValueError as ve:
-        return state, {"type": "engine_negotiation_updated", "status": "error", "message": str(ve)}
-    except Exception as e:
-        logger.error(f"Error booking engine hospitality: {e}")
-        return state, {"type": "engine_negotiation_updated", "status": "error", "message": str(e)}
+        return _state_success_response(state, "engine_negotiation_updated", data)
+
+    return _run_state_handler(
+        state,
+        logger,
+        "Error booking engine hospitality",
+        action,
+        response_type="engine_negotiation_updated",
+    )

@@ -6,6 +6,101 @@ let raceAutoplayData = null;
 let raceAutoplayLapIndex = 0;
 let raceAutoplayPaused = false;
 let currentRaceWeekendData = null;
+let onRacePlaybackComplete = null;
+
+function getRaceElements() {
+	return {
+		raceView: document.getElementById('race-view'),
+		weekendPanel: document.getElementById('race-weekend-panel'),
+		strategyPanel: document.getElementById('race-strategy-panel'),
+		resultsContainer: document.getElementById('race-results-container'),
+		raceName: document.getElementById('race-event-name'),
+		raceWeek: document.getElementById('race-week-display'),
+		circuitDisplay: document.getElementById('race-circuit-display'),
+		locationDisplay: document.getElementById('race-location-display'),
+		lapsDisplay: document.getElementById('race-laps-display'),
+		poleDisplay: document.getElementById('race-pole-display'),
+		statusText: document.getElementById('race-weekend-status'),
+		statusChip: document.getElementById('race-status-chip'),
+		qualifyingBody: document.getElementById('race-qualifying-body'),
+		qualifyingBtn: document.getElementById('simulate-qualifying-btn'),
+		simBtn: document.getElementById('simulate-race-btn'),
+		commentaryLog: document.getElementById('race-commentary-log'),
+		lapCounter: document.getElementById('race-lap-counter'),
+		leaderDisplay: document.getElementById('race-leader-display'),
+		fastestLapDisplay: document.getElementById('race-fastest-lap-display'),
+		latestCommentary: document.getElementById('race-latest-commentary'),
+		pauseBtn: document.getElementById('race-pause-btn'),
+		prevBtn: document.getElementById('race-prev-lap-btn'),
+		nextBtn: document.getElementById('race-next-lap-btn'),
+		timingTab: document.getElementById('race-tab-timing'),
+		qualifyingTab: document.getElementById('race-tab-qualifying'),
+		commentaryTab: document.getElementById('race-tab-commentary'),
+		chartTab: document.getElementById('race-tab-chart'),
+		laptimesTab: document.getElementById('race-tab-laptimes'),
+		qualifyingResultsBody: document.getElementById('race-results-qualifying-body'),
+		qualifyingPoleDisplay: document.getElementById('race-results-pole-display'),
+		timingBody: document.getElementById('race-results-body'),
+		eventDisplay: document.getElementById('race-strategy-event-display'),
+		strategyCards: document.getElementById('race-strategy-cards'),
+		strategyStartBtn: document.getElementById('race-strategy-start-btn'),
+	};
+}
+
+function setRaceStatus(statusText, statusChip, message, chipText, chipClass) {
+	if (statusText) statusText.textContent = message;
+	if (statusChip) {
+		statusChip.textContent = chipText;
+		statusChip.className = `race-status-chip ${chipClass}`;
+	}
+}
+
+function renderQualifyingTable(tbody, qualifyingResults, emptyMessage) {
+	if (!tbody) return;
+	tbody.innerHTML = '';
+	if (!qualifyingResults.length) {
+		tbody.innerHTML = `<tr class="race-qualifying-placeholder"><td colspan="5">${emptyMessage}</td></tr>`;
+		return;
+	}
+
+	const poleLapMs = qualifyingResults[0].best_lap_ms;
+	qualifyingResults.forEach((row) => {
+		const tr = document.createElement('tr');
+		tr.innerHTML = `
+			<td>${row.position}</td>
+			<td>${row.driver_name}</td>
+			<td>${row.team_name}</td>
+			<td>${formatLapTime(row.best_lap_ms)}</td>
+			<td>${formatQualifyingGap(row.best_lap_ms, poleLapMs)}</td>
+		`;
+		tbody.appendChild(tr);
+	});
+}
+
+function renderPoleDisplay(element, qualifyingResults, fallbackText) {
+	if (!element) return;
+	element.textContent = qualifyingResults.length
+		? `Pole: ${qualifyingResults[0].driver_name} (${formatLapTime(qualifyingResults[0].best_lap_ms)})`
+		: fallbackText;
+}
+
+function resetRacePlaybackDisplay(elements) {
+	if (elements.commentaryLog) elements.commentaryLog.innerHTML = '';
+	if (elements.lapCounter) elements.lapCounter.textContent = '0 / 0';
+	if (elements.leaderDisplay) elements.leaderDisplay.textContent = '-';
+	if (elements.fastestLapDisplay) elements.fastestLapDisplay.textContent = '-';
+	if (elements.latestCommentary) elements.latestCommentary.textContent = 'Awaiting lights out.';
+	if (elements.pauseBtn) {
+		elements.pauseBtn.textContent = 'Pause';
+		elements.pauseBtn.disabled = false;
+	}
+}
+
+function setRaceScreenVisibility(elements, { showWeekend, showStrategy, showResults }) {
+	if (elements.weekendPanel) elements.weekendPanel.style.display = showWeekend ? 'grid' : 'none';
+	if (elements.strategyPanel) elements.strategyPanel.style.display = showStrategy ? 'grid' : 'none';
+	if (elements.resultsContainer) elements.resultsContainer.style.display = showResults ? 'block' : 'none';
+}
 
 function formatQualifyingGap(bestLapMs, poleLapMs) {
 	if (!Number.isFinite(bestLapMs) || !Number.isFinite(poleLapMs)) return '-';
@@ -75,6 +170,10 @@ function stopRaceAutoplay() {
 	}
 }
 
+export function setRacePlaybackCompleteHandler(handler) {
+	onRacePlaybackComplete = typeof handler === 'function' ? handler : null;
+}
+
 function activateRaceTab(tabName = 'timing') {
 	const tabButtons = document.querySelectorAll('.race-tab-btn');
 	const timingPanel = document.getElementById('race-panel-timing');
@@ -96,149 +195,89 @@ function activateRaceTab(tabName = 'timing') {
 export function enterRaceView(nextEventEl, weekEl) {
 	stopRaceAutoplay();
 	currentRaceWeekendData = null;
-	const raceView = document.getElementById('race-view');
+	const elements = getRaceElements();
 	const event = nextEventEl.textContent;
-	const raceName = document.getElementById('race-event-name');
-	const raceWeek = document.getElementById('race-week-display');
-	const qualifyingBtn = document.getElementById('simulate-qualifying-btn');
-	const simBtn = document.getElementById('simulate-race-btn');
-	const qualifyingBody = document.getElementById('race-qualifying-body');
-	const circuitDisplay = document.getElementById('race-circuit-display');
-	const locationDisplay = document.getElementById('race-location-display');
-	const lapsDisplay = document.getElementById('race-laps-display');
-	const poleDisplay = document.getElementById('race-pole-display');
-	const statusText = document.getElementById('race-weekend-status');
-	const statusChip = document.getElementById('race-status-chip');
-	const weekendPanel = document.getElementById('race-weekend-panel');
-	const strategyPanel = document.getElementById('race-strategy-panel');
-
-	raceName.textContent = event.replace('Next: ', '').split(' - ')[0] || 'Grand Prix';
-	raceWeek.textContent = weekEl.textContent;
-	if (circuitDisplay) circuitDisplay.textContent = 'Loading weekend data...';
-	if (locationDisplay) locationDisplay.textContent = '-';
-	if (lapsDisplay) lapsDisplay.textContent = '-';
-	if (poleDisplay) poleDisplay.textContent = 'No grid set yet.';
-	if (statusText) statusText.textContent = 'Qualifying must be completed before the race can begin.';
-	if (statusChip) {
-		statusChip.textContent = 'Qualifying Pending';
-		statusChip.className = 'race-status-chip pending';
+	if (elements.raceName) elements.raceName.textContent = event.replace('Next: ', '').split(' - ')[0] || 'Grand Prix';
+	if (elements.raceWeek) elements.raceWeek.textContent = weekEl.textContent;
+	if (elements.circuitDisplay) elements.circuitDisplay.textContent = 'Loading weekend data...';
+	if (elements.locationDisplay) elements.locationDisplay.textContent = '-';
+	if (elements.lapsDisplay) elements.lapsDisplay.textContent = '-';
+	renderPoleDisplay(elements.poleDisplay, [], 'No grid set yet.');
+	setRaceStatus(
+		elements.statusText,
+		elements.statusChip,
+		'Qualifying must be completed before the race can begin.',
+		'Qualifying Pending',
+		'pending',
+	);
+	if (elements.qualifyingBody) {
+		elements.qualifyingBody.innerHTML = '<tr class="race-qualifying-placeholder"><td colspan="4">Loading race weekend...</td></tr>';
 	}
-	if (qualifyingBody) {
-		qualifyingBody.innerHTML = '<tr class="race-qualifying-placeholder"><td colspan="4">Loading race weekend...</td></tr>';
+	if (elements.qualifyingBtn) {
+		elements.qualifyingBtn.disabled = true;
+		elements.qualifyingBtn.textContent = 'RUN QUALIFYING';
 	}
-	if (qualifyingBtn) {
-		qualifyingBtn.disabled = true;
-		qualifyingBtn.textContent = 'RUN QUALIFYING';
+	if (elements.simBtn) {
+		elements.simBtn.disabled = true;
+		elements.simBtn.textContent = 'SIMULATE RACE';
+		elements.simBtn.style.display = '';
 	}
-	if (simBtn) {
-		simBtn.disabled = true;
-		simBtn.textContent = 'SIMULATE RACE';
-		simBtn.style.display = '';
-	}
-	if (weekendPanel) weekendPanel.style.display = 'grid';
-	if (strategyPanel) strategyPanel.style.display = 'none';
-	document.getElementById('race-results-container').style.display = 'none';
-	const commentaryLog = document.getElementById('race-commentary-log');
-	const lapCounter = document.getElementById('race-lap-counter');
-	const leaderDisplay = document.getElementById('race-leader-display');
-	const fastestLapDisplay = document.getElementById('race-fastest-lap-display');
-	const latestCommentary = document.getElementById('race-latest-commentary');
-	const pauseBtn = document.getElementById('race-pause-btn');
-	if (commentaryLog) commentaryLog.innerHTML = '';
-	if (lapCounter) lapCounter.textContent = '0 / 0';
-	if (leaderDisplay) leaderDisplay.textContent = '-';
-	if (fastestLapDisplay) fastestLapDisplay.textContent = '-';
-	if (latestCommentary) latestCommentary.textContent = 'Awaiting lights out.';
-	if (pauseBtn) {
-		pauseBtn.textContent = 'Pause';
-		pauseBtn.disabled = false;
-	}
+	setRaceScreenVisibility(elements, { showWeekend: true, showStrategy: false, showResults: false });
+	resetRacePlaybackDisplay(elements);
 	activateRaceTab('timing');
 
-	raceView.style.display = 'flex';
+	if (elements.raceView) elements.raceView.style.display = 'flex';
 }
 
 export function renderRaceWeekend(data = currentRaceWeekendData) {
 	if (!data) return;
 	stopRaceAutoplay();
 	currentRaceWeekendData = data;
-	const qualifyingBtn = document.getElementById('simulate-qualifying-btn');
-	const simBtn = document.getElementById('simulate-race-btn');
-	const qualifyingBody = document.getElementById('race-qualifying-body');
-	const circuitDisplay = document.getElementById('race-circuit-display');
-	const locationDisplay = document.getElementById('race-location-display');
-	const lapsDisplay = document.getElementById('race-laps-display');
-	const poleDisplay = document.getElementById('race-pole-display');
-	const statusText = document.getElementById('race-weekend-status');
-	const statusChip = document.getElementById('race-status-chip');
-	const weekendPanel = document.getElementById('race-weekend-panel');
-	const strategyPanel = document.getElementById('race-strategy-panel');
-	const resultsContainer = document.getElementById('race-results-container');
+	const elements = getRaceElements();
 	const qualifyingResults = Array.isArray(data.qualifying_results) ? data.qualifying_results : [];
 	const qualifyingComplete = !!data.qualifying_complete;
 	const raceComplete = !!data.race_complete;
 
-	if (circuitDisplay) circuitDisplay.textContent = data.circuit_name || data.event_name || 'Grand Prix';
-	if (locationDisplay) locationDisplay.textContent = [data.circuit_location, data.circuit_country].filter(Boolean).join(', ') || '-';
-	if (lapsDisplay) lapsDisplay.textContent = Number.isFinite(data.laps) ? `${data.laps} laps` : '-';
-	if (qualifyingBody) {
-		qualifyingBody.innerHTML = '';
-		if (!qualifyingResults.length) {
-			qualifyingBody.innerHTML = '<tr class="race-qualifying-placeholder"><td colspan="5">Run qualifying to set the grid.</td></tr>';
-		} else {
-			const poleLapMs = qualifyingResults[0].best_lap_ms;
-			qualifyingResults.forEach((row) => {
-				const tr = document.createElement('tr');
-				tr.innerHTML = `
-					<td>${row.position}</td>
-					<td>${row.driver_name}</td>
-					<td>${row.team_name}</td>
-					<td>${formatLapTime(row.best_lap_ms)}</td>
-					<td>${formatQualifyingGap(row.best_lap_ms, poleLapMs)}</td>
-				`;
-				qualifyingBody.appendChild(tr);
-			});
-		}
-	}
-
-	if (poleDisplay) {
-		poleDisplay.textContent = qualifyingResults.length
-			? `Pole: ${qualifyingResults[0].driver_name} (${formatLapTime(qualifyingResults[0].best_lap_ms)})`
-			: 'No grid set yet.';
-	}
+	if (elements.circuitDisplay) elements.circuitDisplay.textContent = data.circuit_name || data.event_name || 'Grand Prix';
+	if (elements.locationDisplay) elements.locationDisplay.textContent = [data.circuit_location, data.circuit_country].filter(Boolean).join(', ') || '-';
+	if (elements.lapsDisplay) elements.lapsDisplay.textContent = Number.isFinite(data.laps) ? `${data.laps} laps` : '-';
+	renderQualifyingTable(elements.qualifyingBody, qualifyingResults, 'Run qualifying to set the grid.');
+	renderPoleDisplay(elements.poleDisplay, qualifyingResults, 'No grid set yet.');
 
 	if (raceComplete) {
-		if (statusText) statusText.textContent = 'The race has already been run. Replay data is shown below.';
-		if (statusChip) {
-			statusChip.textContent = 'Race Complete';
-			statusChip.className = 'race-status-chip complete';
-		}
+		setRaceStatus(
+			elements.statusText,
+			elements.statusChip,
+			'The race has already been run. Replay data is shown below.',
+			'Race Complete',
+			'complete',
+		);
 	} else if (qualifyingComplete) {
-		if (statusText) statusText.textContent = 'Grid locked in. The race is ready to simulate.';
-		if (statusChip) {
-			statusChip.textContent = 'Grid Set';
-			statusChip.className = 'race-status-chip ready';
-		}
+		setRaceStatus(elements.statusText, elements.statusChip, 'Grid locked in. The race is ready to simulate.', 'Grid Set', 'ready');
 	} else {
-		if (statusText) statusText.textContent = 'Qualifying must be completed before the race can begin.';
-		if (statusChip) {
-			statusChip.textContent = 'Qualifying Pending';
-			statusChip.className = 'race-status-chip pending';
-		}
+		setRaceStatus(
+			elements.statusText,
+			elements.statusChip,
+			'Qualifying must be completed before the race can begin.',
+			'Qualifying Pending',
+			'pending',
+		);
 	}
 
-	if (qualifyingBtn) {
-		qualifyingBtn.disabled = qualifyingComplete || raceComplete;
-		qualifyingBtn.textContent = qualifyingComplete ? 'QUALIFYING COMPLETE' : 'RUN QUALIFYING';
+	if (elements.qualifyingBtn) {
+		elements.qualifyingBtn.disabled = qualifyingComplete || raceComplete;
+		elements.qualifyingBtn.textContent = qualifyingComplete ? 'QUALIFYING COMPLETE' : 'RUN QUALIFYING';
 	}
-	if (simBtn) {
-		simBtn.disabled = !qualifyingComplete || raceComplete;
-		simBtn.textContent = raceComplete ? 'RACE COMPLETE' : 'SIMULATE RACE';
-		simBtn.style.display = '';
+	if (elements.simBtn) {
+		elements.simBtn.disabled = !qualifyingComplete || raceComplete;
+		elements.simBtn.textContent = raceComplete ? 'RACE COMPLETE' : 'SIMULATE RACE';
+		elements.simBtn.style.display = '';
 	}
-	if (weekendPanel) weekendPanel.style.display = 'grid';
-	if (strategyPanel) strategyPanel.style.display = 'none';
-	if (resultsContainer && !raceComplete) resultsContainer.style.display = 'none';
+	setRaceScreenVisibility(elements, {
+		showWeekend: true,
+		showStrategy: false,
+		showResults: raceComplete,
+	});
 }
 
 function strategyCardMarkup(strategy) {
@@ -271,28 +310,21 @@ function strategyCardMarkup(strategy) {
 export function renderRaceStrategyScreen(data = currentRaceWeekendData) {
 	if (!data) return;
 	currentRaceWeekendData = data;
-	const weekendPanel = document.getElementById('race-weekend-panel');
-	const strategyPanel = document.getElementById('race-strategy-panel');
-	const resultsContainer = document.getElementById('race-results-container');
-	const eventDisplay = document.getElementById('race-strategy-event-display');
-	const cards = document.getElementById('race-strategy-cards');
-	const startBtn = document.getElementById('race-strategy-start-btn');
+	const elements = getRaceElements();
 	const strategies = Array.isArray(data.player_strategies) ? data.player_strategies : [];
 
-	if (eventDisplay) eventDisplay.textContent = data.event_name || data.circuit_name || 'Grand Prix';
-	if (cards) {
-		cards.innerHTML = strategies.map(strategyCardMarkup).join('');
+	if (elements.eventDisplay) elements.eventDisplay.textContent = data.event_name || data.circuit_name || 'Grand Prix';
+	if (elements.strategyCards) {
+		elements.strategyCards.innerHTML = strategies.map(strategyCardMarkup).join('');
 		if (!strategies.length) {
-			cards.innerHTML = '<div class="placeholder-msg">No player cars are available for strategy setup.</div>';
+			elements.strategyCards.innerHTML = '<div class="placeholder-msg">No player cars are available for strategy setup.</div>';
 		}
 	}
-	if (startBtn) {
-		startBtn.disabled = !data.qualifying_complete || data.race_complete || !strategies.length;
-		startBtn.textContent = 'START RACE';
+	if (elements.strategyStartBtn) {
+		elements.strategyStartBtn.disabled = !data.qualifying_complete || data.race_complete || !strategies.length;
+		elements.strategyStartBtn.textContent = 'START RACE';
 	}
-	if (weekendPanel) weekendPanel.style.display = 'none';
-	if (resultsContainer) resultsContainer.style.display = 'none';
-	if (strategyPanel) strategyPanel.style.display = 'grid';
+	setRaceScreenVisibility(elements, { showWeekend: false, showStrategy: true, showResults: false });
 }
 
 export function openRaceStrategyScreen() {
@@ -313,17 +345,9 @@ function renderLapSnapshot(data, lapIndex) {
 	const snapshot = lapHistory[Math.max(0, Math.min(lapIndex, lapHistory.length - 1))];
 	const timingRows = Array.isArray(snapshot.order) ? snapshot.order : [];
 	const pitStopCounts = buildPitStopCounts(lapHistory, snapshot.lap);
-	const tbody = document.getElementById('race-results-body');
-	const lapCounter = document.getElementById('race-lap-counter');
-	const leaderDisplay = document.getElementById('race-leader-display');
-	const fastestLapDisplay = document.getElementById('race-fastest-lap-display');
-	const commentaryLog = document.getElementById('race-commentary-log');
-	const latestCommentary = document.getElementById('race-latest-commentary');
-	const prevBtn = document.getElementById('race-prev-lap-btn');
-	const nextBtn = document.getElementById('race-next-lap-btn');
-	const resultsContainer = document.getElementById('race-results-container');
+	const elements = getRaceElements();
 
-	tbody.innerHTML = '';
+	elements.timingBody.innerHTML = '';
 	timingRows.forEach((row) => {
 		const statusLabel = row.status === 'DNF' ? 'DNF' : (row.status || 'RUNNING');
 		const tr = document.createElement('tr');
@@ -337,12 +361,12 @@ function renderLapSnapshot(data, lapIndex) {
 			<td>${row.gap_display || '-'}</td>
 			<td>${statusLabel}</td>
 		`;
-		tbody.appendChild(tr);
+		elements.timingBody.appendChild(tr);
 	});
 
 	const leader = timingRows[0];
-	if (lapCounter) lapCounter.textContent = `${snapshot.lap} / ${data.total_laps || lapHistory.length}`;
-	if (leaderDisplay) leaderDisplay.textContent = leader ? `${leader.driver_name} (${leader.team_name})` : '-';
+	if (elements.lapCounter) elements.lapCounter.textContent = `${snapshot.lap} / ${data.total_laps || lapHistory.length}`;
+	if (elements.leaderDisplay) elements.leaderDisplay.textContent = leader ? `${leader.driver_name} (${leader.team_name})` : '-';
 
 	let fastestEvent = null;
 	for (const lap of lapHistory) {
@@ -351,13 +375,13 @@ function renderLapSnapshot(data, lapIndex) {
 			if (event.type === 'fastest_lap') fastestEvent = event;
 		}
 	}
-	if (fastestLapDisplay) {
-		fastestLapDisplay.textContent = fastestEvent
+	if (elements.fastestLapDisplay) {
+		elements.fastestLapDisplay.textContent = fastestEvent
 			? `${fastestEvent.driver_name} ${formatLapTime(fastestEvent.lap_time_ms)}`
 			: '-';
 	}
 
-	if (commentaryLog) {
+	if (elements.commentaryLog) {
 		const lines = [];
 		let previousLeaderId = null;
 		for (const lap of lapHistory.slice(0, snapshot.lap)) {
@@ -376,26 +400,27 @@ function renderLapSnapshot(data, lapIndex) {
 			});
 			if (currentLeader) previousLeaderId = currentLeader.driver_id;
 		}
-		commentaryLog.innerHTML = '';
+		elements.commentaryLog.innerHTML = '';
 		lines.forEach((line) => {
 			const item = document.createElement('div');
 			item.className = 'race-commentary-item';
 			item.textContent = line;
-			commentaryLog.appendChild(item);
+			elements.commentaryLog.appendChild(item);
 		});
-		if (latestCommentary) latestCommentary.textContent = lines.at(-1) || 'Awaiting the next flashpoint.';
+		if (elements.latestCommentary) elements.latestCommentary.textContent = lines.at(-1) || 'Awaiting the next flashpoint.';
 	}
 
-	if (prevBtn) prevBtn.disabled = snapshot.lap <= 1;
-	if (nextBtn) nextBtn.disabled = snapshot.lap >= lapHistory.length;
-	if (resultsContainer) resultsContainer.dataset.activeLapIndex = String(Math.max(0, Math.min(lapIndex, lapHistory.length - 1)));
+	if (elements.prevBtn) elements.prevBtn.disabled = snapshot.lap <= 1;
+	if (elements.nextBtn) elements.nextBtn.disabled = snapshot.lap >= lapHistory.length;
+	if (elements.resultsContainer) {
+		elements.resultsContainer.dataset.activeLapIndex = String(Math.max(0, Math.min(lapIndex, lapHistory.length - 1)));
+	}
 }
 
 function startRaceAutoplay(data) {
 	const lapHistory = Array.isArray(data.lap_history) ? data.lap_history : [];
-	const resultsContainer = document.getElementById('race-results-container');
-	const pauseBtn = document.getElementById('race-pause-btn');
-	if (!lapHistory.length || !resultsContainer) return;
+	const elements = getRaceElements();
+	if (!lapHistory.length || !elements.resultsContainer) return;
 
 	stopRaceAutoplay();
 	raceAutoplayData = data;
@@ -408,26 +433,29 @@ function startRaceAutoplay(data) {
 		raceAutoplayLapIndex += 1;
 		if (raceAutoplayLapIndex >= lapHistory.length) {
 			renderLapSnapshot(data, lapHistory.length - 1);
-			if (pauseBtn) pauseBtn.disabled = true;
+			if (elements.pauseBtn) elements.pauseBtn.disabled = true;
+			const completionHandler = onRacePlaybackComplete;
+			onRacePlaybackComplete = null;
 			stopRaceAutoplay();
+			if (completionHandler) completionHandler();
 			return;
 		}
 		renderLapSnapshot(data, raceAutoplayLapIndex);
 	};
 
-	if (pauseBtn) {
-		pauseBtn.textContent = 'Pause';
-		pauseBtn.disabled = false;
-		pauseBtn.onclick = () => {
+	if (elements.pauseBtn) {
+		elements.pauseBtn.textContent = 'Pause';
+		elements.pauseBtn.disabled = false;
+		elements.pauseBtn.onclick = () => {
 			if (!raceAutoplayData) return;
 			if (raceAutoplayPaused) {
 				raceAutoplayPaused = false;
-				pauseBtn.textContent = 'Pause';
+				elements.pauseBtn.textContent = 'Pause';
 				raceAutoplayTimer = window.setInterval(tickRaceAutoplay, RACE_AUTOPLAY_INTERVAL_MS);
 				return;
 			}
 			raceAutoplayPaused = true;
-			pauseBtn.textContent = 'Resume';
+			elements.pauseBtn.textContent = 'Resume';
 			if (raceAutoplayTimer) {
 				window.clearInterval(raceAutoplayTimer);
 				raceAutoplayTimer = null;
@@ -440,53 +468,17 @@ function startRaceAutoplay(data) {
 
 export function renderRaceResults(data) {
 	currentRaceWeekendData = data;
-	const tbody = document.getElementById('race-results-body');
-	const container = document.getElementById('race-results-container');
-	const weekendPanel = document.getElementById('race-weekend-panel');
-	const strategyPanel = document.getElementById('race-strategy-panel');
-	const qualifyingResultsBody = document.getElementById('race-results-qualifying-body');
-	const qualifyingPoleDisplay = document.getElementById('race-results-pole-display');
-	const simulateBtn = document.getElementById('simulate-race-btn');
-	const prevBtn = document.getElementById('race-prev-lap-btn');
-	const nextBtn = document.getElementById('race-next-lap-btn');
-	const pauseBtn = document.getElementById('race-pause-btn');
-	const timingTab = document.getElementById('race-tab-timing');
-	const qualifyingTab = document.getElementById('race-tab-qualifying');
-	const commentaryTab = document.getElementById('race-tab-commentary');
-	const chartTab = document.getElementById('race-tab-chart');
-	const laptimesTab = document.getElementById('race-tab-laptimes');
+	const elements = getRaceElements();
 	const qualifyingResults = Array.isArray(data.qualifying_results) ? data.qualifying_results : [];
 
-	if (qualifyingResultsBody) {
-		qualifyingResultsBody.innerHTML = '';
-		if (!qualifyingResults.length) {
-			qualifyingResultsBody.innerHTML = '<tr class="race-qualifying-placeholder"><td colspan="5">No qualifying data recorded.</td></tr>';
-		} else {
-			const poleLapMs = qualifyingResults[0].best_lap_ms;
-			qualifyingResults.forEach((row) => {
-				const tr = document.createElement('tr');
-				tr.innerHTML = `
-					<td>${row.position}</td>
-					<td>${row.driver_name}</td>
-					<td>${row.team_name}</td>
-					<td>${formatLapTime(row.best_lap_ms)}</td>
-					<td>${formatQualifyingGap(row.best_lap_ms, poleLapMs)}</td>
-				`;
-				qualifyingResultsBody.appendChild(tr);
-			});
-		}
-	}
-	if (qualifyingPoleDisplay) {
-		qualifyingPoleDisplay.textContent = qualifyingResults.length
-			? `Pole: ${qualifyingResults[0].driver_name} (${formatLapTime(qualifyingResults[0].best_lap_ms)})`
-			: '-';
-	}
+	renderQualifyingTable(elements.qualifyingResultsBody, qualifyingResults, 'No qualifying data recorded.');
+	renderPoleDisplay(elements.qualifyingPoleDisplay, qualifyingResults, '-');
 
 	const lapHistory = Array.isArray(data.lap_history) ? data.lap_history : [];
 	if (!lapHistory.length) {
 		stopRaceAutoplay();
-		if (pauseBtn) pauseBtn.disabled = true;
-		tbody.innerHTML = '';
+		if (elements.pauseBtn) elements.pauseBtn.disabled = true;
+		elements.timingBody.innerHTML = '';
 		data.results.forEach((r) => {
 			const positionLabel = Number.isInteger(r.position) ? r.position : (r.status || 'DNF');
 			let statusLabel = 'Finished';
@@ -506,39 +498,39 @@ export function renderRaceResults(data) {
 				<td>-</td>
 				<td>${statusLabel}</td>
 			`;
-			tbody.appendChild(row);
+			elements.timingBody.appendChild(row);
 		});
 	} else {
 		renderLapChart(data);
 		renderLaptimeChart(data);
-		if (timingTab) timingTab.onclick = () => activateRaceTab('timing');
-		if (qualifyingTab) qualifyingTab.onclick = () => activateRaceTab('qualifying');
-		if (commentaryTab) commentaryTab.onclick = () => activateRaceTab('commentary');
-		if (chartTab) chartTab.onclick = () => activateRaceTab('chart');
-		if (laptimesTab) laptimesTab.onclick = () => activateRaceTab('laptimes');
-		if (prevBtn) {
-			prevBtn.onclick = () => {
+		if (elements.timingTab) elements.timingTab.onclick = () => activateRaceTab('timing');
+		if (elements.qualifyingTab) elements.qualifyingTab.onclick = () => activateRaceTab('qualifying');
+		if (elements.commentaryTab) elements.commentaryTab.onclick = () => activateRaceTab('commentary');
+		if (elements.chartTab) elements.chartTab.onclick = () => activateRaceTab('chart');
+		if (elements.laptimesTab) elements.laptimesTab.onclick = () => activateRaceTab('laptimes');
+		if (elements.prevBtn) {
+			elements.prevBtn.onclick = () => {
 				if (raceAutoplayTimer) {
 					window.clearInterval(raceAutoplayTimer);
 					raceAutoplayTimer = null;
 				}
 				raceAutoplayPaused = true;
-				if (pauseBtn) pauseBtn.textContent = 'Resume';
-				const current = Number(container.dataset.activeLapIndex || (lapHistory.length - 1));
+				if (elements.pauseBtn) elements.pauseBtn.textContent = 'Resume';
+				const current = Number(elements.resultsContainer.dataset.activeLapIndex || (lapHistory.length - 1));
 				const nextIndex = Math.max(0, current - 1);
 				raceAutoplayLapIndex = nextIndex;
 				renderLapSnapshot(data, nextIndex);
 			};
 		}
-		if (nextBtn) {
-			nextBtn.onclick = () => {
+		if (elements.nextBtn) {
+			elements.nextBtn.onclick = () => {
 				if (raceAutoplayTimer) {
 					window.clearInterval(raceAutoplayTimer);
 					raceAutoplayTimer = null;
 				}
 				raceAutoplayPaused = true;
-				if (pauseBtn) pauseBtn.textContent = 'Resume';
-				const current = Number(container.dataset.activeLapIndex || (lapHistory.length - 1));
+				if (elements.pauseBtn) elements.pauseBtn.textContent = 'Resume';
+				const current = Number(elements.resultsContainer.dataset.activeLapIndex || (lapHistory.length - 1));
 				const nextIndex = Math.min(lapHistory.length - 1, current + 1);
 				raceAutoplayLapIndex = nextIndex;
 				renderLapSnapshot(data, nextIndex);
@@ -547,18 +539,16 @@ export function renderRaceResults(data) {
 		startRaceAutoplay(data);
 	}
 
-	if (weekendPanel) weekendPanel.style.display = 'none';
-	if (strategyPanel) strategyPanel.style.display = 'none';
-	simulateBtn.style.display = 'none';
-	container.style.display = 'block';
+	setRaceScreenVisibility(elements, { showWeekend: false, showStrategy: false, showResults: true });
+	if (elements.simBtn) elements.simBtn.style.display = 'none';
 	activateRaceTab('timing');
 }
 
 export function exitRaceView() {
 	stopRaceAutoplay();
 	currentRaceWeekendData = null;
-	const raceView = document.getElementById('race-view');
-	raceView.style.display = 'none';
+	const { raceView } = getRaceElements();
+	if (raceView) raceView.style.display = 'none';
 
 	const advanceBtn = document.getElementById('advance-btn');
 	if (advanceBtn) {

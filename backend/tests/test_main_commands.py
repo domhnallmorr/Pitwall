@@ -432,6 +432,23 @@ def test_get_finance_reports_crash_and_maintenance_totals():
     assert result["data"]["summary"]["maintenance_total"] == 12_000
 
 
+def test_get_finance_reports_spares_total_from_construction():
+    state = create_state()
+    state.finance.add_transaction(
+        week=10,
+        year=1998,
+        amount=-52_500,
+        category=TransactionCategory.CONSTRUCTION,
+        description="Built 1 spare set (1/10)",
+    )
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "get_finance"})
+
+    assert result["status"] == "success"
+    assert result["data"]["summary"]["spares_total"] == 52_500
+
+
 def test_get_finance_reports_management_salary_total():
     app_main.CURRENT_STATE = create_state()
 
@@ -886,8 +903,8 @@ def test_repair_chassis_wear_reduces_wear_and_records_cost():
     assert state.player_chassis[1].wear == 15
     assert result["data"]["spares_used"] == 1
     assert state.player_spares == 3
-    assert result["data"]["mechanics_usage_percent_used"] == 11
-    assert state.player_mechanics_usage_percent == 11
+    assert result["data"]["mechanics_usage_percent_used"] == 22
+    assert state.player_mechanics_usage_percent == 22
     txs = [t for t in state.finance.transactions if t.category == TransactionCategory.MAINTENANCE]
     assert len(txs) == 1
     assert txs[0].amount == -32_000

@@ -18,6 +18,7 @@ def build_finance_report(state: GameState) -> dict[str, Any]:
     transport_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.TRANSPORT and t.amount < 0)
     crash_damage_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.CRASH_DAMAGE and t.amount < 0)
     maintenance_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.MAINTENANCE and t.amount < 0)
+    spares_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.CONSTRUCTION and t.amount < 0)
     legacy_workforce_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.WORKFORCE_WAGES and t.amount < 0)
     design_staff_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.DESIGN_STAFF_WAGES and t.amount < 0)
     engineering_staff_total = sum(-t.amount for t in transactions if t.category == TransactionCategory.ENGINEERING_STAFF_WAGES and t.amount < 0)
@@ -70,6 +71,7 @@ def build_finance_report(state: GameState) -> dict[str, Any]:
             "transport_total": transport_total,
             "crash_damage_total": crash_damage_total,
             "maintenance_total": maintenance_total,
+            "spares_total": spares_total,
             "design_staff_total": design_staff_total,
             "engineering_staff_total": engineering_staff_total,
             "mechanics_staff_total": mechanics_staff_total,

@@ -372,8 +372,8 @@ def test_chassis_commands_apply_player_updates():
     assert state.player_chassis[1].wear == 1
     assert repair_result["data"]["spares_used"] == 1
     assert state.player_spares == 2
-    assert repair_result["data"]["mechanics_usage_percent_used"] == 11
-    assert state.player_mechanics_usage_percent == 11
+    assert repair_result["data"]["mechanics_usage_percent_used"] == 22
+    assert state.player_mechanics_usage_percent == 22
 
 
 def test_chassis_repair_blocks_when_mechanics_capacity_is_exhausted():

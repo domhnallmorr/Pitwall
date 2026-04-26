@@ -15,4 +15,5 @@ export {
 	renderRaceStrategyScreen,
 	renderRaceResults,
 	renderRaceWeekend,
+	setRacePlaybackCompleteHandler,
 } from './race_helpers.js';
