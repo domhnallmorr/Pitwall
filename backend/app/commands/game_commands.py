@@ -7,6 +7,7 @@ from app.core.prize_money import PrizeMoneyManager
 from app.core.retirement import RetirementManager
 from app.core.roster import load_roster
 from app.core.transfers import TransferManager
+from app.core.tyre_compounds import TyreCompoundManager
 from app.core.management_transfers import (
     CommercialManagerTransferManager,
     EngineSupplierTransferManager,
@@ -150,6 +151,7 @@ def handle_start_career(state: GameState | None, logger: logging.Logger, team_na
         current_state.player_chassis = _create_player_chassis(selected_team.id)
         current_state.player_test_chassis_id = current_state.player_chassis[0].id if current_state.player_chassis else None
         current_state.player_race_chassis_assignments = {}
+        TyreCompoundManager().generate_for_new_career(current_state)
         released_principal = next(
             (principal for principal in current_state.team_principals if principal.team_id == selected_team.id),
             None,

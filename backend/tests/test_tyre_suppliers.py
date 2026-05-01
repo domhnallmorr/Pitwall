@@ -29,9 +29,15 @@ def test_load_roster_can_include_tyre_suppliers(mock_get_conn):
     assert greatday.country == "USA"
     assert greatday.wear == 60
     assert greatday.grip == 80
+    assert greatday.resources == 88
+    assert greatday.innovation == 82
+    assert greatday.reliability == 90
     assert spanrock.country == "Japan"
     assert spanrock.wear == 80
     assert spanrock.grip == 70
+    assert spanrock.resources == 86
+    assert spanrock.innovation == 91
+    assert spanrock.reliability == 84
 
 
 @patch("app.core.roster.get_connection")

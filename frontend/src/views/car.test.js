@@ -9,8 +9,10 @@ describe('CarView', () => {
 		const dom = new JSDOM(`
 			<div id="car-content-comparison"></div>
 			<div id="car-content-development" style="display:none;"></div>
+			<div id="car-content-tyres" style="display:none;"></div>
 			<div id="car-content-construction" style="display:none;"></div>
 			<div id="car-content-chassis" style="display:none;"></div>
+			<div id="car-tyres-suppliers"></div>
 			<div id="car-development-current-speed"></div>
 			<div id="car-development-status"></div>
 			<div id="car-garage-race-assignments-status"></div>
@@ -22,6 +24,7 @@ describe('CarView', () => {
 			<table><tbody id="car-chassis-table-body"></tbody></table>
 			<button class="car-tab-btn active" data-type="comparison"></button>
 			<button class="car-tab-btn" data-type="development"></button>
+			<button class="car-tab-btn" data-type="tyres"></button>
 			<button class="car-tab-btn" data-type="construction"></button>
 			<button class="car-tab-btn" data-type="chassis"></button>
 		`);
@@ -37,6 +40,36 @@ describe('CarView', () => {
 		],
 		player_car_speed: 80,
 		player_spares: 6,
+		tyres: {
+			suppliers: [
+				{
+					name: 'Greatday',
+					country: 'USA',
+					resources: 88,
+					innovation: 82,
+					reliability: 90,
+					is_player_supplier: true,
+					compounds: [
+						{ name: 'Hard', grip: 67, wear: 93, stiffness: 87 },
+						{ name: 'Medium', grip: 77, wear: 79, stiffness: 67 },
+						{ name: 'Soft', grip: 88, wear: 64, stiffness: 47 },
+					],
+				},
+				{
+					name: 'Spanrock',
+					country: 'Japan',
+					resources: 86,
+					innovation: 91,
+					reliability: 84,
+					is_player_supplier: false,
+					compounds: [
+						{ name: 'Hard', grip: 66, wear: 89, stiffness: 84 },
+						{ name: 'Medium', grip: 78, wear: 77, stiffness: 64 },
+						{ name: 'Soft', grip: 90, wear: 60, stiffness: 44 },
+					],
+				},
+			],
+		},
 		construction: {
 			spares: {
 				available: 6,
@@ -84,6 +117,13 @@ describe('CarView', () => {
 		expect(document.querySelector('.car-chassis-repair-spares[data-chassis-id="1"]').textContent).toContain('0 spare sets');
 		expect(document.getElementById('car-garage-race-assignments-status').textContent).toContain('Race chassis assigned');
 		expect(document.getElementById('car-garage-mechanics-status').textContent).toContain('78% remaining');
+		carView.setActiveTab('tyres');
+		expect(document.getElementById('car-content-tyres').style.display).toBe('block');
+		expect(document.getElementById('car-tyres-suppliers').textContent).toContain('Greatday');
+		expect(document.getElementById('car-tyres-suppliers').textContent).toContain('Current Supplier');
+		expect(document.getElementById('car-tyres-suppliers').textContent).toContain('Soft');
+		expect(document.getElementById('car-tyres-suppliers').textContent).toContain('Spanrock');
+		expect(document.querySelectorAll('.car-tyre-compound-table .car-speed-rating').length).toBeGreaterThan(0);
 		carView.setActiveTab('construction');
 		expect(document.getElementById('car-content-construction').style.display).toBe('block');
 		expect(document.getElementById('car-spares-widget').textContent).toContain('Available Spares');

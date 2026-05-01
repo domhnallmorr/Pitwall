@@ -360,12 +360,12 @@ def seed_data(conn):
         tyres_to_insert = [t for t in TYRE_SUPPLIERS_DATA if (t[1], t[0]) not in existing_tyre_keys]
         if tyres_to_insert:
             c.executemany(
-                'INSERT INTO tyre_suppliers (start_year, name, country, wear, grip) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO tyre_suppliers (start_year, name, country, wear, grip, resources, innovation, reliability) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                 tyres_to_insert,
             )
         c.executemany(
-            'UPDATE tyre_suppliers SET country = ?, wear = ?, grip = ? WHERE name = ? AND start_year = ?',
-            [(t[2], t[3], t[4], t[1], t[0]) for t in TYRE_SUPPLIERS_DATA],
+            'UPDATE tyre_suppliers SET country = ?, wear = ?, grip = ?, resources = ?, innovation = ?, reliability = ? WHERE name = ? AND start_year = ?',
+            [(t[2], t[3], t[4], t[5], t[6], t[7], t[1], t[0]) for t in TYRE_SUPPLIERS_DATA],
         )
         c.execute('SELECT name, start_year FROM fuel_suppliers')
         existing_fuel_keys = {(row[0], row[1]) for row in c.fetchall()}
@@ -516,12 +516,12 @@ def seed_data(conn):
     tyres_to_insert = [t for t in TYRE_SUPPLIERS_DATA if (t[1], t[0]) not in existing_tyre_keys]
     if tyres_to_insert:
         c.executemany(
-            'INSERT INTO tyre_suppliers (start_year, name, country, wear, grip) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO tyre_suppliers (start_year, name, country, wear, grip, resources, innovation, reliability) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
             tyres_to_insert,
         )
     c.executemany(
-        'UPDATE tyre_suppliers SET country = ?, wear = ?, grip = ? WHERE name = ? AND start_year = ?',
-        [(t[2], t[3], t[4], t[1], t[0]) for t in TYRE_SUPPLIERS_DATA],
+        'UPDATE tyre_suppliers SET country = ?, wear = ?, grip = ?, resources = ?, innovation = ?, reliability = ? WHERE name = ? AND start_year = ?',
+        [(t[2], t[3], t[4], t[5], t[6], t[7], t[1], t[0]) for t in TYRE_SUPPLIERS_DATA],
     )
     c.execute('SELECT name, start_year FROM fuel_suppliers')
     existing_fuel_keys = {(row[0], row[1]) for row in c.fetchall()}

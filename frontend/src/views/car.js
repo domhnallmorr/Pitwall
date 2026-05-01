@@ -10,8 +10,10 @@ export default class CarView {
 		this.devStatus = document.getElementById('car-development-status');
 		this.comparisonContent = document.getElementById('car-content-comparison');
 		this.developmentContent = document.getElementById('car-content-development');
+		this.tyresContent = document.getElementById('car-content-tyres');
 		this.constructionContent = document.getElementById('car-content-construction');
 		this.chassisContent = document.getElementById('car-content-chassis');
+		this.tyresSuppliers = document.getElementById('car-tyres-suppliers');
 		this.chassisBody = document.getElementById('car-chassis-table-body');
 		this.raceAssignmentsStatus = document.getElementById('car-garage-race-assignments-status');
 		this.mechanicsStatus = document.getElementById('car-garage-mechanics-status');
@@ -72,6 +74,9 @@ export default class CarView {
 		if (this.constructionContent) {
 			this.constructionContent.style.display = tab === 'construction' ? 'block' : 'none';
 		}
+		if (this.tyresContent) {
+			this.tyresContent.style.display = tab === 'tyres' ? 'block' : 'none';
+		}
 		if (this.chassisContent) {
 			this.chassisContent.style.display = tab === 'chassis' ? 'block' : 'none';
 		}
@@ -84,8 +89,18 @@ export default class CarView {
 		return Math.max(1, Math.min(5, Math.ceil((value / maxValue) * 5)));
 	}
 
-	renderRatingBlocks(value, label, scaleMax = 100) {
-		const rating = this.getSpeedRating(value, scaleMax);
+	getTyreQualityRating(value) {
+		const numericValue = Number(value);
+		const score = Number.isFinite(numericValue) ? Math.max(0, Math.min(100, numericValue)) : 0;
+		if (score >= 90) return 5;
+		if (score >= 80) return 4;
+		if (score >= 70) return 3;
+		if (score >= 60) return 2;
+		return 1;
+	}
+
+	renderRatingBlocks(value, label, scaleMax = 100, ratingOverride = null) {
+		const rating = ratingOverride ?? this.getSpeedRating(value, scaleMax);
 		let blocks = '';
 		for (let i = 1; i <= 5; i += 1) {
 			const stateClass = i <= rating ? 'is-filled' : '';
@@ -102,6 +117,50 @@ export default class CarView {
 			blocks += `<span class="car-speed-block car-availability-block ${stateClass}" aria-hidden="true"></span>`;
 		}
 		return `<span class="car-speed-rating car-availability-rating" role="img" aria-label="${label} ${filled} out of ${maxValue}">${blocks}</span>`;
+	}
+
+	renderTyreSuppliers(tyreData = {}, scaleMax = 100) {
+		if (!this.tyresSuppliers) return;
+		const suppliers = Array.isArray(tyreData.suppliers) ? tyreData.suppliers : [];
+		if (!suppliers.length) {
+			this.tyresSuppliers.innerHTML = '<div class="car-tyre-supplier-card"><div class="car-construction-note">No tyre compound data available for this season.</div></div>';
+			return;
+		}
+		this.tyresSuppliers.innerHTML = suppliers.map((supplier) => `
+			<section class="car-tyre-supplier-card ${supplier.is_player_supplier ? 'is-player-supplier' : ''}">
+				<div class="car-tyre-supplier-head">
+					<div>
+						<div class="car-tyre-supplier-name">${supplier.name}${supplier.is_player_supplier ? ' <span class="car-tyre-badge">Current Supplier</span>' : ''}</div>
+						<div class="car-tyre-supplier-country">${supplier.country || '-'}</div>
+					</div>
+				</div>
+				<div class="car-tyre-supplier-stats">
+					<div><span>Resources</span>${this.renderRatingBlocks(supplier.resources, `${supplier.name} resources`, scaleMax)}</div>
+					<div><span>Innovation</span>${this.renderRatingBlocks(supplier.innovation, `${supplier.name} innovation`, scaleMax)}</div>
+					<div><span>Reliability</span>${this.renderRatingBlocks(supplier.reliability, `${supplier.name} reliability`, scaleMax)}</div>
+				</div>
+				<table class="data-table car-tyre-compound-table">
+					<thead>
+						<tr>
+							<th>Compound</th>
+							<th>Grip</th>
+							<th>Wear</th>
+							<th>Stiffness</th>
+						</tr>
+					</thead>
+					<tbody>
+						${(supplier.compounds || []).map((compound) => `
+							<tr>
+								<td><strong>${compound.name}</strong></td>
+								<td>${this.renderRatingBlocks(compound.grip, `${supplier.name} ${compound.name} grip`, scaleMax, this.getTyreQualityRating(compound.grip))}</td>
+								<td>${this.renderRatingBlocks(compound.wear, `${supplier.name} ${compound.name} wear`, scaleMax, this.getTyreQualityRating(compound.wear))}</td>
+								<td>${this.renderRatingBlocks(compound.stiffness, `${supplier.name} ${compound.name} stiffness`, scaleMax, this.getTyreQualityRating(compound.stiffness))}</td>
+							</tr>
+						`).join('')}
+					</tbody>
+				</table>
+			</section>
+		`).join('');
 	}
 
 	updateSparesWidget(playerSpares) {
@@ -181,6 +240,8 @@ export default class CarView {
 				this.onStartDevelopment(type);
 			});
 		});
+
+		this.renderTyreSuppliers(data?.tyres || {}, 100);
 
 		const chassisRows = Array.isArray(data?.player_chassis) ? data.player_chassis : [];
 		const playerDrivers = Array.isArray(data?.player_drivers) ? data.player_drivers : [];

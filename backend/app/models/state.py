@@ -9,6 +9,7 @@ from app.models.commercial_manager import CommercialManager
 from app.models.title_sponsor import TitleSponsor
 from app.models.engine_supplier import EngineSupplier
 from app.models.tyre_supplier import TyreSupplier
+from app.models.tyre_compound import TyreCompound
 from app.models.fuel_supplier import FuelSupplier
 from app.models.calendar import Calendar
 from app.models.circuit import Circuit
@@ -56,6 +57,7 @@ class GameState(BaseModel):
     title_sponsors: List[TitleSponsor] = Field(default_factory=list)
     engine_suppliers: List[EngineSupplier] = Field(default_factory=list)
     tyre_suppliers: List[TyreSupplier] = Field(default_factory=list)
+    season_tyre_compounds: Dict[str, List[TyreCompound]] = Field(default_factory=dict)
     fuel_suppliers: List[FuelSupplier] = Field(default_factory=list)
     calendar: Calendar
     circuits: List[Circuit]
@@ -70,6 +72,7 @@ class GameState(BaseModel):
     driver_stat_awards_by_event: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
     qualifying_results_by_event: Dict[str, List[Dict[str, Any]]] = Field(default_factory=dict)
     player_pit_strategies_by_event: Dict[str, Dict[int, Dict[str, Any]]] = Field(default_factory=dict)
+    tyre_compounds_by_event: Dict[str, Dict[int, str]] = Field(default_factory=dict)
     latest_race_incidents: List[Dict[str, Any]] = Field(default_factory=list)
     planned_ai_signings: List[Dict[str, Any]] = Field(default_factory=list)
     announced_ai_signings: List[Dict[str, Any]] = Field(default_factory=list)

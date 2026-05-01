@@ -33,6 +33,7 @@ def _build_race_weekend_payload(state: GameState) -> dict:
     event_key = f"{state.year}_{current_event.week}_{current_event.name}"
     qualifying_results = list(state.qualifying_results_by_event.get(event_key, []))
     event_processed = f"{current_event.week}_{current_event.name}" in state.events_processed
+    race_manager._ensure_event_tyre_compounds(state, race_manager._build_participants(state)[0])
     player_strategies = race_manager._player_strategy_entries(state, qualifying_results)
 
     return {

@@ -428,11 +428,12 @@
             <h2>Car</h2>
           </div>
           <div class="tabs">
-            <button class="tab-btn car-tab-btn active" data-type="comparison">Comparison</button>
-            <button class="tab-btn car-tab-btn" data-type="development">Development</button>
-            <button class="tab-btn car-tab-btn" data-type="construction">Construction</button>
-            <button class="tab-btn car-tab-btn" data-type="chassis">Chassis</button>
-          </div>
+             <button class="tab-btn car-tab-btn active" data-type="comparison">Comparison</button>
+             <button class="tab-btn car-tab-btn" data-type="development">Development</button>
+             <button class="tab-btn car-tab-btn" data-type="tyres">Tyres</button>
+             <button class="tab-btn car-tab-btn" data-type="construction">Construction</button>
+             <button class="tab-btn car-tab-btn" data-type="chassis">Chassis</button>
+            </div>
           <div id="car-content-comparison">
             <table class="data-table">
               <thead>
@@ -449,9 +450,9 @@
               </tbody>
             </table>
           </div>
-          <div id="car-content-development" style="display:none;">
-            <div id="car-development-current-speed" class="car-development-current-speed"></div>
-            <div id="car-development-status" class="car-development-status"></div>
+           <div id="car-content-development" style="display:none;">
+             <div id="car-development-current-speed" class="car-development-current-speed"></div>
+             <div id="car-development-status" class="car-development-status"></div>
             <table class="data-table">
               <thead>
                 <tr>
@@ -465,7 +466,13 @@
               <tbody id="car-development-table-body">
                 <!-- JS populated -->
               </tbody>
-            </table>
+             </table>
+           </div>
+          <div id="car-content-tyres" style="display:none;">
+            <div class="car-tyres-intro">
+              <p class="car-garage-note">Review the current season compounds and compare both tyre suppliers before locking in your race weekend choices.</p>
+            </div>
+            <div id="car-tyres-suppliers" class="car-tyres-suppliers"></div>
           </div>
           <div id="car-content-construction" style="display:none;">
             <div class="car-construction-intro">
@@ -733,6 +740,7 @@
         </div>
 
         <div class="race-controls race-weekend-actions">
+          <button id="open-race-strategy-btn" class="btn-secondary btn-weekend">TYRES &amp; STRATEGY</button>
           <button id="simulate-qualifying-btn" class="btn-secondary btn-weekend">RUN QUALIFYING</button>
           <button id="simulate-race-btn" class="btn-simulate" disabled>SIMULATE RACE</button>
         </div>
@@ -748,6 +756,7 @@
                 <th>Pos</th>
                 <th>Driver</th>
                 <th>Team</th>
+                <th>Tyre</th>
                 <th>Best</th>
                 <th>Gap</th>
               </tr>
@@ -820,6 +829,7 @@
                   <th>Pos</th>
                   <th>Driver</th>
                   <th>Team</th>
+                  <th>Tyre</th>
                   <th>Stops</th>
                   <th>Last</th>
                   <th>Best</th>
@@ -846,6 +856,7 @@
                   <th>Pos</th>
                   <th>Driver</th>
                   <th>Team</th>
+                  <th>Tyre</th>
                   <th>Best</th>
                   <th>Gap</th>
                 </tr>

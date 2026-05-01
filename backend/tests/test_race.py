@@ -8,6 +8,7 @@ from app.models.engine_supplier import EngineSupplier
 from app.models.state import GameState
 from app.models.team import Team
 from app.models.tyre_supplier import TyreSupplier
+from app.models.tyre_compound import TyreCompound
 from app.race.lap_simulator import resolve_turn_one_incident, start_to_turn_one_time_ms
 from app.race.race_manager import RaceManager
 from app.race.retirements import mechanical_failure_probability, pick_crash_count, prepare_participants
@@ -58,6 +59,18 @@ def create_race_state():
         drivers=drivers,
         engine_suppliers=engine_suppliers,
         tyre_suppliers=tyre_suppliers,
+        season_tyre_compounds={
+            "Tyre A": [
+                TyreCompound(supplier_name="Tyre A", name="Hard", grip=62, wear=86, stiffness=82, year=1998),
+                TyreCompound(supplier_name="Tyre A", name="Medium", grip=72, wear=72, stiffness=62, year=1998),
+                TyreCompound(supplier_name="Tyre A", name="Soft", grip=82, wear=58, stiffness=42, year=1998),
+            ],
+            "Tyre B": [
+                TyreCompound(supplier_name="Tyre B", name="Hard", grip=62, wear=86, stiffness=82, year=1998),
+                TyreCompound(supplier_name="Tyre B", name="Medium", grip=72, wear=72, stiffness=62, year=1998),
+                TyreCompound(supplier_name="Tyre B", name="Soft", grip=82, wear=58, stiffness=42, year=1998),
+            ],
+        },
         calendar=calendar,
         circuits=circuits,
         player_chassis=[
@@ -74,7 +87,12 @@ def test_simulate_race_returns_all_drivers_and_lap_history():
     state = create_race_state()
     manager = RaceManager()
     manager._pick_crash_count = lambda _: 0
-    result = manager.simulate_race(state)
+    original_random = random.random
+    random.random = lambda: 0.99
+    try:
+        result = manager.simulate_race(state)
+    finally:
+        random.random = original_random
 
     assert len(result["results"]) == 4
     assert len(result["qualifying_results"]) == 4
@@ -96,6 +114,7 @@ def test_simulate_qualifying_stores_results_for_current_event():
     assert result["qualifying_complete"] is True
     assert len(result["qualifying_results"]) == 4
     assert state.qualifying_results_by_event[event_key] == result["qualifying_results"]
+    assert set(state.tyre_compounds_by_event[event_key].values()).issubset({"Hard", "Medium", "Soft"})
     assert sum(driver.poles for driver in state.drivers) == 1
 
 
@@ -479,6 +498,9 @@ def test_simulate_race_returns_qualifying_order_and_uses_it_for_grid():
         4: [81_700, 81_680, 81_690],
     }
     qualifying_calls = {driver_id: 0 for driver_id in qualifying_times}
+    event = state.calendar.current_event
+    event_key = f"{state.year}_{event.week}_{event.name}"
+    state.tyre_compounds_by_event[event_key] = {1: "Medium", 2: "Medium", 3: "Medium", 4: "Medium"}
 
     def fake_quali_lap(entrant, circuit):
         driver_id = entrant["driver_id"]
@@ -745,6 +767,111 @@ def test_more_durable_tyres_reduce_stint_degradation():
         random.randint = original_randint
 
     assert durable < fragile
+
+
+def test_compound_grip_affects_lap_time():
+    state = create_race_state()
+    manager = RaceManager()
+    circuit = state.circuits[0]
+    entrant = {
+        "driver_speed": 50,
+        "car_speed": 50,
+        "engine_power": 50,
+        "tyre_compound_name": "Soft",
+        "tyre_compound_grip": 90,
+        "tyre_compound_wear": 72,
+        "fuel_kg": 0.0,
+        "stint_laps": 0,
+    }
+
+    original_randint = random.randint
+    random.randint = lambda a, b: 0
+    try:
+        soft = manager._lap_time_ms(entrant, circuit)
+        entrant["tyre_compound_name"] = "Hard"
+        entrant["tyre_compound_grip"] = 90
+        hard = manager._lap_time_ms(entrant, circuit)
+    finally:
+        random.randint = original_randint
+
+    assert soft < hard
+    assert hard - soft == 600
+
+
+def test_compound_wear_affects_stint_degradation():
+    state = create_race_state()
+    manager = RaceManager()
+    circuit = state.circuits[0]
+    entrant = {
+        "driver_speed": 50,
+        "car_speed": 50,
+        "engine_power": 50,
+        "tyre_compound_name": "Hard",
+        "tyre_compound_grip": 72,
+        "tyre_compound_wear": 90,
+        "fuel_kg": 0.0,
+        "stint_laps": 12,
+    }
+
+    original_randint = random.randint
+    random.randint = lambda a, b: 0
+    try:
+        durable_hard = manager._lap_time_ms(entrant, circuit)
+        entrant["tyre_compound_wear"] = 60
+        fragile_hard = manager._lap_time_ms(entrant, circuit)
+    finally:
+        random.randint = original_randint
+
+    assert durable_hard < fragile_hard
+
+
+def test_compound_quality_rating_can_make_one_hard_better_than_another():
+    state = create_race_state()
+    manager = RaceManager()
+    circuit = state.circuits[0]
+    entrant = {
+        "driver_speed": 50,
+        "car_speed": 50,
+        "engine_power": 50,
+        "tyre_compound_name": "Hard",
+        "tyre_compound_grip": 90,
+        "tyre_compound_wear": 90,
+        "fuel_kg": 0.0,
+        "stint_laps": 10,
+    }
+
+    original_randint = random.randint
+    random.randint = lambda a, b: 0
+    try:
+        strong_hard = manager._lap_time_ms(entrant, circuit)
+        entrant["tyre_compound_grip"] = 60
+        entrant["tyre_compound_wear"] = 60
+        weak_hard = manager._lap_time_ms(entrant, circuit)
+    finally:
+        random.randint = original_randint
+
+    assert strong_hard < weak_hard
+
+
+def test_qualifying_and_race_use_same_locked_compound_choice():
+    state = create_race_state()
+    manager = RaceManager()
+    manager._pick_crash_count = lambda _: 0
+    event_key = f"{state.year}_{state.calendar.current_week}_Test GP"
+    state.tyre_compounds_by_event[event_key] = {
+        1: "Soft",
+        2: "Medium",
+        3: "Hard",
+        4: "Hard",
+    }
+
+    qualifying = manager.simulate_qualifying(state)
+    race = manager.simulate_race(state)
+
+    assert state.tyre_compounds_by_event[event_key][1] == "Soft"
+    assert state.tyre_compounds_by_event[event_key][2] == "Medium"
+    assert qualifying["qualifying_results"]
+    assert race["results"]
 
 
 def test_assign_strategy_generates_valid_pit_windows():

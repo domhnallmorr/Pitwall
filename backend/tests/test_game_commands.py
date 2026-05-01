@@ -10,6 +10,7 @@ from app.models.chassis import Chassis
 from app.models.state import GameState
 from app.models.team import Team
 from app.models.team_principal import TeamPrincipal
+from app.models.tyre_supplier import TyreSupplier
 
 
 def create_state() -> GameState:
@@ -17,6 +18,10 @@ def create_state() -> GameState:
         year=1998,
         teams=[Team(id=1, name="Warrick", country="United Kingdom", balance=1_000_000)],
         drivers=[],
+        tyre_suppliers=[
+            TyreSupplier(id=1, name="Greatday", country="USA", wear=60, grip=80, resources=88, innovation=82, reliability=90),
+            TyreSupplier(id=2, name="Spanrock", country="Japan", wear=80, grip=70, resources=86, innovation=91, reliability=84),
+        ],
         team_principals=[TeamPrincipal(id=1, name="Franklin Warrick", country="United Kingdom", age=56, skill=80, contract_length=99, team_id=1, owns_team=True)],
         calendar=Calendar(events=[Event(name="Albert Park", week=10, type=EventType.RACE)], current_week=1),
         circuits=[],
@@ -114,6 +119,8 @@ def test_handle_start_career_success_without_retirement_email(
     assert all(chassis.team_id == 1 for chassis in next_state.player_chassis)
     assert next_state.player_test_chassis_id == 1
     assert next_state.player_race_chassis_assignments == {}
+    assert set(next_state.season_tyre_compounds.keys()) == {"Greatday", "Spanrock"}
+    assert [compound.name for compound in next_state.season_tyre_compounds["Greatday"]] == ["Hard", "Medium", "Soft"]
 
 
 @patch("app.commands.game_commands.load_default_state", side_effect=RuntimeError("boom"))

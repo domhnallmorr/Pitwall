@@ -9,6 +9,7 @@ from app.models.state import GameState
 from app.models.calendar import Calendar
 from app.models.team import Team
 from app.models.driver import Driver
+from app.models.tyre_compound import TyreCompound
 from app.models.team_principal import TeamPrincipal
 from app.models.technical_director import TechnicalDirector
 from app.models.commercial_manager import CommercialManager
@@ -36,6 +37,13 @@ def create_state() -> GameState:
             Driver(id=1, name="John Newhouse", age=27, country="Canada", team_id=1, speed=84, race_starts=33, wins=11),
             Driver(id=2, name="Henrik Friedrich", age=31, country="Germany", team_id=1, speed=72, race_starts=65, wins=1),
         ],
+        season_tyre_compounds={
+            "Greatday": [
+                TyreCompound(supplier_name="Greatday", name="Hard", grip=67, wear=93, stiffness=87, year=1998),
+                TyreCompound(supplier_name="Greatday", name="Medium", grip=77, wear=79, stiffness=67, year=1998),
+                TyreCompound(supplier_name="Greatday", name="Soft", grip=88, wear=64, stiffness=47, year=1998),
+            ]
+        },
         player_spares=4,
         player_chassis=[
             Chassis(id=1, team_id=1, name="Chassis 1", wear=5),
@@ -176,6 +184,8 @@ def test_save_and_load_round_trip(tmp_path: Path):
     assert loaded.player_chassis[1].wear == 9
     assert loaded.player_test_chassis_id == 3
     assert loaded.player_race_chassis_assignments[1] == 1
+    assert loaded.season_tyre_compounds["Greatday"][2].name == "Soft"
+    assert loaded.season_tyre_compounds["Greatday"][2].grip == 88
     assert loaded.drivers[0].race_starts == 33
     assert loaded.drivers[0].wins == 11
     assert loaded.team_principals[0].name == "Franklin Warrick"

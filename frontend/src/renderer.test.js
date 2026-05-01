@@ -156,6 +156,7 @@ describe('renderer smoke', () => {
 			<button id="test-km-cancel-btn"></button>
 			<button id="test-km-confirm-btn"></button>
 			<button id="simulate-race-btn"></button>
+			<button id="open-race-strategy-btn"></button>
 			<button id="simulate-qualifying-btn"></button>
 			<button id="race-strategy-back-btn"></button>
 			<button id="race-strategy-start-btn"></button>
@@ -284,9 +285,9 @@ describe('renderer smoke', () => {
 			status: 'success',
 			data: {
 				qualifying_results: [
-					{ position: 1, driver_name: 'A', team_name: 'T1', best_lap_ms: 82000 },
-					{ position: 2, driver_name: 'B', team_name: 'T2', best_lap_ms: 82300 },
-					{ position: 3, driver_name: 'C', team_name: 'T3', best_lap_ms: 82600 },
+					{ position: 1, driver_name: 'A', team_name: 'T1', tyre_compound_name: 'Soft', best_lap_ms: 82000 },
+					{ position: 2, driver_name: 'B', team_name: 'T2', tyre_compound_name: 'Medium', best_lap_ms: 82300 },
+					{ position: 3, driver_name: 'C', team_name: 'T3', tyre_compound_name: 'Hard', best_lap_ms: 82600 },
 				],
 				total_laps: 2,
 				lap_history: [
@@ -294,17 +295,17 @@ describe('renderer smoke', () => {
 						lap: 1,
 						order: [
 							{ driver_id: 1, position: 1, driver_name: 'A', team_name: 'T1', last_lap_ms: 83000, best_lap_ms: 83000, gap_display: 'LEADER', status: 'RUNNING' },
-							{ driver_id: 2, position: 2, driver_name: 'B', team_name: 'T2', last_lap_ms: 83500, best_lap_ms: 83500, gap_display: '+0.500s', status: 'RUNNING' },
-							{ driver_id: 3, position: 3, driver_name: 'C', team_name: 'T3', last_lap_ms: 84000, best_lap_ms: 84000, gap_display: '+1.000s', status: 'RUNNING' },
+							{ driver_id: 2, position: 2, driver_name: 'B', team_name: 'T2', tyre_compound_name: 'Medium', last_lap_ms: 83500, best_lap_ms: 83500, gap_display: '+0.500s', status: 'RUNNING' },
+							{ driver_id: 3, position: 3, driver_name: 'C', team_name: 'T3', tyre_compound_name: 'Hard', last_lap_ms: 84000, best_lap_ms: 84000, gap_display: '+1.000s', status: 'RUNNING' },
 						],
 						events: [{ type: 'fastest_lap', lap: 1, driver_name: 'A', lap_time_ms: 83000 }],
 					},
 					{
 						lap: 2,
 						order: [
-							{ driver_id: 1, position: 1, driver_name: 'A', team_name: 'T1', last_lap_ms: 83200, best_lap_ms: 83000, gap_display: 'LEADER', status: 'FINISHED' },
-							{ driver_id: 2, position: 2, driver_name: 'B', team_name: 'T2', last_lap_ms: 84000, best_lap_ms: 83500, gap_display: '+1 Lap', status: 'FINISHED' },
-							{ driver_id: 3, position: 3, driver_name: 'C', team_name: 'T3', last_lap_ms: null, best_lap_ms: 84000, gap_display: '+1 Lap', status: 'DNF' },
+							{ driver_id: 1, position: 1, driver_name: 'A', team_name: 'T1', tyre_compound_name: 'Soft', last_lap_ms: 83200, best_lap_ms: 83000, gap_display: 'LEADER', status: 'FINISHED' },
+							{ driver_id: 2, position: 2, driver_name: 'B', team_name: 'T2', tyre_compound_name: 'Medium', last_lap_ms: 84000, best_lap_ms: 83500, gap_display: '+1 Lap', status: 'FINISHED' },
+							{ driver_id: 3, position: 3, driver_name: 'C', team_name: 'T3', tyre_compound_name: 'Hard', last_lap_ms: null, best_lap_ms: 84000, gap_display: '+1 Lap', status: 'DNF' },
 						],
 						events: [
 							{ type: 'pit_stop', lap: 2, driver_id: 2, driver_name: 'B', stop_number: 1, fuel_added_kg: 20.0 },
@@ -328,7 +329,8 @@ describe('renderer smoke', () => {
 		expect(document.getElementById('race-latest-commentary').textContent).toContain('moves up to P2');
 		expect(document.getElementById('race-commentary-log').textContent).toContain('fastest lap');
 		expect(document.getElementById('race-commentary-log').textContent).toContain('pits for fuel');
-		expect(document.getElementById('race-results-body').children[1].children[3].textContent).toBe('1');
+		expect(document.getElementById('race-results-body').children[0].children[3].textContent).toBe('Soft');
+		expect(document.getElementById('race-results-body').children[1].children[4].textContent).toBe('1');
 		expect(document.querySelectorAll('#race-lap-chart-svg .race-lap-chart-line').length).toBe(3);
 		expect(document.getElementById('race-lap-chart-legend').children.length).toBe(3);
 		expect(document.querySelectorAll('#race-laptime-svg .race-lap-chart-line').length).toBe(3);
@@ -346,8 +348,9 @@ describe('renderer smoke', () => {
 		expect(document.getElementById('race-panel-qualifying').style.display).toBe('');
 		expect(document.getElementById('race-results-qualifying-body').children.length).toBe(3);
 		expect(document.getElementById('race-results-pole-display').textContent).toContain('Pole: A');
-		expect(document.getElementById('race-results-qualifying-body').children[0].children[4].textContent).toBe('POLE');
-		expect(document.getElementById('race-results-qualifying-body').children[1].children[4].textContent).toBe('+0.300s');
+		expect(document.getElementById('race-results-qualifying-body').children[0].children[3].textContent).toBe('Soft');
+		expect(document.getElementById('race-results-qualifying-body').children[0].children[5].textContent).toBe('POLE');
+		expect(document.getElementById('race-results-qualifying-body').children[1].children[5].textContent).toBe('+0.300s');
 		expect(document.getElementById('race-panel-commentary').style.display).toBe('none');
 		document.getElementById('race-tab-laptimes').click();
 		expect(document.getElementById('race-panel-laptimes').style.display).toBe('');
@@ -582,7 +585,9 @@ describe('renderer smoke', () => {
 				qualifying_complete: false,
 				race_complete: false,
 				qualifying_results: [],
-				player_strategies: [],
+				player_strategies: [
+					{ driver_id: 1, driver_name: 'A', planned_stops: 2, planned_pit_laps: [18, 40], tyre_compound: 'Medium' },
+				],
 			},
 		}));
 
@@ -591,7 +596,18 @@ describe('renderer smoke', () => {
 		expect(document.getElementById('race-laps-display').textContent).toBe('78 laps');
 		expect(document.getElementById('simulate-qualifying-btn').disabled).toBe(false);
 		expect(document.getElementById('simulate-race-btn').disabled).toBe(true);
+		expect(document.getElementById('open-race-strategy-btn').disabled).toBe(false);
 		expect(document.getElementById('race-qualifying-body').textContent).toContain('Run qualifying');
+
+		document.getElementById('open-race-strategy-btn').click();
+		expect(document.getElementById('race-strategy-panel').style.display).toBe('grid');
+		document.getElementById('race-strategy-tyre-1').value = 'Soft';
+		document.getElementById('race-strategy-tyre-1').dispatchEvent(new window.Event('change', { bubbles: true }));
+		expect(apiMock.setRaceStrategy).toHaveBeenCalledWith([
+			{ driver_id: 1, planned_stops: 2, tyre_compound: 'Soft' },
+		]);
+		document.getElementById('race-strategy-back-btn').click();
+		expect(document.getElementById('race-weekend-panel').style.display).toBe('grid');
 
 		document.getElementById('simulate-qualifying-btn').click();
 		expect(apiMock.simulateQualifying).toHaveBeenCalledTimes(1);
@@ -612,8 +628,8 @@ describe('renderer smoke', () => {
 					{ position: 2, driver_name: 'B', team_name: 'T2', best_lap_ms: 80200 },
 				],
 				player_strategies: [
-					{ driver_id: 1, driver_name: 'A', planned_stops: 2, planned_pit_laps: [18, 39], grid_position: 1 },
-					{ driver_id: 2, driver_name: 'B', planned_stops: 1, planned_pit_laps: [31], grid_position: 2 },
+					{ driver_id: 1, driver_name: 'A', planned_stops: 2, planned_pit_laps: [18, 39], grid_position: 1, tyre_compound: 'Soft' },
+					{ driver_id: 2, driver_name: 'B', planned_stops: 1, planned_pit_laps: [31], grid_position: 2, tyre_compound: 'Medium' },
 				],
 			},
 		}));
@@ -625,11 +641,12 @@ describe('renderer smoke', () => {
 
 		simulateBtn.click();
 		expect(document.getElementById('race-strategy-panel').style.display).toBe('grid');
+		expect(document.getElementById('race-strategy-tyre-1').disabled).toBe(true);
 		document.getElementById('race-strategy-stops-1').value = '3';
 		document.getElementById('race-strategy-stops-1').dispatchEvent(new window.Event('change', { bubbles: true }));
 		expect(apiMock.setRaceStrategy).toHaveBeenCalledWith([
-			{ driver_id: 1, planned_stops: 3 },
-			{ driver_id: 2, planned_stops: 1 },
+			{ driver_id: 1, planned_stops: 3, tyre_compound: 'Soft' },
+			{ driver_id: 2, planned_stops: 1, tyre_compound: 'Medium' },
 		]);
 		ipcHandler(JSON.stringify({
 			type: 'race_strategy_updated',
@@ -639,8 +656,8 @@ describe('renderer smoke', () => {
 				qualifying_complete: true,
 				race_complete: false,
 				player_strategies: [
-					{ driver_id: 1, driver_name: 'A', planned_stops: 3, planned_pit_laps: [16, 34, 51], grid_position: 1 },
-					{ driver_id: 2, driver_name: 'B', planned_stops: 1, planned_pit_laps: [31], grid_position: 2 },
+					{ driver_id: 1, driver_name: 'A', planned_stops: 3, planned_pit_laps: [16, 34, 51], grid_position: 1, tyre_compound: 'Soft' },
+					{ driver_id: 2, driver_name: 'B', planned_stops: 1, planned_pit_laps: [31], grid_position: 2, tyre_compound: 'Medium' },
 				],
 			},
 		}));

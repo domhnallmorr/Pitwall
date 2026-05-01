@@ -16,6 +16,11 @@ from app.race.constants import (
 	QUALIFYING_JITTER_RANGE_MS,
 	QUALIFYING_REDUCTION_CAP_MS_BY_STAR,
 	TYRE_DEGRADATION_MS_PER_LAP,
+	TYRE_COMPOUND_GRIP_CLASS_EFFECT_MS,
+	TYRE_COMPOUND_GRIP_QUALITY_MS_PER_POINT,
+	TYRE_COMPOUND_QUALITY_REFERENCE,
+	TYRE_COMPOUND_WEAR_CLASS_MULTIPLIER,
+	TYRE_COMPOUND_WEAR_QUALITY_MULTIPLIER_DELTA,
 	TYRE_GRIP_MAX_EFFECT_MS,
 	TYRE_WEAR_MAX_MULTIPLIER_DELTA,
 )
@@ -72,11 +77,23 @@ def grid_score(entrant: dict, grid_jitter_range_ms: int) -> int:
 
 
 def tyre_grip_effect_ms(entrant: dict) -> int:
+	if "tyre_compound_grip" in entrant:
+		compound_name = str(entrant.get("tyre_compound_name", "Medium") or "Medium")
+		class_effect_ms = TYRE_COMPOUND_GRIP_CLASS_EFFECT_MS.get(compound_name, 0)
+		compound_grip = float(entrant.get("tyre_compound_grip", TYRE_COMPOUND_QUALITY_REFERENCE) or TYRE_COMPOUND_QUALITY_REFERENCE)
+		quality_effect_ms = int(round((TYRE_COMPOUND_QUALITY_REFERENCE - compound_grip) * TYRE_COMPOUND_GRIP_QUALITY_MS_PER_POINT))
+		return class_effect_ms + quality_effect_ms
 	tyre_grip = float(entrant.get("tyre_grip", 50) or 50)
 	return int(TYRE_GRIP_MAX_EFFECT_MS * (50.0 - tyre_grip) / 100.0)
 
 
 def tyre_wear_multiplier(entrant: dict) -> float:
+	if "tyre_compound_wear" in entrant:
+		compound_name = str(entrant.get("tyre_compound_name", "Medium") or "Medium")
+		class_multiplier = TYRE_COMPOUND_WEAR_CLASS_MULTIPLIER.get(compound_name, 1.0)
+		compound_wear = float(entrant.get("tyre_compound_wear", TYRE_COMPOUND_QUALITY_REFERENCE) or TYRE_COMPOUND_QUALITY_REFERENCE)
+		quality_multiplier = ((TYRE_COMPOUND_QUALITY_REFERENCE - compound_wear) / 50.0) * TYRE_COMPOUND_WEAR_QUALITY_MULTIPLIER_DELTA
+		return max(0.5, class_multiplier + quality_multiplier)
 	tyre_wear = float(entrant.get("tyre_wear", 50) or 50)
 	return 1.0 + ((50.0 - tyre_wear) / 50.0) * TYRE_WEAR_MAX_MULTIPLIER_DELTA
 

@@ -4,6 +4,7 @@ from typing import Any
 from app.core.player_chassis import apply_player_race_wear, get_player_driver_chassis, get_player_race_chassis_assignments
 from app.models.circuit import Circuit
 from app.models.state import GameState
+from app.models.tyre_compound import TyreCompound
 from app.race.constants import GRID_JITTER_RANGE_MS, PLAYER_QUALIFYING_WEAR_INCREASE, POINTS_TABLE, QUALIFYING_ATTEMPTS
 from app.race.lap_simulator import simulate_lap_race
 from app.race.pace import (
@@ -91,6 +92,41 @@ class RaceManager:
 			return None
 		return f"{state.year}_{event.week}_{event.name}"
 
+	def _current_tyre_compounds_by_supplier(self, state: GameState) -> dict[str, dict[str, TyreCompound]]:
+		return {
+			supplier_name: {compound.name: compound for compound in compounds}
+			for supplier_name, compounds in state.season_tyre_compounds.items()
+		}
+
+	def _default_compound_choice_for_rank(self, rank: int, entrant_count: int) -> str:
+		return random.choice(["Hard", "Medium", "Soft"])
+
+	def _ensure_event_tyre_compounds(
+		self,
+		state: GameState,
+		participants: list[dict[str, Any]],
+	) -> dict[int, str]:
+		event_key = self._current_event_key(state)
+		if event_key is None:
+			return {}
+		compound_map = state.tyre_compounds_by_event.setdefault(event_key, {})
+		if len(compound_map) >= len(participants):
+			return {int(driver_id): name for driver_id, name in compound_map.items()}
+
+		ranked = sorted(
+			participants,
+			key=lambda entrant: (
+				-base_pace_bonus_ms(entrant),
+				-int(entrant.get("driver_qualifying", 3) or 3),
+				int(entrant.get("driver_id", 0) or 0),
+			),
+		)
+		total = len(ranked)
+		for rank, entrant in enumerate(ranked, start=1):
+			driver_id = int(entrant["driver_id"])
+			compound_map.setdefault(driver_id, self._default_compound_choice_for_rank(rank, total))
+		return {int(driver_id): name for driver_id, name in compound_map.items()}
+
 	def _generate_pit_laps(self, planned_stops: int, circuit: Circuit) -> list[int]:
 		windows = strategy_windows(planned_stops, circuit.laps)
 		pit_laps: list[int] = []
@@ -131,6 +167,7 @@ class RaceManager:
 
 		circuit = self._get_circuit(state)
 		strategy_map = state.player_pit_strategies_by_event.setdefault(event_key, {})
+		compound_map = state.tyre_compounds_by_event.setdefault(event_key, {})
 		driver_lookup = {driver.id: driver for driver in state.drivers}
 		qualifying_lookup = {
 			row["driver_id"]: row["position"]
@@ -159,6 +196,7 @@ class RaceManager:
 				"grid_position": qualifying_lookup.get(driver_id),
 				"planned_stops": entry["planned_stops"],
 				"planned_pit_laps": list(entry["planned_pit_laps"]),
+				"tyre_compound": compound_map.get(driver_id, "Medium"),
 			})
 
 		return rows
@@ -174,6 +212,7 @@ class RaceManager:
 
 		circuit = self._get_circuit(state)
 		strategy_map = state.player_pit_strategies_by_event.setdefault(event_key, {})
+		compound_map = state.tyre_compounds_by_event.setdefault(event_key, {})
 		for row in strategies:
 			driver_id = int(row["driver_id"])
 			planned_stops = max(1, min(3, int(row.get("planned_stops", 1))))
@@ -181,6 +220,8 @@ class RaceManager:
 				"planned_stops": planned_stops,
 				"planned_pit_laps": self._generate_pit_laps(planned_stops, circuit),
 			}
+			if row.get("tyre_compound") in {"Hard", "Medium", "Soft"}:
+				compound_map[driver_id] = str(row["tyre_compound"])
 
 		return self._player_strategy_entries(state)
 
@@ -189,6 +230,7 @@ class RaceManager:
 		driver_lookup = {d.id: d for d in state.drivers}
 		engine_supplier_lookup = {supplier.name: supplier for supplier in state.engine_suppliers}
 		tyre_supplier_lookup = {supplier.name: supplier for supplier in state.tyre_suppliers}
+		compound_lookup = self._current_tyre_compounds_by_supplier(state)
 		circuit = self._get_circuit(state)
 
 		for team in state.teams:
@@ -202,8 +244,6 @@ class RaceManager:
 					engine_supplier = engine_supplier_lookup.get(getattr(team, "engine_supplier_name", None))
 					engine_power = getattr(engine_supplier, "power", 50) if engine_supplier else 50
 					tyre_supplier = tyre_supplier_lookup.get(getattr(team, "tyre_supplier_name", None))
-					tyre_grip = getattr(tyre_supplier, "grip", 50) if tyre_supplier else 50
-					tyre_wear = getattr(tyre_supplier, "wear", 50) if tyre_supplier else 50
 					participant = {
 						"driver_id": did,
 						"driver_name": driver.name,
@@ -214,9 +254,18 @@ class RaceManager:
 						"driver_qualifying": driver_qualifying,
 						"car_speed": car_speed,
 						"engine_power": engine_power,
-						"tyre_grip": tyre_grip,
-						"tyre_wear": tyre_wear,
+						"tyre_grip": getattr(tyre_supplier, "grip", 50) if tyre_supplier else 50,
+						"tyre_wear": getattr(tyre_supplier, "wear", 50) if tyre_supplier else 50,
 					}
+					if tyre_supplier:
+						supplier_compounds = compound_lookup.get(tyre_supplier.name, {})
+						for compound in supplier_compounds.values():
+							if compound.name == "Medium":
+								participant["tyre_compound_name"] = compound.name
+								participant["tyre_compound_grip"] = compound.grip
+								participant["tyre_compound_wear"] = compound.wear
+								participant["tyre_compound_stiffness"] = compound.stiffness
+								break
 					if state.player_team_id is not None and team.id == state.player_team_id:
 						chassis = get_player_driver_chassis(state, did)
 						participant["chassis_id"] = chassis.id if chassis else None
@@ -224,6 +273,23 @@ class RaceManager:
 					participants.append(participant)
 
 		return participants, circuit
+
+	def _apply_event_tyre_choices(self, state: GameState, participants: list[dict[str, Any]]) -> None:
+		choices = self._ensure_event_tyre_compounds(state, participants)
+		compound_lookup = self._current_tyre_compounds_by_supplier(state)
+		for entrant in participants:
+			compound_name = choices.get(int(entrant["driver_id"]), "Medium")
+			supplier_name = next(
+				(team.tyre_supplier_name for team in state.teams if team.id == entrant["team_id"]),
+				None,
+			)
+			compound = compound_lookup.get(supplier_name or "", {}).get(compound_name)
+			if compound is None:
+				continue
+			entrant["tyre_compound_name"] = compound.name
+			entrant["tyre_compound_grip"] = compound.grip
+			entrant["tyre_compound_wear"] = compound.wear
+			entrant["tyre_compound_stiffness"] = compound.stiffness
 
 	def _apply_player_qualifying_wear(self, state: GameState):
 		for driver_id, wear in apply_player_race_wear(state, PLAYER_QUALIFYING_WEAR_INCREASE).items():
@@ -336,6 +402,7 @@ class RaceManager:
 				"driver_name": entrant["driver_name"],
 				"team_id": entrant["team_id"],
 				"team_name": entrant["team_name"],
+				"tyre_compound_name": entrant.get("tyre_compound_name", "Medium"),
 				"best_lap_ms": best_lap_ms,
 			})
 
@@ -346,6 +413,7 @@ class RaceManager:
 
 	def simulate_qualifying(self, state: GameState) -> dict[str, Any]:
 		participants, circuit = self._build_participants(state)
+		self._apply_event_tyre_choices(state, participants)
 		self._latest_participants = participants
 		qualifying_results = self._simulate_qualifying(participants, circuit)
 		self._apply_player_qualifying_wear(state)
@@ -374,6 +442,7 @@ class RaceManager:
 		driver_lookup = {d.id: d for d in state.drivers}
 		get_player_race_chassis_assignments(state)
 		participants, circuit = self._build_participants(state)
+		self._apply_event_tyre_choices(state, participants)
 
 		crashed_participants, mechanical_participants = self._prepare_participants(
 			state,
@@ -415,6 +484,7 @@ class RaceManager:
 				"driver_id": entry["driver_id"],
 				"team_name": entry["team_name"],
 				"team_id": entry["team_id"],
+				"tyre_compound_name": entry.get("tyre_compound_name", "Medium"),
 				"points": points,
 				"status": "DNF" if retired else "FINISHED",
 				"crash_out": entry.get("retirement_reason") == "crash",

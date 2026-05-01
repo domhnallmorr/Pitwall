@@ -1,6 +1,6 @@
 import sqlite3
 
-from app.core.roster_components import load_drivers, load_teams
+from app.core.roster_components import load_drivers, load_teams, load_tyre_suppliers
 from tools.seed_schema import create_schema
 
 
@@ -51,3 +51,25 @@ def test_load_drivers_reads_consistency_and_qualifying_columns():
     assert driver_map["Marco Schneider"].speed == 98
     assert driver_map["Marco Schneider"].consistency == 100
     assert driver_map["Marco Schneider"].qualifying == 5
+
+
+def test_load_tyre_suppliers_reads_supplier_development_attributes():
+    conn = sqlite3.connect(":memory:")
+    create_schema(conn)
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO tyre_suppliers (
+            start_year, name, country, wear, grip, resources, innovation, reliability
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (0, "Greatday", "USA", 60, 80, 88, 82, 90),
+    )
+    conn.commit()
+
+    tyre_suppliers = load_tyre_suppliers(cursor, 1998, include=True)
+
+    assert len(tyre_suppliers) == 1
+    assert tyre_suppliers[0].resources == 88
+    assert tyre_suppliers[0].innovation == 82
+    assert tyre_suppliers[0].reliability == 90

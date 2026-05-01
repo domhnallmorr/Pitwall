@@ -767,8 +767,8 @@ ENGINE_SUPPLIERS_DATA = [
 ]
 
 TYRE_SUPPLIERS_DATA = [
-    (0, "Greatday", "USA", 60, 80),
-    (0, "Spanrock", "Japan", 80, 70),
+    (0, "Greatday", "USA", 60, 80, 88, 82, 90),
+    (0, "Spanrock", "Japan", 80, 70, 86, 91, 84),
 ]
 
 FUEL_SUPPLIERS_DATA = [

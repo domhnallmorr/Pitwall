@@ -25,6 +25,7 @@ function getRaceElements() {
 		qualifyingBody: document.getElementById('race-qualifying-body'),
 		qualifyingBtn: document.getElementById('simulate-qualifying-btn'),
 		simBtn: document.getElementById('simulate-race-btn'),
+		strategyOpenBtn: document.getElementById('open-race-strategy-btn'),
 		commentaryLog: document.getElementById('race-commentary-log'),
 		lapCounter: document.getElementById('race-lap-counter'),
 		leaderDisplay: document.getElementById('race-leader-display'),
@@ -59,7 +60,7 @@ function renderQualifyingTable(tbody, qualifyingResults, emptyMessage) {
 	if (!tbody) return;
 	tbody.innerHTML = '';
 	if (!qualifyingResults.length) {
-		tbody.innerHTML = `<tr class="race-qualifying-placeholder"><td colspan="5">${emptyMessage}</td></tr>`;
+		tbody.innerHTML = `<tr class="race-qualifying-placeholder"><td colspan="6">${emptyMessage}</td></tr>`;
 		return;
 	}
 
@@ -70,6 +71,7 @@ function renderQualifyingTable(tbody, qualifyingResults, emptyMessage) {
 			<td>${row.position}</td>
 			<td>${row.driver_name}</td>
 			<td>${row.team_name}</td>
+			<td>${row.tyre_compound_name || row.tyre_compound || '-'}</td>
 			<td>${formatLapTime(row.best_lap_ms)}</td>
 			<td>${formatQualifyingGap(row.best_lap_ms, poleLapMs)}</td>
 		`;
@@ -211,7 +213,7 @@ export function enterRaceView(nextEventEl, weekEl) {
 		'pending',
 	);
 	if (elements.qualifyingBody) {
-		elements.qualifyingBody.innerHTML = '<tr class="race-qualifying-placeholder"><td colspan="4">Loading race weekend...</td></tr>';
+		elements.qualifyingBody.innerHTML = '<tr class="race-qualifying-placeholder"><td colspan="6">Loading race weekend...</td></tr>';
 	}
 	if (elements.qualifyingBtn) {
 		elements.qualifyingBtn.disabled = true;
@@ -221,6 +223,9 @@ export function enterRaceView(nextEventEl, weekEl) {
 		elements.simBtn.disabled = true;
 		elements.simBtn.textContent = 'SIMULATE RACE';
 		elements.simBtn.style.display = '';
+	}
+	if (elements.strategyOpenBtn) {
+		elements.strategyOpenBtn.disabled = true;
 	}
 	setRaceScreenVisibility(elements, { showWeekend: true, showStrategy: false, showResults: false });
 	resetRacePlaybackDisplay(elements);
@@ -273,6 +278,9 @@ export function renderRaceWeekend(data = currentRaceWeekendData) {
 		elements.simBtn.textContent = raceComplete ? 'RACE COMPLETE' : 'SIMULATE RACE';
 		elements.simBtn.style.display = '';
 	}
+	if (elements.strategyOpenBtn) {
+		elements.strategyOpenBtn.disabled = raceComplete;
+	}
 	setRaceScreenVisibility(elements, {
 		showWeekend: true,
 		showStrategy: false,
@@ -280,7 +288,7 @@ export function renderRaceWeekend(data = currentRaceWeekendData) {
 	});
 }
 
-function strategyCardMarkup(strategy) {
+function strategyCardMarkup(strategy, qualifyingComplete) {
 	const plannedPitLaps = Array.isArray(strategy.planned_pit_laps) ? strategy.planned_pit_laps : [];
 	return `
 		<div class="race-strategy-card" data-driver-id="${strategy.driver_id}">
@@ -297,6 +305,22 @@ function strategyCardMarkup(strategy) {
 						<option value="3"${strategy.planned_stops === 3 ? ' selected' : ''}>3 stops</option>
 					</select>
 				</div>
+			</div>
+			<div class="race-strategy-compound-block">
+				<label for="race-strategy-tyre-${strategy.driver_id}">Compound</label>
+				<select
+					id="race-strategy-tyre-${strategy.driver_id}"
+					class="race-strategy-tyre-select"
+					data-driver-id="${strategy.driver_id}"
+					${qualifyingComplete ? ' disabled' : ''}
+				>
+					<option value="Hard"${strategy.tyre_compound === 'Hard' ? ' selected' : ''}>Hard</option>
+					<option value="Medium"${strategy.tyre_compound === 'Medium' ? ' selected' : ''}>Medium</option>
+					<option value="Soft"${strategy.tyre_compound === 'Soft' ? ' selected' : ''}>Soft</option>
+				</select>
+				<p class="race-strategy-compound-note">
+					${qualifyingComplete ? 'Compound locked after qualifying.' : 'Chosen compound is used for qualifying and race.'}
+				</p>
 			</div>
 			<div class="race-strategy-plan">
 				<span class="race-summary-label">Planned Laps</span>
@@ -315,7 +339,7 @@ export function renderRaceStrategyScreen(data = currentRaceWeekendData) {
 
 	if (elements.eventDisplay) elements.eventDisplay.textContent = data.event_name || data.circuit_name || 'Grand Prix';
 	if (elements.strategyCards) {
-		elements.strategyCards.innerHTML = strategies.map(strategyCardMarkup).join('');
+		elements.strategyCards.innerHTML = strategies.map((strategy) => strategyCardMarkup(strategy, !!data.qualifying_complete)).join('');
 		if (!strategies.length) {
 			elements.strategyCards.innerHTML = '<div class="placeholder-msg">No player cars are available for strategy setup.</div>';
 		}
@@ -332,10 +356,16 @@ export function openRaceStrategyScreen() {
 }
 
 export function collectRaceStrategySelections() {
-	return Array.from(document.querySelectorAll('.race-strategy-stop-select')).map((select) => ({
-		driver_id: Number(select.dataset.driverId),
-		planned_stops: Number(select.value),
-	}));
+	return Array.from(document.querySelectorAll('.race-strategy-card')).map((card) => {
+		const driverId = Number(card.getAttribute('data-driver-id'));
+		const stopSelect = card.querySelector('.race-strategy-stop-select');
+		const tyreSelect = card.querySelector('.race-strategy-tyre-select');
+		return {
+			driver_id: driverId,
+			planned_stops: Number(stopSelect?.value || 1),
+			tyre_compound: tyreSelect?.value || 'Medium',
+		};
+	});
 }
 
 function renderLapSnapshot(data, lapIndex) {
@@ -355,6 +385,7 @@ function renderLapSnapshot(data, lapIndex) {
 			<td>${row.position}</td>
 			<td>${row.driver_name}</td>
 			<td>${row.team_name}</td>
+			<td>${row.tyre_compound_name || row.tyre_compound || '-'}</td>
 			<td>${pitStopCounts.get(row.driver_id) || 0}</td>
 			<td>${formatLapTime(row.last_lap_ms)}</td>
 			<td>${formatLapTime(row.best_lap_ms)}</td>
@@ -492,6 +523,7 @@ export function renderRaceResults(data) {
 				<td>${positionLabel}</td>
 				<td>${r.driver_name}</td>
 				<td>${r.team_name}</td>
+				<td>${r.tyre_compound_name || r.tyre_compound || '-'}</td>
 				<td>-</td>
 				<td>-</td>
 				<td>-</td>

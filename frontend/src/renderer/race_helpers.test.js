@@ -34,6 +34,7 @@ describe('race_helpers', () => {
 			<div id="race-strategy-event-display"></div>
 			<div id="race-strategy-cards"></div>
 			<table><tbody id="race-qualifying-body"></tbody></table>
+			<button id="open-race-strategy-btn"></button>
 			<button id="simulate-qualifying-btn"></button>
 			<button id="simulate-race-btn" style="display:none;"></button>
 			<button id="race-strategy-back-btn"></button>
@@ -83,18 +84,19 @@ describe('race_helpers', () => {
 
 		renderRaceResults({
 			results: [
-				{ position: 1, driver_name: 'A', team_name: 'T1', points: 10 },
-				{ status: 'DNF', driver_name: 'B', team_name: 'T2', crash_out: true, mechanical_out: false },
-				{ status: 'DNF', driver_name: 'C', team_name: 'T3', crash_out: false, mechanical_out: true },
-				{ status: 'DNF', driver_name: 'D', team_name: 'T4', crash_out: false, mechanical_out: false },
+				{ position: 1, driver_name: 'A', team_name: 'T1', tyre_compound_name: 'Soft', points: 10 },
+				{ status: 'DNF', driver_name: 'B', team_name: 'T2', tyre_compound_name: 'Medium', crash_out: true, mechanical_out: false },
+				{ status: 'DNF', driver_name: 'C', team_name: 'T3', tyre_compound_name: 'Hard', crash_out: false, mechanical_out: true },
+				{ status: 'DNF', driver_name: 'D', team_name: 'T4', tyre_compound_name: 'Hard', crash_out: false, mechanical_out: false },
 			],
 		});
 
 		const rows = document.getElementById('race-results-body').children;
 		expect(rows).toHaveLength(4);
-		expect(rows[1].children[7].textContent).toBe('Crash');
-		expect(rows[2].children[7].textContent).toBe('Mechanical');
-		expect(rows[3].children[7].textContent).toBe('DNF');
+		expect(rows[0].children[3].textContent).toBe('Soft');
+		expect(rows[1].children[8].textContent).toBe('Crash');
+		expect(rows[2].children[8].textContent).toBe('Mechanical');
+		expect(rows[3].children[8].textContent).toBe('DNF');
 		expect(document.getElementById('race-pause-btn').disabled).toBe(true);
 
 		exitRaceView();
@@ -228,8 +230,8 @@ describe('race_helpers', () => {
 			qualifying_complete: true,
 			race_complete: false,
 			qualifying_results: [
-				{ position: 1, driver_name: 'A', team_name: 'T1', best_lap_ms: 80000 },
-				{ position: 2, driver_name: 'B', team_name: 'T2', best_lap_ms: 80200 },
+				{ position: 1, driver_name: 'A', team_name: 'T1', tyre_compound_name: 'Soft', best_lap_ms: 80000 },
+				{ position: 2, driver_name: 'B', team_name: 'T2', tyre_compound_name: 'Medium', best_lap_ms: 80200 },
 			],
 		});
 
@@ -240,8 +242,9 @@ describe('race_helpers', () => {
 		expect(document.getElementById('simulate-qualifying-btn').disabled).toBe(true);
 		expect(document.getElementById('simulate-race-btn').disabled).toBe(false);
 		expect(document.getElementById('race-qualifying-body').children).toHaveLength(2);
-		expect(document.getElementById('race-qualifying-body').children[0].children[4].textContent).toBe('POLE');
-		expect(document.getElementById('race-qualifying-body').children[1].children[4].textContent).toBe('+0.200s');
+		expect(document.getElementById('race-qualifying-body').children[0].children[3].textContent).toBe('Soft');
+		expect(document.getElementById('race-qualifying-body').children[0].children[5].textContent).toBe('POLE');
+		expect(document.getElementById('race-qualifying-body').children[1].children[5].textContent).toBe('+0.200s');
 	});
 
 	it('renders a separate pre-race strategy screen from weekend data', () => {
@@ -254,12 +257,12 @@ describe('race_helpers', () => {
 			qualifying_complete: true,
 			race_complete: false,
 			qualifying_results: [
-				{ position: 1, driver_name: 'A', team_name: 'T1', best_lap_ms: 80000 },
-				{ position: 2, driver_name: 'B', team_name: 'T1', best_lap_ms: 80200 },
+				{ position: 1, driver_name: 'A', team_name: 'T1', tyre_compound_name: 'Soft', best_lap_ms: 80000 },
+				{ position: 2, driver_name: 'B', team_name: 'T1', tyre_compound_name: 'Medium', best_lap_ms: 80200 },
 			],
 			player_strategies: [
-				{ driver_id: 1, driver_name: 'A', planned_stops: 2, planned_pit_laps: [20, 42], grid_position: 1 },
-				{ driver_id: 2, driver_name: 'B', planned_stops: 1, planned_pit_laps: [31], grid_position: 2 },
+				{ driver_id: 1, driver_name: 'A', planned_stops: 2, planned_pit_laps: [20, 42], grid_position: 1, tyre_compound: 'Soft' },
+				{ driver_id: 2, driver_name: 'B', planned_stops: 1, planned_pit_laps: [31], grid_position: 2, tyre_compound: 'Medium' },
 			],
 		});
 
@@ -270,11 +273,13 @@ describe('race_helpers', () => {
 		expect(document.getElementById('race-strategy-cards').children).toHaveLength(2);
 		expect(document.getElementById('race-strategy-cards').textContent).toContain('Lap 20');
 		expect(document.getElementById('race-strategy-start-btn').disabled).toBe(false);
+		expect(document.getElementById('race-strategy-tyre-1').disabled).toBe(true);
+		expect(document.getElementById('race-strategy-tyre-1').value).toBe('Soft');
 
 		document.getElementById('race-strategy-stops-1').value = '3';
 		expect(collectRaceStrategySelections()).toEqual([
-			{ driver_id: 1, planned_stops: 3 },
-			{ driver_id: 2, planned_stops: 1 },
+			{ driver_id: 1, planned_stops: 3, tyre_compound: 'Soft' },
+			{ driver_id: 2, planned_stops: 1, tyre_compound: 'Medium' },
 		]);
 
 		renderRaceStrategyScreen({
@@ -282,18 +287,42 @@ describe('race_helpers', () => {
 			qualifying_complete: true,
 			race_complete: false,
 			player_strategies: [
-				{ driver_id: 1, driver_name: 'A', planned_stops: 3, planned_pit_laps: [16, 33, 52], grid_position: 1 },
+				{ driver_id: 1, driver_name: 'A', planned_stops: 3, planned_pit_laps: [16, 33, 52], grid_position: 1, tyre_compound: 'Soft' },
 			],
 		});
 		expect(document.getElementById('race-strategy-cards').textContent).toContain('Lap 52');
+	});
+
+	it('allows tyre compound selection before qualifying and keeps the weekend entry point enabled', () => {
+		renderRaceWeekend({
+			event_name: 'Albert Park Grand Prix',
+			circuit_name: 'Albert Park Grand Prix',
+			circuit_location: 'Melbourne',
+			circuit_country: 'Australia',
+			laps: 58,
+			qualifying_complete: false,
+			race_complete: false,
+			qualifying_results: [],
+			player_strategies: [
+				{ driver_id: 1, driver_name: 'A', planned_stops: 2, planned_pit_laps: [18, 37], tyre_compound: 'Medium' },
+			],
+		});
+
+		expect(document.getElementById('open-race-strategy-btn').disabled).toBe(false);
+		openRaceStrategyScreen();
+		expect(document.getElementById('race-strategy-tyre-1').disabled).toBe(false);
+		document.getElementById('race-strategy-tyre-1').value = 'Hard';
+		expect(collectRaceStrategySelections()).toEqual([
+			{ driver_id: 1, planned_stops: 2, tyre_compound: 'Hard' },
+		]);
 	});
 
 	it('renders qualifying data as a replay tab', () => {
 		renderRaceResults({
 			total_laps: 1,
 			qualifying_results: [
-				{ position: 1, driver_name: 'A', team_name: 'T1', best_lap_ms: 80000 },
-				{ position: 2, driver_name: 'B', team_name: 'T2', best_lap_ms: 80200 },
+				{ position: 1, driver_name: 'A', team_name: 'T1', tyre_compound_name: 'Soft', best_lap_ms: 80000 },
+				{ position: 2, driver_name: 'B', team_name: 'T2', tyre_compound_name: 'Medium', best_lap_ms: 80200 },
 			],
 			lap_history: [
 				{
@@ -307,8 +336,9 @@ describe('race_helpers', () => {
 
 		expect(document.getElementById('race-results-qualifying-body').children).toHaveLength(2);
 		expect(document.getElementById('race-results-pole-display').textContent).toContain('Pole: A');
-		expect(document.getElementById('race-results-qualifying-body').children[0].children[4].textContent).toBe('POLE');
-		expect(document.getElementById('race-results-qualifying-body').children[1].children[4].textContent).toBe('+0.200s');
+		expect(document.getElementById('race-results-qualifying-body').children[0].children[3].textContent).toBe('Soft');
+		expect(document.getElementById('race-results-qualifying-body').children[0].children[5].textContent).toBe('POLE');
+		expect(document.getElementById('race-results-qualifying-body').children[1].children[5].textContent).toBe('+0.200s');
 		document.getElementById('race-tab-qualifying').click();
 		expect(document.getElementById('race-panel-qualifying').style.display).toBe('');
 		expect(document.getElementById('race-panel-timing').style.display).toBe('none');

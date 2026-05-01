@@ -397,6 +397,7 @@ function setupEventListeners() {
 	// Race View Controls
 	const qualifyingBtn = document.getElementById('simulate-qualifying-btn');
 	const simulateBtn = document.getElementById('simulate-race-btn');
+	const strategyOpenBtn = document.getElementById('open-race-strategy-btn');
 	const strategyBackBtn = document.getElementById('race-strategy-back-btn');
 	const strategyStartBtn = document.getElementById('race-strategy-start-btn');
 	const returnBtn = document.getElementById('return-dashboard-btn');
@@ -412,6 +413,12 @@ function setupEventListeners() {
 
 	if (simulateBtn) {
 		simulateBtn.addEventListener('click', () => {
+			openRaceStrategyScreen();
+		});
+	}
+
+	if (strategyOpenBtn) {
+		strategyOpenBtn.addEventListener('click', () => {
 			openRaceStrategyScreen();
 		});
 	}
@@ -433,7 +440,10 @@ function setupEventListeners() {
 
 	document.addEventListener('change', (event) => {
 		const target = event.target;
-		if (!(target instanceof HTMLElement) || !target.classList.contains('race-strategy-stop-select')) {
+		if (
+			!(target instanceof HTMLElement) ||
+			(!target.classList.contains('race-strategy-stop-select') && !target.classList.contains('race-strategy-tyre-select'))
+		) {
 			return;
 		}
 		API.setRaceStrategy(collectRaceStrategySelections());

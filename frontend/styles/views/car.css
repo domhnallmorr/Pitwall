@@ -65,6 +65,80 @@
   margin: 12px 0 14px;
 }
 
+.car-tyres-intro {
+  margin: 12px 0 14px;
+}
+
+.car-tyres-suppliers {
+  display: grid;
+  gap: 16px;
+}
+
+.car-tyre-supplier-card {
+  padding: 16px;
+  border: 1px solid rgba(100, 255, 218, 0.14);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(8, 17, 32, 0.94), rgba(8, 17, 32, 0.8));
+}
+
+.car-tyre-supplier-card.is-player-supplier {
+  border-color: rgba(100, 255, 218, 0.32);
+  box-shadow: 0 0 0 1px rgba(100, 255, 218, 0.08);
+}
+
+.car-tyre-supplier-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.car-tyre-supplier-name {
+  color: #dbeafe;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.car-tyre-supplier-country {
+  color: #94a3b8;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.car-tyre-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(100, 255, 218, 0.14);
+  color: #64ffda;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.car-tyre-supplier-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 18px;
+  margin-bottom: 12px;
+}
+
+.car-tyre-supplier-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.car-tyre-compound-table td,
+.car-tyre-compound-table th {
+  text-align: left;
+}
+
 #car-content-chassis select {
   width: 100%;
   min-height: 40px;
@@ -233,6 +307,12 @@
 
 .car-construction-build-card .btn-primary {
   margin-top: 14px;
+}
+
+@media (max-width: 900px) {
+  .car-tyre-supplier-stats {
+    grid-template-columns: 1fr;
+  }
 }
 
 

@@ -16,6 +16,8 @@ from app.models.engine_supplier import EngineSupplier
 from app.models.finance import Finance
 from app.models.state import GameState
 from app.models.team import Team
+from app.models.tyre_compound import TyreCompound
+from app.models.tyre_supplier import TyreSupplier
 
 
 def create_state() -> GameState:
@@ -51,6 +53,22 @@ def create_state() -> GameState:
         circuits=[],
         player_team_id=1,
         engine_suppliers=[EngineSupplier(id=1, name="Mechatron", country="France", resources=55, power=60)],
+        tyre_suppliers=[
+            TyreSupplier(id=1, name="Greatday", country="USA", wear=60, grip=80, resources=88, innovation=82, reliability=90),
+            TyreSupplier(id=2, name="Spanrock", country="Japan", wear=80, grip=70, resources=86, innovation=91, reliability=84),
+        ],
+        season_tyre_compounds={
+            "Greatday": [
+                TyreCompound(supplier_name="Greatday", name="Hard", grip=67, wear=93, stiffness=87, year=1998),
+                TyreCompound(supplier_name="Greatday", name="Medium", grip=77, wear=79, stiffness=67, year=1998),
+                TyreCompound(supplier_name="Greatday", name="Soft", grip=88, wear=64, stiffness=47, year=1998),
+            ],
+            "Spanrock": [
+                TyreCompound(supplier_name="Spanrock", name="Hard", grip=66, wear=89, stiffness=84, year=1998),
+                TyreCompound(supplier_name="Spanrock", name="Medium", grip=78, wear=77, stiffness=64, year=1998),
+                TyreCompound(supplier_name="Spanrock", name="Soft", grip=90, wear=60, stiffness=44, year=1998),
+            ],
+        },
         finance=Finance(),
     )
 
@@ -163,6 +181,7 @@ def test_get_car_payload_without_player_team_returns_defaults():
 
 def test_get_car_payload_includes_player_chassis_state():
     state = create_state()
+    state.teams[0].tyre_supplier_name = "Greatday"
 
     payload = get_car_payload(state)
 
@@ -176,7 +195,12 @@ def test_get_car_payload_includes_player_chassis_state():
     assert payload["maintenance"]["mechanics_staff_available"] == 58
     assert payload["maintenance"]["mechanics_required_percent_per_spare"] == 22
     assert payload["player_test_chassis_id"] == 3
+    assert payload["player_tyre_supplier_name"] == "Greatday"
     assert payload["player_drivers"][0]["name"] == "John Newhouse"
+    assert len(payload["tyres"]["suppliers"]) == 2
+    assert payload["tyres"]["suppliers"][0]["name"] == "Greatday"
+    assert payload["tyres"]["suppliers"][0]["is_player_supplier"] is True
+    assert payload["tyres"]["suppliers"][0]["compounds"][2]["name"] == "Soft"
     assert len(payload["player_chassis"]) == 3
     assert payload["player_chassis"][0]["name"] == "Chassis 1"
     assert payload["player_chassis"][0]["assigned_driver_id"] == 1

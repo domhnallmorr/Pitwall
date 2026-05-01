@@ -148,6 +148,9 @@ def create_schema(conn):
             country TEXT,
             wear INTEGER DEFAULT 0,
             grip INTEGER DEFAULT 0,
+            resources INTEGER DEFAULT 0,
+            innovation INTEGER DEFAULT 0,
+            reliability INTEGER DEFAULT 0,
             start_year INTEGER DEFAULT 0
         )
     '''
@@ -355,6 +358,12 @@ def create_schema(conn):
         c.execute("ALTER TABLE tyre_suppliers ADD COLUMN wear INTEGER DEFAULT 0")
     if "grip" not in tyre_columns:
         c.execute("ALTER TABLE tyre_suppliers ADD COLUMN grip INTEGER DEFAULT 0")
+    if "resources" not in tyre_columns:
+        c.execute("ALTER TABLE tyre_suppliers ADD COLUMN resources INTEGER DEFAULT 0")
+    if "innovation" not in tyre_columns:
+        c.execute("ALTER TABLE tyre_suppliers ADD COLUMN innovation INTEGER DEFAULT 0")
+    if "reliability" not in tyre_columns:
+        c.execute("ALTER TABLE tyre_suppliers ADD COLUMN reliability INTEGER DEFAULT 0")
     if "start_year" not in tyre_columns:
         c.execute("ALTER TABLE tyre_suppliers ADD COLUMN start_year INTEGER DEFAULT 0")
 

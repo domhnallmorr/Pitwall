@@ -352,6 +352,7 @@ def get_car_payload(state: GameState) -> dict:
     engine_power_by_supplier = {e.name: e.power for e in state.engine_suppliers}
     player_project = state.player_car_development
     player_team = state.player_team
+    player_tyre_supplier_name = getattr(player_team, "tyre_supplier_name", None) if player_team else None
     player_design_staff = 250
     if player_team:
         design_staff = getattr(player_team, "design_staff", None)
@@ -395,7 +396,31 @@ def get_car_payload(state: GameState) -> dict:
         "player_car_speed": player_team.car_speed if player_team else 0,
         "player_car_wear": player_wear,
         "player_mechanical_fail_probability": player_mech_fail_probability,
+        "player_tyre_supplier_name": player_tyre_supplier_name,
         "player_spares": int(getattr(state, "player_spares", 0) or 0),
+        "tyres": {
+            "suppliers": [
+                {
+                    "id": supplier.id,
+                    "name": supplier.name,
+                    "country": supplier.country,
+                    "resources": getattr(supplier, "resources", 0),
+                    "innovation": getattr(supplier, "innovation", 0),
+                    "reliability": getattr(supplier, "reliability", 0),
+                    "is_player_supplier": supplier.name == player_tyre_supplier_name,
+                    "compounds": [
+                        {
+                            "name": compound.name,
+                            "grip": compound.grip,
+                            "wear": compound.wear,
+                            "stiffness": compound.stiffness,
+                        }
+                        for compound in state.season_tyre_compounds.get(supplier.name, [])
+                    ],
+                }
+                for supplier in state.tyre_suppliers
+            ],
+        },
         "construction": {
             "spares": get_player_spares_construction_data(state),
         },

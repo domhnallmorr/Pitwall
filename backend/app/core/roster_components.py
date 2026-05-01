@@ -365,7 +365,7 @@ def load_tyre_suppliers(cursor, start_year: int, include: bool) -> List[TyreSupp
         has_table = cursor.fetchone() is not None
         if has_table and include:
             cursor.execute(
-                "SELECT id, name, country, wear, grip, start_year FROM tyre_suppliers "
+                "SELECT id, name, country, wear, grip, resources, innovation, reliability, start_year FROM tyre_suppliers "
                 "WHERE start_year = ? OR start_year = 0 ORDER BY id ASC",
                 (start_year,),
             )
@@ -376,7 +376,10 @@ def load_tyre_suppliers(cursor, start_year: int, include: bool) -> List[TyreSupp
                     country=row[2] if row[2] is not None else "",
                     wear=row[3] if row[3] is not None else 0,
                     grip=row[4] if row[4] is not None else 0,
-                    start_year=row[5] if row[5] is not None else 0,
+                    resources=row[5] if row[5] is not None else 0,
+                    innovation=row[6] if row[6] is not None else 0,
+                    reliability=row[7] if row[7] is not None else 0,
+                    start_year=row[8] if row[8] is not None else 0,
                 )
                 for row in cursor.fetchall()
             ]
