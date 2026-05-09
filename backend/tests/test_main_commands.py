@@ -736,6 +736,19 @@ def test_start_engine_negotiation_returns_market_payload_with_active_negotiation
     assert result["data"]["active_negotiation"]["supplier_name"] == "Frost"
 
 
+def test_start_tyre_negotiation_returns_market_payload_with_active_negotiation():
+    state = create_state()
+    state.teams[0].tyre_supplier_contract_length = 1
+    app_main.CURRENT_STATE = state
+
+    result = process_command({"type": "start_tyre_negotiation", "supplier_id": 42})
+
+    assert result["status"] == "success"
+    assert result["type"] == "tyre_negotiation_updated"
+    assert result["data"]["active_negotiation"]["supplier_id"] == 42
+    assert result["data"]["active_negotiation"]["supplier_name"] == "Spanrock"
+
+
 def test_book_engine_negotiation_hospitality_returns_updated_market_payload():
     state = create_state()
     state.teams[0].engine_supplier_contract_length = 1
@@ -776,6 +789,22 @@ def test_replace_tyre_supplier_respects_contract_rule_and_signs_replacement():
     locked = process_command({"type": "replace_tyre_supplier", "supplier_name": "Greatday"})
     assert locked["status"] == "error"
     assert "2 or more years" in locked["message"]
+
+
+def test_book_tyre_negotiation_hospitality_returns_updated_market_payload():
+    state = create_state()
+    state.teams[0].tyre_supplier_contract_length = 1
+    app_main.CURRENT_STATE = state
+
+    start = process_command({"type": "start_tyre_negotiation", "supplier_id": 42})
+    assert start["status"] == "success"
+
+    result = process_command({"type": "book_tyre_negotiation_hospitality"})
+
+    assert result["status"] == "success"
+    assert result["type"] == "tyre_negotiation_updated"
+    assert result["data"]["hospitality"]["booked"] is True
+    assert state.pending_hospitality_event is not None
 
 
 def test_pending_player_replacements_are_reflected_in_staff_and_finance_payloads():
@@ -867,15 +896,31 @@ def test_start_facilities_upgrade_sets_active_financing_and_blocks_second_upgrad
 def test_start_car_development_creates_project_and_blocks_second_start():
     app_main.CURRENT_STATE = create_state()
 
-    started = process_command({"type": "start_car_development", "development_type": "minor"})
+    started = process_command({"type": "start_car_development", "development_type": "current_year"})
     assert started["status"] == "success"
     assert started["type"] == "car_development_started"
-    assert started["data"]["development_type"] == "minor"
-    assert started["data"]["weekly_cost"] == 25_000
+    assert started["data"]["scope"] == "current_year"
+    assert started["data"]["current_stage_key"] == "design"
+    assert started["data"]["weekly_cost"] > 0
 
-    blocked = process_command({"type": "start_car_development", "development_type": "major"})
+    blocked = process_command({"type": "start_car_development", "development_type": "current_year"})
     assert blocked["status"] == "error"
     assert "already active" in blocked["message"]
+
+
+def test_finish_car_development_stage_advances_current_project():
+    app_main.CURRENT_STATE = create_state()
+
+    process_command({"type": "start_car_development", "development_type": "current_year"})
+    blocked = process_command({"type": "finish_car_development_stage"})
+    assert blocked["status"] == "error"
+    assert "progress block" in blocked["message"]
+
+    app_main.CURRENT_STATE.player_car_development.stages[0].progress = 1
+    finished = process_command({"type": "finish_car_development_stage"})
+    assert finished["status"] == "success"
+    assert finished["type"] == "car_development_stage_finished"
+    assert finished["data"]["current_stage_key"] == "cfd"
 
 
 def test_attend_test_command_applies_testing_cost():

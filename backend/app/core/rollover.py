@@ -14,6 +14,7 @@ from app.core.grid import GridManager
 from app.core.roster import load_roster
 from app.core.car_performance import CarPerformanceManager
 from app.core.ai_car_development import AICarDevelopmentManager
+from app.core.player_car_development import PlayerCarDevelopmentManager
 from app.core.transfers import TransferManager
 from app.core.management_transfers import (
     CommercialManagerTransferManager,
@@ -62,6 +63,7 @@ class SeasonRolloverManager:
         self.grid_manager = GridManager()
         self.car_performance_manager = CarPerformanceManager()
         self.ai_car_development_manager = AICarDevelopmentManager()
+        self.player_car_development_manager = PlayerCarDevelopmentManager()
         self.transfer_manager = TransferManager()
         self.cm_transfer_manager = CommercialManagerTransferManager()
         self.engine_supplier_transfer_manager = EngineSupplierTransferManager()
@@ -161,6 +163,8 @@ class SeasonRolloverManager:
 
         # 14. Recalculate all team car performance for the new season.
         car_speed_updates = self.car_performance_manager.apply_for_new_season(state)
+        player_next_year_chassis_update = self.player_car_development_manager.apply_next_year_project_for_rollover(state)
+        self.player_car_development_manager.reset_for_new_season(state)
         if state.player_team:
             state.player_team.car_wear = 0
 
@@ -256,6 +260,7 @@ class SeasonRolloverManager:
             "tyre_supplier_transfer_outcome": tyre_supplier_transfer_outcome,
             "signings": signings,
             "car_speed_updates": car_speed_updates,
+            "player_next_year_chassis_update": player_next_year_chassis_update,
             "next_season_prize_money": next_season_prize_money,
             "next_season_final_season_drivers": final_season_drivers,
             "planned_transfers": planned_transfers,

@@ -13,13 +13,17 @@ from app.commands.game_commands import (
     handle_get_replacement_candidates,
     handle_get_technical_director_replacement_candidates,
     handle_get_title_sponsor_negotiation_market,
+    handle_get_tyre_negotiation_market,
     handle_get_title_sponsor_replacement_candidates,
     handle_get_tyre_supplier_replacement_candidates,
     handle_build_spare_set,
+    handle_finish_car_development_stage,
+    handle_finish_car_development_project_stage,
     handle_load_roster,
     handle_offer_driver,
     handle_repair_chassis_wear,
     handle_book_engine_negotiation_hospitality,
+    handle_book_tyre_negotiation_hospitality,
     handle_book_title_sponsor_hospitality,
     handle_replace_commercial_manager,
     handle_replace_driver,
@@ -29,17 +33,21 @@ from app.commands.game_commands import (
     handle_replace_tyre_supplier,
     handle_set_race_strategy,
     handle_sign_engine_negotiated_deal,
+    handle_sign_tyre_negotiated_deal,
     handle_sign_title_sponsor_negotiated_deal,
     handle_simulate_qualifying,
     handle_simulate_race,
     handle_start_career,
     handle_start_car_development,
     handle_set_race_chassis_assignments,
+    handle_set_car_development_allocation,
     handle_set_test_chassis,
     handle_start_engine_negotiation,
+    handle_start_tyre_negotiation,
     handle_start_facilities_upgrade,
     handle_start_title_sponsor_negotiation,
     handle_update_engine_negotiation_staff,
+    handle_update_tyre_negotiation_staff,
     handle_update_title_sponsor_negotiation_staff,
 )
 from app.commands.query_commands import (
@@ -433,6 +441,38 @@ def process_command(command: dict[str, Any]) -> dict[str, Any]:
     if cmd_type == "book_engine_negotiation_hospitality":
         return _run_state_handler(handle_book_engine_negotiation_hospitality, save_on_success=True)
 
+    if cmd_type == "get_tyre_negotiation_market":
+        return _run_query(
+            lambda state: handle_get_tyre_negotiation_market(state, logging),
+            response_type="tyre_negotiation_market",
+            error_context="tyre negotiation market",
+            builder=lambda payload: payload,
+        )
+
+    if cmd_type == "start_tyre_negotiation":
+        return _run_state_handler(
+            handle_start_tyre_negotiation,
+            command.get("supplier_id"),
+            save_on_success=True,
+        )
+
+    if cmd_type == "update_tyre_negotiation_staff":
+        return _run_state_handler(
+            handle_update_tyre_negotiation_staff,
+            command.get("assigned_staff"),
+            save_on_success=True,
+        )
+
+    if cmd_type == "sign_tyre_negotiated_deal":
+        return _run_state_handler(
+            handle_sign_tyre_negotiated_deal,
+            command.get("tier"),
+            save_on_success=True,
+        )
+
+    if cmd_type == "book_tyre_negotiation_hospitality":
+        return _run_state_handler(handle_book_tyre_negotiation_hospitality, save_on_success=True)
+
     if cmd_type == "replace_tyre_supplier":
         return _run_state_handler(
             handle_replace_tyre_supplier,
@@ -512,6 +552,23 @@ def process_command(command: dict[str, Any]) -> dict[str, Any]:
             command.get("development_type"),
             save_on_success=True,
             response_type_on_missing_state="car_development_started",
+        )
+
+    if cmd_type == "finish_car_development_stage":
+        return _run_response_handler(
+            handle_finish_car_development_project_stage,
+            command.get("scope"),
+            save_on_success=True,
+            response_type_on_missing_state="car_development_stage_finished",
+        )
+
+    if cmd_type == "set_car_development_allocation":
+        return _run_response_handler(
+            handle_set_car_development_allocation,
+            command.get("scope"),
+            command.get("allocation_percent"),
+            save_on_success=True,
+            response_type_on_missing_state="car_development_allocation_updated",
         )
 
     if cmd_type == "set_test_chassis":

@@ -2,6 +2,7 @@ from app.core.rollover import SeasonRolloverManager
 from app.core.engine import GameEngine
 from app.core.management_retirement import TeamPrincipalRetirementManager, TechnicalDirectorRetirementManager
 from app.models.state import GameState
+from app.models.state import ChassisDesignStage, PlayerCarDevelopment
 from app.models.calendar import Calendar, Event, EventType
 from app.models.driver import Driver
 from app.models.team import Team
@@ -65,6 +66,35 @@ def test_rollover_resets_calendar():
 
     assert state.calendar.current_week == 1
     assert len(state.events_processed) == 0
+
+
+def test_rollover_resets_player_chassis_development_state():
+    state = create_end_of_season_state()
+    state.player_team_id = 1
+    state.player_car_development = PlayerCarDevelopment(
+        active=True,
+        scope="current_year",
+        name="Late Season Upgrade",
+        year=1998,
+        allocation_percent=50,
+        stages=[ChassisDesignStage(key="design", label="Design", progress=4)],
+    )
+    state.player_next_year_car_development = PlayerCarDevelopment(
+        active=False,
+        completed=True,
+        scope="next_year",
+        name="1999 Chassis",
+        year=1999,
+        speed_delta=3,
+        quality_score=55,
+        stages=[ChassisDesignStage(key="design", label="Design", progress=10, completed=True)],
+    )
+
+    result = SeasonRolloverManager().process_rollover(state)
+
+    assert result["player_next_year_chassis_update"]["speed_delta"] == 3
+    assert state.player_car_development is None
+    assert state.player_next_year_car_development is None
 
 
 @patch("app.core.rollover.random.random", return_value=1.0)

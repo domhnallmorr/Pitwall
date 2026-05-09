@@ -26,15 +26,29 @@ class QueuedEmail(BaseModel):
     category: EmailCategory = EmailCategory.GENERAL
 
 
+class ChassisDesignStage(BaseModel):
+    key: str
+    label: str
+    progress: int = 0
+    completed: bool = False
+
+
 class PlayerCarDevelopment(BaseModel):
     active: bool = False
-    development_type: str | None = None
-    total_weeks: int = 0
-    weeks_remaining: int = 0
-    speed_delta: int = 0
-    total_cost: int = 0
+    scope: str = "current_year"
+    name: str = "Current Chassis Upgrade"
+    year: int | None = None
+    current_stage_index: int = 0
+    stages: List[ChassisDesignStage] = Field(default_factory=list)
+    assigned_designers: int = 0
+    allocation_percent: int = 0
+    progress_carry: float = 0.0
     weekly_cost: int = 0
     paid: int = 0
+    completed: bool = False
+    speed_delta: int = 0
+    quality_score: int = 0
+    risk: str = "Unknown"
 
 class GameState(BaseModel):
     MAX_EMAILS: ClassVar[int] = 250
@@ -91,8 +105,10 @@ class GameState(BaseModel):
     planned_ai_car_updates: List[Dict[str, Any]] = Field(default_factory=list)
     player_title_sponsor_negotiation: Dict[str, Any] | None = None
     player_engine_negotiation: Dict[str, Any] | None = None
+    player_tyre_negotiation: Dict[str, Any] | None = None
     pending_hospitality_event: Dict[str, Any] | None = None
     player_car_development: PlayerCarDevelopment | None = None
+    player_next_year_car_development: PlayerCarDevelopment | None = None
     negative_balance_race_streak: int = 0
     game_over: bool = False
     game_over_reason: str | None = None

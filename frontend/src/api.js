@@ -41,6 +41,11 @@ const API = {
 	updateEngineNegotiationStaff: (assignedStaff) => window.electronAPI.sendToPython({ type: 'update_engine_negotiation_staff', assigned_staff: assignedStaff }),
 	signEngineNegotiatedDeal: (tier) => window.electronAPI.sendToPython({ type: 'sign_engine_negotiated_deal', tier }),
 	bookEngineNegotiationHospitality: () => window.electronAPI.sendToPython({ type: 'book_engine_negotiation_hospitality' }),
+	getTyreNegotiationMarket: () => window.electronAPI.sendToPython({ type: 'get_tyre_negotiation_market' }),
+	startTyreNegotiation: (supplierId) => window.electronAPI.sendToPython({ type: 'start_tyre_negotiation', supplier_id: supplierId }),
+	updateTyreNegotiationStaff: (assignedStaff) => window.electronAPI.sendToPython({ type: 'update_tyre_negotiation_staff', assigned_staff: assignedStaff }),
+	signTyreNegotiatedDeal: (tier) => window.electronAPI.sendToPython({ type: 'sign_tyre_negotiated_deal', tier }),
+	bookTyreNegotiationHospitality: () => window.electronAPI.sendToPython({ type: 'book_tyre_negotiation_hospitality' }),
 	offerDriver: (driverId, incomingDriverId, salaryOffer, contractLength) => window.electronAPI.sendToPython({
 		type: 'offer_driver',
 		driver_id: driverId,
@@ -80,7 +85,13 @@ const API = {
 	}),
 	getDriver: (name) => window.electronAPI.sendToPython({ type: 'get_driver', name }),
 	getCar: () => window.electronAPI.sendToPython({ type: 'get_car' }),
-	startCarDevelopment: (developmentType) => window.electronAPI.sendToPython({ type: 'start_car_development', development_type: developmentType }),
+	startCarDevelopment: (developmentType = 'current_year') => window.electronAPI.sendToPython({ type: 'start_car_development', development_type: developmentType }),
+	finishCarDevelopmentStage: (scope = 'current_year') => window.electronAPI.sendToPython({ type: 'finish_car_development_stage', scope }),
+	setCarDevelopmentAllocation: (scope = 'current_year', allocationPercent = 0) => window.electronAPI.sendToPython({
+		type: 'set_car_development_allocation',
+		scope,
+		allocation_percent: allocationPercent
+	}),
 	setTestChassis: (chassisId) => window.electronAPI.sendToPython({ type: 'set_test_chassis', chassis_id: chassisId }),
 	setRaceChassisAssignments: (driver1ChassisId, driver2ChassisId) => window.electronAPI.sendToPython({
 		type: 'set_race_chassis_assignments',

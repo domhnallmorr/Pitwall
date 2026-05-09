@@ -100,9 +100,103 @@ describe('CarView', () => {
 			{ id: 2, name: 'Chassis 2', wear: 9, assigned_to_test: false, assigned_driver_id: 2, assigned_driver_name: 'Henrik Friedrich', mechanical_fail_probability: 0.018 },
 			{ id: 3, name: 'Chassis 3', wear: 0, assigned_to_test: true, assigned_driver_id: null, assigned_driver_name: null, mechanical_fail_probability: 0 },
 		],
-		player_development: { active: false },
+		player_development: {
+			active: false,
+			stages: [
+				{ key: 'design', label: 'Design', progress: 0, completed: false },
+				{ key: 'cfd', label: 'CFD Simulation', progress: 0, completed: false },
+				{ key: 'model', label: 'Model Design', progress: 0, completed: false },
+				{ key: 'wind_tunnel', label: 'Wind Tunnel', progress: 0, completed: false },
+			],
+		},
 		development_catalog: [],
 	};
+
+	it('renders stage-based chassis development and wires actions', () => {
+		const onStartDevelopment = vi.fn();
+		const onFinishDevelopmentStage = vi.fn();
+		const onSetDevelopmentAllocation = vi.fn();
+		carView.setStartDevelopmentHandler(onStartDevelopment);
+		carView.setFinishDevelopmentStageHandler(onFinishDevelopmentStage);
+		carView.setDevelopmentAllocationHandler(onSetDevelopmentAllocation);
+
+		carView.render(sampleData);
+		carView.setActiveTab('development');
+
+		expect(document.getElementById('car-content-development').style.display).toBe('block');
+		expect(document.getElementById('car-development-status').textContent).toContain('No active chassis design project');
+		expect(document.getElementById('car-development-table-body').textContent).toContain('Design');
+		document.querySelector('.car-dev-btn').click();
+		expect(onStartDevelopment).toHaveBeenCalledWith('current_year');
+
+		carView.render({
+			...sampleData,
+			player_development: {
+				active: true,
+				name: 'Current Chassis Upgrade',
+				current_stage_index: 0,
+				current_stage_label: 'Design',
+				assigned_designers: 63,
+				allocation_percent: 100,
+				weekly_cost: 25200,
+				projected_speed_delta: 2,
+				risk: 'Medium',
+				can_finish_stage: true,
+				finish_action_label: 'Finish Stage',
+				stages: [
+					{ key: 'design', label: 'Design', progress: 3, completed: false },
+					{ key: 'cfd', label: 'CFD Simulation', progress: 0, completed: false },
+					{ key: 'model', label: 'Model Design', progress: 0, completed: false },
+					{ key: 'wind_tunnel', label: 'Wind Tunnel', progress: 0, completed: false },
+				],
+			},
+		});
+		expect(document.getElementById('car-development-status').textContent).toContain('Current Chassis Upgrade: 100%, Design');
+		expect(document.querySelectorAll('.car-development-progress-block.is-filled')).toHaveLength(3);
+		const slider = document.querySelector('.car-dev-allocation-slider[data-dev-scope="current_year"]');
+		slider.value = '55';
+		slider.dispatchEvent(new window.Event('input'));
+		expect(document.querySelector('.car-dev-allocation-value[data-dev-scope="current_year"]').textContent).toBe('55%');
+		slider.dispatchEvent(new window.Event('change'));
+		expect(onSetDevelopmentAllocation).toHaveBeenCalledWith('current_year', 55);
+		document.querySelector('.car-dev-finish-stage-btn').click();
+		expect(onFinishDevelopmentStage).toHaveBeenCalledWith('current_year');
+	});
+
+	it('caps allocation sliders to the backend-reported available percentage', () => {
+		carView.render({
+			...sampleData,
+			player_development: {
+				active: true,
+				projects: {
+					current_year: {
+						active: true,
+						scope: 'current_year',
+						name: 'Current Chassis Upgrade',
+						allocation_percent: 70,
+						available_allocation_percent: 70,
+						assigned_designers: 44,
+						weekly_cost: 17600,
+						stages: [{ key: 'design', label: 'Design', progress: 1, completed: false }],
+					},
+					next_year: {
+						active: true,
+						scope: 'next_year',
+						name: '1999 Chassis',
+						allocation_percent: 30,
+						available_allocation_percent: 30,
+						assigned_designers: 19,
+						weekly_cost: 7600,
+						stages: [{ key: 'design', label: 'Design', progress: 1, completed: false }],
+					},
+				},
+			},
+		});
+
+		expect(document.querySelector('.car-dev-allocation-slider[data-dev-scope="current_year"]').max).toBe('70');
+		expect(document.querySelector('.car-dev-allocation-slider[data-dev-scope="next_year"]').max).toBe('30');
+		expect(document.getElementById('car-development-table-body').textContent).toContain('Max available: 30%');
+	});
 
 	it('renders chassis rows with integrated controls', () => {
 		carView.render(sampleData);

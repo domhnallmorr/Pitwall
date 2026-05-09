@@ -350,13 +350,8 @@ def get_facilities_payload(state: GameState) -> dict:
 
 def get_car_payload(state: GameState) -> dict:
     engine_power_by_supplier = {e.name: e.power for e in state.engine_suppliers}
-    player_project = state.player_car_development
     player_team = state.player_team
     player_tyre_supplier_name = getattr(player_team, "tyre_supplier_name", None) if player_team else None
-    player_design_staff = 250
-    if player_team:
-        design_staff = getattr(player_team, "design_staff", None)
-        player_design_staff = int(design_staff or 0) if design_staff is not None and int(design_staff or 0) > 0 else int(getattr(player_team, "workforce", 250) or 250)
     player_drivers = [
         driver
         for driver in state.drivers
@@ -389,9 +384,7 @@ def get_car_payload(state: GameState) -> dict:
             }
             for t in state.teams
         ],
-        "development_catalog": PlayerCarDevelopmentManager().get_catalog(
-            workforce=player_design_staff
-        ),
+        "development_catalog": [],
         "player_team_name": player_team.name if player_team else None,
         "player_car_speed": player_team.car_speed if player_team else 0,
         "player_car_wear": player_wear,
@@ -456,29 +449,7 @@ def get_car_payload(state: GameState) -> dict:
             }
             for chassis in state.player_chassis
         ],
-        "player_development": (
-            {
-                "active": player_project.active,
-                "development_type": player_project.development_type,
-                "total_weeks": player_project.total_weeks,
-                "weeks_remaining": player_project.weeks_remaining,
-                "speed_delta": player_project.speed_delta,
-                "total_cost": player_project.total_cost,
-                "weekly_cost": player_project.weekly_cost,
-                "paid": player_project.paid,
-            }
-            if player_project
-            else {
-                "active": False,
-                "development_type": None,
-                "total_weeks": 0,
-                "weeks_remaining": 0,
-                "speed_delta": 0,
-                "total_cost": 0,
-                "weekly_cost": 0,
-                "paid": 0,
-            }
-        ),
+        "player_development": PlayerCarDevelopmentManager().get_payload(state),
     }
 
 

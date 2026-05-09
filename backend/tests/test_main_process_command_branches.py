@@ -38,6 +38,11 @@ def test_commands_require_game_started_return_error():
         {"type": "get_title_sponsor_replacement_candidates"},
         {"type": "get_engine_supplier_replacement_candidates"},
         {"type": "get_tyre_supplier_replacement_candidates"},
+        {"type": "get_tyre_negotiation_market"},
+        {"type": "start_tyre_negotiation"},
+        {"type": "update_tyre_negotiation_staff"},
+        {"type": "sign_tyre_negotiated_deal"},
+        {"type": "book_tyre_negotiation_hospitality"},
         {"type": "get_staff"},
         {"type": "get_home"},
         {"type": "get_driver", "name": "John Newhouse"},
@@ -55,6 +60,8 @@ def test_commands_require_game_started_return_error():
     assert app_main.process_command({"type": "preview_facilities_upgrade"})["status"] == "error"
     assert app_main.process_command({"type": "start_facilities_upgrade"})["status"] == "error"
     assert app_main.process_command({"type": "start_car_development"})["status"] == "error"
+    assert app_main.process_command({"type": "finish_car_development_stage"})["status"] == "error"
+    assert app_main.process_command({"type": "set_car_development_allocation"})["status"] == "error"
     assert app_main.process_command({"type": "set_test_chassis"})["status"] == "error"
     assert app_main.process_command({"type": "set_race_chassis_assignments"})["status"] == "error"
     assert app_main.process_command({"type": "repair_chassis_wear"})["status"] == "error"
@@ -268,6 +275,10 @@ def test_replace_and_team_commands_save_only_on_success():
         ("replace_title_sponsor", "handle_replace_title_sponsor", {"status": "success", "type": "title_sponsor_replaced"}),
         ("replace_engine_supplier", "handle_replace_engine_supplier", {"status": "success", "type": "engine_supplier_replaced"}),
         ("replace_tyre_supplier", "handle_replace_tyre_supplier", {"status": "success", "type": "tyre_supplier_replaced"}),
+        ("start_tyre_negotiation", "handle_start_tyre_negotiation", {"status": "success", "type": "tyre_negotiation_updated"}),
+        ("update_tyre_negotiation_staff", "handle_update_tyre_negotiation_staff", {"status": "success", "type": "tyre_negotiation_updated"}),
+        ("sign_tyre_negotiated_deal", "handle_sign_tyre_negotiated_deal", {"status": "success", "type": "tyre_negotiation_signed"}),
+        ("book_tyre_negotiation_hospitality", "handle_book_tyre_negotiation_hospitality", {"status": "success", "type": "tyre_negotiation_updated"}),
     ]
 
     for command_type, handler_name, payload in save_cases:
@@ -290,6 +301,8 @@ def test_replace_and_team_commands_save_only_on_success():
     response_cases = [
         ("start_facilities_upgrade", "handle_start_facilities_upgrade", {"status": "success", "type": "facilities_upgrade_started"}),
         ("start_car_development", "handle_start_car_development", {"status": "success", "type": "car_development_started"}),
+        ("finish_car_development_stage", "handle_finish_car_development_project_stage", {"status": "success", "type": "car_development_stage_finished"}),
+        ("set_car_development_allocation", "handle_set_car_development_allocation", {"status": "success", "type": "car_development_allocation_updated"}),
         ("set_test_chassis", "handle_set_test_chassis", {"status": "success", "type": "test_chassis_updated"}),
         ("set_race_chassis_assignments", "handle_set_race_chassis_assignments", {"status": "success", "type": "race_chassis_assignments_updated"}),
         ("repair_chassis_wear", "handle_repair_chassis_wear", {"status": "success", "type": "chassis_wear_repaired"}),

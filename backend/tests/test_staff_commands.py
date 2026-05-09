@@ -4,6 +4,7 @@ from app.commands.staff_commands import (
     handle_build_spare_set,
     handle_offer_driver,
     handle_get_engine_supplier_replacement_candidates,
+    handle_get_tyre_negotiation_market,
     handle_get_technical_director_replacement_candidates,
     handle_get_manager_replacement_candidates,
     handle_get_tyre_supplier_replacement_candidates,
@@ -13,12 +14,15 @@ from app.commands.staff_commands import (
     handle_replace_engine_supplier,
     handle_replace_technical_director,
     handle_replace_tyre_supplier,
+    handle_sign_tyre_negotiated_deal,
     handle_replace_title_sponsor,
     handle_replace_driver,
     handle_repair_chassis_wear,
     handle_set_race_chassis_assignments,
     handle_set_test_chassis,
     handle_start_car_development,
+    handle_start_tyre_negotiation,
+    handle_update_tyre_negotiation_staff,
 )
 from app.models.chassis import Chassis
 from app.models.calendar import Calendar, Event, EventType
@@ -318,18 +322,36 @@ def test_get_tyre_supplier_replacement_candidates_validates_and_handles_errors()
     assert logger.error.called
 
 
+def test_tyre_negotiation_handlers_validate_and_handle_errors():
+    state = create_state()
+    logger = Mock()
+
+    assert handle_get_tyre_negotiation_market(state, logger)["status"] == "success"
+    _, result = handle_start_tyre_negotiation(state, logger, supplier_id=None)
+    assert result["status"] == "error"
+    _, result = handle_update_tyre_negotiation_staff(state, logger, assigned_staff=None)
+    assert result["status"] == "error"
+    _, result = handle_sign_tyre_negotiated_deal(state, logger, tier=None)
+    assert result["status"] == "error"
+
+    with patch("app.commands.staff_market_commands.PlayerTyreNegotiationManager.get_market_payload", side_effect=RuntimeError("boom")):
+        result = handle_get_tyre_negotiation_market(state, logger)
+    assert result["status"] == "error"
+
+
 def test_start_car_development_validates_and_handles_errors():
     state = create_state()
     logger = Mock()
-    assert handle_start_car_development(state, logger, development_type=None)["status"] == "error"
+    assert handle_start_car_development(state, logger, development_type=None)["status"] == "success"
 
-    with patch("app.commands.staff_commands.PlayerCarDevelopmentManager.start", side_effect=ValueError("invalid")):
-        result = handle_start_car_development(state, logger, development_type="minor")
+    state = create_state()
+    with patch("app.commands.staff_team_commands.PlayerCarDevelopmentManager.start", side_effect=ValueError("invalid")):
+        result = handle_start_car_development(state, logger, development_type="current_year")
     assert result["status"] == "error"
     assert result["message"] == "invalid"
 
-    with patch("app.commands.staff_commands.PlayerCarDevelopmentManager.start", side_effect=RuntimeError("x")):
-        result = handle_start_car_development(state, logger, development_type="minor")
+    with patch("app.commands.staff_team_commands.PlayerCarDevelopmentManager.start", side_effect=RuntimeError("x")):
+        result = handle_start_car_development(state, logger, development_type="current_year")
     assert result["status"] == "error"
     assert result["message"] == "x"
 

@@ -21,30 +21,74 @@ from app.models.finance import TransactionCategory
 from app.models.state import GameState
 
 
+def _build_car_development_response_data(state: GameState) -> dict:
+    return PlayerCarDevelopmentManager().get_payload(state)
+
+
 def handle_start_car_development(state: GameState, logger: logging.Logger, development_type: str | None):
     try:
-        if not development_type:
-            return {"type": "car_development_started", "status": "error", "message": "development_type is required"}
-        project = PlayerCarDevelopmentManager().start(state, development_type)
+        scope = development_type or "current_year"
+        PlayerCarDevelopmentManager().start(state, scope)
         return {
             "type": "car_development_started",
             "status": "success",
-            "data": {
-                "active": project.active,
-                "development_type": project.development_type,
-                "total_weeks": project.total_weeks,
-                "weeks_remaining": project.weeks_remaining,
-                "speed_delta": project.speed_delta,
-                "total_cost": project.total_cost,
-                "weekly_cost": project.weekly_cost,
-                "paid": project.paid,
-            },
+            "data": _build_car_development_response_data(state),
         }
     except ValueError as ve:
         return {"type": "car_development_started", "status": "error", "message": str(ve)}
     except Exception as e:
         logger.error(f"Error starting car development: {e}")
         return {"type": "car_development_started", "status": "error", "message": str(e)}
+
+
+def handle_finish_car_development_stage(state: GameState, logger: logging.Logger):
+    try:
+        PlayerCarDevelopmentManager().finish_current_stage(state, "current_year")
+        return {
+            "type": "car_development_stage_finished",
+            "status": "success",
+            "data": _build_car_development_response_data(state),
+        }
+    except ValueError as ve:
+        return {"type": "car_development_stage_finished", "status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error finishing car development stage: {e}")
+        return {"type": "car_development_stage_finished", "status": "error", "message": str(e)}
+
+
+def handle_finish_car_development_project_stage(state: GameState, logger: logging.Logger, scope: str | None):
+    try:
+        PlayerCarDevelopmentManager().finish_current_stage(state, scope or "current_year")
+        return {
+            "type": "car_development_stage_finished",
+            "status": "success",
+            "data": _build_car_development_response_data(state),
+        }
+    except ValueError as ve:
+        return {"type": "car_development_stage_finished", "status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error finishing car development stage: {e}")
+        return {"type": "car_development_stage_finished", "status": "error", "message": str(e)}
+
+
+def handle_set_car_development_allocation(
+    state: GameState,
+    logger: logging.Logger,
+    scope: str | None,
+    allocation_percent: int | None,
+):
+    try:
+        PlayerCarDevelopmentManager().set_allocation(state, scope or "current_year", allocation_percent)
+        return {
+            "type": "car_development_allocation_updated",
+            "status": "success",
+            "data": _build_car_development_response_data(state),
+        }
+    except ValueError as ve:
+        return {"type": "car_development_allocation_updated", "status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error updating car development allocation: {e}")
+        return {"type": "car_development_allocation_updated", "status": "error", "message": str(e)}
 
 
 def _get_player_chassis(state: GameState, chassis_id: int | None) -> Chassis:

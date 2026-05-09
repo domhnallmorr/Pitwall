@@ -266,6 +266,8 @@ function init() {
 	});
 	carView = new CarView();
 	carView.setStartDevelopmentHandler((developmentType) => API.startCarDevelopment(developmentType));
+	carView.setFinishDevelopmentStageHandler((scope) => API.finishCarDevelopmentStage(scope));
+	carView.setDevelopmentAllocationHandler((scope, allocationPercent) => API.setCarDevelopmentAllocation(scope, allocationPercent));
 	carView.setTestChassisHandler((chassisId) => API.setTestChassis(chassisId));
 	carView.setRaceChassisAssignmentsHandler((driver1ChassisId, driver2ChassisId) => API.setRaceChassisAssignments(driver1ChassisId, driver2ChassisId));
 	carView.setRepairChassisWearHandler((chassisId, wearPoints) => API.repairChassisWear(chassisId, wearPoints));
@@ -273,7 +275,7 @@ function init() {
 	financeView = new FinanceView();
 	financeView.setReplaceTitleSponsorHandler(() => API.getTitleSponsorNegotiationMarket());
 	financeView.setReplaceEngineSupplierHandler(() => API.getEngineNegotiationMarket());
-	financeView.setReplaceTyreSupplierHandler((supplierName) => API.getTyreSupplierReplacementCandidates(supplierName));
+	financeView.setReplaceTyreSupplierHandler(() => API.getTyreNegotiationMarket());
 	commercialView = new CommercialView();
 	commercialView.setStartTitleSponsorNegotiationHandler((sponsorId) => API.startTitleSponsorNegotiation(sponsorId));
 	commercialView.setUpdateTitleSponsorNegotiationStaffHandler((assignedStaff) => API.updateTitleSponsorNegotiationStaff(assignedStaff));
@@ -283,6 +285,10 @@ function init() {
 	commercialView.setUpdateEngineNegotiationStaffHandler((assignedStaff) => API.updateEngineNegotiationStaff(assignedStaff));
 	commercialView.setSignEngineNegotiatedDealHandler((tier) => API.signEngineNegotiatedDeal(tier));
 	commercialView.setBookEngineNegotiationHospitalityHandler(() => API.bookEngineNegotiationHospitality());
+	commercialView.setStartTyreNegotiationHandler((supplierId) => API.startTyreNegotiation(supplierId));
+	commercialView.setUpdateTyreNegotiationStaffHandler((assignedStaff) => API.updateTyreNegotiationStaff(assignedStaff));
+	commercialView.setSignTyreNegotiatedDealHandler((tier) => API.signTyreNegotiatedDeal(tier));
+	commercialView.setBookTyreNegotiationHospitalityHandler(() => API.bookTyreNegotiationHospitality());
 	facilitiesView = new FacilitiesView();
 	facilitiesView.setPreviewHandler((points, years) => API.previewFacilitiesUpgrade(points, years));
 	facilitiesView.setStartUpgradeHandler((points, years) => API.startFacilitiesUpgrade(points, years));
@@ -586,6 +592,13 @@ function setupIPC() {
 					'engine',
 					'Unable to update engine negotiation.',
 				);
+			} else if (parsed.type === 'tyre_negotiation_market' || parsed.type === 'tyre_negotiation_updated') {
+				renderCommercialNegotiation(
+					parsed,
+					(data) => commercialView.renderTyreNegotiation(data),
+					'tyre',
+					'Unable to update tyre negotiation.',
+				);
 			} else if (parsed.type === 'tyre_supplier_replacement_candidates') {
 				driverMarketView.render(parsed.data);
 				if (navigation) navigation.showView('driver-market');
@@ -619,15 +632,22 @@ function setupIPC() {
 				activateCommercialTab('engine');
 				API.getFinance();
 				refreshGridYearsAndEmails();
+			} else if (parsed.type === 'tyre_negotiation_signed') {
+				activateCommercialTab('tyre');
+				API.getFinance();
+				refreshGridYearsAndEmails();
 			} else if (parsed.type === 'tyre_supplier_replaced') {
 				refreshDriverMarketOutcome('finance');
 			} else if (parsed.type === 'driver_data') {
 				driverView.render(parsed.data);
 			} else if (parsed.type === 'car_data') {
 				carView.render(parsed.data);
-			} else if (parsed.type === 'car_development_started') {
+			} else if (parsed.type === 'car_development_started' || parsed.type === 'car_development_stage_finished' || parsed.type === 'car_development_allocation_updated') {
 				if (parsed.status === 'success') {
 					refreshCarRelatedViews();
+				} else if (parsed.status === 'error') {
+					window.alert(parsed.message || 'Unable to update chassis development');
+					API.getCar();
 				}
 			} else if (parsed.type === 'test_chassis_updated' || parsed.type === 'race_chassis_assignments_updated' || parsed.type === 'chassis_wear_repaired' || parsed.type === 'spare_set_built') {
 				if (parsed.status === 'success') {

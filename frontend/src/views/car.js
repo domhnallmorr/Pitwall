@@ -21,6 +21,8 @@ export default class CarView {
 		this.constructionBuildCard = document.getElementById('car-construction-build-card');
 		this.tabButtons = document.querySelectorAll('.car-tab-btn');
 		this.onStartDevelopment = null;
+		this.onFinishDevelopmentStage = null;
+		this.onSetDevelopmentAllocation = null;
 		this.onSetTestChassis = null;
 		this.onSetRaceChassisAssignments = null;
 		this.onRepairChassisWear = null;
@@ -35,6 +37,14 @@ export default class CarView {
 
 	setStartDevelopmentHandler(handler) {
 		this.onStartDevelopment = handler;
+	}
+
+	setFinishDevelopmentStageHandler(handler) {
+		this.onFinishDevelopmentStage = handler;
+	}
+
+	setDevelopmentAllocationHandler(handler) {
+		this.onSetDevelopmentAllocation = handler;
 	}
 
 	setTestChassisHandler(handler) {
@@ -117,6 +127,16 @@ export default class CarView {
 			blocks += `<span class="car-speed-block car-availability-block ${stateClass}" aria-hidden="true"></span>`;
 		}
 		return `<span class="car-speed-rating car-availability-rating" role="img" aria-label="${label} ${filled} out of ${maxValue}">${blocks}</span>`;
+	}
+
+	renderProgressBlocks(value, label, maxValue = 10) {
+		const filled = Math.max(0, Math.min(maxValue, Number(value || 0)));
+		let blocks = '';
+		for (let i = 1; i <= maxValue; i += 1) {
+			const stateClass = i <= filled ? 'is-filled' : '';
+			blocks += `<span class="car-speed-block car-development-progress-block ${stateClass}" aria-hidden="true"></span>`;
+		}
+		return `<span class="car-speed-rating car-development-progress" role="img" aria-label="${label} ${filled} out of ${maxValue}">${blocks}</span>`;
 	}
 
 	renderTyreSuppliers(tyreData = {}, scaleMax = 100) {
@@ -205,39 +225,107 @@ export default class CarView {
 			this.body.appendChild(row);
 		});
 
-		const project = data?.player_development || { active: false };
+		const project = data?.player_development || { active: false, stages: [] };
+		const projects = project.projects || {
+			current_year: project,
+			next_year: { active: false, scope: 'next_year', stages: [] },
+		};
+		const activeProjects = Object.values(projects).filter((item) => item?.active);
 		if (this.currentSpeed) {
 			const value = Number(data?.player_car_speed || 0);
 			this.currentSpeed.innerHTML = `Current Car Rating: <strong>${value}</strong> ${this.renderRatingBlocks(value, 'Player car speed', maxCarSpeed)}`;
 		}
 		if (this.devStatus) {
-			if (project.active) {
-				this.devStatus.textContent = `Active project: ${String(project.development_type || '').toUpperCase()} | ${project.weeks_remaining}/${project.total_weeks} weeks remaining | Weekly cost $${Number(project.weekly_cost || 0).toLocaleString()} | Paid $${Number(project.paid || 0).toLocaleString()} of $${Number(project.total_cost || 0).toLocaleString()}`;
+			if (activeProjects.length) {
+				this.devStatus.textContent = activeProjects.map((item) => `${item.name || 'Chassis Upgrade'}: ${Number(item.allocation_percent || 0)}%, ${item.current_stage_label || '-'}`).join(' | ');
+			} else if (project.completed) {
+				this.devStatus.textContent = `Completed project: ${project.name || 'Chassis Upgrade'} | Quality ${Number(project.quality_score || 0)} | Gain +${Number(project.projected_speed_delta || project.speed_delta || 0)} | Paid $${Number(project.paid || 0).toLocaleString()}`;
 			} else {
-				this.devStatus.textContent = 'No active development project';
+				this.devStatus.textContent = 'No active chassis design project';
 			}
 		}
 
-		const catalog = data?.development_catalog || [];
 		this.devBody.innerHTML = '';
-		catalog.forEach((item) => {
-			const row = document.createElement('tr');
-			const disabled = project.active ? 'disabled' : '';
-			row.innerHTML = `
-				<td>${String(item.type || '').toUpperCase()}</td>
-				<td>${item.weeks} weeks</td>
-				<td>$${Number(item.weekly_cost || 0).toLocaleString()}</td>
-				<td>+${item.speed_delta}</td>
-				<td><button class="btn-secondary car-dev-btn" data-dev-type="${item.type}" ${disabled}>Start</button></td>
+		[
+			{ scope: 'current_year', label: 'This Year Upgrade', startLabel: 'Start Upgrade' },
+			{ scope: 'next_year', label: 'Next Year Chassis', startLabel: 'Start Next Car' },
+		].forEach(({ scope, label, startLabel }) => {
+			const scopedProject = projects[scope] || { active: false, scope, stages: [] };
+			const projectName = scopedProject.name || label;
+			const header = document.createElement('tr');
+			header.className = 'car-development-project-row';
+			header.innerHTML = `
+				<td colspan="5">
+					<strong>${projectName}</strong>
+					<span class="car-development-project-meta">
+						${scopedProject.active ? `Allocation ${Number(scopedProject.allocation_percent || 0)}% (${Number(scopedProject.assigned_designers || 0)} designers) | $${Number(scopedProject.weekly_cost || 0).toLocaleString()}/week | Projected +${Number(scopedProject.projected_speed_delta || 0)} | Risk ${scopedProject.risk || '-'}` : 'Not active'}
+					</span>
+				</td>
 			`;
-			this.devBody.appendChild(row);
+			this.devBody.appendChild(header);
+
+			if (scopedProject.active) {
+				const allocation = document.createElement('tr');
+				const maxAllocation = Math.max(0, Math.min(100, Number(scopedProject.available_allocation_percent ?? 100)));
+				const currentAllocation = Math.max(0, Math.min(maxAllocation, Number(scopedProject.allocation_percent || 0)));
+				allocation.innerHTML = `
+					<td>Designers</td>
+					<td colspan="4">
+						<input type="range" min="0" max="${maxAllocation}" step="5" value="${currentAllocation}" class="car-dev-allocation-slider" data-dev-scope="${scope}">
+						<strong class="car-dev-allocation-value" data-dev-scope="${scope}">${currentAllocation}%</strong>
+						<span class="car-development-project-meta">Max available: ${maxAllocation}%</span>
+					</td>
+				`;
+				this.devBody.appendChild(allocation);
+			}
+
+			const stages = Array.isArray(scopedProject.stages) ? scopedProject.stages : [];
+			stages.forEach((stage, index) => {
+				const row = document.createElement('tr');
+				const isCurrent = scopedProject.active && index === Number(scopedProject.current_stage_index || 0);
+				const status = stage.completed ? 'Complete' : (isCurrent ? 'In Progress' : 'Pending');
+				row.innerHTML = `
+					<td>${stage.label || stage.key || '-'}</td>
+					<td>${this.renderProgressBlocks(stage.progress, `${stage.label || stage.key} progress`)}</td>
+					<td>${Number(stage.progress || 0)} / 10</td>
+					<td>${status}</td>
+					<td>${isCurrent ? `<button class="btn-secondary car-dev-finish-stage-btn" data-dev-scope="${scope}" ${scopedProject.can_finish_stage ? '' : 'disabled'}>${scopedProject.finish_action_label || 'Finish Stage'}</button>` : ''}</td>
+				`;
+				this.devBody.appendChild(row);
+			});
+
+			if (!scopedProject.active && !scopedProject.completed) {
+				const row = document.createElement('tr');
+				row.innerHTML = `
+					<td colspan="4">${scope === 'next_year' ? 'Begin next season chassis design.' : 'Start a current-year chassis upgrade.'}</td>
+					<td><button class="btn-secondary car-dev-btn" data-dev-type="${scope}">${startLabel}</button></td>
+				`;
+				this.devBody.appendChild(row);
+			}
 		});
 
 		this.devBody.querySelectorAll('.car-dev-btn').forEach((btn) => {
 			btn.addEventListener('click', () => {
 				if (!this.onStartDevelopment) return;
-				const type = btn.getAttribute('data-dev-type');
-				this.onStartDevelopment(type);
+				this.onStartDevelopment(btn.getAttribute('data-dev-type') || 'current_year');
+			});
+		});
+		this.devBody.querySelectorAll('.car-dev-finish-stage-btn').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				if (!this.onFinishDevelopmentStage) return;
+				this.onFinishDevelopmentStage(btn.getAttribute('data-dev-scope') || 'current_year');
+			});
+		});
+		this.devBody.querySelectorAll('.car-dev-allocation-slider').forEach((slider) => {
+			slider.addEventListener('input', () => {
+				const scope = slider.getAttribute('data-dev-scope') || 'current_year';
+				const valueNode = this.devBody.querySelector(`.car-dev-allocation-value[data-dev-scope="${scope}"]`);
+				if (valueNode) valueNode.textContent = `${Number(slider.value || 0)}%`;
+			});
+			slider.addEventListener('change', () => {
+				if (!this.onSetDevelopmentAllocation) return;
+				const scope = slider.getAttribute('data-dev-scope') || 'current_year';
+				this.onSetDevelopmentAllocation(scope, Number(slider?.value || 0));
 			});
 		});
 

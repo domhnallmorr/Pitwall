@@ -9,8 +9,10 @@ from app.core.player_car_development import PlayerCarDevelopmentManager
 from app.core.transfers import TransferManager
 from app.commands.staff_market_commands import (
     handle_book_engine_negotiation_hospitality,
+    handle_book_tyre_negotiation_hospitality,
     handle_book_title_sponsor_hospitality,
     handle_get_engine_negotiation_market,
+    handle_get_tyre_negotiation_market,
     handle_get_title_sponsor_negotiation_market,
     handle_offer_driver,
     handle_get_engine_supplier_replacement_candidates,
@@ -20,10 +22,13 @@ from app.commands.staff_market_commands import (
     handle_get_title_sponsor_replacement_candidates,
     handle_get_tyre_supplier_replacement_candidates,
     handle_sign_engine_negotiated_deal,
+    handle_sign_tyre_negotiated_deal,
     handle_sign_title_sponsor_negotiated_deal,
     handle_start_engine_negotiation,
+    handle_start_tyre_negotiation,
     handle_start_title_sponsor_negotiation,
     handle_update_engine_negotiation_staff,
+    handle_update_tyre_negotiation_staff,
     handle_update_title_sponsor_negotiation_staff,
     handle_replace_commercial_manager,
     handle_replace_driver,
@@ -34,8 +39,11 @@ from app.commands.staff_market_commands import (
 )
 from app.commands.staff_team_commands import (
     handle_build_spare_set,
+    handle_finish_car_development_stage,
+    handle_finish_car_development_project_stage,
     handle_repair_chassis_wear,
     handle_set_race_chassis_assignments,
     handle_set_test_chassis,
     handle_start_car_development,
+    handle_set_car_development_allocation,
 )
