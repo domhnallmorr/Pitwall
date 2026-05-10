@@ -603,7 +603,7 @@ export default class CarView {
 						<div>Progress: <strong>${progress} / ${progressRequired}</strong></div>
 						<div>Paid: <strong>$${Number(project.paid || 0).toLocaleString()}</strong></div>
 						<div>Engineers: <strong>${Number(project.assigned_engineers || 0)}</strong></div>
-						<div>Outcome: <strong>${scope === 'next_year' ? `${Number(project.units_built || 0)} / ${Number(project.units_required || 2)} chassis` : `+${Number(project.speed_delta || 0)} speed`}</strong></div>
+						<div>Outcome: <strong>${scope === 'next_year' ? `${Number(project.race_ready_built || project.units_built || 0)} / ${Number(project.race_ready_required || 2)} race chassis` : `+${Number(project.speed_delta || 0)} speed`}</strong></div>
 						<div>Target: <strong>${targetWeeks}</strong></div>
 						<div>Estimate: <strong>${estimatedWeeks > 0 ? `${Math.ceil(estimatedWeeks)} weeks` : 'Assign engineers'}</strong></div>
 					</div>

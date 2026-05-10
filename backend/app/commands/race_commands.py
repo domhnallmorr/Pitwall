@@ -11,6 +11,7 @@ from app.core.management_salaries import ManagementSalaryManager
 from app.core.operational_staff_costs import OperationalStaffCostManager
 from app.core.player_engine_negotiations import PlayerEngineNegotiationManager
 from app.core.player_construction import PlayerConstructionManager
+from app.core.player_tyre_negotiations import PlayerTyreNegotiationManager
 from app.core.player_title_sponsor_negotiations import PlayerTitleSponsorNegotiationManager
 from app.core.prize_money import PrizeMoneyManager
 from app.core.sponsorships import SponsorshipManager
@@ -168,10 +169,13 @@ def handle_simulate_race(state: GameState, logger: logging.Logger):
         crash_damage_charges = CrashDamageManager().charge_for_race(state, race_result, current_event)
         facilities_upgrade_charge = FacilitiesUpgradeManager().charge_for_event(state, current_event)
         engine_negotiation_manager = PlayerEngineNegotiationManager()
+        tyre_negotiation_manager = PlayerTyreNegotiationManager()
         title_sponsor_negotiation_manager = PlayerTitleSponsorNegotiationManager()
         engine_negotiation_manager.progress_after_race(state)
+        tyre_negotiation_manager.progress_after_race(state)
         title_sponsor_negotiation_manager.progress_after_race(state)
         engine_negotiation_manager.apply_hospitality_bonus_after_race(state)
+        tyre_negotiation_manager.apply_hospitality_bonus_after_race(state)
         title_sponsor_negotiation_manager.apply_hospitality_bonus_after_race(state)
 
         if transport_charge:

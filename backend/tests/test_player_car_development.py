@@ -197,7 +197,38 @@ def test_next_year_project_completion_does_not_apply_until_rollover():
     assert state.player_next_year_car_development.speed_delta == 7
     assert state.player_team.car_speed == 80
     assert state.player_construction_projects[0].scope == "next_year"
-    assert state.player_construction_projects[0].total_cost == 1_000_000
+    assert state.player_construction_projects[0].total_cost == 500_000
+    assert state.player_construction_projects[0].units_required == 1
+
+
+def test_next_year_construction_builds_one_chassis_at_a_time():
+    state = create_state()
+    manager = PlayerCarDevelopmentManager()
+    manager.start(state, "next_year")
+    for stage in state.player_next_year_car_development.stages:
+        stage.progress = 10
+        manager.finish_current_stage(state, "next_year")
+
+    construction_manager = PlayerConstructionManager()
+    first = construction_manager.start_project(state, "next_year")
+    first.progress = first.progress_required - 1
+    first.progress_carry = 1
+
+    construction_manager.process_week(state)
+
+    assert first.completed is True
+    assert first.units_built == 1
+    payload = construction_manager.get_payload(state)["projects"]["next_year"]
+    assert payload["race_ready_built"] == 1
+    assert payload["race_ready_required"] == 2
+    assert payload["can_start"] is True
+
+    second = construction_manager.start_project(state, "next_year")
+
+    assert second is not first
+    assert second.active is True
+    assert second.total_cost == 500_000
+    assert second.units_required == 1
 
 
 def test_current_year_construction_completion_applies_speed_gain_and_costs():

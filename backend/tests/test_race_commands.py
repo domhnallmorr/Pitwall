@@ -126,8 +126,18 @@ def test_first_race_applies_completed_next_year_chassis_before_weekend():
             name="1999 Chassis",
             year=1999,
             speed_delta=4,
-            units_required=2,
-            units_built=2,
+            units_required=1,
+            units_built=1,
+        ),
+        PlayerConstructionProject(
+            active=False,
+            completed=True,
+            scope="next_year",
+            name="1999 Chassis 2",
+            year=1999,
+            speed_delta=4,
+            units_required=1,
+            units_built=1,
         )
     ]
     old_speed = state.player_team.car_speed

@@ -8,6 +8,7 @@ from app.core.management_transfers import (
     TyreSupplierTransferManager,
 )
 from app.core.player_engine_negotiations import PlayerEngineNegotiationManager
+from app.core.player_tyre_negotiations import PlayerTyreNegotiationManager
 from app.core.player_title_sponsor_negotiations import PlayerTitleSponsorNegotiationManager
 from app.core.player_driver_negotiations import PlayerDriverNegotiationManager
 from app.core.transfers import TransferManager
@@ -504,6 +505,17 @@ def handle_get_engine_negotiation_market(
     return _run_handler(logger, "Error loading engine negotiation market", action)
 
 
+def handle_get_tyre_negotiation_market(
+    state: GameState,
+    logger: logging.Logger,
+):
+    def action():
+        payload = PlayerTyreNegotiationManager().get_market_payload(state)
+        return _success_response("tyre_negotiation_market", payload)
+
+    return _run_handler(logger, "Error loading tyre negotiation market", action)
+
+
 def handle_start_engine_negotiation(
     state: GameState,
     logger: logging.Logger,
@@ -518,6 +530,20 @@ def handle_start_engine_negotiation(
     return _run_state_handler(state, logger, "Error starting engine negotiation", action)
 
 
+def handle_start_tyre_negotiation(
+    state: GameState,
+    logger: logging.Logger,
+    supplier_id: int | None,
+):
+    def action():
+        supplier_id_value = int(_require_value(supplier_id, "Tyre supplier id is required"))
+        manager = PlayerTyreNegotiationManager()
+        manager.start_negotiation(state, supplier_id_value)
+        return _state_success_response(state, "tyre_negotiation_updated", manager.get_market_payload(state))
+
+    return _run_state_handler(state, logger, "Error starting tyre negotiation", action)
+
+
 def handle_update_engine_negotiation_staff(
     state: GameState,
     logger: logging.Logger,
@@ -529,6 +555,19 @@ def handle_update_engine_negotiation_staff(
         return _state_success_response(state, "engine_negotiation_updated", manager.get_market_payload(state))
 
     return _run_state_handler(state, logger, "Error updating engine negotiation staff", action)
+
+
+def handle_update_tyre_negotiation_staff(
+    state: GameState,
+    logger: logging.Logger,
+    assigned_staff: int | None,
+):
+    def action():
+        manager = PlayerTyreNegotiationManager()
+        manager.update_assigned_staff(state, int(_require_value(assigned_staff, "Assigned staff is required")))
+        return _state_success_response(state, "tyre_negotiation_updated", manager.get_market_payload(state))
+
+    return _run_state_handler(state, logger, "Error updating tyre negotiation staff", action)
 
 
 def handle_sign_engine_negotiated_deal(
@@ -546,6 +585,21 @@ def handle_sign_engine_negotiated_deal(
     return _run_state_handler(state, logger, "Error signing negotiated engine deal", action)
 
 
+def handle_sign_tyre_negotiated_deal(
+    state: GameState,
+    logger: logging.Logger,
+    tier: str | None,
+):
+    def action():
+        signing = PlayerTyreNegotiationManager().sign_deal(
+            state,
+            str(_require_text(tier, "Negotiated tier is required")),
+        )
+        return _state_success_response(state, "tyre_negotiation_signed", signing)
+
+    return _run_state_handler(state, logger, "Error signing negotiated tyre deal", action)
+
+
 def handle_book_engine_negotiation_hospitality(
     state: GameState,
     logger: logging.Logger,
@@ -560,4 +614,21 @@ def handle_book_engine_negotiation_hospitality(
         "Error booking engine hospitality",
         action,
         response_type="engine_negotiation_updated",
+    )
+
+
+def handle_book_tyre_negotiation_hospitality(
+    state: GameState,
+    logger: logging.Logger,
+):
+    def action():
+        data = PlayerTyreNegotiationManager().book_hospitality(state)
+        return _state_success_response(state, "tyre_negotiation_updated", data)
+
+    return _run_state_handler(
+        state,
+        logger,
+        "Error booking tyre hospitality",
+        action,
+        response_type="tyre_negotiation_updated",
     )

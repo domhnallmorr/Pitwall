@@ -13,7 +13,7 @@ class PlayerConstructionManager:
     NEXT_YEAR_CHASSIS_UNIT_COST = 500_000
     CURRENT_YEAR_PROGRESS_REQUIRED = 10
     NEXT_YEAR_PROGRESS_REQUIRED = 24
-    NEXT_YEAR_CHASSIS_UNITS_REQUIRED = 2
+    NEXT_YEAR_RACE_READY_CHASSIS_REQUIRED = 2
     MINOR_UPGRADE_FAST_WEEKS = 2.0
     MINOR_UPGRADE_SLOW_WEEKS = 4.0
     MAJOR_UPGRADE_FAST_WEEKS = 4.0
@@ -93,7 +93,7 @@ class PlayerConstructionManager:
 
     def _build_cost_for_scope(self, scope: str, design: PlayerCarDevelopment | None = None) -> int:
         if scope == "next_year":
-            return self.NEXT_YEAR_CHASSIS_UNIT_COST * self.NEXT_YEAR_CHASSIS_UNITS_REQUIRED
+            return self.NEXT_YEAR_CHASSIS_UNIT_COST
         if design is None:
             return self.CURRENT_YEAR_MIN_UPGRADE_COST
         design_blocks = sum(max(0, min(10, int(stage.progress or 0))) for stage in design.stages)
@@ -108,7 +108,7 @@ class PlayerConstructionManager:
         return self.NEXT_YEAR_PROGRESS_REQUIRED if scope == "next_year" else self.CURRENT_YEAR_PROGRESS_REQUIRED
 
     def _units_required_for_scope(self, scope: str) -> int:
-        return self.NEXT_YEAR_CHASSIS_UNITS_REQUIRED if scope == "next_year" else 1
+        return 1
 
     def create_from_design(self, state: GameState, design: PlayerCarDevelopment) -> PlayerConstructionProject:
         scope = self._normalize_scope(design.scope)
@@ -153,6 +153,8 @@ class PlayerConstructionManager:
             ),
             None,
         )
+        if project is None and normalized_scope == "next_year":
+            project = self._create_additional_next_year_chassis_project(state)
         if not project:
             raise ValueError("No construction package is ready for this chassis")
         if any(item.scope == normalized_scope and item.active for item in state.player_construction_projects):
@@ -172,6 +174,37 @@ class PlayerConstructionManager:
             ),
             category=EmailCategory.GENERAL,
         )
+        return project
+
+    def _create_additional_next_year_chassis_project(self, state: GameState) -> PlayerConstructionProject | None:
+        previous = next(
+            (
+                item
+                for item in reversed(state.player_construction_projects)
+                if item.scope == "next_year" and item.completed and not item.applied
+            ),
+            None,
+        )
+        if previous is None:
+            return None
+        built_so_far = self._next_year_chassis_built_count(state, int(previous.year or state.year + 1))
+        base_name = str(previous.name or "Next Year Chassis").split(" #", 1)[0]
+        project = PlayerConstructionProject(
+            active=False,
+            scope="next_year",
+            name=f"{base_name} #{built_so_far + 1}",
+            year=previous.year,
+            allocation_percent=0,
+            progress_required=self.NEXT_YEAR_PROGRESS_REQUIRED,
+            total_cost=self.NEXT_YEAR_CHASSIS_UNIT_COST,
+            speed_delta=int(previous.speed_delta or 0),
+            quality_score=int(previous.quality_score or 0),
+            risk=previous.risk,
+            units_required=1,
+            design_blocks=int(previous.design_blocks or 0),
+        )
+        self._refresh_project_staffing(state, project)
+        state.player_construction_projects.append(project)
         return project
 
     def set_allocation(self, state: GameState, scope: str | None, allocation_percent: int | None) -> PlayerConstructionProject:
@@ -240,12 +273,18 @@ class PlayerConstructionManager:
             "risk": "None",
             "units_required": self._units_required_for_scope(scope),
             "units_built": 0,
+            "race_ready_required": self.NEXT_YEAR_RACE_READY_CHASSIS_REQUIRED if scope == "next_year" else 1,
+            "race_ready_built": self._next_year_chassis_built_count(state, state.year + 1) if scope == "next_year" else 0,
             "estimated_weeks": None,
             "target_week_range": self._target_week_range(PlayerConstructionProject(scope=scope)),
         }
 
     def _project_payload(self, state: GameState, project: PlayerConstructionProject, scope: str) -> dict:
         self._refresh_project_staffing(state, project)
+        race_ready_built = self._next_year_chassis_built_count(state, int(project.year or state.year + 1)) if scope == "next_year" else project.units_built
+        can_start = not project.active and not project.completed
+        if scope == "next_year" and project.completed and not project.applied:
+            can_start = True
         return {
             "active": project.active,
             "scope": project.scope,
@@ -260,12 +299,14 @@ class PlayerConstructionManager:
             "paid": project.paid,
             "completed": project.completed,
             "applied": project.applied,
-            "can_start": not project.active and not project.completed,
+            "can_start": can_start,
             "speed_delta": project.speed_delta,
             "quality_score": project.quality_score,
             "risk": project.risk,
             "units_required": project.units_required,
             "units_built": project.units_built,
+            "race_ready_required": self.NEXT_YEAR_RACE_READY_CHASSIS_REQUIRED if scope == "next_year" else 1,
+            "race_ready_built": race_ready_built,
             "estimated_weeks": self._estimated_weeks(state, project),
             "target_week_range": self._target_week_range(project),
         }
@@ -341,7 +382,7 @@ class PlayerConstructionManager:
             subject=f"Next Year's Chassis Built: {project.name}",
             body=(
                 f"Construction of {project.name} is complete.\n\n"
-                f"Chassis built: {project.units_built} / {project.units_required}\n"
+                f"Chassis built: {self._next_year_chassis_built_count(state, int(project.year or state.year + 1))} / {self.NEXT_YEAR_RACE_READY_CHASSIS_REQUIRED} required for Race 1\n"
                 f"Projected performance gain: +{project.speed_delta}\n"
                 f"Construction spend: ${project.paid:,}"
             ),
@@ -369,20 +410,13 @@ class PlayerConstructionManager:
         )
 
     def apply_next_year_for_rollover(self, state: GameState) -> dict | None:
-        project = next(
-            (
-                item
-                for item in state.player_construction_projects
-                if item.scope == "next_year" and item.completed and item.year == state.year
-            ),
-            None,
-        )
+        projects = self._completed_next_year_projects(state, state.year)
         team = state.player_team
         if not team:
             return None
-        if not project or int(project.units_built or 0) < self.NEXT_YEAR_CHASSIS_UNITS_REQUIRED:
+        if self._sum_units_built(projects) < self.NEXT_YEAR_RACE_READY_CHASSIS_REQUIRED:
             return {"status": "not_ready", "reason": "next_year_chassis_not_built"}
-        return self._apply_next_year_project(state, project)
+        return self._apply_next_year_projects(state, projects)
 
     def validate_first_race_chassis_ready(self, state: GameState) -> dict | None:
         current_event = state.calendar.current_event
@@ -395,24 +429,17 @@ class PlayerConstructionManager:
         team = state.player_team
         if not team:
             return None
-        project = next(
-            (
-                item
-                for item in state.player_construction_projects
-                if item.scope == "next_year" and item.year == state.year
-            ),
-            None,
-        )
+        projects = self._completed_next_year_projects(state, state.year)
         chassis_year = getattr(state, "player_chassis_year", None)
         if chassis_year is None and state.year <= 1998:
             return {"status": "ready", "chassis_built": len(state.player_chassis)}
         if (
             chassis_year == state.year
-            and len(state.player_chassis) >= self.NEXT_YEAR_CHASSIS_UNITS_REQUIRED
+            and len(state.player_chassis) >= self.NEXT_YEAR_RACE_READY_CHASSIS_REQUIRED
         ):
             return {"status": "ready", "chassis_built": len(state.player_chassis)}
-        if project and int(project.units_built or 0) >= self.NEXT_YEAR_CHASSIS_UNITS_REQUIRED:
-            return self._apply_next_year_project(state, project)
+        if self._sum_units_built(projects) >= self.NEXT_YEAR_RACE_READY_CHASSIS_REQUIRED:
+            return self._apply_next_year_projects(state, projects)
         state.game_over = True
         state.game_over_reason = "next_year_chassis_not_built"
         state.add_email(
@@ -426,16 +453,32 @@ class PlayerConstructionManager:
         )
         return {"status": "game_over", "reason": state.game_over_reason, "message": "At least two race-ready chassis must be built before Race 1."}
 
-    def _apply_next_year_project(self, state: GameState, project: PlayerConstructionProject) -> dict:
+    def _completed_next_year_projects(self, state: GameState, year: int) -> list[PlayerConstructionProject]:
+        return [
+            item
+            for item in state.player_construction_projects
+            if item.scope == "next_year" and item.year == year and item.completed
+        ]
+
+    def _sum_units_built(self, projects: list[PlayerConstructionProject]) -> int:
+        return sum(max(0, int(project.units_built or 0)) for project in projects)
+
+    def _next_year_chassis_built_count(self, state: GameState, year: int) -> int:
+        return self._sum_units_built(self._completed_next_year_projects(state, year))
+
+    def _apply_next_year_projects(self, state: GameState, projects: list[PlayerConstructionProject]) -> dict:
         team = state.player_team
         if not team:
             return {"status": "not_ready", "reason": "no_player_team"}
-        if project.applied and len(state.player_chassis) >= self.NEXT_YEAR_CHASSIS_UNITS_REQUIRED:
+        built_count = self._sum_units_built(projects)
+        if all(project.applied for project in projects) and len(state.player_chassis) >= self.NEXT_YEAR_RACE_READY_CHASSIS_REQUIRED:
             return {"status": "ready", "chassis_built": len(state.player_chassis)}
+        project = projects[0]
         old_speed = team.car_speed
         team.car_speed = max(1, old_speed + int(project.speed_delta or 0))
-        project.applied = True
-        state.player_chassis = self._create_next_year_chassis(state, team.id, project.units_built)
+        for item in projects:
+            item.applied = True
+        state.player_chassis = self._create_next_year_chassis(state, team.id, built_count)
         state.player_chassis_year = state.year
         state.player_test_chassis_id = state.player_chassis[0].id if state.player_chassis else None
         state.player_race_chassis_assignments = {}
@@ -445,8 +488,8 @@ class PlayerConstructionManager:
             body=(
                 f"The completed {project.name} has been introduced for {state.year}.\n\n"
                 f"Car rating: {old_speed} -> {team.car_speed}\n"
-                f"Race-ready chassis: {project.units_built}\n"
-                f"Construction spend: ${project.paid:,}"
+                f"Race-ready chassis: {built_count}\n"
+                f"Construction spend: ${sum(int(item.paid or 0) for item in projects):,}"
             ),
             category=EmailCategory.SEASON,
         )
@@ -457,7 +500,7 @@ class PlayerConstructionManager:
             "new_speed": team.car_speed,
             "speed_delta": project.speed_delta,
             "quality_score": project.quality_score,
-            "chassis_built": project.units_built,
+            "chassis_built": built_count,
         }
 
     def _create_next_year_chassis(self, state: GameState, team_id: int, count: int) -> list[Chassis]:

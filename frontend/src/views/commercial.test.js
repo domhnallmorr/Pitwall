@@ -11,6 +11,7 @@ describe('CommercialView', () => {
 				<div id="commercial-summary"></div>
 				<button class="commercial-tab-btn active" data-type="title-sponsor"></button>
 				<button class="commercial-tab-btn" data-type="engine"></button>
+				<button class="commercial-tab-btn" data-type="tyre"></button>
 				<div id="commercial-content-title-sponsor">
 					<div id="commercial-title-sponsor-list"></div>
 					<div id="commercial-title-sponsor-detail"></div>
@@ -18,6 +19,10 @@ describe('CommercialView', () => {
 				<div id="commercial-content-engine" style="display:none;">
 					<div id="commercial-engine-list"></div>
 					<div id="commercial-engine-detail"></div>
+				</div>
+				<div id="commercial-content-tyre" style="display:none;">
+					<div id="commercial-tyre-list"></div>
+					<div id="commercial-tyre-detail"></div>
 				</div>
 				<div id="commercial-hospitality-modal" style="display:none;">
 					<div id="commercial-hospitality-modal-title"></div>
@@ -48,13 +53,21 @@ describe('CommercialView', () => {
 				commercial_staff_total: 49,
 				hospitality: { booked: true },
 			},
+			tyre_negotiation: {
+				suppliers: [{ id: 3, name: 'Spanrock', country: 'Japan', resources: 86, innovation: 91, reliability: 84, targetable: true }],
+				commercial_manager: { name: 'Helena Schwarz', skill: 84 },
+				commercial_staff_total: 49,
+				hospitality: { booked: false },
+			},
 		});
 
 		expect(document.getElementById('commercial-summary').textContent).toContain('Helena Schwarz');
 		expect(document.getElementById('commercial-summary').textContent).toContain('Windale');
 		expect(document.getElementById('commercial-summary').textContent).toContain('Mechatron');
+		expect(document.getElementById('commercial-summary').textContent).toContain('Tyres:');
 		expect(document.getElementById('commercial-title-sponsor-list').textContent).toContain('Fastlane');
 		expect(document.getElementById('commercial-engine-list').textContent).toContain('Power 88');
+		expect(document.getElementById('commercial-tyre-list').textContent).toContain('Innovation 91');
 	});
 
 	it('switches tabs and routes sponsor actions through handlers', () => {
@@ -161,6 +174,54 @@ describe('CommercialView', () => {
 		expect(onHospitality).toHaveBeenCalled();
 	});
 
+	it('routes tyre actions through handlers and supports the third commercial tab', () => {
+		const onStart = vi.fn();
+		const onUpdateStaff = vi.fn();
+		const onSign = vi.fn();
+		const onHospitality = vi.fn();
+		view.setStartTyreNegotiationHandler(onStart);
+		view.setUpdateTyreNegotiationStaffHandler(onUpdateStaff);
+		view.setSignTyreNegotiatedDealHandler(onSign);
+		view.setBookTyreNegotiationHospitalityHandler(onHospitality);
+
+		view.renderTyreNegotiation({
+			suppliers: [{ id: 3, name: 'Spanrock', country: 'Japan', resources: 86, innovation: 91, reliability: 84, targetable: true }],
+			commercial_manager: { name: 'Helena Schwarz', skill: 84 },
+			commercial_staff_total: 20,
+			hospitality: { available: true, booked: false, cost: 100000, progress_bonus: 1.0, event_name: 'Monaco', event_week: 15 },
+			active_negotiation: {
+				supplier_name: 'Spanrock',
+				assigned_staff: 10,
+				progress_boxes: 4,
+				total_boxes: 7,
+				customer_threshold: 2,
+				partner_threshold: 4,
+				works_threshold: 7,
+				contract_length: 2,
+				available_tiers: ['customer', 'partner', 'works'],
+				unlocked_tiers: ['customer', 'partner'],
+				annual_values: { customer: 450000, partner: 0, works: 0 },
+			},
+		});
+
+		document.querySelector('.commercial-tab-btn[data-type="tyre"]').click();
+		expect(document.getElementById('commercial-content-tyre').style.display).toBe('block');
+
+		document.querySelector('[data-tyre-supplier-id="3"]').click();
+		expect(onStart).toHaveBeenCalledWith(3);
+
+		document.querySelector('[data-staff-input-id="commercial-tyre-negotiation-staff"][data-staff-step="1"]').click();
+		expect(onUpdateStaff).toHaveBeenCalledWith(11);
+
+		document.querySelector('[data-tyre-tier="partner"]').click();
+		expect(onSign).toHaveBeenCalledWith('partner');
+
+		document.getElementById('commercial-tyre-hospitality-btn').click();
+		expect(document.getElementById('commercial-hospitality-modal-body').textContent).toContain('Monaco (Week 15)');
+		document.getElementById('commercial-hospitality-confirm-btn').click();
+		expect(onHospitality).toHaveBeenCalled();
+	});
+
 	it('clamps staff stepper values and supports hospitality cancel/overlay close', () => {
 		view.setUpdateTitleSponsorNegotiationStaffHandler(vi.fn());
 		view.renderTitleSponsorNegotiation({
@@ -209,6 +270,10 @@ describe('CommercialView', () => {
 				hospitality: { booked: false },
 			},
 			engine_negotiation: {
+				suppliers: [],
+				hospitality: { booked: false },
+			},
+			tyre_negotiation: {
 				suppliers: [],
 				hospitality: { booked: false },
 			},

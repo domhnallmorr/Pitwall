@@ -84,6 +84,23 @@ export function renderEngineNegotiationSupplierList(suppliers = []) {
 	`).join('');
 }
 
+export function renderTyreNegotiationSupplierList(suppliers = []) {
+	if (!suppliers.length) {
+		return '<p class="finance-engine-negotiation-empty">No suppliers available.</p>';
+	}
+	return suppliers.map((supplier) => `
+		<div class="finance-engine-supplier-row">
+			<div>
+				<div class="finance-section-title">${supplier.name}</div>
+				<div class="finance-balance-label">${supplier.country} · Resources ${supplier.resources} · Innovation ${supplier.innovation} · Reliability ${supplier.reliability}</div>
+			</div>
+			<button class="btn-secondary" data-tyre-supplier-id="${supplier.id}" ${supplier.targetable ? '' : 'disabled'}>
+				Approach
+			</button>
+		</div>
+	`).join('');
+}
+
 export function renderNegotiationBlockedState(reason) {
 	return `
 		<div class="finance-engine-negotiation-empty">
@@ -252,6 +269,80 @@ export function renderEngineNegotiationDetail(data = {}, options = {}) {
 			const sign = value < 0 ? '+' : '-';
 			return `
 				<button class="btn-primary finance-engine-tier-btn" data-engine-tier="${tier}" ${unlocked ? '' : 'disabled'}>
+					Sign ${tier[0].toUpperCase()}${tier.slice(1)} (${sign}$${Math.abs(value).toLocaleString()})
+				</button>
+			`;
+		}).join('');
+
+	return `
+		<div class="finance-engine-negotiation-card">
+			<div class="finance-balance-label">Active Negotiation</div>
+			<h3>${active.supplier_name}</h3>
+			<div class="finance-engine-progress-track">${boxes}</div>
+			<div class="finance-balance-label">Progress: ${active.progress_boxes}/${active.total_boxes} boxes</div>
+			<div class="finance-engine-negotiation-meta">
+				<div>
+					<span class="finance-balance-label">Contract Length</span>
+					<div>${active.contract_length} year(s)</div>
+				</div>
+				<div>
+					<span class="finance-balance-label">Unlocked</span>
+					<div>${active.unlocked_tiers.map((tier) => tier[0].toUpperCase() + tier.slice(1)).join(', ') || 'None yet'}</div>
+				</div>
+			</div>
+			${renderStaffAssignmentControl({
+				inputId: staffInputId,
+				assignedStaff: active.assigned_staff,
+				commercialStaffTotal: data.commercial_staff_total,
+			})}
+			${renderHospitalityAction(hospitality, hospitalityButtonId)}
+			<div class="finance-engine-negotiation-tiers">${tierButtons}</div>
+		</div>
+	`;
+}
+
+export function renderTyreNegotiationDetail(data = {}, options = {}) {
+	const active = data.active_negotiation;
+	const hospitality = data.hospitality || {};
+	const {
+		staffInputId = 'finance-tyre-negotiation-staff',
+		hospitalityButtonId = 'finance-tyre-hospitality-btn',
+	} = options;
+	if (data.blocked_reason) {
+		return renderNegotiationBlockedState(data.blocked_reason);
+	}
+	if (!active) {
+		return renderNegotiationIdleState({
+			intro: 'Select a tyre supplier on the left to open talks. Commercial manager skill and assigned commercial staff will drive progress after each race.',
+			commercialManager: data.commercial_manager,
+			commercialStaffTotal: data.commercial_staff_total,
+		});
+	}
+
+	const boxes = Array.from({ length: active.total_boxes }, (_, index) => {
+		const boxNumber = index + 1;
+		const marker = boxNumber === active.customer_threshold
+			? 'C'
+			: boxNumber === active.partner_threshold
+				? 'P'
+				: boxNumber === active.works_threshold
+					? 'W'
+					: '';
+		return `
+			<div class="finance-engine-progress-box ${boxNumber <= active.progress_boxes ? 'filled' : ''}">
+				<span>${marker}</span>
+			</div>
+		`;
+	}).join('');
+
+	const tierButtons = ['customer', 'partner', 'works']
+		.filter((tier) => active.available_tiers.includes(tier))
+		.map((tier) => {
+			const unlocked = active.unlocked_tiers.includes(tier);
+			const value = active.annual_values?.[tier] || 0;
+			const sign = value < 0 ? '+' : '-';
+			return `
+				<button class="btn-primary finance-engine-tier-btn" data-tyre-tier="${tier}" ${unlocked ? '' : 'disabled'}>
 					Sign ${tier[0].toUpperCase()}${tier.slice(1)} (${sign}$${Math.abs(value).toLocaleString()})
 				</button>
 			`;

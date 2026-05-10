@@ -461,12 +461,13 @@ export default class FinanceView {
 		this.setSupplierLogo(this.engineSupplierLogoWrap, engineSupplier.name);
 
 		const tyreSupplier = data.tyre_supplier || {};
+		const tyreNegotiation = data.tyre_negotiation || {};
 		const tyreContractLength = tyreSupplier.contract_length || 0;
 		const tyrePendingReplacement = Boolean(tyreSupplier.pending_replacement);
 
 		this.setText(this.tyreSupplierNameEl, tyreSupplier.name || 'Unassigned');
 		if (this.tyreSupplierReplaceBtn) {
-			const canReplace = Boolean(tyreSupplier.name) && tyreContractLength < 2 && !tyrePendingReplacement;
+			const canReplace = Boolean(tyreSupplier.name) && tyreContractLength < 2 && !tyrePendingReplacement && !tyreNegotiation?.blocked_reason;
 			this.tyreSupplierReplaceBtn.disabled = !canReplace;
 			if (canReplace) this.tyreSupplierReplaceBtn.setAttribute('data-supplier-name', tyreSupplier.name);
 			else this.tyreSupplierReplaceBtn.removeAttribute('data-supplier-name');

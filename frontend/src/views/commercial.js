@@ -3,6 +3,8 @@ import {
 	renderEngineNegotiationSupplierList,
 	renderTitleSponsorNegotiationDetail,
 	renderTitleSponsorNegotiationSupplierList,
+	renderTyreNegotiationDetail,
+	renderTyreNegotiationSupplierList,
 } from './finance_renderers.js';
 
 export default class CommercialView {
@@ -11,10 +13,13 @@ export default class CommercialView {
 		this.tabBtns = document.querySelectorAll('.commercial-tab-btn');
 		this.titleSponsorPanel = document.getElementById('commercial-content-title-sponsor');
 		this.enginePanel = document.getElementById('commercial-content-engine');
+		this.tyrePanel = document.getElementById('commercial-content-tyre');
 		this.titleSponsorListEl = document.getElementById('commercial-title-sponsor-list');
 		this.titleSponsorDetailEl = document.getElementById('commercial-title-sponsor-detail');
 		this.engineListEl = document.getElementById('commercial-engine-list');
 		this.engineDetailEl = document.getElementById('commercial-engine-detail');
+		this.tyreListEl = document.getElementById('commercial-tyre-list');
+		this.tyreDetailEl = document.getElementById('commercial-tyre-detail');
 		this.hospitalityModal = document.getElementById('commercial-hospitality-modal');
 		this.hospitalityModalTitle = document.getElementById('commercial-hospitality-modal-title');
 		this.hospitalityModalBody = document.getElementById('commercial-hospitality-modal-body');
@@ -24,6 +29,7 @@ export default class CommercialView {
 		this.activeTab = 'title-sponsor';
 		this.titleSponsorData = null;
 		this.engineData = null;
+		this.tyreData = null;
 		this.summaryData = null;
 		this.pendingHospitalityAction = null;
 
@@ -35,10 +41,15 @@ export default class CommercialView {
 		this.onUpdateEngineNegotiationStaff = null;
 		this.onSignEngineNegotiatedDeal = null;
 		this.onBookEngineNegotiationHospitality = null;
+		this.onStartTyreNegotiation = null;
+		this.onUpdateTyreNegotiationStaff = null;
+		this.onSignTyreNegotiatedDeal = null;
+		this.onBookTyreNegotiationHospitality = null;
 
 		this.bindTabs();
 		this.bindTitleSponsorPanel();
 		this.bindEnginePanel();
+		this.bindTyrePanel();
 		this.bindHospitalityModal();
 	}
 
@@ -50,6 +61,10 @@ export default class CommercialView {
 	setUpdateEngineNegotiationStaffHandler(handler) { this.onUpdateEngineNegotiationStaff = handler; }
 	setSignEngineNegotiatedDealHandler(handler) { this.onSignEngineNegotiatedDeal = handler; }
 	setBookEngineNegotiationHospitalityHandler(handler) { this.onBookEngineNegotiationHospitality = handler; }
+	setStartTyreNegotiationHandler(handler) { this.onStartTyreNegotiation = handler; }
+	setUpdateTyreNegotiationStaffHandler(handler) { this.onUpdateTyreNegotiationStaff = handler; }
+	setSignTyreNegotiatedDealHandler(handler) { this.onSignTyreNegotiatedDeal = handler; }
+	setBookTyreNegotiationHospitalityHandler(handler) { this.onBookTyreNegotiationHospitality = handler; }
 
 	adjustStaffInput(inputId, delta) {
 		const input = document.getElementById(inputId);
@@ -153,6 +168,44 @@ export default class CommercialView {
 		}
 	}
 
+	bindTyrePanel() {
+		if (this.tyreListEl) {
+			this.tyreListEl.addEventListener('click', (event) => {
+				const button = event.target.closest('[data-tyre-supplier-id]');
+				if (button && this.onStartTyreNegotiation) {
+					this.onStartTyreNegotiation(Number(button.getAttribute('data-tyre-supplier-id')));
+				}
+			});
+		}
+		if (this.tyreDetailEl) {
+			this.tyreDetailEl.addEventListener('click', (event) => {
+				const stepButton = event.target.closest('[data-staff-step]');
+				if (stepButton) {
+					const inputId = stepButton.getAttribute('data-staff-input-id');
+					this.adjustStaffInput(
+						inputId,
+						Number(stepButton.getAttribute('data-staff-step') || 0),
+					);
+					this.applyStaffFromInput(inputId, this.onUpdateTyreNegotiationStaff);
+					return;
+				}
+				const signButton = event.target.closest('[data-tyre-tier]');
+				if (signButton && this.onSignTyreNegotiatedDeal) {
+					this.onSignTyreNegotiatedDeal(signButton.getAttribute('data-tyre-tier'));
+					return;
+				}
+				if (event.target.closest('#commercial-tyre-hospitality-btn') && this.onBookTyreNegotiationHospitality) {
+					this.openHospitalityConfirm('tyre');
+				}
+			});
+			this.tyreDetailEl.addEventListener('change', (event) => {
+				if (event.target?.id === 'commercial-tyre-negotiation-staff') {
+					this.applyStaffFromInput(event.target.id, this.onUpdateTyreNegotiationStaff);
+				}
+			});
+		}
+	}
+
 	bindHospitalityModal() {
 		if (this.hospitalityCancelBtn) {
 			this.hospitalityCancelBtn.addEventListener('click', () => this.closeHospitalityConfirm());
@@ -163,6 +216,8 @@ export default class CommercialView {
 					this.onBookTitleSponsorHospitality();
 				} else if (this.pendingHospitalityAction === 'engine' && this.onBookEngineNegotiationHospitality) {
 					this.onBookEngineNegotiationHospitality();
+				} else if (this.pendingHospitalityAction === 'tyre' && this.onBookTyreNegotiationHospitality) {
+					this.onBookTyreNegotiationHospitality();
 				}
 				this.closeHospitalityConfirm();
 			});
@@ -175,7 +230,11 @@ export default class CommercialView {
 	}
 
 	openHospitalityConfirm(targetType) {
-		const data = targetType === 'title-sponsor' ? this.titleSponsorData : this.engineData;
+		const data = targetType === 'title-sponsor'
+			? this.titleSponsorData
+			: targetType === 'engine'
+				? this.engineData
+				: this.tyreData;
 		const hospitality = data?.hospitality || {};
 		const targetName = targetType === 'title-sponsor'
 			? data?.active_negotiation?.sponsor_name
@@ -204,6 +263,7 @@ export default class CommercialView {
 		this.tabBtns.forEach((btn) => btn.classList.toggle('active', btn.getAttribute('data-type') === type));
 		if (this.titleSponsorPanel) this.titleSponsorPanel.style.display = type === 'title-sponsor' ? 'block' : 'none';
 		if (this.enginePanel) this.enginePanel.style.display = type === 'engine' ? 'block' : 'none';
+		if (this.tyrePanel) this.tyrePanel.style.display = type === 'tyre' ? 'block' : 'none';
 		this.renderSummary();
 	}
 
@@ -212,13 +272,16 @@ export default class CommercialView {
 		const finance = this.summaryData || {};
 		const titleNegotiation = this.titleSponsorData || {};
 		const engineNegotiation = this.engineData || {};
-		const manager = titleNegotiation.commercial_manager || engineNegotiation.commercial_manager || {};
-		const commercialStaffTotal = Number(titleNegotiation.commercial_staff_total || engineNegotiation.commercial_staff_total || 0);
-		const activeTalks = [titleNegotiation.active_negotiation, engineNegotiation.active_negotiation].filter(Boolean).length;
+		const tyreNegotiation = this.tyreData || {};
+		const manager = titleNegotiation.commercial_manager || engineNegotiation.commercial_manager || tyreNegotiation.commercial_manager || {};
+		const commercialStaffTotal = Number(titleNegotiation.commercial_staff_total || engineNegotiation.commercial_staff_total || tyreNegotiation.commercial_staff_total || 0);
+		const activeTalks = [titleNegotiation.active_negotiation, engineNegotiation.active_negotiation, tyreNegotiation.active_negotiation].filter(Boolean).length;
 		const activeHospitality = titleNegotiation.hospitality?.booked
 			? 'Title Sponsor booked'
 			: engineNegotiation.hospitality?.booked
 				? 'Engine Supplier booked'
+				: tyreNegotiation.hospitality?.booked
+					? 'Tyre Supplier booked'
 				: 'None booked';
 
 		this.summaryEl.innerHTML = `
@@ -235,12 +298,12 @@ export default class CommercialView {
 			<div class="commercial-summary-card">
 				<div class="finance-balance-label">Active Talks</div>
 				<div class="commercial-summary-value">${activeTalks}</div>
-				<div class="commercial-summary-subtle">Title sponsor and engine negotiations</div>
+				<div class="commercial-summary-subtle">Title sponsor, engine, and tyre negotiations</div>
 			</div>
 			<div class="commercial-summary-card">
 				<div class="finance-balance-label">Hospitality</div>
 				<div class="commercial-summary-value">${activeHospitality}</div>
-				<div class="commercial-summary-subtle">Current sponsor: ${finance.sponsor?.name || 'Unassigned'} | Engine: ${finance.engine_supplier?.name || 'Unassigned'}</div>
+				<div class="commercial-summary-subtle">Current sponsor: ${finance.sponsor?.name || 'Unassigned'} | Engine: ${finance.engine_supplier?.name || 'Unassigned'} | Tyres: ${finance.tyre_supplier?.name || 'Unassigned'}</div>
 			</div>
 		`;
 	}
@@ -274,9 +337,24 @@ export default class CommercialView {
 		this.renderSummary();
 	}
 
+	renderTyreNegotiation(data = {}) {
+		this.tyreData = data;
+		if (this.tyreListEl) {
+			this.tyreListEl.innerHTML = renderTyreNegotiationSupplierList(Array.isArray(data.suppliers) ? data.suppliers : []);
+		}
+		if (this.tyreDetailEl) {
+			this.tyreDetailEl.innerHTML = renderTyreNegotiationDetail(data, {
+				staffInputId: 'commercial-tyre-negotiation-staff',
+				hospitalityButtonId: 'commercial-tyre-hospitality-btn',
+			});
+		}
+		this.renderSummary();
+	}
+
 	render(financeData = {}) {
 		this.summaryData = financeData;
 		this.renderTitleSponsorNegotiation(financeData.title_sponsor_negotiation || {});
 		this.renderEngineNegotiation(financeData.engine_negotiation || {});
+		this.renderTyreNegotiation(financeData.tyre_negotiation || {});
 	}
 }

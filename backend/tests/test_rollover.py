@@ -100,8 +100,21 @@ def test_rollover_resets_player_chassis_development_state():
             quality_score=55,
             progress=24,
             progress_required=24,
-            units_required=2,
-            units_built=2,
+            units_required=1,
+            units_built=1,
+        ),
+        PlayerConstructionProject(
+            active=False,
+            completed=True,
+            scope="next_year",
+            name="1999 Chassis 2",
+            year=1999,
+            speed_delta=3,
+            quality_score=55,
+            progress=24,
+            progress_required=24,
+            units_required=1,
+            units_built=1,
         )
     ]
 
@@ -125,7 +138,7 @@ def test_rollover_preserves_unfinished_next_year_chassis_construction_for_presea
             year=1999,
             progress=12,
             progress_required=24,
-            units_required=2,
+            units_required=1,
             units_built=0,
         )
     ]
