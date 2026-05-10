@@ -259,6 +259,50 @@
   gap: 16px;
 }
 
+.car-construction-projects-card {
+  margin-top: 14px;
+}
+
+.car-construction-projects {
+  display: grid;
+  gap: 12px;
+}
+
+.car-construction-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.car-construction-section-head {
+  padding: 14px 16px;
+  border: 1px solid rgba(100, 255, 218, 0.14);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(5, 14, 26, 0.92), rgba(8, 17, 32, 0.78));
+}
+
+.car-construction-projects .car-tyre-supplier-card {
+  display: grid;
+  gap: 12px;
+}
+
+.car-construction-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 2px;
+}
+
+.car-construction-actions .btn-primary {
+  margin-top: 0;
+}
+
+.car-construction-actions .btn-secondary {
+  margin-top: 0;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+}
+
 .car-spares-widget-label {
   color: #94a3b8;
   text-transform: uppercase;
@@ -327,10 +371,16 @@
 
 .car-construction-build-card .btn-primary {
   margin-top: 14px;
+  padding: 8px 14px;
+  font-size: 0.82rem;
 }
 
 @media (max-width: 900px) {
   .car-tyre-supplier-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .car-construction-grid {
     grid-template-columns: 1fr;
   }
 }

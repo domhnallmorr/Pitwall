@@ -2,6 +2,7 @@ import logging
 import random
 
 from app.core.player_car_development import PlayerCarDevelopmentManager
+from app.core.player_construction import PlayerConstructionManager
 from app.core.player_spares import (
     PLAYER_SPARE_BUILD_COST,
     PLAYER_MECHANICS_REPAIR_PERCENT_PER_SPARE,
@@ -89,6 +90,45 @@ def handle_set_car_development_allocation(
     except Exception as e:
         logger.error(f"Error updating car development allocation: {e}")
         return {"type": "car_development_allocation_updated", "status": "error", "message": str(e)}
+
+
+def handle_set_construction_allocation(
+    state: GameState,
+    logger: logging.Logger,
+    scope: str | None,
+    allocation_percent: int | None,
+):
+    try:
+        PlayerConstructionManager().set_allocation(state, scope or "current_year", allocation_percent)
+        return {
+            "type": "construction_allocation_updated",
+            "status": "success",
+            "data": PlayerConstructionManager().get_payload(state),
+        }
+    except ValueError as ve:
+        return {"type": "construction_allocation_updated", "status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error updating construction allocation: {e}")
+        return {"type": "construction_allocation_updated", "status": "error", "message": str(e)}
+
+
+def handle_start_construction_project(
+    state: GameState,
+    logger: logging.Logger,
+    scope: str | None,
+):
+    try:
+        PlayerConstructionManager().start_project(state, scope or "current_year")
+        return {
+            "type": "construction_started",
+            "status": "success",
+            "data": PlayerConstructionManager().get_payload(state),
+        }
+    except ValueError as ve:
+        return {"type": "construction_started", "status": "error", "message": str(ve)}
+    except Exception as e:
+        logger.error(f"Error starting construction: {e}")
+        return {"type": "construction_started", "status": "error", "message": str(e)}
 
 
 def _get_player_chassis(state: GameState, chassis_id: int | None) -> Chassis:

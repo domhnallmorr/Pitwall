@@ -10,6 +10,7 @@ from app.core.fuel_supplier_costs import FuelSupplierCostManager
 from app.core.management_salaries import ManagementSalaryManager
 from app.core.operational_staff_costs import OperationalStaffCostManager
 from app.core.player_engine_negotiations import PlayerEngineNegotiationManager
+from app.core.player_construction import PlayerConstructionManager
 from app.core.player_title_sponsor_negotiations import PlayerTitleSponsorNegotiationManager
 from app.core.prize_money import PrizeMoneyManager
 from app.core.sponsorships import SponsorshipManager
@@ -52,6 +53,17 @@ def _build_race_weekend_payload(state: GameState) -> dict:
 
 def handle_get_race_weekend(state: GameState, logger: logging.Logger):
     try:
+        chassis_ready = PlayerConstructionManager().validate_first_race_chassis_ready(state)
+        if chassis_ready and chassis_ready.get("status") == "game_over":
+            return state, {
+                "type": "game_over",
+                "status": "success",
+                "data": {
+                    "reason": chassis_ready["reason"],
+                    "message": chassis_ready["message"],
+                    "summary": GameEngine().get_week_summary(state),
+                },
+            }
         payload = _build_race_weekend_payload(state)
         if not payload:
             return state, {"status": "error", "message": "No active race weekend"}
@@ -63,6 +75,9 @@ def handle_get_race_weekend(state: GameState, logger: logging.Logger):
 
 def handle_simulate_qualifying(state: GameState, logger: logging.Logger):
     try:
+        chassis_ready = PlayerConstructionManager().validate_first_race_chassis_ready(state)
+        if chassis_ready and chassis_ready.get("status") == "game_over":
+            return state, {"type": "game_over", "status": "success", "data": {"reason": chassis_ready["reason"], "message": chassis_ready["message"], "summary": GameEngine().get_week_summary(state)}}
         RaceManager().simulate_qualifying(state)
         return state, {"type": "qualifying_result", "status": "success", "data": _build_race_weekend_payload(state)}
     except Exception as e:
@@ -132,6 +147,9 @@ def _evaluate_negative_balance_game_over(state: GameState, event_name: str) -> d
 
 def handle_simulate_race(state: GameState, logger: logging.Logger):
     try:
+        chassis_ready = PlayerConstructionManager().validate_first_race_chassis_ready(state)
+        if chassis_ready and chassis_ready.get("status") == "game_over":
+            return state, {"type": "game_over", "status": "success", "data": {"reason": chassis_ready["reason"], "message": chassis_ready["message"], "summary": GameEngine().get_week_summary(state)}}
         race_result = RaceManager().simulate_race(state)
         current_event = state.calendar.current_event
         event_name = race_result.get("event_name", "Grand Prix")

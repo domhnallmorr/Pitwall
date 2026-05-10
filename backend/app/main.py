@@ -39,6 +39,8 @@ from app.commands.game_commands import (
     handle_simulate_race,
     handle_start_career,
     handle_start_car_development,
+    handle_set_construction_allocation,
+    handle_start_construction_project,
     handle_set_race_chassis_assignments,
     handle_set_car_development_allocation,
     handle_set_test_chassis,
@@ -569,6 +571,23 @@ def process_command(command: dict[str, Any]) -> dict[str, Any]:
             command.get("allocation_percent"),
             save_on_success=True,
             response_type_on_missing_state="car_development_allocation_updated",
+        )
+
+    if cmd_type == "set_construction_allocation":
+        return _run_response_handler(
+            handle_set_construction_allocation,
+            command.get("scope"),
+            command.get("allocation_percent"),
+            save_on_success=True,
+            response_type_on_missing_state="construction_allocation_updated",
+        )
+
+    if cmd_type == "start_construction_project":
+        return _run_response_handler(
+            handle_start_construction_project,
+            command.get("scope"),
+            save_on_success=True,
+            response_type_on_missing_state="construction_started",
         )
 
     if cmd_type == "set_test_chassis":

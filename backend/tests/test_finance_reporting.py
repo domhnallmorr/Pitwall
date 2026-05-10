@@ -121,3 +121,26 @@ def test_build_finance_report_summarizes_and_groups_by_track():
     assert track["income"] == 2_500_000
     assert track["expense"] == 790_000
     assert track["net"] == 1_710_000
+
+
+def test_build_finance_report_separates_spares_and_chassis_construction():
+    state = GameState(year=1998, teams=[], drivers=[], calendar=Calendar(events=[]), circuits=[])
+    state.finance.add_transaction(
+        week=1,
+        year=1998,
+        amount=-52_500,
+        category=TransactionCategory.CONSTRUCTION,
+        description="Built 1 spare set (1/10)",
+    )
+    state.finance.add_transaction(
+        week=2,
+        year=1998,
+        amount=-75_000,
+        category=TransactionCategory.CONSTRUCTION,
+        description="Current Chassis Upgrade construction (1/10)",
+    )
+
+    report = build_finance_report(state)
+
+    assert report["summary"]["spares_total"] == 52_500
+    assert report["summary"]["chassis_construction_total"] == 75_000

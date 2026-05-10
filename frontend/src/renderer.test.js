@@ -50,6 +50,8 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 		startCarDevelopment: vi.fn(),
 		finishCarDevelopmentStage: vi.fn(),
 		setCarDevelopmentAllocation: vi.fn(),
+		setConstructionAllocation: vi.fn(),
+		startConstructionProject: vi.fn(),
 		setTestChassis: vi.fn(),
 		setRaceChassisAssignments: vi.fn(),
 		repairChassisWear: vi.fn(),
@@ -114,6 +116,8 @@ vi.mock('./views/car.js', () => ({
 		setStartDevelopmentHandler() {}
 		setFinishDevelopmentStageHandler() {}
 		setDevelopmentAllocationHandler() {}
+		setConstructionAllocationHandler() {}
+		setStartConstructionHandler() {}
 		setTestChassisHandler() {}
 		setRaceChassisAssignmentsHandler() {}
 		setRepairChassisWearHandler() {}

@@ -5,6 +5,7 @@ from app.core.factory_size import get_factory_limits
 from app.core.operational_staff_costs import OperationalStaffCostManager
 from app.core.player_chassis import get_player_race_chassis_assignments, get_player_test_chassis, player_chassis_fail_probability
 from app.core.player_car_development import PlayerCarDevelopmentManager
+from app.core.player_construction import PlayerConstructionManager
 from app.core.player_spares import get_player_spares_construction_data
 from app.core.player_spares import get_player_maintenance_data
 from app.core.finance_reporting import build_finance_report
@@ -416,6 +417,7 @@ def get_car_payload(state: GameState) -> dict:
         },
         "construction": {
             "spares": get_player_spares_construction_data(state),
+            "projects": PlayerConstructionManager().get_payload(state),
         },
         "maintenance": get_player_maintenance_data(state),
         "player_test_chassis_id": selected_test_chassis.id if selected_test_chassis else state.player_test_chassis_id,

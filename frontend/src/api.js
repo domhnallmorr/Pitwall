@@ -92,6 +92,15 @@ const API = {
 		scope,
 		allocation_percent: allocationPercent
 	}),
+	setConstructionAllocation: (scope = 'current_year', allocationPercent = 0) => window.electronAPI.sendToPython({
+		type: 'set_construction_allocation',
+		scope,
+		allocation_percent: allocationPercent
+	}),
+	startConstructionProject: (scope = 'current_year') => window.electronAPI.sendToPython({
+		type: 'start_construction_project',
+		scope
+	}),
 	setTestChassis: (chassisId) => window.electronAPI.sendToPython({ type: 'set_test_chassis', chassis_id: chassisId }),
 	setRaceChassisAssignments: (driver1ChassisId, driver2ChassisId) => window.electronAPI.sendToPython({
 		type: 'set_race_chassis_assignments',

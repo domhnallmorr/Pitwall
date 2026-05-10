@@ -50,6 +50,8 @@ from app.commands.staff_commands import (
     handle_finish_car_development_stage,
     handle_finish_car_development_project_stage,
     handle_repair_chassis_wear,
+    handle_set_construction_allocation,
+    handle_start_construction_project,
     handle_replace_commercial_manager,
     handle_replace_engine_supplier,
     handle_replace_technical_director,
@@ -157,6 +159,7 @@ def handle_start_career(state: GameState | None, logger: logging.Logger, team_na
         current_state.player_mechanics_usage_week = current_state.calendar.current_week
         current_state.player_mechanics_usage_year = current_state.year
         current_state.player_chassis = _create_player_chassis(selected_team.id)
+        current_state.player_chassis_year = current_state.year
         current_state.player_test_chassis_id = current_state.player_chassis[0].id if current_state.player_chassis else None
         current_state.player_race_chassis_assignments = {}
         TyreCompoundManager().generate_for_new_career(current_state)

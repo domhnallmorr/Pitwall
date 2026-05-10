@@ -2,7 +2,7 @@ from app.core.rollover import SeasonRolloverManager
 from app.core.engine import GameEngine
 from app.core.management_retirement import TeamPrincipalRetirementManager, TechnicalDirectorRetirementManager
 from app.models.state import GameState
-from app.models.state import ChassisDesignStage, PlayerCarDevelopment
+from app.models.state import ChassisDesignStage, PlayerCarDevelopment, PlayerConstructionProject
 from app.models.calendar import Calendar, Event, EventType
 from app.models.driver import Driver
 from app.models.team import Team
@@ -89,12 +89,54 @@ def test_rollover_resets_player_chassis_development_state():
         quality_score=55,
         stages=[ChassisDesignStage(key="design", label="Design", progress=10, completed=True)],
     )
+    state.player_construction_projects = [
+        PlayerConstructionProject(
+            active=False,
+            completed=True,
+            scope="next_year",
+            name="1999 Chassis",
+            year=1999,
+            speed_delta=3,
+            quality_score=55,
+            progress=24,
+            progress_required=24,
+            units_required=2,
+            units_built=2,
+        )
+    ]
 
     result = SeasonRolloverManager().process_rollover(state)
 
     assert result["player_next_year_chassis_update"]["speed_delta"] == 3
     assert state.player_car_development is None
     assert state.player_next_year_car_development is None
+    assert state.player_construction_projects == []
+
+
+def test_rollover_preserves_unfinished_next_year_chassis_construction_for_preseason():
+    state = create_end_of_season_state()
+    state.player_team_id = 1
+    state.player_construction_projects = [
+        PlayerConstructionProject(
+            active=True,
+            completed=False,
+            scope="next_year",
+            name="1999 Chassis",
+            year=1999,
+            progress=12,
+            progress_required=24,
+            units_required=2,
+            units_built=0,
+        )
+    ]
+
+    result = SeasonRolloverManager().process_rollover(state)
+
+    assert result["player_next_year_chassis_update"]["status"] == "not_ready"
+    assert len(state.player_construction_projects) == 1
+    assert state.player_construction_projects[0].scope == "next_year"
+    assert state.player_construction_projects[0].year == 1999
+    assert state.game_over is False
 
 
 @patch("app.core.rollover.random.random", return_value=1.0)
@@ -274,9 +316,10 @@ def test_rollover_sends_ai_workforce_summary_email(mock_load_roster, mock_workfo
 
 def test_engine_triggers_rollover_after_last_event():
     state = create_end_of_season_state()
+    state.calendar.current_week = 50
     engine = GameEngine()
 
-    # Advance past last event (week 3 -> 4, which is past last event)
+    # Advance past week 50; weeks after the last race remain available for factory work.
     summary = engine.advance_week(state)
 
     assert summary.get("season_rollover") is True
@@ -287,10 +330,10 @@ def test_engine_triggers_rollover_after_last_event():
 
 def test_calendar_season_over_property():
     events = [Event(name="GP", week=5, type=EventType.RACE)]
-    cal = Calendar(events=events, current_week=5)
+    cal = Calendar(events=events, current_week=50)
     assert cal.season_over is False
 
-    cal.current_week = 6
+    cal.current_week = 51
     assert cal.season_over is True
 
 

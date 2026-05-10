@@ -50,6 +50,29 @@ class PlayerCarDevelopment(BaseModel):
     quality_score: int = 0
     risk: str = "Unknown"
 
+
+class PlayerConstructionProject(BaseModel):
+    active: bool = False
+    scope: str = "current_year"
+    name: str = "Current Chassis Upgrade"
+    year: int | None = None
+    allocation_percent: int = 0
+    assigned_engineers: int = 0
+    progress: int = 0
+    progress_required: int = 10
+    progress_carry: float = 0.0
+    total_cost: int = 0
+    paid: int = 0
+    completed: bool = False
+    applied: bool = False
+    speed_delta: int = 0
+    quality_score: int = 0
+    risk: str = "Unknown"
+    units_required: int = 1
+    units_built: int = 0
+    design_blocks: int = 0
+
+
 class GameState(BaseModel):
     MAX_EMAILS: ClassVar[int] = 250
     year: int
@@ -63,6 +86,7 @@ class GameState(BaseModel):
     player_mechanics_usage_week: int | None = None
     player_mechanics_usage_year: int | None = None
     player_chassis: List[Chassis] = Field(default_factory=list)
+    player_chassis_year: int | None = None
     player_test_chassis_id: int | None = None
     player_race_chassis_assignments: Dict[int, int] = Field(default_factory=dict)
     team_principals: List[TeamPrincipal] = Field(default_factory=list)
@@ -109,6 +133,7 @@ class GameState(BaseModel):
     pending_hospitality_event: Dict[str, Any] | None = None
     player_car_development: PlayerCarDevelopment | None = None
     player_next_year_car_development: PlayerCarDevelopment | None = None
+    player_construction_projects: List[PlayerConstructionProject] = Field(default_factory=list)
     negative_balance_race_streak: int = 0
     game_over: bool = False
     game_over_reason: str | None = None

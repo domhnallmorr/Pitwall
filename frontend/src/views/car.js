@@ -18,11 +18,14 @@ export default class CarView {
 		this.raceAssignmentsStatus = document.getElementById('car-garage-race-assignments-status');
 		this.mechanicsStatus = document.getElementById('car-garage-mechanics-status');
 		this.sparesWidget = document.getElementById('car-spares-widget');
+		this.constructionProjectsCard = document.getElementById('car-construction-projects-card');
 		this.constructionBuildCard = document.getElementById('car-construction-build-card');
 		this.tabButtons = document.querySelectorAll('.car-tab-btn');
 		this.onStartDevelopment = null;
 		this.onFinishDevelopmentStage = null;
 		this.onSetDevelopmentAllocation = null;
+		this.onSetConstructionAllocation = null;
+		this.onStartConstruction = null;
 		this.onSetTestChassis = null;
 		this.onSetRaceChassisAssignments = null;
 		this.onRepairChassisWear = null;
@@ -45,6 +48,14 @@ export default class CarView {
 
 	setDevelopmentAllocationHandler(handler) {
 		this.onSetDevelopmentAllocation = handler;
+	}
+
+	setConstructionAllocationHandler(handler) {
+		this.onSetConstructionAllocation = handler;
+	}
+
+	setStartConstructionHandler(handler) {
+		this.onStartConstruction = handler;
 	}
 
 	setTestChassisHandler(handler) {
@@ -239,7 +250,7 @@ export default class CarView {
 			if (activeProjects.length) {
 				this.devStatus.textContent = activeProjects.map((item) => `${item.name || 'Chassis Upgrade'}: ${Number(item.allocation_percent || 0)}%, ${item.current_stage_label || '-'}`).join(' | ');
 			} else if (project.completed) {
-				this.devStatus.textContent = `Completed project: ${project.name || 'Chassis Upgrade'} | Quality ${Number(project.quality_score || 0)} | Gain +${Number(project.projected_speed_delta || project.speed_delta || 0)} | Paid $${Number(project.paid || 0).toLocaleString()}`;
+				this.devStatus.textContent = `Completed project: ${project.name || 'Chassis Upgrade'} | Quality ${Number(project.quality_score || 0)} | Gain +${Number(project.projected_speed_delta || project.speed_delta || 0)}`;
 			} else {
 				this.devStatus.textContent = 'No active chassis design project';
 			}
@@ -258,7 +269,7 @@ export default class CarView {
 				<td colspan="5">
 					<strong>${projectName}</strong>
 					<span class="car-development-project-meta">
-						${scopedProject.active ? `Allocation ${Number(scopedProject.allocation_percent || 0)}% (${Number(scopedProject.assigned_designers || 0)} designers) | $${Number(scopedProject.weekly_cost || 0).toLocaleString()}/week | Projected +${Number(scopedProject.projected_speed_delta || 0)} | Risk ${scopedProject.risk || '-'}` : 'Not active'}
+						${scopedProject.active ? `Allocation ${Number(scopedProject.allocation_percent || 0)}% (${Number(scopedProject.assigned_designers || 0)} designers) | Projected +${Number(scopedProject.projected_speed_delta || 0)} | Risk ${scopedProject.risk || '-'}` : 'Not active'}
 					</span>
 				</td>
 			`;
@@ -337,6 +348,7 @@ export default class CarView {
 		const playerSpares = Math.max(0, Math.min(10, Number(data?.player_spares || 0)));
 		this.playerSpares = playerSpares;
 		const spareConstruction = data?.construction?.spares || {};
+		const constructionProjects = data?.construction?.projects || { projects: {} };
 		const maintenance = data?.maintenance || {};
 		const averageWearRepairPerSpare = 26;
 		this.mechanicsCapacityRemaining = Math.max(0, Number(maintenance.mechanics_capacity_remaining ?? 100));
@@ -528,6 +540,101 @@ export default class CarView {
 			}
 		}
 
+		if (this.constructionProjectsCard) {
+			this.constructionProjectsCard.innerHTML = this.renderConstructionProjects(constructionProjects);
+			this.constructionProjectsCard.querySelectorAll('.car-construction-start-btn').forEach((button) => {
+				button.addEventListener('click', () => {
+					if (!this.onStartConstruction) return;
+					this.onStartConstruction(button.getAttribute('data-construction-scope') || 'current_year');
+				});
+			});
+			this.constructionProjectsCard.querySelectorAll('.car-construction-allocation-slider').forEach((slider) => {
+				slider.addEventListener('input', () => {
+					const scope = slider.getAttribute('data-construction-scope') || 'current_year';
+					const valueNode = this.constructionProjectsCard.querySelector(`.car-construction-allocation-value[data-construction-scope="${scope}"]`);
+					if (valueNode) valueNode.textContent = `${Number(slider.value || 0)}%`;
+				});
+				slider.addEventListener('change', () => {
+					if (!this.onSetConstructionAllocation) return;
+					const scope = slider.getAttribute('data-construction-scope') || 'current_year';
+					this.onSetConstructionAllocation(scope, Number(slider.value || 0));
+				});
+			});
+		}
+
 		this.setActiveTab(this.activeTab);
+	}
+
+	renderConstructionProjects(constructionProjects = {}) {
+		const projects = constructionProjects.projects || {};
+		const rows = [
+			{ scope: 'current_year', label: 'This Year Upgrade' },
+			{ scope: 'next_year', label: 'Next Year Chassis' },
+		].map(({ scope, label }) => {
+			const project = projects[scope] || {};
+			const active = Boolean(project.active);
+			const completed = Boolean(project.completed);
+			const canStart = Boolean(project.can_start);
+			const progress = Number(project.progress || 0);
+			const progressRequired = Math.max(1, Number(project.progress_required || 10));
+			const estimatedWeeks = Number(project.estimated_weeks || 0);
+			const targetRange = Array.isArray(project.target_week_range) ? project.target_week_range : [];
+			const targetWeeks = targetRange.length === 2 ? `${Math.round(Number(targetRange[0] || 0))}-${Math.round(Number(targetRange[1] || 0))} weeks` : '-';
+			const maxAllocation = Math.max(0, Math.min(100, Number(project.available_allocation_percent ?? 100)));
+			const currentAllocation = Math.max(0, Math.min(maxAllocation, Number(project.allocation_percent || 0)));
+			if (!active && !completed && !canStart) {
+				return `
+					<section class="car-tyre-supplier-card">
+						<div class="car-spares-widget-label">${label}</div>
+						<div class="car-construction-note">No completed design is ready for construction.</div>
+					</section>
+				`;
+			}
+			return `
+				<section class="car-tyre-supplier-card">
+					<div class="car-construction-build-head">
+						<div>
+							<div class="car-spares-widget-label">${label}</div>
+							<div class="car-construction-build-title">${project.name || label}</div>
+						</div>
+						<div class="car-construction-build-cost">$${Number(project.total_cost || 0).toLocaleString()}</div>
+					</div>
+					<div class="car-construction-build-meta">
+						<div>Progress: <strong>${progress} / ${progressRequired}</strong></div>
+						<div>Paid: <strong>$${Number(project.paid || 0).toLocaleString()}</strong></div>
+						<div>Engineers: <strong>${Number(project.assigned_engineers || 0)}</strong></div>
+						<div>Outcome: <strong>${scope === 'next_year' ? `${Number(project.units_built || 0)} / ${Number(project.units_required || 2)} chassis` : `+${Number(project.speed_delta || 0)} speed`}</strong></div>
+						<div>Target: <strong>${targetWeeks}</strong></div>
+						<div>Estimate: <strong>${estimatedWeeks > 0 ? `${Math.ceil(estimatedWeeks)} weeks` : 'Assign engineers'}</strong></div>
+					</div>
+					<div>${this.renderProgressBlocks(progress, `${project.name || label} construction`, progressRequired)}</div>
+					${canStart ? `
+						<div class="car-construction-actions">
+							<button class="btn-secondary car-construction-start-btn" data-construction-scope="${scope}">Start Construction</button>
+						</div>
+					` : ''}
+					${active ? `
+						<div class="car-construction-build-meta">
+							<div>
+								<input type="range" min="0" max="${maxAllocation}" step="5" value="${currentAllocation}" class="car-construction-allocation-slider" data-construction-scope="${scope}">
+								<strong class="car-construction-allocation-value" data-construction-scope="${scope}">${currentAllocation}%</strong>
+								<span class="car-development-project-meta">Max available: ${maxAllocation}%</span>
+							</div>
+						</div>
+					` : (completed ? '<div class="car-construction-note">Construction complete.</div>' : '')}
+				</section>
+			`;
+		}).join('');
+		return `
+			<div class="car-construction-projects">
+				<div class="car-construction-section-head">
+					<div>
+						<div class="car-spares-widget-label">Build Queue</div>
+						<div class="car-construction-build-title">Chassis Construction</div>
+					</div>
+				</div>
+				<div class="car-construction-grid">${rows}</div>
+			</div>
+		`;
 	}
 }

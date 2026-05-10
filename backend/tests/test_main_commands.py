@@ -901,7 +901,7 @@ def test_start_car_development_creates_project_and_blocks_second_start():
     assert started["type"] == "car_development_started"
     assert started["data"]["scope"] == "current_year"
     assert started["data"]["current_stage_key"] == "design"
-    assert started["data"]["weekly_cost"] > 0
+    assert started["data"]["weekly_cost"] == 0
 
     blocked = process_command({"type": "start_car_development", "development_type": "current_year"})
     assert blocked["status"] == "error"

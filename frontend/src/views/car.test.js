@@ -18,6 +18,7 @@ describe('CarView', () => {
 			<div id="car-garage-race-assignments-status"></div>
 			<div id="car-garage-mechanics-status"></div>
 			<div id="car-spares-widget"></div>
+			<div id="car-construction-projects-card"></div>
 			<div id="car-construction-build-card"></div>
 			<table><tbody id="car-table-body"></tbody></table>
 			<table><tbody id="car-development-table-body"></tbody></table>
@@ -138,7 +139,7 @@ describe('CarView', () => {
 				current_stage_label: 'Design',
 				assigned_designers: 63,
 				allocation_percent: 100,
-				weekly_cost: 25200,
+				weekly_cost: 0,
 				projected_speed_delta: 2,
 				risk: 'Medium',
 				can_finish_stage: true,
@@ -176,7 +177,7 @@ describe('CarView', () => {
 						allocation_percent: 70,
 						available_allocation_percent: 70,
 						assigned_designers: 44,
-						weekly_cost: 17600,
+						weekly_cost: 0,
 						stages: [{ key: 'design', label: 'Design', progress: 1, completed: false }],
 					},
 					next_year: {
@@ -186,7 +187,7 @@ describe('CarView', () => {
 						allocation_percent: 30,
 						available_allocation_percent: 30,
 						assigned_designers: 19,
-						weekly_cost: 7600,
+						weekly_cost: 0,
 						stages: [{ key: 'design', label: 'Design', progress: 1, completed: false }],
 					},
 				},
@@ -224,6 +225,7 @@ describe('CarView', () => {
 		expect(document.getElementById('car-spares-widget').textContent).toContain('6 / 10 sets');
 		expect(document.querySelectorAll('#car-spares-widget .car-availability-block.is-filled')).toHaveLength(6);
 		expect(document.getElementById('car-construction-build-card').textContent).toContain('Build Spare Set');
+		expect(document.getElementById('car-construction-projects-card').textContent).toContain('Chassis Construction');
 		expect(document.getElementById('car-construction-build-card').textContent).toContain('$52,500');
 		expect(document.getElementById('car-construction-build-card').textContent).toContain('36%');
 		expect(document.getElementById('car-construction-build-card').textContent).toContain('64%');
@@ -262,6 +264,67 @@ describe('CarView', () => {
 
 		document.getElementById('car-build-spare-set-btn').click();
 		expect(onBuildSpareSet).toHaveBeenCalledTimes(1);
+	});
+
+	it('renders queued construction projects and wires start/allocation controls', () => {
+		const onStartConstruction = vi.fn();
+		const onSetConstructionAllocation = vi.fn();
+		carView.setStartConstructionHandler(onStartConstruction);
+		carView.setConstructionAllocationHandler(onSetConstructionAllocation);
+		carView.render({
+			...sampleData,
+			construction: {
+				...sampleData.construction,
+				projects: {
+					projects: {
+						current_year: {
+							active: false,
+							can_start: true,
+							scope: 'current_year',
+							name: 'Current Chassis Upgrade',
+							total_cost: 20000,
+							paid: 0,
+							progress: 0,
+							progress_required: 10,
+							speed_delta: 1,
+							available_allocation_percent: 100,
+							target_week_range: [2, 4],
+						},
+						next_year: {
+							active: true,
+							can_start: false,
+							scope: 'next_year',
+							name: '1999 Chassis',
+							total_cost: 1000000,
+							paid: 125000,
+							progress: 3,
+							progress_required: 24,
+							units_built: 0,
+							units_required: 2,
+							allocation_percent: 40,
+							available_allocation_percent: 100,
+							assigned_engineers: 24,
+							estimated_weeks: 12,
+							target_week_range: [4, 8],
+						},
+					},
+				},
+			},
+		});
+
+		expect(document.getElementById('car-construction-projects-card').textContent).toContain('Current Chassis Upgrade');
+		expect(document.getElementById('car-construction-projects-card').textContent).toContain('$20,000');
+		expect(document.getElementById('car-construction-projects-card').textContent).toContain('4-8 weeks');
+		expect(document.getElementById('car-construction-projects-card').textContent).toContain('12 weeks');
+		document.querySelector('.car-construction-start-btn[data-construction-scope="current_year"]').click();
+		expect(onStartConstruction).toHaveBeenCalledWith('current_year');
+
+		const slider = document.querySelector('.car-construction-allocation-slider[data-construction-scope="next_year"]');
+		slider.value = '55';
+		slider.dispatchEvent(new window.Event('input'));
+		expect(document.querySelector('.car-construction-allocation-value[data-construction-scope="next_year"]').textContent).toBe('55%');
+		slider.dispatchEvent(new window.Event('change'));
+		expect(onSetConstructionAllocation).toHaveBeenCalledWith('next_year', 55);
 	});
 
 	it('updates the spares widget immediately from a repair result', () => {

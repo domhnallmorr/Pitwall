@@ -10,6 +10,7 @@ from app.commands.race_commands import (
     handle_simulate_race,
 )
 from app.models.finance import TransactionCategory
+from app.models.state import PlayerConstructionProject
 from tests.factories import make_calendar, make_circuit, make_driver, make_race_event, make_state, make_team
 
 
@@ -97,6 +98,47 @@ def test_handle_get_race_weekend_handles_exceptions():
     assert response["status"] == "error"
     assert response["message"] == "broken"
     logger.error.assert_called_once()
+
+
+def test_first_race_blocks_without_current_year_chassis_after_rollover():
+    state = create_state()
+    state.year = 1999
+    state.player_chassis_year = 1998
+    logger = Mock()
+
+    returned_state, response = handle_get_race_weekend(state, logger)
+
+    assert returned_state is state
+    assert response["type"] == "game_over"
+    assert response["data"]["reason"] == "next_year_chassis_not_built"
+    assert state.game_over is True
+
+
+def test_first_race_applies_completed_next_year_chassis_before_weekend():
+    state = create_state()
+    state.year = 1999
+    state.player_chassis_year = 1998
+    state.player_construction_projects = [
+        PlayerConstructionProject(
+            active=False,
+            completed=True,
+            scope="next_year",
+            name="1999 Chassis",
+            year=1999,
+            speed_delta=4,
+            units_required=2,
+            units_built=2,
+        )
+    ]
+    old_speed = state.player_team.car_speed
+
+    returned_state, response = handle_get_race_weekend(state, Mock())
+
+    assert returned_state is state
+    assert response["type"] == "race_weekend"
+    assert state.player_team.car_speed == old_speed + 4
+    assert state.player_chassis_year == 1999
+    assert len(state.player_chassis) == 2
 
 
 def test_handle_simulate_qualifying_handles_exceptions():

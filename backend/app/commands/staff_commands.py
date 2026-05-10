@@ -42,8 +42,10 @@ from app.commands.staff_team_commands import (
     handle_finish_car_development_stage,
     handle_finish_car_development_project_stage,
     handle_repair_chassis_wear,
+    handle_set_construction_allocation,
     handle_set_race_chassis_assignments,
     handle_set_test_chassis,
     handle_start_car_development,
+    handle_start_construction_project,
     handle_set_car_development_allocation,
 )

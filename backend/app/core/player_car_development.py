@@ -1,6 +1,6 @@
 from app.models.email import EmailCategory
-from app.models.finance import TransactionCategory
 from app.models.state import ChassisDesignStage, GameState, PlayerCarDevelopment
+from app.core.player_construction import PlayerConstructionManager
 
 
 class PlayerCarDevelopmentManager:
@@ -11,7 +11,6 @@ class PlayerCarDevelopmentManager:
         ("wind_tunnel", "Wind Tunnel"),
     ]
     DESIGN_STAFF_BASELINE = 60
-    DESIGNER_WEEKLY_PROJECT_COST = 400
     SCOPES = {"current_year", "next_year"}
 
     def _design_capacity_for_team(self, team) -> int:
@@ -44,9 +43,6 @@ class PlayerCarDevelopmentManager:
         if bounded <= 0:
             return 0
         return max(0, min(2, round(bounded / 40)))
-
-    def _weekly_cost(self, assigned_designers: int) -> int:
-        return max(0, int(assigned_designers or 0)) * self.DESIGNER_WEEKLY_PROJECT_COST
 
     def _normalize_scope(self, scope: str | None) -> str:
         normalized = (scope or "current_year").strip().lower()
@@ -113,7 +109,7 @@ class PlayerCarDevelopmentManager:
         capacity = self._design_capacity_for_team(team) if team else 0
         project.allocation_percent = max(0, min(100, int(project.allocation_percent or 0)))
         project.assigned_designers = round(capacity * project.allocation_percent / 100)
-        project.weekly_cost = self._weekly_cost(project.assigned_designers)
+        project.weekly_cost = 0
 
     def _allocated_percent_except(self, state: GameState, scope: str) -> int:
         return sum(
@@ -240,6 +236,11 @@ class PlayerCarDevelopmentManager:
                 raise ValueError("A chassis design project is already active")
             if existing.completed:
                 self._clear_project(state, normalized_scope)
+        if any(
+            construction.scope == normalized_scope and not construction.completed
+            for construction in state.player_construction_projects
+        ):
+            raise ValueError("Engineering already has a construction package for this chassis")
 
         team = state.player_team
         if not team:
@@ -297,6 +298,11 @@ class PlayerCarDevelopmentManager:
         stage = project.stages[project.current_stage_index]
         if int(stage.progress or 0) <= 0:
             raise ValueError("Current design stage needs at least one progress block before it can be finished")
+        if project.current_stage_index >= len(project.stages) - 1 and any(
+            construction.scope == normalized_scope and not construction.completed
+            for construction in state.player_construction_projects
+        ):
+            raise ValueError("Engineering already has a construction package for this chassis")
 
         stage.completed = True
         if project.current_stage_index < len(project.stages) - 1:
@@ -313,32 +319,15 @@ class PlayerCarDevelopmentManager:
         project.quality_score = quality_score
         project.speed_delta = speed_delta
         project.risk = self._risk_for_quality(quality_score)
-        if project.scope == "next_year":
-            state.add_email(
-                sender="Technical Department",
-                subject=f"Next Year's Chassis Design Complete: +{speed_delta}",
-                body=(
-                    f"{project.name} design work has been completed.\n\n"
-                    f"Quality score: {quality_score}\n"
-                    f"Projected next-season gain: +{speed_delta}\n"
-                    f"Risk: {project.risk}\n"
-                    f"Total project spend: ${project.paid:,}"
-                ),
-                category=EmailCategory.GENERAL,
-            )
-            return project
-
-        old_speed = team.car_speed
-        team.car_speed = max(1, old_speed + speed_delta)
+        PlayerConstructionManager().create_from_design(state, project)
         state.add_email(
             sender="Technical Department",
-            subject=f"Chassis Upgrade Complete: +{speed_delta}",
+            subject=f"Chassis Design Complete: {project.name}",
             body=(
-                f"{project.name} has been completed and fitted to the current car.\n\n"
+                f"{project.name} design work has been completed and handed to Engineering for construction.\n\n"
                 f"Quality score: {quality_score}\n"
-                f"Risk: {project.risk}\n"
-                f"Car rating: {old_speed} -> {team.car_speed}\n"
-                f"Total project spend: ${project.paid:,}"
+                f"Projected gain: +{speed_delta}\n"
+                f"Risk: {project.risk}"
             ),
             category=EmailCategory.GENERAL,
         )
@@ -395,20 +384,6 @@ class PlayerCarDevelopmentManager:
 
         old_progress = max(0, int(stage.progress or 0))
         stage.progress = min(10, old_progress + progress_added)
-        charge = max(0, int(project.weekly_cost or 0))
-        if charge:
-            state.finance.add_transaction(
-                week=state.calendar.current_week,
-                year=state.year,
-                amount=-charge,
-                category=TransactionCategory.DEVELOPMENT,
-                description=f"Chassis design ({project.name}) weekly payment",
-                event_name=None,
-                event_type=None,
-                circuit_country=None,
-            )
-            project.paid += charge
-
         completed_stages = self._finish_full_stages(state, project)
         return {
             "status": "in_progress",
@@ -426,35 +401,9 @@ class PlayerCarDevelopmentManager:
         }
 
     def apply_next_year_project_for_rollover(self, state: GameState) -> dict | None:
-        project = self._normalize_project(state, "next_year")
-        if not project or not project.completed:
-            return None
-        if project.year != state.year:
-            return None
-        team = state.player_team
-        if not team:
-            return None
-        old_speed = team.car_speed
-        team.car_speed = max(1, old_speed + int(project.speed_delta or 0))
-        state.add_email(
-            sender="Technical Department",
-            subject=f"New Chassis Introduced: {project.name}",
-            body=(
-                f"The completed {project.name} has been introduced for {state.year}.\n\n"
-                f"Car rating: {old_speed} -> {team.car_speed}\n"
-                f"Design quality: {project.quality_score}\n"
-                f"Risk: {project.risk}"
-            ),
-            category=EmailCategory.SEASON,
-        )
-        return {
-            "project": project.name,
-            "old_speed": old_speed,
-            "new_speed": team.car_speed,
-            "speed_delta": project.speed_delta,
-            "quality_score": project.quality_score,
-        }
+        return PlayerConstructionManager().apply_next_year_for_rollover(state)
 
     def reset_for_new_season(self, state: GameState) -> None:
         state.player_car_development = None
         state.player_next_year_car_development = None
+        PlayerConstructionManager().reset_completed_for_new_season(state)

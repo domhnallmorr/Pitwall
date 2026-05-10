@@ -15,6 +15,7 @@ class Event(BaseModel):
 class Calendar(BaseModel):
     events: List[Event]
     current_week: int = 1 # Start at week 1
+    season_end_week: int = 50
     
     @property
     def current_event(self) -> Optional[Event]:
@@ -37,8 +38,8 @@ class Calendar(BaseModel):
 
     @property
     def season_over(self) -> bool:
-        """True if the current week is past the last event."""
-        return self.current_week > self.last_event_week
+        """True if the current week is past the fixed end-of-season cutoff."""
+        return self.current_week > self.season_end_week
 
     def get_schedule_data(
         self,

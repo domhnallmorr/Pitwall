@@ -268,6 +268,8 @@ function init() {
 	carView.setStartDevelopmentHandler((developmentType) => API.startCarDevelopment(developmentType));
 	carView.setFinishDevelopmentStageHandler((scope) => API.finishCarDevelopmentStage(scope));
 	carView.setDevelopmentAllocationHandler((scope, allocationPercent) => API.setCarDevelopmentAllocation(scope, allocationPercent));
+	carView.setConstructionAllocationHandler((scope, allocationPercent) => API.setConstructionAllocation(scope, allocationPercent));
+	carView.setStartConstructionHandler((scope) => API.startConstructionProject(scope));
 	carView.setTestChassisHandler((chassisId) => API.setTestChassis(chassisId));
 	carView.setRaceChassisAssignmentsHandler((driver1ChassisId, driver2ChassisId) => API.setRaceChassisAssignments(driver1ChassisId, driver2ChassisId));
 	carView.setRepairChassisWearHandler((chassisId, wearPoints) => API.repairChassisWear(chassisId, wearPoints));
@@ -642,7 +644,7 @@ function setupIPC() {
 				driverView.render(parsed.data);
 			} else if (parsed.type === 'car_data') {
 				carView.render(parsed.data);
-			} else if (parsed.type === 'car_development_started' || parsed.type === 'car_development_stage_finished' || parsed.type === 'car_development_allocation_updated') {
+			} else if (parsed.type === 'car_development_started' || parsed.type === 'car_development_stage_finished' || parsed.type === 'car_development_allocation_updated' || parsed.type === 'construction_allocation_updated' || parsed.type === 'construction_started') {
 				if (parsed.status === 'success') {
 					refreshCarRelatedViews();
 				} else if (parsed.status === 'error') {

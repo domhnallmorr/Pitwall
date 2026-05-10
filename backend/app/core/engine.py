@@ -13,6 +13,7 @@ from app.core.management_transfers import (
 )
 from app.core.ai_car_development import AICarDevelopmentManager
 from app.core.player_car_development import PlayerCarDevelopmentManager
+from app.core.player_construction import PlayerConstructionManager
 from app.core.testing import TestSessionManager
 from app.core.standings import StandingsManager
 from app.models.email import EmailCategory
@@ -35,6 +36,7 @@ class GameEngine:
         self.tyre_supplier_transfer_manager = TyreSupplierTransferManager()
         self.ai_car_development_manager = AICarDevelopmentManager()
         self.player_car_development_manager = PlayerCarDevelopmentManager()
+        self.player_construction_manager = PlayerConstructionManager()
         self.test_session_manager = TestSessionManager()
 
     def advance_week(self, state: GameState) -> dict:
@@ -201,3 +203,4 @@ class GameEngine:
     def _process_weekly_finances(self, state: GameState):
         """Process non-race recurring finances."""
         self.player_car_development_manager.process_week(state)
+        self.player_construction_manager.process_week(state)
