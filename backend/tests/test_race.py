@@ -1017,6 +1017,34 @@ def test_overtake_success_uses_roll():
         random.randint = original_randint
 
 
+def test_overtake_success_probability_uses_racecraft_delta():
+    manager = RaceManager()
+
+    assert manager._overtake_success_probability(
+        {"driver_racecraft": 5},
+        {"driver_racecraft": 1},
+    ) == 0.85
+    assert manager._overtake_success_probability(
+        {"driver_racecraft": 1},
+        {"driver_racecraft": 5},
+    ) == 0.45
+    assert manager._overtake_success_probability(
+        {"driver_racecraft": 3},
+        {"driver_racecraft": 3},
+    ) == 0.65
+
+
+def test_overtake_success_roll_respects_racecraft_modified_probability():
+    manager = RaceManager()
+    original_randint = random.randint
+    try:
+        random.randint = lambda a, b: 800
+        assert manager._pass_succeeds({"driver_racecraft": 5}, {"driver_racecraft": 1}) is True
+        assert manager._pass_succeeds({"driver_racecraft": 1}, {"driver_racecraft": 5}) is False
+    finally:
+        random.randint = original_randint
+
+
 def test_pick_crash_count_handles_small_fields():
     assert pick_crash_count(0) == 0
     assert pick_crash_count(1) == 0
@@ -1079,7 +1107,7 @@ def test_simulate_race_emits_overtake_event_when_pass_succeeds():
     original_assign = manager._assign_fuel_strategy
     original_grid = manager._grid_score
 
-    def forced_success():
+    def forced_success(*_args):
         return True
 
     lap_times = {

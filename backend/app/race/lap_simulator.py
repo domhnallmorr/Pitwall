@@ -438,7 +438,7 @@ def simulate_lap_race(
 			attacker = ordered_after_lap[index]
 			defender = ordered_after_lap[index - 1]
 			lap_time_gain_ms = (defender.get("last_lap_ms") or 0) - (attacker.get("last_lap_ms") or 0)
-			if should_attempt_pass_fn(lap_time_gain_ms, overtaking_delta_ms_fn(circuit)) and pass_succeeds_fn():
+			if should_attempt_pass_fn(lap_time_gain_ms, overtaking_delta_ms_fn(circuit)) and pass_succeeds_fn(attacker, defender):
 				ordered_after_lap[index - 1], ordered_after_lap[index] = attacker, defender
 				lap_overtakes.append({
 					"type": "position_change",

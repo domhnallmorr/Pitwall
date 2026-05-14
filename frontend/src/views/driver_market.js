@@ -221,7 +221,8 @@ export default class DriverMarketView {
 				<div class="driver-market-list-row">
 					${this.renderFlagIcon(candidate.country)}
 					<span class="driver-market-list-name">${candidate.name} <span class="driver-market-list-age">(${candidate.age})</span></span>
-					<span class="driver-market-list-rating">${this.renderSpeedBlocks(candidate.speed)}</span>
+					<span class="driver-market-list-rating" title="Speed">${this.renderSpeedBlocks(candidate.speed)}</span>
+					<span class="driver-market-list-rating" title="Racecraft">${this.renderSpeedBlocks((Number(candidate.racecraft) || 1) * 20)}</span>
 				</div>
 			`;
 			item.addEventListener('click', () => this.setSelectedCandidate(candidate.id));
@@ -271,6 +272,8 @@ export default class DriverMarketView {
 					<strong>${this.renderSpeedBlocks(candidate.consistency)}</strong>
 					<span class="driver-market-detail-label" style="margin-top: 10px;">Qualifying</span>
 					<strong>${this.renderSpeedBlocks((Number(candidate.qualifying) || 1) * 20)}</strong>
+					<span class="driver-market-detail-label" style="margin-top: 10px;">Racecraft</span>
+					<strong>${this.renderSpeedBlocks((Number(candidate.racecraft) || 1) * 20)}</strong>
 				</div>
 				<div class="driver-market-detail-card">
 					<span class="driver-market-detail-label">Current Ask</span>

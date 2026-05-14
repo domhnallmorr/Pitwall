@@ -14,6 +14,7 @@ from app.race.pace import (
 	qualifying_lap_time_ms,
 	lap_time_ms,
 	overtaking_delta_ms,
+	overtake_success_probability,
 	pass_succeeds,
 	should_attempt_pass,
 	tyre_wear_penalty_ms,
@@ -240,6 +241,7 @@ class RaceManager:
 					driver_speed = getattr(driver, "speed", 50)
 					driver_consistency = getattr(driver, "consistency", 50)
 					driver_qualifying = getattr(driver, "qualifying", 3)
+					driver_racecraft = getattr(driver, "racecraft", 3)
 					car_speed = getattr(team, "car_speed", 50)
 					engine_supplier = engine_supplier_lookup.get(getattr(team, "engine_supplier_name", None))
 					engine_power = getattr(engine_supplier, "power", 50) if engine_supplier else 50
@@ -252,6 +254,7 @@ class RaceManager:
 						"driver_speed": driver_speed,
 						"driver_consistency": driver_consistency,
 						"driver_qualifying": driver_qualifying,
+						"driver_racecraft": driver_racecraft,
 						"car_speed": car_speed,
 						"engine_power": engine_power,
 						"tyre_grip": getattr(tyre_supplier, "grip", 50) if tyre_supplier else 50,
@@ -315,8 +318,11 @@ class RaceManager:
 	def _should_attempt_pass(self, lap_time_gain_ms: int, overtaking_delta_ms_value: float) -> bool:
 		return should_attempt_pass(lap_time_gain_ms, overtaking_delta_ms_value)
 
-	def _pass_succeeds(self) -> bool:
-		return pass_succeeds()
+	def _overtake_success_probability(self, attacker: dict | None = None, defender: dict | None = None) -> float:
+		return overtake_success_probability(attacker, defender)
+
+	def _pass_succeeds(self, attacker: dict | None = None, defender: dict | None = None) -> bool:
+		return pass_succeeds(attacker, defender)
 
 	def _fuel_per_lap(self, circuit: Circuit) -> float:
 		return fuel_per_lap(circuit)

@@ -44,6 +44,16 @@ class PlayerConstructionManager:
             if item is not project
         )
 
+    def _spare_construction_usage_percent(self, state: GameState) -> int:
+        current_week = int(getattr(state.calendar, "current_week", 1) or 1)
+        current_year = int(getattr(state, "year", 0) or 0)
+        if (
+            getattr(state, "player_construction_usage_week", None) != current_week
+            or getattr(state, "player_construction_usage_year", None) != current_year
+        ):
+            return 0
+        return max(0, min(100, int(getattr(state, "player_construction_usage_percent", 0) or 0)))
+
     def _refresh_project_staffing(self, state: GameState, project: PlayerConstructionProject) -> None:
         capacity = self._engineering_capacity_for_team(state)
         project.allocation_percent = max(0, min(100, int(project.allocation_percent or 0)))
@@ -159,7 +169,12 @@ class PlayerConstructionManager:
             raise ValueError("No construction package is ready for this chassis")
         if any(item.scope == normalized_scope and item.active for item in state.player_construction_projects):
             raise ValueError("A construction project for this chassis is already active")
-        remaining_allocation = max(0, 100 - sum(int(item.allocation_percent or 0) for item in self._active_projects(state)))
+        remaining_allocation = max(
+            0,
+            100
+            - self._spare_construction_usage_percent(state)
+            - sum(int(item.allocation_percent or 0) for item in self._active_projects(state)),
+        )
         project.active = True
         project.allocation_percent = remaining_allocation
         self._refresh_project_staffing(state, project)
@@ -216,8 +231,9 @@ class PlayerConstructionManager:
             raise ValueError("allocation_percent is required")
         requested = max(0, min(100, int(allocation_percent)))
         other_allocated = self._allocated_percent_except(state, project)
-        if requested + other_allocated > 100:
-            raise ValueError(f"Engineering allocation exceeds 100%; {100 - other_allocated}% is available")
+        spare_allocated = self._spare_construction_usage_percent(state)
+        if requested + other_allocated + spare_allocated > 100:
+            raise ValueError(f"Engineering allocation exceeds 100%; {100 - other_allocated - spare_allocated}% is available")
         project.allocation_percent = requested
         self._refresh_project_staffing(state, project)
         return project
@@ -260,7 +276,12 @@ class PlayerConstructionManager:
             "year": state.year + 1 if scope == "next_year" else state.year,
             "allocation_percent": 0,
             "assigned_engineers": 0,
-            "available_allocation_percent": 100 - sum(int(project.allocation_percent or 0) for project in self._active_projects(state)),
+            "available_allocation_percent": max(
+                0,
+                100
+                - self._spare_construction_usage_percent(state)
+                - sum(int(project.allocation_percent or 0) for project in self._active_projects(state)),
+            ),
             "progress": 0,
             "progress_required": self._progress_required_for_scope(scope),
             "total_cost": self._build_cost_for_scope(scope),
@@ -292,7 +313,10 @@ class PlayerConstructionManager:
             "year": project.year,
             "allocation_percent": project.allocation_percent,
             "assigned_engineers": project.assigned_engineers,
-            "available_allocation_percent": max(0, 100 - self._allocated_percent_except(state, project)),
+            "available_allocation_percent": max(
+                0,
+                100 - self._spare_construction_usage_percent(state) - self._allocated_percent_except(state, project),
+            ),
             "progress": project.progress,
             "progress_required": project.progress_required,
             "total_cost": project.total_cost,

@@ -254,6 +254,28 @@ def test_current_year_construction_completion_applies_speed_gain_and_costs():
     assert any(tx.category == TransactionCategory.CONSTRUCTION for tx in state.finance.transactions)
 
 
+def test_chassis_construction_allocation_respects_spare_work_used_this_week():
+    state = create_state()
+    state.player_construction_usage_percent = 30
+    state.player_construction_usage_week = state.calendar.current_week
+    state.player_construction_usage_year = state.year
+    manager = PlayerCarDevelopmentManager()
+    manager.start(state, "current_year")
+    for stage in state.player_car_development.stages:
+        stage.progress = 1
+        manager.finish_current_stage(state)
+
+    construction = PlayerConstructionManager().start_project(state, "current_year")
+
+    assert construction.allocation_percent == 70
+    try:
+        PlayerConstructionManager().set_allocation(state, "current_year", 80)
+    except ValueError as exc:
+        assert "70% is available" in str(exc)
+    else:
+        raise AssertionError("Expected allocation validation error")
+
+
 def test_construction_estimates_follow_resource_and_upgrade_size_ranges():
     state = create_state()
     manager = PlayerCarDevelopmentManager()

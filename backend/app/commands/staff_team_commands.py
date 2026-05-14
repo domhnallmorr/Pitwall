@@ -339,6 +339,7 @@ def handle_build_spare_set(state: GameState, logger: logging.Logger):
 
         before = max(0, int(getattr(state, "player_spares", 0) or 0))
         usage_before = max(0, int(getattr(state, "player_construction_usage_percent", 0) or 0))
+        total_usage_before = int(construction["construction_usage_percent"] or usage_before)
         usage_added = int(construction["engineering_required_percentage"] or 0)
         if before >= PLAYER_SPARES_MAX:
             return {"type": "spare_set_built", "status": "error", "message": "Spare stock is already full"}
@@ -361,7 +362,7 @@ def handle_build_spare_set(state: GameState, logger: logging.Logger):
                 "Engineering has completed a new set of spares.\n\n"
                 f"Available spares: {state.player_spares} / {PLAYER_SPARES_MAX}\n"
                 f"Engineering allocation required: {construction['engineering_required_percentage']}%\n"
-                f"Construction capacity used this week: {state.player_construction_usage_percent}% / 100%\n"
+                f"Construction capacity used this week: {min(100, total_usage_before + usage_added)}% / 100%\n"
                 f"Cost: ${PLAYER_SPARE_BUILD_COST:,}"
             ),
             category=EmailCategory.GENERAL,
@@ -376,8 +377,9 @@ def handle_build_spare_set(state: GameState, logger: logging.Logger):
                 "cost": PLAYER_SPARE_BUILD_COST,
                 "engineering_required_percentage": construction["engineering_required_percentage"],
                 "engineering_required_staff": construction["engineering_required_staff"],
-                "construction_usage_percent_before": usage_before,
-                "construction_usage_percent_after": state.player_construction_usage_percent,
+                "construction_usage_percent_before": total_usage_before,
+                "construction_usage_percent_after": min(100, total_usage_before + usage_added),
+                "spare_construction_usage_percent_after": state.player_construction_usage_percent,
             },
         }
     except Exception as e:

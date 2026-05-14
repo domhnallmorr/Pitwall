@@ -154,5 +154,16 @@ def should_attempt_pass(lap_time_gain_ms: int, overtake_delta_ms: float) -> bool
 	return lap_time_gain_ms > 0 and lap_time_gain_ms >= int(overtake_delta_ms)
 
 
-def pass_succeeds() -> bool:
-	return random.randint(1, 1000) <= int(OVERTAKE_SUCCESS_PROBABILITY * 1000)
+def _racecraft_rating(entrant: dict) -> int:
+	return max(1, min(5, int(entrant.get("driver_racecraft", 3) or 3)))
+
+
+def overtake_success_probability(attacker: dict | None = None, defender: dict | None = None) -> float:
+	if attacker is None or defender is None:
+		return OVERTAKE_SUCCESS_PROBABILITY
+	racecraft_delta = _racecraft_rating(attacker) - _racecraft_rating(defender)
+	return max(0.35, min(0.85, OVERTAKE_SUCCESS_PROBABILITY + (racecraft_delta * 0.05)))
+
+
+def pass_succeeds(attacker: dict | None = None, defender: dict | None = None) -> bool:
+	return random.randint(1, 1000) <= int(overtake_success_probability(attacker, defender) * 1000)

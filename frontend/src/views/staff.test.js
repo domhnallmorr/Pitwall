@@ -73,14 +73,15 @@ describe('StaffView', () => {
 			player_commercial_staff: 49,
 			teams: [{ name: 'Warrick', country: 'United Kingdom', workforce: 250 }],
 			drivers: [
-				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, overall_rating: 75, wage: 1000, pay_driver: false, contract_length: 2 },
-				{ id: 2, name: 'Driver B', age: 24, country: 'DE', speed: 70, overall_rating: 68, wage: 1000, pay_driver: false, contract_length: 1 },
+				{ id: 1, name: 'Driver A', age: 30, country: 'UK', speed: 80, overall_rating: 75, racecraft: 4, wage: 1000, pay_driver: false, contract_length: 2 },
+				{ id: 2, name: 'Driver B', age: 24, country: 'DE', speed: 70, overall_rating: 68, racecraft: 2, wage: 1000, pay_driver: false, contract_length: 1 },
 			],
 			technical_director: null,
 			commercial_manager: null,
 		});
 
 		const buttons = document.querySelectorAll('.staff-replace-btn');
+		expect(document.getElementById('staff-drivers-container').textContent).not.toContain('Racecraft');
 		expect(buttons.length).toBe(2);
 		expect(buttons[0].disabled).toBe(true);
 		expect(buttons[1].disabled).toBe(false);

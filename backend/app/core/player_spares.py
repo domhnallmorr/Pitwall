@@ -61,27 +61,52 @@ def get_spare_build_requirements(engineering_staff: int | None, factory_size: in
     }
 
 
+def get_active_chassis_construction_allocation_percent(state: GameState) -> int:
+    return sum(
+        max(0, min(100, int(getattr(project, "allocation_percent", 0) or 0)))
+        for project in getattr(state, "player_construction_projects", [])
+        if getattr(project, "active", False) and not getattr(project, "completed", False)
+    )
+
+
+def get_active_chassis_construction_engineers(state: GameState) -> int:
+    return sum(
+        max(0, int(getattr(project, "assigned_engineers", 0) or 0))
+        for project in getattr(state, "player_construction_projects", [])
+        if getattr(project, "active", False) and not getattr(project, "completed", False)
+    )
+
+
 def get_player_spares_construction_data(state: GameState) -> dict[str, int | bool | str | None]:
     player_team = state.player_team
     available_spares = max(0, int(getattr(state, "player_spares", 0) or 0))
     sync_player_construction_usage_period(state)
-    current_usage = max(0, min(100, int(getattr(state, "player_construction_usage_percent", 0) or 0)))
+    spare_usage = max(0, min(100, int(getattr(state, "player_construction_usage_percent", 0) or 0)))
+    chassis_usage = get_active_chassis_construction_allocation_percent(state)
+    current_usage = min(100, spare_usage + chassis_usage)
     if not player_team:
         return {
             "available": available_spares,
             "max": PLAYER_SPARES_MAX,
             "build_cost": PLAYER_SPARE_BUILD_COST,
             "construction_usage_percent": current_usage,
+            "spare_construction_usage_percent": spare_usage,
+            "chassis_construction_usage_percent": chassis_usage,
             "construction_capacity_remaining": max(0, 100 - current_usage),
             "engineering_required_percentage": None,
             "engineering_required_staff": None,
+            "engineering_staff_total": 0,
+            "engineering_staff_committed_to_projects": 0,
             "engineering_staff_available": 0,
             "enough_engineering_staff": False,
             "can_build": False,
             "blocking_reason": "No player team assigned",
         }
 
-    requirements = get_spare_build_requirements(getattr(player_team, "engineering_staff", 0), getattr(player_team, "factory_size", 1))
+    total_engineering_staff = max(0, int(getattr(player_team, "engineering_staff", 0) or 0))
+    committed_engineers = min(total_engineering_staff, get_active_chassis_construction_engineers(state))
+    free_engineers = max(0, total_engineering_staff - committed_engineers)
+    requirements = get_spare_build_requirements(total_engineering_staff, getattr(player_team, "factory_size", 1))
     blocking_reason = None
     if available_spares >= PLAYER_SPARES_MAX:
         blocking_reason = "Spare stock is already full"
@@ -89,19 +114,25 @@ def get_player_spares_construction_data(state: GameState) -> dict[str, int | boo
         blocking_reason = "Insufficient funds"
     elif not requirements["enough_engineering_staff"]:
         blocking_reason = "Insufficient engineering staff"
+    elif free_engineers < int(requirements["engineering_required_staff"] or 0):
+        blocking_reason = "Insufficient free engineering staff"
     elif current_usage + int(requirements["engineering_required_percentage"] or 0) > 100:
-        blocking_reason = "Construction capacity fully allocated this week"
+        blocking_reason = "Engineering capacity is already allocated this week"
 
     return {
         "available": available_spares,
         "max": PLAYER_SPARES_MAX,
         "build_cost": PLAYER_SPARE_BUILD_COST,
         "construction_usage_percent": current_usage,
+        "spare_construction_usage_percent": spare_usage,
+        "chassis_construction_usage_percent": chassis_usage,
         "construction_capacity_remaining": max(0, 100 - current_usage),
         "engineering_required_percentage": requirements["engineering_required_percentage"],
         "engineering_required_staff": requirements["engineering_required_staff"],
-        "engineering_staff_available": requirements["engineering_staff_available"],
-        "enough_engineering_staff": requirements["enough_engineering_staff"],
+        "engineering_staff_total": total_engineering_staff,
+        "engineering_staff_committed_to_projects": committed_engineers,
+        "engineering_staff_available": free_engineers,
+        "enough_engineering_staff": requirements["enough_engineering_staff"] and free_engineers >= int(requirements["engineering_required_staff"] or 0),
         "can_build": blocking_reason is None,
         "blocking_reason": blocking_reason,
     }

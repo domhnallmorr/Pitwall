@@ -51,8 +51,8 @@ describe('DriverMarketView', () => {
 		marketView.render({
 			outgoing_driver: { id: 1, name: 'Old Driver' },
 			candidates: [
-				{ id: 100, name: 'Expiring Seat', age: 28, country: 'Italy', speed: 72, consistency: 61, qualifying: 2, wage: 500000, pay_driver: false, contract_length: 1, team_name: 'Ferano' },
-				{ id: 99, name: 'Free Agent', age: 24, country: 'Germany', speed: 80, consistency: 55, qualifying: 4, wage: 0, pay_driver: false, contract_length: 0 },
+				{ id: 100, name: 'Expiring Seat', age: 28, country: 'Italy', speed: 72, consistency: 61, qualifying: 2, racecraft: 3, wage: 500000, pay_driver: false, contract_length: 1, team_name: 'Ferano' },
+				{ id: 99, name: 'Free Agent', age: 24, country: 'Germany', speed: 80, consistency: 55, qualifying: 4, racecraft: 5, wage: 0, pay_driver: false, contract_length: 0 },
 			],
 		});
 
@@ -70,6 +70,9 @@ describe('DriverMarketView', () => {
 		expect(document.getElementById('driver-market-driver-detail').innerHTML).toContain('Speed rating 3 out of 5');
 		expect(document.getElementById('driver-market-driver-detail').textContent).toContain('Qualifying');
 		expect(document.getElementById('driver-market-driver-detail').innerHTML).toContain('Speed rating 4 out of 5');
+		expect(document.getElementById('driver-market-driver-detail').textContent).toContain('Racecraft');
+		expect(document.getElementById('driver-market-driver-list').innerHTML).toContain('Racecraft');
+		expect(document.getElementById('driver-market-driver-list').innerHTML).toContain('Speed rating 5 out of 5');
 		expect(document.getElementById('driver-market-driver-detail').textContent).not.toContain('80');
 	});
 

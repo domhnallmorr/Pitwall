@@ -31,17 +31,17 @@ def test_load_teams_reads_factory_size_department_and_commercial_staff_columns()
     assert teams[0].commercial_staff == 60
 
 
-def test_load_drivers_reads_consistency_and_qualifying_columns():
+def test_load_drivers_reads_consistency_qualifying_and_racecraft_columns():
     conn = sqlite3.connect(":memory:")
     create_schema(conn)
     cursor = conn.cursor()
     cursor.execute(
         """
         INSERT INTO drivers (
-            start_year, name, age, country, wage, pay_driver, contract_length, speed, consistency, qualifying
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            start_year, name, age, country, wage, pay_driver, contract_length, speed, consistency, qualifying, racecraft
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (0, "Marco Schneider", 29, "Germany", 24_000_000, 0, 4, 98, 100, 5),
+        (0, "Marco Schneider", 29, "Germany", 24_000_000, 0, 4, 98, 100, 5, 3),
     )
     conn.commit()
 
@@ -51,6 +51,7 @@ def test_load_drivers_reads_consistency_and_qualifying_columns():
     assert driver_map["Marco Schneider"].speed == 98
     assert driver_map["Marco Schneider"].consistency == 100
     assert driver_map["Marco Schneider"].qualifying == 5
+    assert driver_map["Marco Schneider"].racecraft == 3
 
 
 def test_load_tyre_suppliers_reads_supplier_development_attributes():

@@ -11,6 +11,7 @@ try:
         DRIVER_FASTEST_LAPS,
         DRIVER_CONSISTENCY,
         DRIVER_QUALIFYING,
+        DRIVER_RACECRAFT,
         DRIVER_POLES,
         DRIVER_PODIUMS,
         DRIVER_RACE_STARTS,
@@ -55,6 +56,7 @@ except ModuleNotFoundError:
         DRIVER_FASTEST_LAPS,
         DRIVER_CONSISTENCY,
         DRIVER_QUALIFYING,
+        DRIVER_RACECRAFT,
         DRIVER_POLES,
         DRIVER_PODIUMS,
         DRIVER_RACE_STARTS,
@@ -159,6 +161,7 @@ def seed_data(conn):
                     DRIVER_SPEEDS.get(d[1], 50),
                     DRIVER_CONSISTENCY.get(d[1], 50),
                     DRIVER_QUALIFYING.get(d[1], 3),
+                    DRIVER_RACECRAFT.get(d[1], 3),
                     DRIVER_RACE_STARTS.get(d[1], 0),
                     DRIVER_WINS.get(d[1], 0),
                     DRIVER_PODIUMS.get(d[1], 0),
@@ -169,7 +172,7 @@ def seed_data(conn):
                 for d in drivers_to_insert
             ]
             c.executemany(
-                'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, contract_length, speed, consistency, qualifying, race_starts, wins, podiums, poles, fastest_laps, championships) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, contract_length, speed, consistency, qualifying, racecraft, race_starts, wins, podiums, poles, fastest_laps, championships) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 drivers_to_insert_with_attrs
             )
             conn.commit()
@@ -188,6 +191,10 @@ def seed_data(conn):
         c.executemany(
             'UPDATE drivers SET qualifying = ? WHERE name = ?',
             [(qualifying, name) for name, qualifying in DRIVER_QUALIFYING.items()]
+        )
+        c.executemany(
+            'UPDATE drivers SET racecraft = ? WHERE name = ?',
+            [(racecraft, name) for name, racecraft in DRIVER_RACECRAFT.items()]
         )
         c.executemany(
             'UPDATE drivers SET race_starts = ? WHERE name = ?',
@@ -549,6 +556,7 @@ def seed_data(conn):
             DRIVER_SPEEDS.get(d[1], 50),
             DRIVER_CONSISTENCY.get(d[1], 50),
             DRIVER_QUALIFYING.get(d[1], 3),
+            DRIVER_RACECRAFT.get(d[1], 3),
             DRIVER_RACE_STARTS.get(d[1], 0),
             DRIVER_WINS.get(d[1], 0),
             DRIVER_PODIUMS.get(d[1], 0),
@@ -559,7 +567,7 @@ def seed_data(conn):
         for d in drivers_data
     ]
     c.executemany(
-        'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, contract_length, speed, consistency, qualifying, race_starts, wins, podiums, poles, fastest_laps, championships) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO drivers (start_year, name, age, country, wage, pay_driver, contract_length, speed, consistency, qualifying, racecraft, race_starts, wins, podiums, poles, fastest_laps, championships) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         drivers_data_with_attrs
     )
 

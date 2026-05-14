@@ -28,7 +28,7 @@ from app.models.chassis import Chassis
 from app.models.calendar import Calendar, Event, EventType
 from app.models.commercial_manager import CommercialManager
 from app.models.driver import Driver
-from app.models.state import GameState
+from app.models.state import GameState, PlayerConstructionProject
 from app.models.team import Team
 from app.models.technical_director import TechnicalDirector
 from app.models.title_sponsor import TitleSponsor
@@ -459,3 +459,49 @@ def test_build_spare_set_blocks_when_weekly_construction_capacity_is_used():
 
     assert result["status"] == "error"
     assert "capacity" in result["message"]
+
+
+def test_build_spare_set_blocks_when_chassis_construction_uses_engineering_capacity():
+    state = create_state()
+    state.finance.balance = 500_000
+    state.player_spares = 0
+    state.player_construction_projects = [
+        PlayerConstructionProject(
+            active=True,
+            scope="next_year",
+            name="1999 Chassis",
+            allocation_percent=70,
+            assigned_engineers=38,
+        )
+    ]
+    logger = Mock()
+
+    result = handle_build_spare_set(state, logger)
+
+    assert result["status"] == "error"
+    assert "free engineering" in result["message"]
+
+
+def test_build_spare_set_uses_remaining_engineering_capacity_after_chassis_work():
+    state = create_state()
+    state.player_team.factory_size = 5
+    state.finance.balance = 500_000
+    state.player_spares = 0
+    state.player_construction_projects = [
+        PlayerConstructionProject(
+            active=True,
+            scope="next_year",
+            name="1999 Chassis",
+            allocation_percent=80,
+            assigned_engineers=43,
+        )
+    ]
+    logger = Mock()
+
+    result = handle_build_spare_set(state, logger)
+
+    assert result["status"] == "success"
+    assert result["data"]["engineering_required_percentage"] == 9
+    assert result["data"]["construction_usage_percent_before"] == 80
+    assert result["data"]["construction_usage_percent_after"] == 89
+    assert result["data"]["spare_construction_usage_percent_after"] == 9

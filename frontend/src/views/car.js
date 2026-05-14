@@ -513,6 +513,10 @@ export default class CarView {
 			const requiredPercentage = Number(spareConstruction.engineering_required_percentage || 0);
 			const requiredStaff = Number(spareConstruction.engineering_required_staff || 0);
 			const availableStaff = Number(spareConstruction.engineering_staff_available || 0);
+			const totalEngineeringStaff = Number(spareConstruction.engineering_staff_total || availableStaff);
+			const committedEngineeringStaff = Number(spareConstruction.engineering_staff_committed_to_projects || 0);
+			const chassisUsagePercent = Number(spareConstruction.chassis_construction_usage_percent || 0);
+			const spareUsagePercent = Number(spareConstruction.spare_construction_usage_percent || 0);
 			const usagePercent = Number(spareConstruction.construction_usage_percent || 0);
 			const remainingPercent = Number(spareConstruction.construction_capacity_remaining || 0);
 			this.constructionBuildCard.innerHTML = `
@@ -525,11 +529,13 @@ export default class CarView {
 				</div>
 				<div class="car-construction-build-meta">
 					<div>Engineering Required: <strong>${requiredStaff}</strong> staff (${requiredPercentage}%)</div>
-					<div>Engineering Available: <strong>${availableStaff}</strong></div>
-					<div>Capacity Used This Week: <strong>${usagePercent}%</strong></div>
+					<div>Engineering Free: <strong>${availableStaff}</strong> / ${totalEngineeringStaff}</div>
+					<div>On Chassis Projects: <strong>${committedEngineeringStaff}</strong> staff (${chassisUsagePercent}%)</div>
+					<div>Spare Work This Week: <strong>${spareUsagePercent}%</strong></div>
+					<div>Total Capacity Used: <strong>${usagePercent}%</strong></div>
 					<div>Capacity Remaining: <strong>${remainingPercent}%</strong></div>
 				</div>
-				<div class="car-construction-note">${canBuild ? "A spare set can be built if you allocate this week's remaining construction capacity." : blockingReason}</div>
+				<div class="car-construction-note">${canBuild ? "A spare set can be built from the engineering capacity not already assigned to chassis projects." : blockingReason}</div>
 				<button id="car-build-spare-set-btn" class="btn-primary" ${canBuild ? '' : 'disabled'}>Build Spare Set</button>
 			`;
 			const buildBtn = document.getElementById('car-build-spare-set-btn');

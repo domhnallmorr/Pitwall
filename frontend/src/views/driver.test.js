@@ -25,6 +25,7 @@ describe('DriverView', () => {
 			speed: 84,
 			consistency: 68,
 			qualifying: 3,
+			racecraft: 4,
 			race_starts: 33,
 			wins: 11,
 			podiums: 19,
@@ -52,6 +53,7 @@ describe('DriverView', () => {
 		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Championships');
 		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Consistency');
 		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Qualifying');
+		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Racecraft');
 		expect(document.getElementById('driver-profile-container').innerHTML).toContain('Speed rating 4 out of 5');
 
 		const seasonHtml = document.getElementById('driver-season-results-container').innerHTML;
@@ -115,6 +117,7 @@ describe('DriverView', () => {
 			speed: 0,
 			consistency: 27,
 			qualifying: 2,
+			racecraft: 3,
 			race_starts: 0,
 			wins: 0,
 			podiums: 0,
@@ -132,6 +135,7 @@ describe('DriverView', () => {
 		expect(profileHtml).toContain('Pay Driver');
 		expect(profileHtml).toContain('Speed rating 2 out of 5');
 		expect(profileHtml).toContain('Qualifying');
+		expect(profileHtml).toContain('Racecraft');
 		expect(document.getElementById('driver-season-results-container').textContent).toContain('No race results recorded this season yet');
 	});
 });

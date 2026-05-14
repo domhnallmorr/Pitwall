@@ -20,6 +20,7 @@ def create_schema(conn):
             speed INTEGER DEFAULT 50,
             consistency INTEGER DEFAULT 50,
             qualifying INTEGER DEFAULT 3,
+            racecraft INTEGER DEFAULT 3,
             race_starts INTEGER DEFAULT 0,
             wins INTEGER DEFAULT 0,
             podiums INTEGER DEFAULT 0,
@@ -217,6 +218,8 @@ def create_schema(conn):
         c.execute("ALTER TABLE drivers ADD COLUMN consistency INTEGER DEFAULT 50")
     if "qualifying" not in driver_columns:
         c.execute("ALTER TABLE drivers ADD COLUMN qualifying INTEGER DEFAULT 3")
+    if "racecraft" not in driver_columns:
+        c.execute("ALTER TABLE drivers ADD COLUMN racecraft INTEGER DEFAULT 3")
     if "contract_length" not in driver_columns:
         c.execute("ALTER TABLE drivers ADD COLUMN contract_length INTEGER DEFAULT 2")
     if "race_starts" not in driver_columns:
