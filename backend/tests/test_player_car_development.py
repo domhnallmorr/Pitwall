@@ -2,7 +2,7 @@ from app.core.player_car_development import PlayerCarDevelopmentManager
 from app.core.player_construction import PlayerConstructionManager
 from app.models.calendar import Calendar, Event, EventType
 from app.models.finance import TransactionCategory
-from app.models.state import GameState
+from app.models.state import GameState, PlayerConstructionProject
 from app.models.team import Team
 from app.models.technical_director import TechnicalDirector
 
@@ -233,6 +233,7 @@ def test_next_year_construction_builds_one_chassis_at_a_time():
 
 def test_current_year_construction_completion_applies_speed_gain_and_costs():
     state = create_state()
+    state.player_setup_knowledge = 80
     manager = PlayerCarDevelopmentManager()
     manager.start(state, "current_year")
     for stage in state.player_car_development.stages:
@@ -250,8 +251,29 @@ def test_current_year_construction_completion_applies_speed_gain_and_costs():
     assert construction.completed is True
     assert construction.applied is True
     assert state.player_team.car_speed == 87
+    assert state.player_setup_knowledge == 38
     assert construction.paid > 0
     assert any(tx.category == TransactionCategory.CONSTRUCTION for tx in state.finance.transactions)
+    assert any("Setup knowledge: 80 -> 38" in email.body for email in state.emails)
+
+
+def test_current_year_upgrade_setup_reduction_clamps_to_minimum():
+    state = create_state()
+    state.player_setup_knowledge = 10
+    project = PlayerConstructionProject(
+        active=True,
+        scope="current_year",
+        name="Large Upgrade",
+        speed_delta=4,
+        paid=120_000,
+        quality_score=40,
+    )
+
+    PlayerConstructionManager()._apply_current_year_upgrade(state, project)
+
+    assert state.player_team.car_speed == 84
+    assert state.player_setup_knowledge == 1
+    assert project.applied is True
 
 
 def test_chassis_construction_allocation_respects_spare_work_used_this_week():

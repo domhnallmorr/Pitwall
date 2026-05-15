@@ -391,6 +391,7 @@ def get_car_payload(state: GameState) -> dict:
         "player_team_name": player_team.name if player_team else None,
         "player_car_speed": player_team.car_speed if player_team else 0,
         "player_car_wear": player_wear,
+        "player_setup_knowledge": max(1, min(100, int(getattr(state, "player_setup_knowledge", 1) or 1))),
         "player_mechanical_fail_probability": player_mech_fail_probability,
         "player_tyre_supplier_name": player_tyre_supplier_name,
         "player_spares": int(getattr(state, "player_spares", 0) or 0),

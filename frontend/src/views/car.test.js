@@ -40,6 +40,7 @@ describe('CarView', () => {
 			{ name: 'Ferano', country: 'Italy', car_speed: 84, engine_power: 72 },
 		],
 		player_car_speed: 80,
+		player_setup_knowledge: 42,
 		player_spares: 6,
 		tyres: {
 			suppliers: [
@@ -125,6 +126,12 @@ describe('CarView', () => {
 		carView.setActiveTab('development');
 
 		expect(document.getElementById('car-content-development').style.display).toBe('block');
+		const currentSpeed = document.getElementById('car-development-current-speed');
+		expect(currentSpeed.textContent).toContain('Setup Knowledge:');
+		expect(currentSpeed.textContent).not.toContain('42/100');
+		const setupRating = currentSpeed.querySelectorAll('.car-speed-rating')[1];
+		expect(setupRating.querySelectorAll('.car-speed-block')).toHaveLength(10);
+		expect(setupRating.querySelectorAll('.car-speed-block.is-filled')).toHaveLength(5);
 		expect(document.getElementById('car-development-status').textContent).toContain('No active chassis design project');
 		expect(document.getElementById('car-development-table-body').textContent).toContain('Design');
 		document.querySelector('.car-dev-btn').click();

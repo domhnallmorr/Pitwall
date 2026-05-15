@@ -258,6 +258,32 @@ def test_lap_time_consistency_penalty_scales_with_driver_consistency():
     assert erratic == 84_500
 
 
+def test_lap_time_applies_player_setup_bonus():
+    state = create_race_state()
+    manager = RaceManager()
+    circuit = state.circuits[0]
+    entrant = {
+        "driver_speed": 50,
+        "driver_consistency": 100,
+        "car_speed": 50,
+        "engine_power": 50,
+        "tyre_grip": 50,
+        "tyre_wear": 50,
+        "fuel_kg": 0.0,
+        "stint_laps": 0,
+    }
+
+    original_randint = random.randint
+    random.randint = lambda a, b: b
+    try:
+        without_setup = manager._lap_time_ms(entrant, circuit)
+        with_setup = manager._lap_time_ms({**entrant, "setup_bonus_ms": 1000}, circuit)
+    finally:
+        random.randint = original_randint
+
+    assert without_setup - with_setup == 1000
+
+
 def test_qualifying_lap_time_does_not_use_driver_consistency():
     state = create_race_state()
     manager = RaceManager()

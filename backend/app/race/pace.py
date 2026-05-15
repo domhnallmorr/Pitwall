@@ -118,10 +118,11 @@ def lap_time_ms(entrant: dict, circuit: Circuit) -> int:
 	fuel_penalty_ms = int((entrant.get("fuel_kg", 0.0) or 0.0) * FUEL_PENALTY_MS_PER_KG)
 	degradation_ms = tyre_wear_penalty_ms(entrant.get("stint_laps", 0), entrant)
 	dirty_air_penalty_ms = int(entrant.get("dirty_air_penalty_ms", 0) or 0)
+	setup_bonus_ms = int(entrant.get("setup_bonus_ms", 0) or 0)
 	return max(
 		45_000,
 		circuit.base_laptime_ms - base_bonus_ms + engine_adjustment_ms + tyre_grip_adjustment_ms
-		+ fuel_penalty_ms + degradation_ms + dirty_air_penalty_ms + consistency_penalty_ms,
+		+ fuel_penalty_ms + degradation_ms + dirty_air_penalty_ms + consistency_penalty_ms - setup_bonus_ms,
 	)
 
 

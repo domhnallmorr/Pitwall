@@ -87,6 +87,7 @@ class GameState(BaseModel):
     player_mechanics_usage_year: int | None = None
     player_chassis: List[Chassis] = Field(default_factory=list)
     player_chassis_year: int | None = None
+    player_setup_knowledge: int = 1
     player_test_chassis_id: int | None = None
     player_race_chassis_assignments: Dict[int, int] = Field(default_factory=dict)
     team_principals: List[TeamPrincipal] = Field(default_factory=list)

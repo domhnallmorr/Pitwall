@@ -18,6 +18,8 @@ class TestSessionManager:
     MIN_SUCCESS_PROBABILITY = 0.35
     MAX_SUCCESS_PROBABILITY = 0.85
     MAX_WEAR = 100
+    SETUP_BASE_GAIN = 8
+    SETUP_MAX_GAIN_PER_TEST = 15
 
     def _gain_for_km(self, kms: int) -> int:
         km_value = max(0, int(kms))
@@ -30,6 +32,56 @@ class TestSessionManager:
 
     def _get_circuit_country(self, state: GameState, event_name: str) -> str:
         return next((c.country for c in state.circuits if c.name == event_name), None) or "Unknown"
+
+    def _technical_director_skill(self, state: GameState) -> int:
+        player_team = state.player_team
+        if not player_team:
+            return 0
+        director_id = getattr(player_team, "technical_director_id", None)
+        director = next(
+            (
+                item
+                for item in getattr(state, "technical_directors", [])
+                if item.team_id == player_team.id or (director_id is not None and item.id == director_id)
+            ),
+            None,
+        )
+        return max(0, min(100, int(getattr(director, "skill", 0) or 0)))
+
+    def _driver_feedback_rating(self, state: GameState) -> int:
+        player_team = state.player_team
+        if not player_team:
+            return 0
+        driver_ids = {player_team.driver1_id, player_team.driver2_id}
+        drivers = [driver for driver in state.drivers if driver.id in driver_ids]
+        if not drivers:
+            return 0
+        ratings = [
+            (max(0, min(100, int(getattr(driver, "consistency", 50) or 50))) + (max(1, min(5, int(getattr(driver, "racecraft", 3) or 3))) * 20)) / 2
+            for driver in drivers
+        ]
+        return round(sum(ratings) / len(ratings))
+
+    def _setup_gain_for_test(self, state: GameState, kms: int) -> int:
+        if kms <= 0:
+            return 0
+        player_team = state.player_team
+        facilities = max(0, min(100, int(getattr(player_team, "facilities", 0) or 0))) if player_team else 0
+        full_test_gain = (
+            self.SETUP_BASE_GAIN
+            + (facilities // 25)
+            + (self._technical_director_skill(state) // 35)
+            + (self._driver_feedback_rating(state) // 35)
+        )
+        distance_factor = min(1.0, max(0, int(kms)) / 1_200)
+        gain = round(full_test_gain * distance_factor)
+        return max(0, min(self.SETUP_MAX_GAIN_PER_TEST, gain))
+
+    def _apply_setup_gain(self, state: GameState, gain: int) -> tuple[int, int]:
+        old_setup = max(1, min(100, int(getattr(state, "player_setup_knowledge", 1) or 1)))
+        new_setup = max(1, min(100, old_setup + max(0, int(gain))))
+        state.player_setup_knowledge = new_setup
+        return old_setup, new_setup
 
     def _apply_team_gain(self, team, gain: int) -> tuple[int, int]:
         old_speed = team.car_speed
@@ -61,6 +113,8 @@ class TestSessionManager:
             kms = max(0, min(self.PLAYER_MAX_KM, int(player_kms or 0))) if player_attended else 0
             attempted_gain, actual_gain, probability, succeeded = self._resolve_gain_with_risk(kms) if player_attended else (0, 0, self._success_probability(0), False)
             old_speed, new_speed = self._apply_team_gain(player_team, actual_gain)
+            setup_gain = self._setup_gain_for_test(state, kms) if player_attended else 0
+            old_setup, new_setup = self._apply_setup_gain(state, setup_gain)
             selected_chassis = get_player_test_chassis(state)
             new_wear = apply_player_test_wear(state, kms) if player_attended else int(getattr(selected_chassis, "wear", 0) or 0)
             cost = kms * self.COST_PER_KM
@@ -86,6 +140,9 @@ class TestSessionManager:
                 "cost": cost,
                 "old_speed": old_speed,
                 "new_speed": new_speed,
+                "setup_gain": setup_gain,
+                "old_setup_knowledge": old_setup,
+                "new_setup_knowledge": new_setup,
                 "chassis_name": selected_chassis.name if selected_chassis else None,
                 "wear": new_wear,
             }
@@ -122,6 +179,7 @@ class TestSessionManager:
                     f"attempted +{player_summary['attempted_gain']} / actual +{player_summary['gain']} "
                     f"({outcome_label}), cost ${player_summary['cost']:,} "
                     f"({player_summary['old_speed']} -> {player_summary['new_speed']}), "
+                    f"setup knowledge {player_summary['old_setup_knowledge']} -> {player_summary['new_setup_knowledge']}, "
                     f"success chance {round(player_summary['success_probability'] * 100)}%, "
                     f"{player_summary['chassis_name'] or 'Chassis'} wear now {player_summary['wear']}"
                 )

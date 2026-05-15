@@ -18,6 +18,7 @@ class PlayerConstructionManager:
     MINOR_UPGRADE_SLOW_WEEKS = 4.0
     MAJOR_UPGRADE_FAST_WEEKS = 4.0
     MAJOR_UPGRADE_SLOW_WEEKS = 8.0
+    SETUP_KNOWLEDGE_LOSS_PER_SPEED_DELTA = 6
 
     def _normalize_scope(self, scope: str | None) -> str:
         normalized = (scope or "current_year").strip().lower()
@@ -418,7 +419,12 @@ class PlayerConstructionManager:
         if not team:
             return
         old_speed = team.car_speed
-        team.car_speed = max(1, old_speed + int(project.speed_delta or 0))
+        speed_delta = int(project.speed_delta or 0)
+        old_setup = max(1, min(100, int(getattr(state, "player_setup_knowledge", 1) or 1)))
+        setup_loss = max(0, speed_delta * self.SETUP_KNOWLEDGE_LOSS_PER_SPEED_DELTA)
+        new_setup = max(1, old_setup - setup_loss)
+        team.car_speed = max(1, old_speed + speed_delta)
+        state.player_setup_knowledge = new_setup
         project.applied = True
         state.add_email(
             sender="Chief Engineer",
@@ -426,6 +432,7 @@ class PlayerConstructionManager:
             body=(
                 f"{project.name} has been constructed and fitted to the current car.\n\n"
                 f"Car rating: {old_speed} -> {team.car_speed}\n"
+                f"Setup knowledge: {old_setup} -> {new_setup}\n"
                 f"Construction spend: ${project.paid:,}\n"
                 f"Design quality: {project.quality_score}\n"
                 f"Risk: {project.risk}"

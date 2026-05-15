@@ -160,6 +160,7 @@ def handle_start_career(state: GameState | None, logger: logging.Logger, team_na
         current_state.player_mechanics_usage_year = current_state.year
         current_state.player_chassis = _create_player_chassis(selected_team.id)
         current_state.player_chassis_year = current_state.year
+        current_state.player_setup_knowledge = 1
         current_state.player_test_chassis_id = current_state.player_chassis[0].id if current_state.player_chassis else None
         current_state.player_race_chassis_assignments = {}
         TyreCompoundManager().generate_for_new_career(current_state)

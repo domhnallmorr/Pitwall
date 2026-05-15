@@ -167,6 +167,7 @@ class SeasonRolloverManager:
         self.player_car_development_manager.reset_for_new_season(state)
         if state.player_team:
             state.player_team.car_wear = 0
+            state.player_setup_knowledge = 1
 
         # 15. Snapshot the new season grid after retirements/signings
         self.grid_manager.capture_season_snapshot(state, year=state.year)

@@ -112,6 +112,7 @@ def test_handle_start_career_success_without_retirement_email(
     assert next_state.player_construction_usage_percent == 0
     assert next_state.player_construction_usage_week == 1
     assert next_state.player_construction_usage_year == 1998
+    assert next_state.player_setup_knowledge == 1
     assert next_state.player_mechanics_usage_percent == 0
     assert next_state.player_mechanics_usage_week == 1
     assert next_state.player_mechanics_usage_year == 1998

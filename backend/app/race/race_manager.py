@@ -260,6 +260,9 @@ class RaceManager:
 						"tyre_grip": getattr(tyre_supplier, "grip", 50) if tyre_supplier else 50,
 						"tyre_wear": getattr(tyre_supplier, "wear", 50) if tyre_supplier else 50,
 					}
+					if state.player_team_id is not None and team.id == state.player_team_id:
+						setup_knowledge = max(1, min(100, int(getattr(state, "player_setup_knowledge", 1) or 1)))
+						participant["setup_bonus_ms"] = round(((setup_knowledge - 1) / 99) * 1000)
 					if tyre_supplier:
 						supplier_compounds = compound_lookup.get(tyre_supplier.name, {})
 						for compound in supplier_compounds.values():

@@ -48,6 +48,7 @@ def create_state() -> GameState:
             Chassis(id=3, team_id=1, name="Chassis 3", wear=0),
         ],
         player_test_chassis_id=3,
+        player_setup_knowledge=42,
         player_race_chassis_assignments={1: 1, 2: 2},
         calendar=Calendar(events=[Event(name="Albert Park", week=10, type=EventType.RACE)], current_week=1),
         circuits=[],
@@ -176,6 +177,7 @@ def test_get_car_payload_without_player_team_returns_defaults():
     assert payload["player_team_name"] is None
     assert payload["player_car_speed"] == 0
     assert payload["player_car_wear"] == 0
+    assert payload["player_setup_knowledge"] == 42
     assert payload["player_development"]["active"] is False
 
 
@@ -194,6 +196,7 @@ def test_get_car_payload_includes_player_chassis_state():
     assert payload["maintenance"]["mechanics_capacity_remaining"] == 100
     assert payload["maintenance"]["mechanics_staff_available"] == 58
     assert payload["maintenance"]["mechanics_required_percent_per_spare"] == 22
+    assert payload["player_setup_knowledge"] == 42
     assert payload["player_test_chassis_id"] == 3
     assert payload["player_tyre_supplier_name"] == "Greatday"
     assert payload["player_drivers"][0]["name"] == "John Newhouse"

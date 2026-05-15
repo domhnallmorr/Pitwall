@@ -140,6 +140,12 @@ export default class CarView {
 		return `<span class="car-speed-rating car-availability-rating" role="img" aria-label="${label} ${filled} out of ${maxValue}">${blocks}</span>`;
 	}
 
+	renderSetupKnowledgeBlocks(value) {
+		const setupValue = Math.max(1, Math.min(100, Number(value || 1)));
+		const filled = Math.max(1, Math.min(10, Math.ceil(setupValue / 10)));
+		return this.renderAvailabilityBlocks(filled, 'Setup knowledge', 10);
+	}
+
 	renderProgressBlocks(value, label, maxValue = 10) {
 		const filled = Math.max(0, Math.min(maxValue, Number(value || 0)));
 		let blocks = '';
@@ -244,7 +250,11 @@ export default class CarView {
 		const activeProjects = Object.values(projects).filter((item) => item?.active);
 		if (this.currentSpeed) {
 			const value = Number(data?.player_car_speed || 0);
-			this.currentSpeed.innerHTML = `Current Car Rating: <strong>${value}</strong> ${this.renderRatingBlocks(value, 'Player car speed', maxCarSpeed)}`;
+			const setupKnowledge = Math.max(1, Math.min(100, Number(data?.player_setup_knowledge || 1)));
+			this.currentSpeed.innerHTML = `
+				<div>Current Car Rating: <strong>${value}</strong> ${this.renderRatingBlocks(value, 'Player car speed', maxCarSpeed)}</div>
+				<div>Setup Knowledge: ${this.renderSetupKnowledgeBlocks(setupKnowledge)}</div>
+			`;
 		}
 		if (this.devStatus) {
 			if (activeProjects.length) {
