@@ -165,6 +165,8 @@ class SeasonRolloverManager:
         car_speed_updates = self.car_performance_manager.apply_for_new_season(state)
         player_next_year_chassis_update = self.player_car_development_manager.apply_next_year_project_for_rollover(state)
         self.player_car_development_manager.reset_for_new_season(state)
+        for team in state.teams:
+            team.setup_knowledge = 1
         if state.player_team:
             state.player_team.car_wear = 0
             state.player_setup_knowledge = 1

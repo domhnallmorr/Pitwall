@@ -20,6 +20,8 @@ class TestSessionManager:
     MAX_WEAR = 100
     SETUP_BASE_GAIN = 8
     SETUP_MAX_GAIN_PER_TEST = 15
+    AI_SETUP_BASE_GAIN = 6
+    AI_SETUP_MAX_GAIN_PER_TEST = 14
 
     def _gain_for_km(self, kms: int) -> int:
         km_value = max(0, int(kms))
@@ -81,6 +83,22 @@ class TestSessionManager:
         old_setup = max(1, min(100, int(getattr(state, "player_setup_knowledge", 1) or 1)))
         new_setup = max(1, min(100, old_setup + max(0, int(gain))))
         state.player_setup_knowledge = new_setup
+        return old_setup, new_setup
+
+    def _ai_setup_gain_for_test(self, team, kms: int) -> int:
+        if kms <= 0:
+            return 0
+        facilities = max(0, min(100, int(getattr(team, "facilities", 0) or 0)))
+        car_speed = max(1, min(100, int(getattr(team, "car_speed", 50) or 50)))
+        full_test_gain = self.AI_SETUP_BASE_GAIN + (facilities // 30) + (car_speed // 40)
+        distance_factor = min(1.0, max(0, int(kms)) / 1_200)
+        gain = round(full_test_gain * distance_factor)
+        return max(0, min(self.AI_SETUP_MAX_GAIN_PER_TEST, gain))
+
+    def _apply_ai_setup_gain(self, team, gain: int) -> tuple[int, int]:
+        old_setup = max(1, min(100, int(getattr(team, "setup_knowledge", 1) or 1)))
+        new_setup = max(1, min(100, old_setup + max(0, int(gain))))
+        team.setup_knowledge = new_setup
         return old_setup, new_setup
 
     def _apply_team_gain(self, team, gain: int) -> tuple[int, int]:
@@ -157,6 +175,8 @@ class TestSessionManager:
             kms = random.randint(self.AI_MIN_KM, self.AI_MAX_KM)
             attempted_gain, actual_gain, probability, succeeded = self._resolve_gain_with_risk(kms)
             old_speed, new_speed = self._apply_team_gain(team, actual_gain)
+            setup_gain = self._ai_setup_gain_for_test(team, kms)
+            old_setup, new_setup = self._apply_ai_setup_gain(team, setup_gain)
             ai_updates.append(
                 {
                     "team_name": team.name,
@@ -167,6 +187,9 @@ class TestSessionManager:
                     "succeeded": succeeded,
                     "old_speed": old_speed,
                     "new_speed": new_speed,
+                    "setup_gain": setup_gain,
+                    "old_setup_knowledge": old_setup,
+                    "new_setup_knowledge": new_setup,
                 }
             )
 

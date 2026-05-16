@@ -262,7 +262,9 @@ class RaceManager:
 					}
 					if state.player_team_id is not None and team.id == state.player_team_id:
 						setup_knowledge = max(1, min(100, int(getattr(state, "player_setup_knowledge", 1) or 1)))
-						participant["setup_bonus_ms"] = round(((setup_knowledge - 1) / 99) * 1000)
+					else:
+						setup_knowledge = max(1, min(100, int(getattr(team, "setup_knowledge", 1) or 1)))
+					participant["setup_bonus_ms"] = round(((setup_knowledge - 1) / 99) * 1000)
 					if tyre_supplier:
 						supplier_compounds = compound_lookup.get(tyre_supplier.name, {})
 						for compound in supplier_compounds.values():

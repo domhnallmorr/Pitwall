@@ -50,6 +50,7 @@ def test_test_session_attend_applies_player_cost_and_ai_gains(mock_random, mock_
     assert state.player_chassis[1].wear == 12
     ai_team = next(t for t in state.teams if t.id == 2)
     assert ai_team.car_speed == 87  # 900 km -> +3
+    assert ai_team.setup_knowledge == 7  # 900 km scales the AI full-test setup gain.
     assert ai_team.car_wear == 0
     txs = [t for t in state.finance.transactions if t.category == TransactionCategory.TESTING]
     assert len(txs) == 1
@@ -69,6 +70,7 @@ def test_skip_test_still_allows_ai_to_improve(mock_random, mock_randint):
     assert state.player_chassis[1].wear == 0
     ai_team = next(t for t in state.teams if t.id == 2)
     assert ai_team.car_speed == 86  # 600 km -> +2
+    assert ai_team.setup_knowledge == 5
     txs = [t for t in state.finance.transactions if t.category == TransactionCategory.TESTING]
     assert len(txs) == 0
     assert any(e.subject.startswith("Test Session Summary:") for e in state.emails)

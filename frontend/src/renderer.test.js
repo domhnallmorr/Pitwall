@@ -39,6 +39,7 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 		bookEngineNegotiationHospitality: vi.fn(),
 		bookTyreNegotiationHospitality: vi.fn(),
 		offerDriver: vi.fn(),
+		offerTechnicalDirector: vi.fn(),
 		replaceDriver: vi.fn(),
 		replaceCommercialManager: vi.fn(),
 		replaceTechnicalDirector: vi.fn(),
@@ -705,6 +706,7 @@ describe('renderer smoke', () => {
 		ipcHandler(JSON.stringify({ type: 'staff_data', data: { drivers: [] } }));
 		ipcHandler(JSON.stringify({ type: 'replacement_candidates', data: { candidates: [] } }));
 		ipcHandler(JSON.stringify({ type: 'driver_offer_result', data: { accepted: false, message: 'Rejected' } }));
+		ipcHandler(JSON.stringify({ type: 'technical_director_offer_result', data: { accepted: false, message: 'Rejected' } }));
 		ipcHandler(JSON.stringify({ type: 'driver_replaced', status: 'success' }));
 		ipcHandler(JSON.stringify({ type: 'driver_data', data: { name: 'Driver X' } }));
 		ipcHandler(JSON.stringify({ type: 'car_data', data: { teams: [] } }));

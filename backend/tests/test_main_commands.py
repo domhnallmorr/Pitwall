@@ -650,6 +650,30 @@ def test_replace_technical_director_respects_contract_rule_and_signs_replacement
     assert "2 or more years" in locked["message"]
 
 
+@patch("app.core.management_transfer_markets.technical_director.random.randint", return_value=0)
+def test_offer_technical_director_accepts_targetable_candidate(mock_randint):
+    state = create_state()
+    state.teams[0].car_speed = 72
+    director = next(d for d in state.technical_directors if d.id == 21)
+    director.contract_length = 1
+    incoming = next(d for d in state.technical_directors if d.id == 22)
+    incoming.salary = 2_000_000
+    app_main.CURRENT_STATE = state
+
+    result = process_command({
+        "type": "offer_technical_director",
+        "director_id": 21,
+        "incoming_director_id": 22,
+        "salary_offer": 4_500_000,
+        "contract_length": 5,
+    })
+
+    assert result["status"] == "success"
+    assert result["type"] == "technical_director_offer_result"
+    assert result["data"]["accepted"] is True
+    assert result["data"]["contract_length"] == 5
+
+
 def test_replace_title_sponsor_respects_contract_rule_and_signs_replacement():
     state = create_state()
     app_main.CURRENT_STATE = state

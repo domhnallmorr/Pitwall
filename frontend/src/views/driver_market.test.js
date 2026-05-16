@@ -156,6 +156,30 @@ describe('DriverMarketView', () => {
 		expect(onSign).toHaveBeenCalledWith(11, 12, 'commercial_manager');
 	});
 
+	it('opens technical director offer modal and submits terms', () => {
+		const onSign = vi.fn();
+		marketView.setSignHandler(onSign);
+		marketView.render({
+			market_type: 'technical_director',
+			outgoing_manager: { id: 21, name: 'Old TD' },
+			candidates: [{ id: 22, name: 'Free TD', age: 44, country: 'France', skill: 68, salary: 3200000, contract_length: 0 }],
+		});
+
+		const btn = document.querySelector('.driver-market-sign-btn');
+		expect(btn.textContent).toContain('Offer');
+		btn.click();
+
+		expect(document.getElementById('driver-market-offer-modal').style.display).toBe('flex');
+		expect(document.getElementById('driver-market-offer-salary').value).toBe('3200000');
+		expect(document.querySelectorAll('#driver-market-offer-contract option')).toHaveLength(5);
+		document.getElementById('driver-market-offer-contract').value = '5';
+		document.getElementById('driver-market-offer-salary').value = '4000000';
+		document.getElementById('driver-market-offer-confirm-btn').click();
+
+		expect(onSign).toHaveBeenCalledWith(21, 22, 'technical_director', { salary: 4000000, contract_length: 5 });
+		expect(document.getElementById('driver-market-offer-modal').style.display).toBe('none');
+	});
+
 	it('renders title sponsor market and signs sponsor candidate', () => {
 		const onSign = vi.fn();
 		marketView.setSignHandler(onSign);

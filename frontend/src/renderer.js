@@ -243,6 +243,10 @@ function init() {
 			return;
 		}
 		if (marketType === 'technical_director') {
+			if (offer) {
+				API.offerTechnicalDirector(outgoingId, incomingId, offer.salary, offer.contract_length);
+				return;
+			}
 			API.replaceTechnicalDirector(outgoingId, incomingId);
 			return;
 		}
@@ -614,6 +618,18 @@ function setupIPC() {
 				});
 				if (!didShowResult) {
 					window.alert(parsed.data?.message || 'Driver offer processed.');
+					if (parsed.data?.accepted) {
+						refreshDriverMarketOutcome('staff');
+					}
+				}
+			} else if (parsed.type === 'technical_director_offer_result') {
+				const didShowResult = driverMarketView?.showOfferResult?.(parsed.data || {}, () => {
+					if (parsed.data?.accepted) {
+						refreshDriverMarketOutcome('staff');
+					}
+				});
+				if (!didShowResult) {
+					window.alert(parsed.data?.message || 'Technical director offer processed.');
 					if (parsed.data?.accepted) {
 						refreshDriverMarketOutcome('staff');
 					}

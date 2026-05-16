@@ -49,6 +49,8 @@ def test_generate_for_season_plans_ai_only_and_skips_first_race(mock_choices, mo
 def test_apply_for_week_updates_speed_and_sends_email():
     state = create_state()
     state.calendar.current_week = 6
+    next(t for t in state.teams if t.id == 2).setup_knowledge = 50
+    next(t for t in state.teams if t.id == 3).setup_knowledge = 50
     state.planned_ai_car_updates = [
         {
             "year": 1998,
@@ -76,6 +78,8 @@ def test_apply_for_week_updates_speed_and_sends_email():
     team_b = next(t for t in state.teams if t.id == 3)
     assert team_a.car_speed == 61
     assert team_b.car_speed == 87
+    assert team_a.setup_knowledge == 47
+    assert team_b.setup_knowledge == 41
     assert len(applied) == 2
     assert all(u.get("applied") is True for u in state.planned_ai_car_updates)
 
@@ -213,6 +217,7 @@ def test_apply_for_week_compresses_low_resource_team_speed_growth():
     low_resource_team.engineering_staff = 1
     low_resource_team.facilities = 20
     low_resource_team.car_speed = 72
+    low_resource_team.setup_knowledge = 50
     state.planned_ai_car_updates = [
         {
             "year": 1998,
@@ -229,3 +234,4 @@ def test_apply_for_week_compresses_low_resource_team_speed_growth():
 
     assert applied[0]["new_speed"] == 72
     assert low_resource_team.car_speed == 72
+    assert low_resource_team.setup_knowledge == 50

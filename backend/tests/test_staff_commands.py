@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 from app.commands.staff_commands import (
     handle_build_spare_set,
     handle_offer_driver,
+    handle_offer_technical_director,
     handle_get_engine_supplier_replacement_candidates,
     handle_get_tyre_negotiation_market,
     handle_get_technical_director_replacement_candidates,
@@ -197,6 +198,24 @@ def test_replace_technical_director_validates_and_handles_errors():
         _, result = handle_replace_technical_director(state, logger, director_id=21)
     assert result["status"] == "error"
     assert result["message"] == "oops"
+
+
+def test_offer_technical_director_validates_and_handles_errors():
+    state = create_state()
+    logger = Mock()
+    _, result = handle_offer_technical_director(state, logger, director_id=None, incoming_director_id=22, salary_offer=500000, contract_length=2)
+    assert result["status"] == "error"
+
+    with patch("app.commands.staff_commands.TechnicalDirectorTransferManager.submit_offer", side_effect=ValueError("blocked")):
+        _, result = handle_offer_technical_director(state, logger, director_id=21, incoming_director_id=22, salary_offer=500000, contract_length=2)
+    assert result["status"] == "error"
+    assert result["message"] == "blocked"
+
+    with patch("app.commands.staff_commands.TechnicalDirectorTransferManager.submit_offer", side_effect=RuntimeError("fail")):
+        _, result = handle_offer_technical_director(state, logger, director_id=21, incoming_director_id=22, salary_offer=500000, contract_length=2)
+    assert result["status"] == "error"
+    assert result["message"] == "fail"
+    assert logger.error.called
 
 
 def test_get_technical_director_replacement_candidates_validates_and_handles_errors():

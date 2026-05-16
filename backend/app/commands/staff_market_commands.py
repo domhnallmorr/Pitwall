@@ -154,6 +154,27 @@ def handle_offer_driver(
     return _run_state_handler(state, logger, "Error offering contract to driver", action)
 
 
+def handle_offer_technical_director(
+    state: GameState,
+    logger: logging.Logger,
+    director_id: int | None,
+    incoming_director_id: int | None,
+    salary_offer: int | None,
+    contract_length: int | None,
+):
+    def action():
+        result = TechnicalDirectorTransferManager().submit_offer(
+            state,
+            outgoing_director_id=int(_require_value(director_id, "Technical director id is required")),
+            incoming_director_id=int(_require_value(incoming_director_id, "Incoming technical director id is required")),
+            salary_offer=int(_require_value(salary_offer, "Salary offer is required")),
+            contract_length=int(_require_value(contract_length, "Contract length is required")),
+        )
+        return _state_success_response(state, "technical_director_offer_result", result)
+
+    return _run_state_handler(state, logger, "Error offering contract to technical director", action)
+
+
 def handle_replace_commercial_manager(
     state: GameState,
     logger: logging.Logger,
@@ -234,6 +255,7 @@ def handle_get_technical_director_replacement_candidates(
             raise ValueError("Technical director not found")
 
         candidates = TechnicalDirectorTransferManager().get_player_replacement_candidates(state, director_id_value)
+        team_lookup = {team.technical_director_id: team.name for team in state.teams if team.technical_director_id is not None}
         payload = {
             "market_type": "technical_director",
             "outgoing_manager": {
@@ -249,6 +271,8 @@ def handle_get_technical_director_replacement_candidates(
                     "country": d.country,
                     "skill": d.skill,
                     "salary": d.salary,
+                    "contract_length": d.contract_length,
+                    "team_name": team_lookup.get(d.id),
                 }
                 for d in candidates
             ],

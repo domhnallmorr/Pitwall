@@ -22,6 +22,7 @@ class AICarDevelopmentManager:
     RESOURCE_CAP_BASE = 55
     RESOURCE_CAP_RANGE = 35
     RESOURCE_CAP_EXCESS_RETENTION = 0.35
+    SETUP_KNOWLEDGE_LOSS_PER_SPEED_DELTA = 3
 
     def _design_capacity_for_team(self, team) -> int:
         design_staff = getattr(team, "design_staff", None)
@@ -170,11 +171,15 @@ class AICarDevelopmentManager:
                 continue
 
             old_speed = team.car_speed
+            old_setup = max(1, min(100, int(getattr(team, "setup_knowledge", 1) or 1)))
             proposed_speed = max(1, old_speed + int(update["delta"]))
             team.car_speed = max(
                 old_speed,
                 self._compress_to_resource_cap(proposed_speed, self._design_capacity_for_team(team), team.facilities),
             )
+            actual_delta = max(0, team.car_speed - old_speed)
+            setup_loss = actual_delta * self.SETUP_KNOWLEDGE_LOSS_PER_SPEED_DELTA
+            team.setup_knowledge = max(1, old_setup - setup_loss)
             update["applied"] = True
             applied_updates.append(
                 {
@@ -184,6 +189,8 @@ class AICarDevelopmentManager:
                     "delta": int(update["delta"]),
                     "old_speed": old_speed,
                     "new_speed": team.car_speed,
+                    "old_setup_knowledge": old_setup,
+                    "new_setup_knowledge": team.setup_knowledge,
                     "week": target_week,
                 }
             )

@@ -15,6 +15,7 @@ from app.commands.staff_market_commands import (
     handle_get_tyre_negotiation_market,
     handle_get_title_sponsor_negotiation_market,
     handle_offer_driver,
+    handle_offer_technical_director,
     handle_get_engine_supplier_replacement_candidates,
     handle_get_manager_replacement_candidates,
     handle_get_replacement_candidates,

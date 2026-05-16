@@ -53,6 +53,13 @@ const API = {
 		salary_offer: salaryOffer,
 		contract_length: contractLength
 	}),
+	offerTechnicalDirector: (directorId, incomingDirectorId, salaryOffer, contractLength) => window.electronAPI.sendToPython({
+		type: 'offer_technical_director',
+		director_id: directorId,
+		incoming_director_id: incomingDirectorId,
+		salary_offer: salaryOffer,
+		contract_length: contractLength
+	}),
 	replaceDriver: (driverId, incomingDriverId) => window.electronAPI.sendToPython({
 		type: 'replace_driver',
 		driver_id: driverId,

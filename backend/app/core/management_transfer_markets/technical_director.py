@@ -127,7 +127,9 @@ class TechnicalDirectorTransferManager:
 
             team.technical_director_id = incoming.id
             incoming.team_id = team.id
-            incoming.contract_length = 2
+            incoming.contract_length = max(1, min(5, int(signing.get("contract_length", 2) or 2)))
+            if "salary" in signing:
+                incoming.salary = max(0, int(signing.get("salary") or 0))
             applied_signings.append(
                 {
                     "team_id": team.id,
@@ -138,6 +140,104 @@ class TechnicalDirectorTransferManager:
             )
 
         return {"applied_signings": applied_signings}
+
+    def submit_offer(
+        self,
+        state: GameState,
+        outgoing_director_id: int,
+        incoming_director_id: int,
+        salary_offer: int,
+        contract_length: int,
+    ) -> Dict[str, Any]:
+        player_team = state.player_team
+        if player_team is None:
+            raise ValueError("No player team assigned")
+        if player_team.technical_director_id != outgoing_director_id:
+            raise ValueError("Technical director is not assigned to the player team")
+        if contract_length not in {1, 2, 3, 4, 5}:
+            raise ValueError("Contract length must be between 1 and 5 years")
+        if salary_offer <= 0:
+            raise ValueError("Salary offer must be greater than zero")
+
+        outgoing = next((d for d in state.technical_directors if d.id == outgoing_director_id), None)
+        if outgoing is None:
+            raise ValueError("Technical director not found")
+        if not getattr(outgoing, "active", True):
+            raise ValueError("Technical director is retired")
+        if outgoing.contract_length >= 2:
+            raise ValueError("Technical director has 2 or more years remaining on contract")
+
+        candidates = self.get_player_replacement_candidates(state, outgoing_director_id)
+        incoming = next((d for d in candidates if d.id == incoming_director_id), None)
+        if incoming is None:
+            raise ValueError("Selected technical director is not available for negotiation")
+
+        accepted, interest_band, score = self._evaluate_player_offer(state, incoming, salary_offer, contract_length)
+        current_team_name = next((team.name for team in state.teams if team.id == incoming.team_id), None)
+        market_salary = self._market_salary(incoming)
+        offer_summary = {
+            "team_id": player_team.id,
+            "team_name": player_team.name,
+            "seat": "technical_director_id",
+            "seat_label": "Technical Director",
+            "director_id": incoming.id,
+            "director_name": incoming.name,
+            "salary": salary_offer,
+            "contract_length": contract_length,
+            "interest_band": interest_band,
+            "score": score,
+            "current_team_name": current_team_name,
+            "market_salary": market_salary,
+        }
+
+        if not accepted:
+            return {
+                "accepted": False,
+                "message": self._rejection_message(incoming, current_team_name, interest_band),
+                **offer_summary,
+            }
+
+        announced = list(state.announced_ai_td_signings)
+        existing = next((signing for signing in announced if signing["team_id"] == player_team.id), None)
+        if existing:
+            announced.remove(existing)
+
+        signing = {
+            "team_id": player_team.id,
+            "team_name": player_team.name,
+            "seat": "technical_director_id",
+            "seat_label": "Technical Director",
+            "director_id": incoming.id,
+            "director_name": incoming.name,
+            "announce_week": state.calendar.current_week,
+            "announce_year": state.year,
+            "status": "announced",
+            "origin": "player_offer",
+            "salary": salary_offer,
+            "contract_length": contract_length,
+        }
+        announced.append(signing)
+        state.announced_ai_td_signings = announced
+        self.recompute_ai_signings(state)
+
+        state.add_email(
+            sender="Management Market Desk",
+            subject=f"Technical Director Offer Accepted: {incoming.name}",
+            body=(
+                f"{incoming.name} has accepted your offer to join {player_team.name} for next season "
+                f"({state.year + 1}) as Technical Director. Agreed salary: ${salary_offer:,} over {contract_length} year(s)."
+            ),
+            category=EmailCategory.SEASON,
+        )
+
+        return {
+            "accepted": True,
+            "message": (
+                f"{incoming.name} has accepted your offer and will join {player_team.name} next season "
+                f"on a {contract_length}-year deal."
+            ),
+            **offer_summary,
+        }
 
     def sign_player_replacement(
         self,
@@ -377,6 +477,75 @@ class TechnicalDirectorTransferManager:
             score -= 4
 
         return score
+
+    def _evaluate_player_offer(
+        self,
+        state: GameState,
+        director: Any,
+        salary_offer: int,
+        contract_length: int,
+    ) -> tuple[bool, str, int]:
+        player_team = state.player_team
+        player_desirability = self._team_desirability(player_team) if player_team else 50
+        current_team = next((team for team in state.teams if team.id == director.team_id), None)
+        current_desirability = self._team_desirability(current_team) if current_team else 50
+
+        score = 38
+        if director.team_id is None:
+            score += 18
+        elif director.contract_length == 1:
+            score += 5
+
+        score += max(-20, min(20, round((player_desirability - current_desirability) * 0.35)))
+
+        market_salary = self._market_salary(director)
+        if market_salary > 0:
+            salary_ratio = (salary_offer - market_salary) / market_salary
+            score += max(-24, min(30, round(salary_ratio * 34)))
+
+        score += {1: -5, 2: 0, 3: 6, 4: 9, 5: 11}.get(contract_length, 0)
+
+        skill = int(getattr(director, "skill", 50) or 50)
+        if skill >= 90:
+            score -= 14
+        elif skill >= 82:
+            score -= 8
+        elif skill >= 75:
+            score -= 4
+
+        if current_team is not None and current_desirability >= player_desirability + 10:
+            score -= 8
+        if director.team_id is None:
+            score += 5
+
+        score += random.randint(-8, 8)
+        interest_band = self._interest_band(score)
+        return score >= 50, interest_band, score
+
+    def _market_salary(self, director: Any) -> int:
+        current_salary = abs(int(getattr(director, "salary", 0) or 0))
+        if current_salary > 0:
+            return current_salary
+        return max(250_000, int((getattr(director, "skill", 50) or 50) * 45_000))
+
+    def _interest_band(self, score: int) -> str:
+        if score >= 75:
+            return "Very Interested"
+        if score >= 60:
+            return "Interested"
+        if score >= 45:
+            return "Unsure"
+        if score >= 30:
+            return "Unlikely"
+        return "Not Interested"
+
+    def _rejection_message(self, director: Any, current_team_name: str | None, interest_band: str) -> str:
+        if current_team_name:
+            return (
+                f"{director.name} turned the offer down. Interest level: {interest_band}. "
+                f"They are not prepared to leave {current_team_name} on those terms."
+            )
+        return f"{director.name} turned the offer down. Interest level: {interest_band}."
 
     def _protected_director_ids(self, state: GameState) -> set[int]:
         active = [director for director in state.technical_directors if getattr(director, "active", True)]

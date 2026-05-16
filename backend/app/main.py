@@ -21,6 +21,7 @@ from app.commands.game_commands import (
     handle_finish_car_development_project_stage,
     handle_load_roster,
     handle_offer_driver,
+    handle_offer_technical_director,
     handle_repair_chassis_wear,
     handle_book_engine_negotiation_hospitality,
     handle_book_tyre_negotiation_hospitality,
@@ -346,6 +347,16 @@ def process_command(command: dict[str, Any]) -> dict[str, Any]:
             handle_offer_driver,
             command.get("driver_id"),
             command.get("incoming_driver_id"),
+            command.get("salary_offer"),
+            command.get("contract_length"),
+            save_predicate=lambda response: response.get("data", {}).get("accepted", False),
+        )
+
+    if cmd_type == "offer_technical_director":
+        return _run_state_handler(
+            handle_offer_technical_director,
+            command.get("director_id"),
+            command.get("incoming_director_id"),
             command.get("salary_offer"),
             command.get("contract_length"),
             save_predicate=lambda response: response.get("data", {}).get("accepted", False),

@@ -72,6 +72,8 @@ def test_rollover_resets_player_chassis_development_state():
     state = create_end_of_season_state()
     state.player_team_id = 1
     state.player_setup_knowledge = 74
+    for team in state.teams:
+        team.setup_knowledge = 63
     state.player_car_development = PlayerCarDevelopment(
         active=True,
         scope="current_year",
@@ -126,6 +128,7 @@ def test_rollover_resets_player_chassis_development_state():
     assert state.player_next_year_car_development is None
     assert state.player_construction_projects == []
     assert state.player_setup_knowledge == 1
+    assert all(team.setup_knowledge == 1 for team in state.teams)
 
 
 def test_rollover_preserves_unfinished_next_year_chassis_construction_for_preseason():

@@ -67,12 +67,22 @@ export default class DriverMarketView {
 		}
 		if (this.offerConfirmBtn) {
 			this.offerConfirmBtn.addEventListener('click', () => {
-				if (!this.onSign || this.marketType !== 'driver' || !this.outgoingDriver) return;
+				if (!this.onSign) return;
 				const candidate = this.getSelectedCandidate();
 				if (!candidate) return;
-				const availability = this.getDriverCandidateAvailability(candidate);
-				if (!availability.targetable) return;
-				this.onSign(this.outgoingDriver.id, candidate.id, this.marketType, {
+				if (this.marketType === 'driver') {
+					if (!this.outgoingDriver) return;
+					const availability = this.getDriverCandidateAvailability(candidate);
+					if (!availability.targetable) return;
+					this.onSign(this.outgoingDriver.id, candidate.id, this.marketType, {
+						salary: Number(this.offerSalary?.value || 0),
+						contract_length: Number(this.offerContract?.value || 0),
+					});
+					this.closeOfferModal();
+					return;
+				}
+				if (this.marketType !== 'technical_director' || !this.outgoingManager) return;
+				this.onSign(this.outgoingManager.id, candidate.id, this.marketType, {
 					salary: Number(this.offerSalary?.value || 0),
 					contract_length: Number(this.offerContract?.value || 0),
 				});
@@ -116,8 +126,12 @@ export default class DriverMarketView {
 	getSuggestedSalary(candidate) {
 		const base = Math.abs(Number(candidate?.wage) || 0);
 		if (base > 0) return base;
+		const salary = Math.abs(Number(candidate?.salary) || 0);
+		if (salary > 0) return salary;
 		const speed = Number(candidate?.speed) || 0;
-		return Math.max(250000, speed * 20000);
+		if (speed > 0) return Math.max(250000, speed * 20000);
+		const skill = Number(candidate?.skill) || 0;
+		return Math.max(250000, skill * 45000);
 	}
 
 	getDriverRating(speed) {
@@ -157,7 +171,9 @@ export default class DriverMarketView {
 	openOfferModal() {
 		const candidate = this.getSelectedCandidate();
 		if (!candidate || !this.offerModal) return;
-		const availability = this.getDriverCandidateAvailability(candidate);
+		const availability = this.marketType === 'driver'
+			? this.getDriverCandidateAvailability(candidate)
+			: { label: candidate.team_name ? 'Expiring Contract' : 'Free Agent', targetable: true };
 		if (!availability.targetable) return;
 		if (this.offerTitle) this.offerTitle.textContent = `Offer ${candidate.name}`;
 		if (this.offerDriver) this.offerDriver.textContent = candidate.name;
@@ -167,7 +183,17 @@ export default class DriverMarketView {
 				? `${availability.label} at ${currentTeam}`
 				: availability.label;
 		}
-		if (this.offerContract) this.offerContract.value = '2';
+		if (this.offerContract) {
+			const maxYears = this.marketType === 'technical_director' ? 5 : 3;
+			this.offerContract.innerHTML = '';
+			for (let year = 1; year <= maxYears; year += 1) {
+				const option = document.createElement('option');
+				option.value = String(year);
+				option.textContent = `${year} year${year === 1 ? '' : 's'}`;
+				this.offerContract.appendChild(option);
+			}
+			this.offerContract.value = '2';
+		}
 		if (this.offerSalary) this.offerSalary.value = String(this.getSuggestedSalary(candidate));
 		this.offerModal.style.display = 'flex';
 	}
@@ -186,6 +212,7 @@ export default class DriverMarketView {
 		if (this.resultMeta) {
 			const meta = [];
 			if (result.driver_name) meta.push(`<div><span>Driver</span><strong>${result.driver_name}</strong></div>`);
+			if (result.director_name) meta.push(`<div><span>Technical Director</span><strong>${result.director_name}</strong></div>`);
 			if (result.interest_band) meta.push(`<div><span>Interest</span><strong>${result.interest_band}</strong></div>`);
 			if (Number.isFinite(Number(result.salary))) meta.push(`<div><span>Salary</span><strong>$${Math.abs(Number(result.salary)).toLocaleString()}</strong></div>`);
 			if (Number.isFinite(Number(result.contract_length))) meta.push(`<div><span>Term</span><strong>${Number(result.contract_length)} year${Number(result.contract_length) === 1 ? '' : 's'}</strong></div>`);
@@ -313,7 +340,7 @@ export default class DriverMarketView {
 					<td>${renderFlagLabel(candidate.country, candidate.country)}</td>
 					<td>${candidate.skill}</td>
 					<td>$${absSalary.toLocaleString()}</td>
-					<td><button class="driver-market-sign-btn" data-driver-id="${candidate.id}">Sign</button></td>
+					<td><button class="driver-market-sign-btn" data-driver-id="${candidate.id}">${this.marketType === 'technical_director' ? 'Offer' : 'Sign'}</button></td>
 				`;
 			} else if (this.marketType === 'title_sponsor') {
 				tr.innerHTML = `
@@ -347,7 +374,11 @@ export default class DriverMarketView {
 				if (!this.onSign) return;
 				const incomingId = Number(btn.getAttribute('data-driver-id'));
 				if (!Number.isFinite(incomingId)) return;
-				if (this.marketType === 'commercial_manager' || this.marketType === 'technical_director') {
+				if (this.marketType === 'technical_director') {
+					if (!this.outgoingManager) return;
+					this.selectedCandidateId = incomingId;
+					this.openOfferModal();
+				} else if (this.marketType === 'commercial_manager') {
 					if (!this.outgoingManager) return;
 					this.onSign(this.outgoingManager.id, incomingId, this.marketType);
 				} else if (this.marketType === 'title_sponsor') {

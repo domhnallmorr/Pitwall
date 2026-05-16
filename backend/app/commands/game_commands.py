@@ -39,6 +39,7 @@ from app.commands.staff_commands import (
     handle_update_title_sponsor_negotiation_staff,
     handle_update_tyre_negotiation_staff,
     handle_offer_driver,
+    handle_offer_technical_director,
     handle_get_engine_negotiation_market,
     handle_get_technical_director_replacement_candidates,
     handle_get_engine_supplier_replacement_candidates,

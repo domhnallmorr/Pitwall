@@ -27,6 +27,7 @@ def test_commands_require_game_started_return_error():
         {"type": "simulate_race"},
         {"type": "replace_driver"},
         {"type": "offer_driver"},
+        {"type": "offer_technical_director"},
         {"type": "replace_commercial_manager"},
         {"type": "replace_technical_director"},
         {"type": "replace_title_sponsor"},
@@ -139,6 +140,21 @@ def test_offer_driver_command_saves_only_when_offer_is_accepted():
     with patch("app.main.handle_offer_driver", return_value=(fake_state, {"type": "driver_offer_result", "status": "success", "data": {"accepted": False}})), patch("app.main.save_game") as save_mock:
         result = app_main.process_command({"type": "offer_driver", "driver_id": 1, "incoming_driver_id": 5, "salary_offer": 1000000, "contract_length": 2})
     assert result["type"] == "driver_offer_result"
+    save_mock.assert_not_called()
+
+
+def test_offer_technical_director_command_saves_only_when_offer_is_accepted():
+    fake_state = SimpleNamespace()
+    app_main.CURRENT_STATE = fake_state
+
+    with patch("app.main.handle_offer_technical_director", return_value=(fake_state, {"type": "technical_director_offer_result", "status": "success", "data": {"accepted": True}})), patch("app.main.save_game") as save_mock:
+        result = app_main.process_command({"type": "offer_technical_director", "director_id": 1, "incoming_director_id": 5, "salary_offer": 1000000, "contract_length": 2})
+    assert result["type"] == "technical_director_offer_result"
+    save_mock.assert_called_once_with(fake_state)
+
+    with patch("app.main.handle_offer_technical_director", return_value=(fake_state, {"type": "technical_director_offer_result", "status": "success", "data": {"accepted": False}})), patch("app.main.save_game") as save_mock:
+        result = app_main.process_command({"type": "offer_technical_director", "director_id": 1, "incoming_director_id": 5, "salary_offer": 1000000, "contract_length": 2})
+    assert result["type"] == "technical_director_offer_result"
     save_mock.assert_not_called()
 
 

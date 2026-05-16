@@ -1387,6 +1387,53 @@ def test_player_td_replacement_signing_updates_announced_and_replans_ai(mock_cho
     assert any(e.subject.startswith("Technical Director Signed:") for e in state.emails)
 
 
+@patch("app.core.management_transfer_markets.technical_director.random.randint", return_value=0)
+def test_player_td_offer_accepts_and_applies_agreed_terms(mock_randint):
+    state = create_transfer_state()
+    player_director = next(d for d in state.technical_directors if d.id == 1)
+    player_director.contract_length = 1
+
+    result = TechnicalDirectorTransferManager().submit_offer(
+        state,
+        outgoing_director_id=1,
+        incoming_director_id=3,
+        salary_offer=5_000_000,
+        contract_length=5,
+    )
+
+    assert result["accepted"] is True
+    assert result["salary"] == 5_000_000
+    assert result["contract_length"] == 5
+    assert state.announced_ai_td_signings[0]["origin"] == "player_offer"
+
+    outcome = TechnicalDirectorTransferManager().apply_new_season_transfers(state, announced_year=1998)
+
+    player_team = state.teams[0]
+    incoming = next(d for d in state.technical_directors if d.id == 3)
+    assert outcome["applied_signings"][0]["director_id"] == 3
+    assert player_team.technical_director_id == 3
+    assert incoming.contract_length == 5
+    assert incoming.salary == 5_000_000
+
+
+@patch("app.core.management_transfer_markets.technical_director.random.randint", return_value=-8)
+def test_player_td_offer_rejects_low_salary(mock_randint):
+    state = create_transfer_state()
+    player_director = next(d for d in state.technical_directors if d.id == 1)
+    player_director.contract_length = 1
+
+    result = TechnicalDirectorTransferManager().submit_offer(
+        state,
+        outgoing_director_id=1,
+        incoming_director_id=3,
+        salary_offer=100_000,
+        contract_length=1,
+    )
+
+    assert result["accepted"] is False
+    assert state.announced_ai_td_signings == []
+
+
 @patch("app.core.management_transfer_markets.technical_director.random.shuffle", side_effect=lambda x: None)
 @patch("app.core.management_transfer_markets.technical_director.random.randint", return_value=6)
 @patch("app.core.management_transfer_markets.technical_director.random.choice", side_effect=lambda choices: choices[0])

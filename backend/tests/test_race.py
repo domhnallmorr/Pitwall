@@ -284,6 +284,21 @@ def test_lap_time_applies_player_setup_bonus():
     assert without_setup - with_setup == 1000
 
 
+def test_build_participants_applies_player_and_ai_setup_bonuses():
+    state = create_race_state()
+    state.player_team_id = 1
+    state.player_setup_knowledge = 100
+    state.teams[0].setup_knowledge = 1
+    state.teams[1].setup_knowledge = 50
+
+    participants, _ = RaceManager()._build_participants(state)
+
+    player_entries = [entry for entry in participants if entry["team_id"] == 1]
+    ai_entries = [entry for entry in participants if entry["team_id"] == 2]
+    assert all(entry["setup_bonus_ms"] == 1000 for entry in player_entries)
+    assert all(entry["setup_bonus_ms"] == 495 for entry in ai_entries)
+
+
 def test_qualifying_lap_time_does_not_use_driver_consistency():
     state = create_race_state()
     manager = RaceManager()
