@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
+const { apiMock, callbackFns, facilitiesFns, viewFns } = vi.hoisted(() => {
 	const mock = {
 		startCareer: vi.fn(),
 		loadGame: vi.fn(),
@@ -26,6 +26,7 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 		startTitleSponsorNegotiation: vi.fn(),
 		updateTitleSponsorNegotiationStaff: vi.fn(),
 		signTitleSponsorNegotiatedDeal: vi.fn(),
+		bookTitleSponsorHospitality: vi.fn(),
 		getEngineSupplierReplacementCandidates: vi.fn(),
 		getTyreSupplierReplacementCandidates: vi.fn(),
 		getTyreNegotiationMarket: vi.fn(),
@@ -67,6 +68,7 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 	};
 	return {
 		apiMock: mock,
+		callbackFns: {},
 		facilitiesFns: {
 			renderPreview: vi.fn(),
 			closeUpgradeModal: vi.fn(),
@@ -80,8 +82,10 @@ const { apiMock, facilitiesFns, viewFns } = vi.hoisted(() => {
 			staffRender: vi.fn(),
 			driverMarketRender: vi.fn(),
 			driverMarketOfferResult: vi.fn(),
+			driverMarketOfferResultReturn: true,
 			driverRender: vi.fn(),
 			carRender: vi.fn(),
+			carWearRepairResult: vi.fn(),
 			financeRender: vi.fn(),
 			commercialRender: vi.fn(),
 			commercialTitle: vi.fn(),
@@ -98,40 +102,41 @@ vi.mock('./views/navigation.js', () => ({ default: class { showView() {} activat
 vi.mock('./views/grid.js', () => ({
 	default: class {
 		constructor() { this.baseYear = 1998; }
-		setYearRequestHandler() {}
-		setDriverSelectHandler() {}
+		setYearRequestHandler(cb) { callbackFns.gridYearRequest = cb; }
+		setDriverSelectHandler(cb) { callbackFns.gridDriverSelect = cb; }
 		setDriverCountryMap() {}
 		setSeasonBase() {}
 		getActiveYear() { return 1998; }
 		render(...args) { viewFns.gridRender(...args); }
 	},
 }));
-vi.mock('./views/standings.js', () => ({ default: class { setDriverSelectHandler() {} render(...args) { viewFns.standingsRender(...args); } } }));
+vi.mock('./views/standings.js', () => ({ default: class { setDriverSelectHandler(cb) { callbackFns.standingsDriverSelect = cb; } render(...args) { viewFns.standingsRender(...args); } } }));
 vi.mock('./views/calendar.js', () => ({ default: class { render(...args) { viewFns.calendarRender(...args); } } }));
 vi.mock('./views/email.js', () => ({ default: class { render(...args) { viewFns.emailRender(...args); } updateUnreadBadge(...args) { viewFns.emailUnread(...args); } } }));
-vi.mock('./views/staff.js', () => ({ default: class { setReplaceDriverHandler() {} setDriverSelectHandler() {} setReplaceCommercialManagerHandler() {} setReplaceTechnicalDirectorHandler() {} render(...args) { viewFns.staffRender(...args); } } }));
+vi.mock('./views/staff.js', () => ({ default: class { setReplaceDriverHandler(cb) { callbackFns.staffReplaceDriver = cb; } setDriverSelectHandler(cb) { callbackFns.staffDriverSelect = cb; } setReplaceCommercialManagerHandler(cb) { callbackFns.staffReplaceCommercialManager = cb; } setReplaceTechnicalDirectorHandler(cb) { callbackFns.staffReplaceTechnicalDirector = cb; } render(...args) { viewFns.staffRender(...args); } } }));
 vi.mock('./views/driver.js', () => ({ default: class { constructor() { this.currentDriverName = null; } render(...args) { viewFns.driverRender(...args); } } }));
-vi.mock('./views/driver_market.js', () => ({ default: class { setBackHandler() {} setSignHandler() {} render(...args) { viewFns.driverMarketRender(...args); } showOfferResult(...args) { viewFns.driverMarketOfferResult(...args); return true; } } }));
+vi.mock('./views/driver_market.js', () => ({ default: class { constructor() { callbackFns.driverMarketInstance = this; this.marketType = 'driver'; } setBackHandler(cb) { callbackFns.driverMarketBack = cb; } setSignHandler(cb) { callbackFns.driverMarketSign = cb; } render(...args) { viewFns.driverMarketRender(...args); } showOfferResult(...args) { viewFns.driverMarketOfferResult(...args); return viewFns.driverMarketOfferResultReturn ?? true; } } }));
 vi.mock('./views/car.js', () => ({
 	default: class {
-		setStartDevelopmentHandler() {}
-		setFinishDevelopmentStageHandler() {}
-		setDevelopmentAllocationHandler() {}
-		setConstructionAllocationHandler() {}
-		setStartConstructionHandler() {}
-		setTestChassisHandler() {}
-		setRaceChassisAssignmentsHandler() {}
-		setRepairChassisWearHandler() {}
-		setBuildSpareSetHandler() {}
+		setStartDevelopmentHandler(cb) { callbackFns.carStartDevelopment = cb; }
+		setFinishDevelopmentStageHandler(cb) { callbackFns.carFinishDevelopmentStage = cb; }
+		setDevelopmentAllocationHandler(cb) { callbackFns.carDevelopmentAllocation = cb; }
+		setConstructionAllocationHandler(cb) { callbackFns.carConstructionAllocation = cb; }
+		setStartConstructionHandler(cb) { callbackFns.carStartConstruction = cb; }
+		setTestChassisHandler(cb) { callbackFns.carTestChassis = cb; }
+		setRaceChassisAssignmentsHandler(cb) { callbackFns.carRaceChassisAssignments = cb; }
+		setRepairChassisWearHandler(cb) { callbackFns.carRepairChassisWear = cb; }
+		setBuildSpareSetHandler(cb) { callbackFns.carBuildSpareSet = cb; }
+		applyChassisWearRepairResult(...args) { viewFns.carWearRepairResult(...args); }
 		render(...args) { viewFns.carRender(...args); }
 	}
 }));
-vi.mock('./views/finance.js', () => ({ default: class { setReplaceTitleSponsorHandler() {} setStartTitleSponsorNegotiationHandler() {} setUpdateTitleSponsorNegotiationStaffHandler() {} setSignTitleSponsorNegotiatedDealHandler() {} setBookTitleSponsorHospitalityHandler() {} setReplaceEngineSupplierHandler() {} setReplaceTyreSupplierHandler() {} setStartEngineNegotiationHandler() {} setUpdateEngineNegotiationStaffHandler() {} setSignEngineNegotiatedDealHandler() {} setBookEngineNegotiationHospitalityHandler() {} showTitleSponsorNegotiationModal() {} hideTitleSponsorNegotiationModal() {} showEngineNegotiationModal() {} hideEngineNegotiationModal() {} render(...args) { viewFns.financeRender(...args); } } }));
-vi.mock('./views/commercial.js', () => ({ default: class { setStartTitleSponsorNegotiationHandler() {} setUpdateTitleSponsorNegotiationStaffHandler() {} setSignTitleSponsorNegotiatedDealHandler() {} setBookTitleSponsorHospitalityHandler() {} setStartEngineNegotiationHandler() {} setUpdateEngineNegotiationStaffHandler() {} setSignEngineNegotiatedDealHandler() {} setBookEngineNegotiationHospitalityHandler() {} setStartTyreNegotiationHandler() {} setUpdateTyreNegotiationStaffHandler() {} setSignTyreNegotiatedDealHandler() {} setBookTyreNegotiationHospitalityHandler() {} render(...args) { viewFns.commercialRender(...args); } renderTitleSponsorNegotiation(...args) { viewFns.commercialTitle(...args); } renderEngineNegotiation(...args) { viewFns.commercialEngine(...args); } renderTyreNegotiation(...args) { viewFns.commercialTyre(...args); } showTab(...args) { viewFns.commercialTab(...args); } } }));
+vi.mock('./views/finance.js', () => ({ default: class { setReplaceTitleSponsorHandler(cb) { callbackFns.financeReplaceTitleSponsor = cb; } setReplaceEngineSupplierHandler(cb) { callbackFns.financeReplaceEngineSupplier = cb; } setReplaceTyreSupplierHandler(cb) { callbackFns.financeReplaceTyreSupplier = cb; } render(...args) { viewFns.financeRender(...args); } } }));
+vi.mock('./views/commercial.js', () => ({ default: class { setStartTitleSponsorNegotiationHandler(cb) { callbackFns.commercialStartTitleSponsor = cb; } setUpdateTitleSponsorNegotiationStaffHandler(cb) { callbackFns.commercialUpdateTitleSponsorStaff = cb; } setSignTitleSponsorNegotiatedDealHandler(cb) { callbackFns.commercialSignTitleSponsor = cb; } setBookTitleSponsorHospitalityHandler(cb) { callbackFns.commercialBookTitleSponsorHospitality = cb; } setStartEngineNegotiationHandler(cb) { callbackFns.commercialStartEngine = cb; } setUpdateEngineNegotiationStaffHandler(cb) { callbackFns.commercialUpdateEngineStaff = cb; } setSignEngineNegotiatedDealHandler(cb) { callbackFns.commercialSignEngine = cb; } setBookEngineNegotiationHospitalityHandler(cb) { callbackFns.commercialBookEngineHospitality = cb; } setStartTyreNegotiationHandler(cb) { callbackFns.commercialStartTyre = cb; } setUpdateTyreNegotiationStaffHandler(cb) { callbackFns.commercialUpdateTyreStaff = cb; } setSignTyreNegotiatedDealHandler(cb) { callbackFns.commercialSignTyre = cb; } setBookTyreNegotiationHospitalityHandler(cb) { callbackFns.commercialBookTyreHospitality = cb; } render(...args) { viewFns.commercialRender(...args); } renderTitleSponsorNegotiation(...args) { viewFns.commercialTitle(...args); } renderEngineNegotiation(...args) { viewFns.commercialEngine(...args); } renderTyreNegotiation(...args) { viewFns.commercialTyre(...args); } showTab(...args) { viewFns.commercialTab(...args); } } }));
 vi.mock('./views/facilities.js', () => ({
 	default: class {
-		setPreviewHandler() {}
-		setStartUpgradeHandler() {}
+		setPreviewHandler(cb) { callbackFns.facilitiesPreview = cb; }
+		setStartUpgradeHandler(cb) { callbackFns.facilitiesStartUpgrade = cb; }
 		closeUpgradeModal() { facilitiesFns.closeUpgradeModal(); }
 		renderPreview(...args) { facilitiesFns.renderPreview(...args); }
 		render(...args) { viewFns.facilitiesRender(...args); }
@@ -142,6 +147,10 @@ describe('renderer smoke', () => {
 	beforeEach(() => {
 		vi.resetModules();
 		vi.clearAllMocks();
+		for (const key of Object.keys(callbackFns)) {
+			delete callbackFns[key];
+		}
+		viewFns.driverMarketOfferResultReturn = true;
 		window.alert = vi.fn();
 		document.body.innerHTML = `
 			<div id="title-screen"></div>
@@ -254,6 +263,105 @@ describe('renderer smoke', () => {
 
 		ipcHandler(JSON.stringify({ type: 'save_status', data: { has_save: true } }));
 		expect(document.getElementById('load-game-btn').disabled).toBe(false);
+	});
+
+	it('wires view callbacks through to API commands', async () => {
+		await import('./renderer.js');
+
+		callbackFns.staffReplaceDriver(1);
+		callbackFns.staffDriverSelect('Driver A');
+		callbackFns.staffReplaceCommercialManager(11);
+		callbackFns.staffReplaceTechnicalDirector(21);
+		callbackFns.gridYearRequest(1999);
+		callbackFns.gridDriverSelect('Driver B');
+		callbackFns.standingsDriverSelect('Driver C');
+		expect(apiMock.getReplacementCandidates).toHaveBeenCalledWith(1);
+		expect(apiMock.getDriver).toHaveBeenCalledWith('Driver A');
+		expect(apiMock.getManagerReplacementCandidates).toHaveBeenCalledWith(11);
+		expect(apiMock.getTechnicalDirectorReplacementCandidates).toHaveBeenCalledWith(21);
+		expect(apiMock.getGrid).toHaveBeenCalledWith(1999);
+		expect(apiMock.getDriver).toHaveBeenCalledWith('Driver B');
+		expect(apiMock.getDriver).toHaveBeenCalledWith('Driver C');
+
+		callbackFns.driverMarketSign(1, 2, 'commercial_manager');
+		callbackFns.driverMarketSign(1, 22, 'technical_director', { salary: 1_000_000, contract_length: 2 });
+		callbackFns.driverMarketSign(1, 22, 'technical_director');
+		callbackFns.driverMarketSign('Windale', 31, 'title_sponsor');
+		callbackFns.driverMarketSign('Mechatron', 41, 'engine_supplier');
+		callbackFns.driverMarketSign('Greatday', 42, 'tyre_supplier');
+		callbackFns.driverMarketSign(1, 3, 'driver', { salary: 500_000, contract_length: 1 });
+		callbackFns.driverMarketSign(1, 3);
+		expect(apiMock.replaceCommercialManager).toHaveBeenCalledWith(1, 2);
+		expect(apiMock.offerTechnicalDirector).toHaveBeenCalledWith(1, 22, 1_000_000, 2);
+		expect(apiMock.replaceTechnicalDirector).toHaveBeenCalledWith(1, 22);
+		expect(apiMock.replaceTitleSponsor).toHaveBeenCalledWith('Windale', 31);
+		expect(apiMock.replaceEngineSupplier).toHaveBeenCalledWith('Mechatron', 41);
+		expect(apiMock.replaceTyreSupplier).toHaveBeenCalledWith('Greatday', 42);
+		expect(apiMock.offerDriver).toHaveBeenCalledWith(1, 3, 500_000, 1);
+		expect(apiMock.replaceDriver).toHaveBeenCalledWith(1, 3);
+
+		callbackFns.driverMarketInstance.marketType = 'title_sponsor';
+		callbackFns.driverMarketBack();
+		expect(apiMock.getFinance).toHaveBeenCalled();
+		callbackFns.driverMarketInstance.marketType = 'driver';
+		callbackFns.driverMarketBack();
+		expect(apiMock.getStaff).toHaveBeenCalled();
+
+		callbackFns.carStartDevelopment('current_year');
+		callbackFns.carFinishDevelopmentStage('next_year');
+		callbackFns.carDevelopmentAllocation('current_year', 60);
+		callbackFns.carConstructionAllocation('next_year', 50);
+		callbackFns.carStartConstruction('next_year');
+		callbackFns.carTestChassis(3);
+		callbackFns.carRaceChassisAssignments(1, 2);
+		callbackFns.carRepairChassisWear(1, 5);
+		callbackFns.carBuildSpareSet();
+		expect(apiMock.startCarDevelopment).toHaveBeenCalledWith('current_year');
+		expect(apiMock.finishCarDevelopmentStage).toHaveBeenCalledWith('next_year');
+		expect(apiMock.setCarDevelopmentAllocation).toHaveBeenCalledWith('current_year', 60);
+		expect(apiMock.setConstructionAllocation).toHaveBeenCalledWith('next_year', 50);
+		expect(apiMock.startConstructionProject).toHaveBeenCalledWith('next_year');
+		expect(apiMock.setTestChassis).toHaveBeenCalledWith(3);
+		expect(apiMock.setRaceChassisAssignments).toHaveBeenCalledWith(1, 2);
+		expect(apiMock.repairChassisWear).toHaveBeenCalledWith(1, 5);
+		expect(apiMock.buildSpareSet).toHaveBeenCalled();
+
+		callbackFns.financeReplaceTitleSponsor();
+		callbackFns.financeReplaceEngineSupplier();
+		callbackFns.financeReplaceTyreSupplier();
+		expect(apiMock.getTitleSponsorNegotiationMarket).toHaveBeenCalled();
+		expect(apiMock.getEngineNegotiationMarket).toHaveBeenCalled();
+		expect(apiMock.getTyreNegotiationMarket).toHaveBeenCalled();
+
+		callbackFns.commercialStartTitleSponsor(32);
+		callbackFns.commercialUpdateTitleSponsorStaff(12);
+		callbackFns.commercialSignTitleSponsor();
+		callbackFns.commercialBookTitleSponsorHospitality();
+		callbackFns.commercialStartEngine(41);
+		callbackFns.commercialUpdateEngineStaff(13);
+		callbackFns.commercialSignEngine('partner');
+		callbackFns.commercialBookEngineHospitality();
+		callbackFns.commercialStartTyre(42);
+		callbackFns.commercialUpdateTyreStaff(14);
+		callbackFns.commercialSignTyre('works');
+		callbackFns.commercialBookTyreHospitality();
+		expect(apiMock.startTitleSponsorNegotiation).toHaveBeenCalledWith(32);
+		expect(apiMock.updateTitleSponsorNegotiationStaff).toHaveBeenCalledWith(12);
+		expect(apiMock.signTitleSponsorNegotiatedDeal).toHaveBeenCalled();
+		expect(apiMock.bookTitleSponsorHospitality).toHaveBeenCalled();
+		expect(apiMock.startEngineNegotiation).toHaveBeenCalledWith(41);
+		expect(apiMock.updateEngineNegotiationStaff).toHaveBeenCalledWith(13);
+		expect(apiMock.signEngineNegotiatedDeal).toHaveBeenCalledWith('partner');
+		expect(apiMock.bookEngineNegotiationHospitality).toHaveBeenCalled();
+		expect(apiMock.startTyreNegotiation).toHaveBeenCalledWith(42);
+		expect(apiMock.updateTyreNegotiationStaff).toHaveBeenCalledWith(14);
+		expect(apiMock.signTyreNegotiatedDeal).toHaveBeenCalledWith('works');
+		expect(apiMock.bookTyreNegotiationHospitality).toHaveBeenCalled();
+
+		callbackFns.facilitiesPreview(5, 2);
+		callbackFns.facilitiesStartUpgrade(6, 3);
+		expect(apiMock.previewFacilitiesUpgrade).toHaveBeenCalledWith(5, 2);
+		expect(apiMock.startFacilitiesUpgrade).toHaveBeenCalledWith(6, 3);
 	});
 
 	it('handles key IPC update branches end-to-end', async () => {
@@ -697,6 +805,7 @@ describe('renderer smoke', () => {
 		await import('./renderer.js');
 
 		ipcHandler(JSON.stringify({ type: 'game_loaded', status: 'success', data: { team_name: 'Warrick', week_display: 'Week 1 1998', next_event_display: 'Next: A - Week 2', year: 1998, balance: 1, unread_count: 0 } }));
+		ipcHandler(JSON.stringify({ type: 'game_loaded', status: 'success', data: { team_name: 'Warrick', week_display: 'Week 1 1998', next_event_display: 'Next: A - Week 2', year: 1998, balance: 1, unread_count: 0, game_over: true } }));
 		ipcHandler(JSON.stringify({ type: 'home_data', data: { top_summary: {}, next_up: {}, alerts: [], season_snapshot: {}, team_snapshot: {}, finance_snapshot: {}, recent_news: [] } }));
 		ipcHandler(JSON.stringify({ type: 'grid_data', data: { rows: [] }, year: 1998 }));
 		ipcHandler(JSON.stringify({ type: 'standings_data', data: { drivers: [], constructors: [] } }));
@@ -707,13 +816,21 @@ describe('renderer smoke', () => {
 		ipcHandler(JSON.stringify({ type: 'replacement_candidates', data: { candidates: [] } }));
 		ipcHandler(JSON.stringify({ type: 'driver_offer_result', data: { accepted: false, message: 'Rejected' } }));
 		ipcHandler(JSON.stringify({ type: 'technical_director_offer_result', data: { accepted: false, message: 'Rejected' } }));
+		viewFns.driverMarketOfferResultReturn = false;
+		ipcHandler(JSON.stringify({ type: 'driver_offer_result', data: { accepted: true, message: 'Accepted' } }));
+		ipcHandler(JSON.stringify({ type: 'technical_director_offer_result', data: { accepted: true, message: 'TD Accepted' } }));
 		ipcHandler(JSON.stringify({ type: 'driver_replaced', status: 'success' }));
 		ipcHandler(JSON.stringify({ type: 'driver_data', data: { name: 'Driver X' } }));
 		ipcHandler(JSON.stringify({ type: 'car_data', data: { teams: [] } }));
+		ipcHandler(JSON.stringify({ type: 'car_development_stage_finished', status: 'error', message: 'Development blocked' }));
+		ipcHandler(JSON.stringify({ type: 'spare_set_built', status: 'success', data: { spares_after: 2 } }));
+		ipcHandler(JSON.stringify({ type: 'chassis_wear_repaired', status: 'success', data: { chassis_id: 1, wear_after: 2 } }));
 		ipcHandler(JSON.stringify({ type: 'finance_data', data: { summary: {} } }));
 		ipcHandler(JSON.stringify({ type: 'title_sponsor_negotiation_market', data: { sponsors: [] } }));
 		ipcHandler(JSON.stringify({ type: 'engine_negotiation_market', data: { suppliers: [] } }));
 		ipcHandler(JSON.stringify({ type: 'tyre_negotiation_market', data: { suppliers: [] } }));
+		ipcHandler(JSON.stringify({ type: 'tyre_negotiation_signed', data: { supplier_name: 'Spanrock' } }));
+		ipcHandler(JSON.stringify({ type: 'tyre_supplier_replaced', status: 'success' }));
 		ipcHandler(JSON.stringify({ type: 'facilities_data', data: { teams: [] } }));
 		ipcHandler(JSON.stringify({ type: 'facilities_upgrade_preview', data: { projected_facilities: 90 }, status: 'success' }));
 		ipcHandler(JSON.stringify({ type: 'status', message: 'ok' }));
@@ -739,5 +856,10 @@ describe('renderer smoke', () => {
 		expect(apiMock.getGrid).toHaveBeenCalled();
 		expect(viewFns.driverMarketOfferResult).toHaveBeenCalled();
 		expect(window.alert).not.toHaveBeenCalledWith('Rejected');
+		expect(window.alert).toHaveBeenCalledWith('Accepted');
+		expect(window.alert).toHaveBeenCalledWith('TD Accepted');
+		expect(window.alert).toHaveBeenCalledWith('Development blocked');
+		expect(viewFns.carWearRepairResult).toHaveBeenCalledWith({ chassis_id: 1, wear_after: 2 });
+		expect(document.getElementById('game-over-modal-body').textContent).toContain('already over');
 	});
 });

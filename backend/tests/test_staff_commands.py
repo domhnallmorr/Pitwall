@@ -2,6 +2,8 @@ from unittest.mock import Mock, patch
 
 from app.commands.staff_commands import (
     handle_build_spare_set,
+    handle_finish_car_development_project_stage,
+    handle_finish_car_development_stage,
     handle_offer_driver,
     handle_offer_technical_director,
     handle_get_engine_supplier_replacement_candidates,
@@ -19,9 +21,12 @@ from app.commands.staff_commands import (
     handle_replace_title_sponsor,
     handle_replace_driver,
     handle_repair_chassis_wear,
+    handle_set_car_development_allocation,
+    handle_set_construction_allocation,
     handle_set_race_chassis_assignments,
     handle_set_test_chassis,
     handle_start_car_development,
+    handle_start_construction_project,
     handle_start_tyre_negotiation,
     handle_update_tyre_negotiation_staff,
 )
@@ -136,12 +141,12 @@ def test_offer_driver_validates_and_handles_errors():
     _, result = handle_offer_driver(state, logger, driver_id=None, incoming_driver_id=3, salary_offer=500000, contract_length=2)
     assert result["status"] == "error"
 
-    with patch("app.commands.staff_market_commands.PlayerDriverNegotiationManager.submit_offer", side_effect=ValueError("blocked")):
+    with patch("app.commands.driver_market_commands.PlayerDriverNegotiationManager.submit_offer", side_effect=ValueError("blocked")):
         _, result = handle_offer_driver(state, logger, driver_id=1, incoming_driver_id=3, salary_offer=500000, contract_length=2)
     assert result["status"] == "error"
     assert result["message"] == "blocked"
 
-    with patch("app.commands.staff_market_commands.PlayerDriverNegotiationManager.submit_offer", side_effect=RuntimeError("boom")):
+    with patch("app.commands.driver_market_commands.PlayerDriverNegotiationManager.submit_offer", side_effect=RuntimeError("boom")):
         _, result = handle_offer_driver(state, logger, driver_id=1, incoming_driver_id=3, salary_offer=500000, contract_length=2)
     assert result["status"] == "error"
     assert result["message"] == "boom"
@@ -353,7 +358,7 @@ def test_tyre_negotiation_handlers_validate_and_handle_errors():
     _, result = handle_sign_tyre_negotiated_deal(state, logger, tier=None)
     assert result["status"] == "error"
 
-    with patch("app.commands.staff_market_commands.PlayerTyreNegotiationManager.get_market_payload", side_effect=RuntimeError("boom")):
+    with patch("app.commands.supplier_market_commands.PlayerTyreNegotiationManager.get_market_payload", side_effect=RuntimeError("boom")):
         result = handle_get_tyre_negotiation_market(state, logger)
     assert result["status"] == "error"
 
@@ -375,13 +380,110 @@ def test_start_car_development_validates_and_handles_errors():
     assert result["message"] == "x"
 
 
+def test_car_development_stage_and_allocation_handlers_cover_success_and_errors():
+    state = create_state()
+    logger = Mock()
+
+    with patch("app.commands.staff_team_commands.PlayerCarDevelopmentManager.finish_current_stage") as finish_mock:
+        with patch("app.commands.staff_team_commands.PlayerCarDevelopmentManager.get_payload", return_value={"ok": True}):
+            result = handle_finish_car_development_stage(state, logger)
+    assert result == {"type": "car_development_stage_finished", "status": "success", "data": {"ok": True}}
+    finish_mock.assert_called_once()
+
+    with patch("app.commands.staff_team_commands.PlayerCarDevelopmentManager.finish_current_stage") as finish_mock:
+        with patch("app.commands.staff_team_commands.PlayerCarDevelopmentManager.get_payload", return_value={"scope": "next_year"}):
+            result = handle_finish_car_development_project_stage(state, logger, scope="next_year")
+    assert result["status"] == "success"
+    finish_mock.assert_called_once_with(state, "next_year")
+
+    with patch("app.commands.staff_team_commands.PlayerCarDevelopmentManager.finish_current_stage", side_effect=ValueError("blocked")):
+        result = handle_finish_car_development_project_stage(state, logger, scope=None)
+    assert result["status"] == "error"
+    assert result["message"] == "blocked"
+
+    with patch("app.commands.staff_team_commands.PlayerCarDevelopmentManager.finish_current_stage", side_effect=RuntimeError("boom")):
+        result = handle_finish_car_development_stage(state, logger)
+    assert result["status"] == "error"
+    assert result["message"] == "boom"
+    assert logger.error.called
+
+    with patch("app.commands.staff_team_commands.PlayerCarDevelopmentManager.set_allocation") as allocation_mock:
+        with patch("app.commands.staff_team_commands.PlayerCarDevelopmentManager.get_payload", return_value={"allocation": 60}):
+            result = handle_set_car_development_allocation(state, logger, scope=None, allocation_percent=60)
+    assert result["status"] == "success"
+    allocation_mock.assert_called_once_with(state, "current_year", 60)
+
+    with patch("app.commands.staff_team_commands.PlayerCarDevelopmentManager.set_allocation", side_effect=ValueError("bad allocation")):
+        result = handle_set_car_development_allocation(state, logger, scope="current_year", allocation_percent=101)
+    assert result["status"] == "error"
+    assert result["message"] == "bad allocation"
+
+    with patch("app.commands.staff_team_commands.PlayerCarDevelopmentManager.set_allocation", side_effect=RuntimeError("allocation fail")):
+        result = handle_set_car_development_allocation(state, logger, scope="current_year", allocation_percent=50)
+    assert result["status"] == "error"
+    assert result["message"] == "allocation fail"
+
+
+def test_construction_project_handlers_cover_success_and_errors():
+    state = create_state()
+    logger = Mock()
+
+    with patch("app.commands.staff_team_commands.PlayerConstructionManager.set_allocation") as allocation_mock:
+        with patch("app.commands.staff_team_commands.PlayerConstructionManager.get_payload", return_value={"allocation": 45}):
+            result = handle_set_construction_allocation(state, logger, scope=None, allocation_percent=45)
+    assert result == {"type": "construction_allocation_updated", "status": "success", "data": {"allocation": 45}}
+    allocation_mock.assert_called_once_with(state, "current_year", 45)
+
+    with patch("app.commands.staff_team_commands.PlayerConstructionManager.set_allocation", side_effect=ValueError("capacity")):
+        result = handle_set_construction_allocation(state, logger, scope="next_year", allocation_percent=101)
+    assert result["status"] == "error"
+    assert result["message"] == "capacity"
+
+    with patch("app.commands.staff_team_commands.PlayerConstructionManager.set_allocation", side_effect=RuntimeError("allocation boom")):
+        result = handle_set_construction_allocation(state, logger, scope="next_year", allocation_percent=50)
+    assert result["status"] == "error"
+    assert result["message"] == "allocation boom"
+
+    with patch("app.commands.staff_team_commands.PlayerConstructionManager.start_project") as start_mock:
+        with patch("app.commands.staff_team_commands.PlayerConstructionManager.get_payload", return_value={"started": True}):
+            result = handle_start_construction_project(state, logger, scope=None)
+    assert result == {"type": "construction_started", "status": "success", "data": {"started": True}}
+    start_mock.assert_called_once_with(state, "current_year")
+
+    with patch("app.commands.staff_team_commands.PlayerConstructionManager.start_project", side_effect=ValueError("no project")):
+        result = handle_start_construction_project(state, logger, scope="next_year")
+    assert result["status"] == "error"
+    assert result["message"] == "no project"
+
+    with patch("app.commands.staff_team_commands.PlayerConstructionManager.start_project", side_effect=RuntimeError("start boom")):
+        result = handle_start_construction_project(state, logger, scope="next_year")
+    assert result["status"] == "error"
+    assert result["message"] == "start boom"
+
+
+def test_car_development_project_stage_logs_unexpected_errors():
+    state = create_state()
+    logger = Mock()
+
+    with patch("app.commands.staff_team_commands.PlayerCarDevelopmentManager.finish_current_stage", side_effect=RuntimeError("project boom")):
+        result = handle_finish_car_development_project_stage(state, logger, scope="next_year")
+
+    assert result["status"] == "error"
+    assert result["message"] == "project boom"
+    logger.error.assert_called()
+
+
 def test_chassis_commands_validate_edge_cases_and_exceptions():
     state = create_state()
     logger = Mock()
     state.player_team_id = None
     assert handle_set_test_chassis(state, logger, chassis_id=1)["status"] == "error"
+    assert handle_set_race_chassis_assignments(state, logger, driver1_chassis_id=1, driver2_chassis_id=2)["status"] == "error"
 
     state = create_state()
+    assert handle_set_test_chassis(state, logger, chassis_id=None)["status"] == "error"
+    assert handle_set_test_chassis(state, logger, chassis_id=999)["status"] == "error"
+    assert handle_set_race_chassis_assignments(state, logger, driver1_chassis_id=1, driver2_chassis_id=999)["status"] == "error"
     state.player_chassis[2].wear = 0
     assert handle_repair_chassis_wear(state, logger, chassis_id=3, wear_points=10)["status"] == "error"
     assert handle_repair_chassis_wear(state, logger, chassis_id=1, wear_points=None)["status"] == "error"
@@ -393,6 +495,43 @@ def test_chassis_commands_validate_edge_cases_and_exceptions():
     state.player_chassis[0].wear = "bad"
     result = handle_repair_chassis_wear(state, logger, chassis_id=1, wear_points=1)
     assert result["status"] == "error"
+
+
+def test_chassis_commands_log_unexpected_exceptions():
+    state = create_state()
+    logger = Mock()
+
+    with patch("app.commands.staff_team_commands._get_player_chassis", side_effect=RuntimeError("test boom")):
+        result = handle_set_test_chassis(state, logger, chassis_id=1)
+    assert result["status"] == "error"
+    assert result["message"] == "test boom"
+
+    with patch("app.commands.staff_team_commands._get_player_chassis", side_effect=RuntimeError("race boom")):
+        result = handle_set_race_chassis_assignments(state, logger, driver1_chassis_id=1, driver2_chassis_id=2)
+    assert result["status"] == "error"
+    assert result["message"] == "race boom"
+
+    with patch("app.commands.staff_team_commands.get_player_maintenance_data", side_effect=RuntimeError("repair boom")):
+        result = handle_repair_chassis_wear(state, logger, chassis_id=1, wear_points=1)
+    assert result["status"] == "error"
+    assert result["message"] == "repair boom"
+    assert logger.error.call_count >= 3
+
+
+def test_chassis_repair_blocks_when_no_mechanics_are_available_or_random_repair_fails():
+    state = create_state()
+    state.player_team.mechanics_staff = 0
+    logger = Mock()
+
+    result = handle_repair_chassis_wear(state, logger, chassis_id=1, wear_points=1)
+    assert result["status"] == "error"
+    assert result["message"] == "No mechanics staff available"
+
+    state = create_state()
+    with patch("app.commands.staff_team_commands.random.randint", return_value=0):
+        result = handle_repair_chassis_wear(state, logger, chassis_id=1, wear_points=1)
+    assert result["status"] == "error"
+    assert result["message"] == "Unable to complete wear repairs"
 
 
 def test_chassis_commands_apply_player_updates():
@@ -464,6 +603,37 @@ def test_build_spare_set_blocks_when_stock_full_or_cash_missing():
     result = handle_build_spare_set(state, logger)
     assert result["status"] == "error"
     assert "full" in result["message"]
+
+
+def test_build_spare_set_handles_no_player_team_full_stock_after_capacity_check_and_exceptions():
+    state = create_state()
+    logger = Mock()
+    state.player_team_id = None
+
+    result = handle_build_spare_set(state, logger)
+    assert result["status"] == "error"
+    assert result["message"] == "No player team assigned"
+
+    state = create_state()
+    state.player_spares = 10
+    with patch(
+        "app.commands.staff_team_commands.get_player_spares_construction_data",
+        return_value={
+            "can_build": True,
+            "blocking_reason": None,
+            "construction_usage_percent": 0,
+            "engineering_required_percentage": 45,
+            "engineering_required_staff": 25,
+        },
+    ):
+        result = handle_build_spare_set(state, logger)
+    assert result["status"] == "error"
+    assert result["message"] == "Spare stock is already full"
+
+    with patch("app.commands.staff_team_commands.sync_player_construction_usage_period", side_effect=RuntimeError("spare boom")):
+        result = handle_build_spare_set(create_state(), logger)
+    assert result["status"] == "error"
+    assert result["message"] == "spare boom"
 
 
 def test_build_spare_set_blocks_when_weekly_construction_capacity_is_used():

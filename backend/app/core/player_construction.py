@@ -402,6 +402,7 @@ class PlayerConstructionManager:
         if project.scope == "current_year":
             self._apply_current_year_upgrade(state, project)
             return
+        self._apply_extra_next_year_chassis_if_current(state, project)
         state.add_email(
             sender="Chief Engineer",
             subject=f"Next Year's Chassis Built: {project.name}",
@@ -495,7 +496,25 @@ class PlayerConstructionManager:
         return sum(max(0, int(project.units_built or 0)) for project in projects)
 
     def _next_year_chassis_built_count(self, state: GameState, year: int) -> int:
-        return self._sum_units_built(self._completed_next_year_projects(state, year))
+        project_count = self._sum_units_built(self._completed_next_year_projects(state, year))
+        garage_count = len(state.player_chassis) if state.player_chassis_year == year else 0
+        return max(project_count, garage_count)
+
+    def _apply_extra_next_year_chassis_if_current(self, state: GameState, project: PlayerConstructionProject) -> None:
+        team = state.player_team
+        project_year = int(project.year or state.year + 1)
+        if not team or state.player_chassis_year != project_year:
+            return
+        next_id = max((int(chassis.id or 0) for chassis in state.player_chassis), default=0) + 1
+        state.player_chassis.append(
+            Chassis(
+                id=next_id,
+                team_id=team.id,
+                name=f"{project_year} Chassis {len(state.player_chassis) + 1}",
+                wear=0,
+            )
+        )
+        project.applied = True
 
     def _apply_next_year_projects(self, state: GameState, projects: list[PlayerConstructionProject]) -> dict:
         team = state.player_team

@@ -1,6 +1,7 @@
 from app.core.player_car_development import PlayerCarDevelopmentManager
 from app.core.player_construction import PlayerConstructionManager
 from app.models.calendar import Calendar, Event, EventType
+from app.models.chassis import Chassis
 from app.models.finance import TransactionCategory
 from app.models.state import GameState, PlayerConstructionProject
 from app.models.team import Team
@@ -229,6 +230,65 @@ def test_next_year_construction_builds_one_chassis_at_a_time():
     assert second.active is True
     assert second.total_cost == 500_000
     assert second.units_required == 1
+
+
+def test_next_year_third_chassis_keeps_race_ready_count_in_payload():
+    state = create_state()
+    manager = PlayerCarDevelopmentManager()
+    manager.start(state, "next_year")
+    for stage in state.player_next_year_car_development.stages:
+        stage.progress = 10
+        manager.finish_current_stage(state, "next_year")
+
+    construction_manager = PlayerConstructionManager()
+    for _ in range(2):
+        project = construction_manager.start_project(state, "next_year")
+        project.progress = project.progress_required - 1
+        project.progress_carry = 1
+        construction_manager.process_week(state)
+
+    third = construction_manager.start_project(state, "next_year")
+    payload = construction_manager.get_payload(state)["projects"]["next_year"]
+
+    assert third.active is True
+    assert payload["race_ready_built"] == 2
+    assert payload["race_ready_required"] == 2
+
+
+def test_preseason_third_next_year_chassis_appends_to_current_chassis_list():
+    state = create_state()
+    state.year = 1999
+    state.player_chassis_year = 1999
+    state.player_chassis = [
+        Chassis(id=1, team_id=1, name="1999 Chassis 1", wear=0),
+        Chassis(id=2, team_id=1, name="1999 Chassis 2", wear=0),
+    ]
+    third = PlayerConstructionProject(
+        active=True,
+        completed=False,
+        scope="next_year",
+        name="1999 Chassis #3",
+        year=1999,
+        progress=23,
+        progress_required=24,
+        progress_carry=1,
+        units_required=1,
+        units_built=0,
+    )
+    state.player_construction_projects = [third]
+
+    construction_manager = PlayerConstructionManager()
+    payload = construction_manager.get_payload(state)["projects"]["next_year"]
+
+    assert payload["race_ready_built"] == 2
+
+    construction_manager.process_week(state)
+
+    assert third.completed is True
+    assert third.applied is True
+    assert len(state.player_chassis) == 3
+    assert state.player_chassis[2].id == 3
+    assert state.player_chassis[2].name == "1999 Chassis 3"
 
 
 def test_current_year_construction_completion_applies_speed_gain_and_costs():

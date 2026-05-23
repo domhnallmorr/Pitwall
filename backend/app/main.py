@@ -245,6 +245,125 @@ def _load_game_response() -> dict[str, Any]:
         return _error(str(e))
 
 
+def _resolve_handler(name: str) -> Callable[..., Any]:
+    return globals()[name]
+
+
+STATE_HANDLER_COMMANDS: dict[str, dict[str, Any]] = {
+    "simulate_race": {"handler": "handle_simulate_race", "save_on_success": True},
+    "get_race_weekend": {"handler": "handle_get_race_weekend"},
+    "set_race_strategy": {"handler": "handle_set_race_strategy", "args": ("strategies",), "save_on_success": True},
+    "simulate_qualifying": {"handler": "handle_simulate_qualifying", "save_on_success": True},
+    "replace_driver": {"handler": "handle_replace_driver", "args": ("driver_id", "incoming_driver_id"), "save_on_success": True},
+    "offer_driver": {
+        "handler": "handle_offer_driver",
+        "args": ("driver_id", "incoming_driver_id", "salary_offer", "contract_length"),
+        "save_predicate": lambda response: response.get("data", {}).get("accepted", False),
+    },
+    "offer_technical_director": {
+        "handler": "handle_offer_technical_director",
+        "args": ("director_id", "incoming_director_id", "salary_offer", "contract_length"),
+        "save_predicate": lambda response: response.get("data", {}).get("accepted", False),
+    },
+    "replace_commercial_manager": {"handler": "handle_replace_commercial_manager", "args": ("manager_id", "incoming_manager_id"), "save_on_success": True},
+    "replace_technical_director": {"handler": "handle_replace_technical_director", "args": ("director_id", "incoming_director_id"), "save_on_success": True},
+    "replace_title_sponsor": {"handler": "handle_replace_title_sponsor", "args": ("sponsor_name", "incoming_sponsor_id"), "save_on_success": True},
+    "start_title_sponsor_negotiation": {"handler": "handle_start_title_sponsor_negotiation", "args": ("sponsor_id",), "save_on_success": True},
+    "update_title_sponsor_negotiation_staff": {"handler": "handle_update_title_sponsor_negotiation_staff", "args": ("assigned_staff",), "save_on_success": True},
+    "sign_title_sponsor_negotiated_deal": {"handler": "handle_sign_title_sponsor_negotiated_deal", "save_on_success": True},
+    "book_title_sponsor_hospitality": {"handler": "handle_book_title_sponsor_hospitality", "save_on_success": True},
+    "replace_engine_supplier": {"handler": "handle_replace_engine_supplier", "args": ("supplier_name", "incoming_supplier_id"), "save_on_success": True},
+    "start_engine_negotiation": {"handler": "handle_start_engine_negotiation", "args": ("supplier_id",), "save_on_success": True},
+    "update_engine_negotiation_staff": {"handler": "handle_update_engine_negotiation_staff", "args": ("assigned_staff",), "save_on_success": True},
+    "sign_engine_negotiated_deal": {"handler": "handle_sign_engine_negotiated_deal", "args": ("tier",), "save_on_success": True},
+    "book_engine_negotiation_hospitality": {"handler": "handle_book_engine_negotiation_hospitality", "save_on_success": True},
+    "start_tyre_negotiation": {"handler": "handle_start_tyre_negotiation", "args": ("supplier_id",), "save_on_success": True},
+    "update_tyre_negotiation_staff": {"handler": "handle_update_tyre_negotiation_staff", "args": ("assigned_staff",), "save_on_success": True},
+    "sign_tyre_negotiated_deal": {"handler": "handle_sign_tyre_negotiated_deal", "args": ("tier",), "save_on_success": True},
+    "book_tyre_negotiation_hospitality": {"handler": "handle_book_tyre_negotiation_hospitality", "save_on_success": True},
+    "replace_tyre_supplier": {"handler": "handle_replace_tyre_supplier", "args": ("supplier_name", "incoming_supplier_id"), "save_on_success": True},
+}
+
+
+RESPONSE_HANDLER_COMMANDS: dict[str, dict[str, Any]] = {
+    "preview_facilities_upgrade": {"handler": "handle_facilities_upgrade_preview", "args": ("points", "years"), "response_type_on_missing_state": "facilities_upgrade_preview"},
+    "start_facilities_upgrade": {"handler": "handle_start_facilities_upgrade", "args": ("points", "years"), "save_on_success": True, "response_type_on_missing_state": "facilities_upgrade_started"},
+    "start_car_development": {"handler": "handle_start_car_development", "args": ("development_type",), "save_on_success": True, "response_type_on_missing_state": "car_development_started"},
+    "finish_car_development_stage": {"handler": "handle_finish_car_development_project_stage", "args": ("scope",), "save_on_success": True, "response_type_on_missing_state": "car_development_stage_finished"},
+    "set_car_development_allocation": {"handler": "handle_set_car_development_allocation", "args": ("scope", "allocation_percent"), "save_on_success": True, "response_type_on_missing_state": "car_development_allocation_updated"},
+    "set_construction_allocation": {"handler": "handle_set_construction_allocation", "args": ("scope", "allocation_percent"), "save_on_success": True, "response_type_on_missing_state": "construction_allocation_updated"},
+    "start_construction_project": {"handler": "handle_start_construction_project", "args": ("scope",), "save_on_success": True, "response_type_on_missing_state": "construction_started"},
+    "set_test_chassis": {"handler": "handle_set_test_chassis", "args": ("chassis_id",), "save_on_success": True, "response_type_on_missing_state": "test_chassis_updated"},
+    "set_race_chassis_assignments": {"handler": "handle_set_race_chassis_assignments", "args": ("driver1_chassis_id", "driver2_chassis_id"), "save_on_success": True, "response_type_on_missing_state": "race_chassis_assignments_updated"},
+    "repair_chassis_wear": {"handler": "handle_repair_chassis_wear", "args": ("chassis_id", "wear_points"), "save_on_success": True, "response_type_on_missing_state": "chassis_wear_repaired"},
+    "build_spare_set": {"handler": "handle_build_spare_set", "save_on_success": True, "response_type_on_missing_state": "spare_set_built"},
+}
+
+
+QUERY_COMMANDS: dict[str, dict[str, Any]] = {
+    "get_home": {"builder": "get_home_payload", "response_type": "home_data", "error_context": "home data"},
+    "get_standings": {"builder": "get_standings_payload", "response_type": "standings_data", "error_context": "standings"},
+    "get_staff": {"builder": "get_staff_payload", "response_type": "staff_data", "error_context": "staff"},
+    "get_facilities": {"builder": "get_facilities_payload", "response_type": "facilities_data", "error_context": "facilities"},
+    "get_car": {"builder": "get_car_payload", "response_type": "car_data", "error_context": "car data"},
+    "get_finance": {"builder": "build_finance_payload", "response_type": "finance_data", "error_context": "finance"},
+    "get_emails": {"builder": "get_emails_payload", "response_type": "email_data", "error_context": "emails"},
+}
+
+
+MARKET_QUERY_COMMANDS: dict[str, dict[str, Any]] = {
+    "get_title_sponsor_negotiation_market": {"handler": "handle_get_title_sponsor_negotiation_market", "response_type": "title_sponsor_negotiation_market", "error_context": "title sponsor negotiation market"},
+    "get_engine_negotiation_market": {"handler": "handle_get_engine_negotiation_market", "response_type": "engine_negotiation_market", "error_context": "engine negotiation market"},
+    "get_tyre_negotiation_market": {"handler": "handle_get_tyre_negotiation_market", "response_type": "tyre_negotiation_market", "error_context": "tyre negotiation market"},
+    "get_replacement_candidates": {"handler": "handle_get_replacement_candidates", "args": ("driver_id",), "response_type": "replacement_candidates", "error_context": "replacement candidates"},
+    "get_manager_replacement_candidates": {"handler": "handle_get_manager_replacement_candidates", "args": ("manager_id",), "response_type": "manager_replacement_candidates", "error_context": "manager replacement candidates"},
+    "get_technical_director_replacement_candidates": {"handler": "handle_get_technical_director_replacement_candidates", "args": ("director_id",), "response_type": "manager_replacement_candidates", "error_context": "technical director replacement candidates"},
+    "get_title_sponsor_replacement_candidates": {"handler": "handle_get_title_sponsor_replacement_candidates", "args": ("sponsor_name",), "response_type": "title_sponsor_replacement_candidates", "error_context": "title sponsor replacement candidates"},
+    "get_engine_supplier_replacement_candidates": {"handler": "handle_get_engine_supplier_replacement_candidates", "args": ("supplier_name",), "response_type": "engine_supplier_replacement_candidates", "error_context": "engine supplier replacement candidates"},
+    "get_tyre_supplier_replacement_candidates": {"handler": "handle_get_tyre_supplier_replacement_candidates", "args": ("supplier_name",), "response_type": "tyre_supplier_replacement_candidates", "error_context": "tyre supplier replacement candidates"},
+}
+
+
+def _command_args(command: dict[str, Any], keys: tuple[str, ...] = ()) -> tuple[Any, ...]:
+    return tuple(command.get(key) for key in keys)
+
+
+def _dispatch_state_handler(command: dict[str, Any], spec: dict[str, Any]) -> dict[str, Any]:
+    return _run_state_handler(
+        _resolve_handler(spec["handler"]),
+        *_command_args(command, spec.get("args", ())),
+        save_on_success=spec.get("save_on_success", False),
+        save_predicate=spec.get("save_predicate"),
+    )
+
+
+def _dispatch_response_handler(command: dict[str, Any], spec: dict[str, Any]) -> dict[str, Any]:
+    return _run_response_handler(
+        _resolve_handler(spec["handler"]),
+        *_command_args(command, spec.get("args", ())),
+        save_on_success=spec.get("save_on_success", False),
+        response_type_on_missing_state=spec.get("response_type_on_missing_state"),
+    )
+
+
+def _dispatch_market_query(command: dict[str, Any], spec: dict[str, Any]) -> dict[str, Any]:
+    handler = _resolve_handler(spec["handler"])
+    return _run_query(
+        lambda state: handler(state, logging, *_command_args(command, spec.get("args", ()))),
+        response_type=spec["response_type"],
+        error_context=spec["error_context"],
+        builder=lambda payload: payload,
+    )
+
+
+def _dispatch_query(spec: dict[str, Any]) -> dict[str, Any]:
+    return _run_query(
+        _resolve_handler(spec["builder"]),
+        response_type=spec["response_type"],
+        error_context=spec["error_context"],
+    )
+
+
 def process_command(command: dict[str, Any]) -> dict[str, Any]:
     global CURRENT_STATE
     logging.debug(f"Received command: {command}")
@@ -275,6 +394,18 @@ def process_command(command: dict[str, Any]) -> dict[str, Any]:
     if cmd_type == "load_game":
         return _load_game_response()
 
+    if cmd_type in STATE_HANDLER_COMMANDS:
+        return _dispatch_state_handler(command, STATE_HANDLER_COMMANDS[cmd_type])
+
+    if cmd_type in RESPONSE_HANDLER_COMMANDS:
+        return _dispatch_response_handler(command, RESPONSE_HANDLER_COMMANDS[cmd_type])
+
+    if cmd_type in QUERY_COMMANDS:
+        return _dispatch_query(QUERY_COMMANDS[cmd_type])
+
+    if cmd_type in MARKET_QUERY_COMMANDS:
+        return _dispatch_market_query(command, MARKET_QUERY_COMMANDS[cmd_type])
+
     if cmd_type == "get_grid":
         return _run_query(
             get_grid_payload,
@@ -284,9 +415,6 @@ def process_command(command: dict[str, Any]) -> dict[str, Any]:
             args=(command.get("year"), GridManager()),
         )
 
-    if cmd_type == "get_home":
-        return _run_query(get_home_payload, response_type="home_data", error_context="home data")
-
     if cmd_type == "get_calendar":
         return _run_query(
             lambda _state: _build_calendar_response(),
@@ -294,9 +422,6 @@ def process_command(command: dict[str, Any]) -> dict[str, Any]:
             error_context="calendar",
             builder=lambda payload: payload,
         )
-
-    if cmd_type == "get_standings":
-        return _run_query(get_standings_payload, response_type="standings_data", error_context="standings")
 
     if cmd_type == "advance_week":
         return _run_query(
@@ -322,321 +447,6 @@ def process_command(command: dict[str, Any]) -> dict[str, Any]:
             builder=lambda payload: _build_saved_success_response("week_advanced", payload),
         )
 
-    if cmd_type == "simulate_race":
-        return _run_state_handler(handle_simulate_race, save_on_success=True)
-
-    if cmd_type == "get_race_weekend":
-        return _run_state_handler(handle_get_race_weekend)
-
-    if cmd_type == "set_race_strategy":
-        return _run_state_handler(handle_set_race_strategy, command.get("strategies"), save_on_success=True)
-
-    if cmd_type == "simulate_qualifying":
-        return _run_state_handler(handle_simulate_qualifying, save_on_success=True)
-
-    if cmd_type == "replace_driver":
-        return _run_state_handler(
-            handle_replace_driver,
-            command.get("driver_id"),
-            command.get("incoming_driver_id"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "offer_driver":
-        return _run_state_handler(
-            handle_offer_driver,
-            command.get("driver_id"),
-            command.get("incoming_driver_id"),
-            command.get("salary_offer"),
-            command.get("contract_length"),
-            save_predicate=lambda response: response.get("data", {}).get("accepted", False),
-        )
-
-    if cmd_type == "offer_technical_director":
-        return _run_state_handler(
-            handle_offer_technical_director,
-            command.get("director_id"),
-            command.get("incoming_director_id"),
-            command.get("salary_offer"),
-            command.get("contract_length"),
-            save_predicate=lambda response: response.get("data", {}).get("accepted", False),
-        )
-
-    if cmd_type == "replace_commercial_manager":
-        return _run_state_handler(
-            handle_replace_commercial_manager,
-            command.get("manager_id"),
-            command.get("incoming_manager_id"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "replace_technical_director":
-        return _run_state_handler(
-            handle_replace_technical_director,
-            command.get("director_id"),
-            command.get("incoming_director_id"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "replace_title_sponsor":
-        return _run_state_handler(
-            handle_replace_title_sponsor,
-            command.get("sponsor_name"),
-            command.get("incoming_sponsor_id"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "get_title_sponsor_negotiation_market":
-        return _run_query(
-            lambda state: handle_get_title_sponsor_negotiation_market(state, logging),
-            response_type="title_sponsor_negotiation_market",
-            error_context="title sponsor negotiation market",
-            builder=lambda payload: payload,
-        )
-
-    if cmd_type == "start_title_sponsor_negotiation":
-        return _run_state_handler(
-            handle_start_title_sponsor_negotiation,
-            command.get("sponsor_id"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "update_title_sponsor_negotiation_staff":
-        return _run_state_handler(
-            handle_update_title_sponsor_negotiation_staff,
-            command.get("assigned_staff"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "sign_title_sponsor_negotiated_deal":
-        return _run_state_handler(handle_sign_title_sponsor_negotiated_deal, save_on_success=True)
-
-    if cmd_type == "book_title_sponsor_hospitality":
-        return _run_state_handler(handle_book_title_sponsor_hospitality, save_on_success=True)
-
-    if cmd_type == "replace_engine_supplier":
-        return _run_state_handler(
-            handle_replace_engine_supplier,
-            command.get("supplier_name"),
-            command.get("incoming_supplier_id"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "get_engine_negotiation_market":
-        return _run_query(
-            lambda state: handle_get_engine_negotiation_market(state, logging),
-            response_type="engine_negotiation_market",
-            error_context="engine negotiation market",
-            builder=lambda payload: payload,
-        )
-
-    if cmd_type == "start_engine_negotiation":
-        return _run_state_handler(
-            handle_start_engine_negotiation,
-            command.get("supplier_id"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "update_engine_negotiation_staff":
-        return _run_state_handler(
-            handle_update_engine_negotiation_staff,
-            command.get("assigned_staff"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "sign_engine_negotiated_deal":
-        return _run_state_handler(
-            handle_sign_engine_negotiated_deal,
-            command.get("tier"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "book_engine_negotiation_hospitality":
-        return _run_state_handler(handle_book_engine_negotiation_hospitality, save_on_success=True)
-
-    if cmd_type == "get_tyre_negotiation_market":
-        return _run_query(
-            lambda state: handle_get_tyre_negotiation_market(state, logging),
-            response_type="tyre_negotiation_market",
-            error_context="tyre negotiation market",
-            builder=lambda payload: payload,
-        )
-
-    if cmd_type == "start_tyre_negotiation":
-        return _run_state_handler(
-            handle_start_tyre_negotiation,
-            command.get("supplier_id"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "update_tyre_negotiation_staff":
-        return _run_state_handler(
-            handle_update_tyre_negotiation_staff,
-            command.get("assigned_staff"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "sign_tyre_negotiated_deal":
-        return _run_state_handler(
-            handle_sign_tyre_negotiated_deal,
-            command.get("tier"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "book_tyre_negotiation_hospitality":
-        return _run_state_handler(handle_book_tyre_negotiation_hospitality, save_on_success=True)
-
-    if cmd_type == "replace_tyre_supplier":
-        return _run_state_handler(
-            handle_replace_tyre_supplier,
-            command.get("supplier_name"),
-            command.get("incoming_supplier_id"),
-            save_on_success=True,
-        )
-
-    if cmd_type == "get_replacement_candidates":
-        return _run_query(
-            lambda state: handle_get_replacement_candidates(state, logging, command.get("driver_id")),
-            response_type="replacement_candidates",
-            error_context="replacement candidates",
-            builder=lambda payload: payload,
-        )
-
-    if cmd_type == "get_manager_replacement_candidates":
-        return _run_query(
-            lambda state: handle_get_manager_replacement_candidates(state, logging, command.get("manager_id")),
-            response_type="manager_replacement_candidates",
-            error_context="manager replacement candidates",
-            builder=lambda payload: payload,
-        )
-
-    if cmd_type == "get_technical_director_replacement_candidates":
-        return _run_query(
-            lambda state: handle_get_technical_director_replacement_candidates(state, logging, command.get("director_id")),
-            response_type="manager_replacement_candidates",
-            error_context="technical director replacement candidates",
-            builder=lambda payload: payload,
-        )
-
-    if cmd_type == "get_title_sponsor_replacement_candidates":
-        return _run_query(
-            lambda state: handle_get_title_sponsor_replacement_candidates(state, logging, command.get("sponsor_name")),
-            response_type="title_sponsor_replacement_candidates",
-            error_context="title sponsor replacement candidates",
-            builder=lambda payload: payload,
-        )
-
-    if cmd_type == "get_engine_supplier_replacement_candidates":
-        return _run_query(
-            lambda state: handle_get_engine_supplier_replacement_candidates(state, logging, command.get("supplier_name")),
-            response_type="engine_supplier_replacement_candidates",
-            error_context="engine supplier replacement candidates",
-            builder=lambda payload: payload,
-        )
-
-    if cmd_type == "get_tyre_supplier_replacement_candidates":
-        return _run_query(
-            lambda state: handle_get_tyre_supplier_replacement_candidates(state, logging, command.get("supplier_name")),
-            response_type="tyre_supplier_replacement_candidates",
-            error_context="tyre supplier replacement candidates",
-            builder=lambda payload: payload,
-        )
-
-    if cmd_type == "preview_facilities_upgrade":
-        return _run_response_handler(
-            handle_facilities_upgrade_preview,
-            command.get("points"),
-            command.get("years"),
-            response_type_on_missing_state="facilities_upgrade_preview",
-        )
-
-    if cmd_type == "start_facilities_upgrade":
-        return _run_response_handler(
-            handle_start_facilities_upgrade,
-            command.get("points"),
-            command.get("years"),
-            save_on_success=True,
-            response_type_on_missing_state="facilities_upgrade_started",
-        )
-
-    if cmd_type == "start_car_development":
-        return _run_response_handler(
-            handle_start_car_development,
-            command.get("development_type"),
-            save_on_success=True,
-            response_type_on_missing_state="car_development_started",
-        )
-
-    if cmd_type == "finish_car_development_stage":
-        return _run_response_handler(
-            handle_finish_car_development_project_stage,
-            command.get("scope"),
-            save_on_success=True,
-            response_type_on_missing_state="car_development_stage_finished",
-        )
-
-    if cmd_type == "set_car_development_allocation":
-        return _run_response_handler(
-            handle_set_car_development_allocation,
-            command.get("scope"),
-            command.get("allocation_percent"),
-            save_on_success=True,
-            response_type_on_missing_state="car_development_allocation_updated",
-        )
-
-    if cmd_type == "set_construction_allocation":
-        return _run_response_handler(
-            handle_set_construction_allocation,
-            command.get("scope"),
-            command.get("allocation_percent"),
-            save_on_success=True,
-            response_type_on_missing_state="construction_allocation_updated",
-        )
-
-    if cmd_type == "start_construction_project":
-        return _run_response_handler(
-            handle_start_construction_project,
-            command.get("scope"),
-            save_on_success=True,
-            response_type_on_missing_state="construction_started",
-        )
-
-    if cmd_type == "set_test_chassis":
-        return _run_response_handler(
-            handle_set_test_chassis,
-            command.get("chassis_id"),
-            save_on_success=True,
-            response_type_on_missing_state="test_chassis_updated",
-        )
-
-    if cmd_type == "set_race_chassis_assignments":
-        return _run_response_handler(
-            handle_set_race_chassis_assignments,
-            command.get("driver1_chassis_id"),
-            command.get("driver2_chassis_id"),
-            save_on_success=True,
-            response_type_on_missing_state="race_chassis_assignments_updated",
-        )
-
-    if cmd_type == "repair_chassis_wear":
-        return _run_response_handler(
-            handle_repair_chassis_wear,
-            command.get("chassis_id"),
-            command.get("wear_points"),
-            save_on_success=True,
-            response_type_on_missing_state="chassis_wear_repaired",
-        )
-
-    if cmd_type == "build_spare_set":
-        return _run_response_handler(
-            handle_build_spare_set,
-            save_on_success=True,
-            response_type_on_missing_state="spare_set_built",
-        )
-
-    if cmd_type == "get_staff":
-        return _run_query(get_staff_payload, response_type="staff_data", error_context="staff")
-
     if cmd_type == "get_driver":
         state_or_error = _require_state()
         if isinstance(state_or_error, dict):
@@ -650,18 +460,6 @@ def process_command(command: dict[str, Any]) -> dict[str, Any]:
             error_context="driver",
             args=(driver_name,),
         )
-
-    if cmd_type == "get_facilities":
-        return _run_query(get_facilities_payload, response_type="facilities_data", error_context="facilities")
-
-    if cmd_type == "get_car":
-        return _run_query(get_car_payload, response_type="car_data", error_context="car data")
-
-    if cmd_type == "get_finance":
-        return _run_query(build_finance_payload, response_type="finance_data", error_context="finance")
-
-    if cmd_type == "get_emails":
-        return _run_query(get_emails_payload, response_type="email_data", error_context="emails")
 
     if cmd_type == "read_email":
         return _run_query(

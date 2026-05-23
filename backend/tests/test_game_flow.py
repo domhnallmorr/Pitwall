@@ -73,6 +73,201 @@ def test_start_career_flow_can_select_team(mock_get_conn, test_db):
     assert response['type'] == 'game_started'
     assert response['data']['team_name'] == 'Ferano'
 
+
+@patch('app.main.save_game')
+@patch('app.core.rollover.load_roster', return_value=([], [], 1999, [], []))
+@patch('app.core.roster.get_connection')
+def test_full_season_smoke_advances_events_and_rolls_over(mock_get_conn, mock_rollover_load_roster, mock_save_game, test_db):
+    mock_get_conn.return_value = test_db
+    app_main.CURRENT_STATE = None
+
+    start_response = process_command({'type': 'start_career', 'team_name': 'Warrick'})
+    assert start_response['status'] == 'success'
+    assert start_response['type'] == 'game_started'
+
+    starting_balance = app_main.CURRENT_STATE.finance.balance
+    starting_year = app_main.CURRENT_STATE.year
+    races_run = 0
+    tests_skipped = 0
+    rollover_response = None
+
+    for _ in range(70):
+        state = app_main.CURRENT_STATE
+        event = state.calendar.current_event
+        if event:
+            event_id = f"{event.week}_{event.name}"
+            if event_id not in state.events_processed:
+                if event.type.value == "RACE":
+                    qualifying_response = process_command({'type': 'simulate_qualifying'})
+                    assert qualifying_response['status'] == 'success'
+                    race_response = process_command({'type': 'simulate_race'})
+                    assert race_response['status'] == 'success'
+                    assert race_response['type'] == 'race_result'
+                    assert race_response['data']['results']
+                    assert race_response['data']['lap_history']
+                    races_run += 1
+                else:
+                    skip_response = process_command({'type': 'skip_event'})
+                    assert skip_response['status'] == 'success'
+                    tests_skipped += 1
+
+        advance_response = process_command({'type': 'advance_week'})
+        assert advance_response['status'] == 'success'
+        assert advance_response['type'] == 'week_advanced'
+        if advance_response['data'].get('season_rollover'):
+            rollover_response = advance_response
+            break
+
+    assert rollover_response is not None
+    rollover_info = rollover_response['data']['rollover_info']
+    state = app_main.CURRENT_STATE
+
+    assert rollover_info['old_year'] == starting_year
+    assert rollover_info['new_year'] == starting_year + 1
+    assert rollover_info['final_driver_standings']
+    assert rollover_info['final_constructor_standings']
+    assert races_run == len([event for event in state.calendar.events if event.type.value == "RACE"])
+    assert tests_skipped >= 1
+    assert state.year == starting_year + 1
+    assert state.calendar.current_week == 1
+    assert state.events_processed == []
+    assert not state.game_over
+    assert state.finance.balance != starting_balance
+    assert len(state.finance.transactions) > 0
+    assert state.driver_season_results[starting_year]
+    assert state.finance.prize_money_entitlement > 0
+    assert any(email.subject.startswith("New Season:") for email in state.emails)
+
+    standings_response = process_command({'type': 'get_standings'})
+    assert standings_response['status'] == 'success'
+    assert 'drivers' in standings_response['data']
+    assert 'constructors' in standings_response['data']
+
+
+@patch('app.main.save_game')
+@patch('app.core.roster.get_connection')
+def test_race_weekend_integration_updates_strategy_results_finance_and_wear(mock_get_conn, mock_save_game, test_db):
+    mock_get_conn.return_value = test_db
+    app_main.CURRENT_STATE = None
+
+    start_response = process_command({'type': 'start_career', 'team_name': 'Warrick'})
+    assert start_response['status'] == 'success'
+    state = app_main.CURRENT_STATE
+    state.calendar.current_week = 10
+    player_team = state.player_team
+    player_driver_ids = {player_team.driver1_id, player_team.driver2_id}
+    race_driver_count = len([driver for driver in state.drivers if driver.team_id is not None])
+    starting_chassis_wear = {chassis.id: chassis.wear for chassis in state.player_chassis}
+    starting_balance = state.finance.balance
+
+    weekend_response = process_command({'type': 'get_race_weekend'})
+    assert weekend_response['status'] == 'success'
+    assert weekend_response['type'] == 'race_weekend'
+    assert weekend_response['data']['event_name'] == 'Albert Park'
+    assert weekend_response['data']['qualifying_complete'] is False
+    assert weekend_response['data']['race_complete'] is False
+    assert len(weekend_response['data']['player_strategies']) == 2
+
+    strategy_response = process_command({
+        'type': 'set_race_strategy',
+        'strategies': [
+            {
+                'driver_id': weekend_response['data']['player_strategies'][0]['driver_id'],
+                'planned_stops': 1,
+                'tyre_compound': 'Medium',
+            },
+            {
+                'driver_id': weekend_response['data']['player_strategies'][1]['driver_id'],
+                'planned_stops': 2,
+                'tyre_compound': 'Soft',
+            },
+        ],
+    })
+    assert strategy_response['status'] == 'success'
+    assert strategy_response['type'] == 'race_strategy_updated'
+    assert [row['planned_stops'] for row in strategy_response['data']['player_strategies']] == [1, 2]
+    assert [row['tyre_compound'] for row in strategy_response['data']['player_strategies']] == ['Medium', 'Soft']
+
+    qualifying_response = process_command({'type': 'simulate_qualifying'})
+    assert qualifying_response['status'] == 'success'
+    assert qualifying_response['type'] == 'qualifying_result'
+    assert qualifying_response['data']['qualifying_complete'] is True
+    assert len(qualifying_response['data']['qualifying_results']) == race_driver_count
+
+    event_key = f"{state.year}_{state.calendar.current_week}_Albert Park"
+    assert event_key in state.qualifying_results_by_event
+    assert state.qualifying_results_by_event[event_key]
+
+    race_response = process_command({'type': 'simulate_race'})
+    assert race_response['status'] == 'success'
+    assert race_response['type'] == 'race_result'
+    race_data = race_response['data']
+    assert race_data['event_name'] == 'Albert Park'
+    assert race_data['qualifying_results'] == state.qualifying_results_by_event[event_key]
+    assert race_data['results']
+    assert race_data['lap_history']
+    assert race_data['total_laps'] > 0
+    assert len(race_data['results']) == race_driver_count
+    assert any(row['points'] > 0 for row in race_data['results'])
+    assert f"{state.calendar.current_week}_Albert Park" in state.events_processed
+
+    player_result_rows = [row for row in race_data['results'] if row['driver_id'] in player_driver_ids]
+    assert len(player_result_rows) == 2
+    assert all(row['tyre_compound_name'] in {'Medium', 'Soft'} for row in player_result_rows)
+
+    for driver in state.drivers:
+        if driver.team_id is not None:
+            assert driver.race_starts >= 1
+    assert sum(driver.points for driver in state.drivers) > 0
+    assert sum(team.points for team in state.teams) > 0
+    assert state.driver_season_results[state.year]
+
+    for driver_id, chassis_id in state.player_race_chassis_assignments.items():
+        if driver_id in player_driver_ids:
+            chassis = next(item for item in state.player_chassis if item.id == chassis_id)
+            assert chassis.wear >= starting_chassis_wear[chassis_id] + 10
+
+    race_transactions = [
+        transaction for transaction in state.finance.transactions
+        if transaction.event_name == 'Albert Park'
+        and transaction.event_type == 'RACE'
+        and transaction.year == state.year
+    ]
+    categories = {transaction.category for transaction in race_transactions}
+    assert TransactionCategory.PRIZE_MONEY in categories
+    assert TransactionCategory.SPONSORSHIP in categories
+    assert TransactionCategory.DRIVER_WAGES in categories
+    assert TransactionCategory.MANAGEMENT_SALARIES in categories
+    assert TransactionCategory.DESIGN_STAFF_WAGES in categories
+    assert TransactionCategory.ENGINEERING_STAFF_WAGES in categories
+    assert TransactionCategory.MECHANICS_STAFF_WAGES in categories
+    assert TransactionCategory.COMMERCIAL_STAFF_WAGES in categories
+    assert TransactionCategory.FACTORY_OVERHEAD in categories
+    assert TransactionCategory.ENGINE_SUPPLIER in categories
+    assert TransactionCategory.FUEL_SUPPLIER in categories
+    assert TransactionCategory.TRANSPORT in categories
+    assert state.finance.balance != starting_balance
+
+    completed_weekend_response = process_command({'type': 'get_race_weekend'})
+    assert completed_weekend_response['status'] == 'success'
+    assert completed_weekend_response['data']['qualifying_complete'] is True
+    assert completed_weekend_response['data']['race_complete'] is True
+
+    standings_response = process_command({'type': 'get_standings'})
+    assert standings_response['status'] == 'success'
+    assert standings_response['data']['drivers'][0]['points'] > 0
+    assert standings_response['data']['constructors'][0]['points'] > 0
+
+    finance_response = process_command({'type': 'get_finance'})
+    assert finance_response['status'] == 'success'
+    assert finance_response['data']['summary']['prize_money_total'] > 0
+    assert finance_response['data']['summary']['sponsorship_total'] > 0
+
+    race_report_emails = [email for email in state.emails if email.subject.startswith('Race Report: Albert Park')]
+    finance_summary_emails = [email for email in state.emails if email.subject.startswith('Race Finance Summary: Albert Park')]
+    assert race_report_emails
+    assert finance_summary_emails
+
 @patch('app.core.retirement.random.random', return_value=0.0)
 @patch('app.core.roster.get_connection')
 def test_start_career_can_announce_donovan_final_season(mock_get_conn, mock_random, test_db):
